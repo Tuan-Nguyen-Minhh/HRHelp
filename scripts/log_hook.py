@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Shared AI hook logger — works with Claude Code, Gemini CLI, Codex, Cursor, Copilot.
+Shared AI hook logger — Claude Code, Gemini CLI, Codex, Cursor, Copilot, Grok.
 Reads JSON from stdin, normalizes to common format, appends to .ai-log/session.jsonl
 """
 import json
@@ -12,12 +12,29 @@ from pathlib import Path
 
 VN_TZ = timezone(timedelta(hours=7))
 
+# Returned by detect_tool when Grok fires a vendor-compat hook
+# (.claude/settings.json, .cursor/hooks.json, …) and the project already
+# has .grok/hooks — those events are owned by --tool=grok.
+_SKIP_GROK_COMPAT = "_skip_grok_compat"
+
 
 def git(cmd):
     try:
         return subprocess.check_output(cmd, shell=True, text=True, stderr=subprocess.DEVNULL).strip()
     except Exception:
         return ""
+
+
+def _explicit_tool() -> str:
+    for arg in sys.argv[1:]:
+        if arg.startswith("--tool="):
+            return arg.split("=", 1)[1].lower()
+    return os.environ.get("AI_TOOL_NAME", "").lower()
+
+
+def _project_has_grok_hooks() -> bool:
+    hooks_dir = Path(".grok") / "hooks"
+    return hooks_dir.is_dir() and any(hooks_dir.glob("*.json"))
 
 
 def detect_tool(data: dict) -> str:
@@ -27,19 +44,33 @@ def detect_tool(data: dict) -> str:
       1. --tool=NAME CLI argument (cross-platform: works in cmd.exe, PowerShell, bash)
       2. AI_TOOL_NAME env var (legacy, bash-only when set inline)
       3. Heuristics from payload shape
+
+    Grok loads Claude/Cursor project hooks for compatibility. When this
+    process is a Grok hook (GROK_SESSION_ID is set) and .grok/hooks exists,
+    vendor-compat events are skipped so each prompt is logged once as grok.
     """
-    for arg in sys.argv[1:]:
-        if arg.startswith("--tool="):
-            return arg.split("=", 1)[1].lower()
-    tool_env = os.environ.get("AI_TOOL_NAME", "").lower()
-    if tool_env:
-        return tool_env
+    explicit = _explicit_tool()
+    grok_session = bool(os.environ.get("GROK_SESSION_ID"))
+
+    if grok_session:
+        if explicit == "grok":
+            return "grok"
+        if _project_has_grok_hooks() and explicit and explicit != "grok":
+            return _SKIP_GROK_COMPAT
+        return "grok"
+
+    if explicit:
+        return explicit
+
     # Heuristics
     if "transcript_path" in data:
         return "codex"
-    if data.get("hook_event_name", "").startswith(("Before", "After", "Session", "Pre", "Notification")):
+    if data.get("hookEventName") and data.get("workspaceRoot"):
+        return "grok"
+    event_name = data.get("hook_event_name") or ""
+    if event_name.startswith(("Before", "After", "Session", "Pre", "Notification")):
         return "gemini"
-    if data.get("hook_event_name", "")[0:1].islower():
+    if event_name[:1].islower():
         # camelCase event names → Cursor or Copilot
         if "workspace_roots" in data:
             return "cursor"
@@ -50,9 +81,21 @@ def detect_tool(data: dict) -> str:
     return "unknown"
 
 
+def _clip(value, limit: int) -> str:
+    if not value:
+        return ""
+    text = value if isinstance(value, str) else str(value)
+    return text[:limit]
+
+
 def normalize(data: dict, tool: str) -> dict | None:
     """Normalize tool-specific payload to common log entry."""
-    event = data.get("hook_event_name") or data.get("event", "")
+    event = (
+        data.get("hook_event_name")
+        or data.get("event")
+        or data.get("hookEventName")
+        or ""
+    )
     ts = datetime.now(VN_TZ).isoformat()
 
     # Resolve repo from git origin. When cwd is not a git working tree (or
@@ -71,11 +114,14 @@ def normalize(data: dict, tool: str) -> dict | None:
         "tool": tool,
         "event": event,
         "session_id": (
-            data.get("session_id") or
-            data.get("conversation_id") or
-            data.get("generation_id") or ""
+            data.get("session_id")
+            or data.get("sessionId")
+            or data.get("conversation_id")
+            or data.get("generation_id")
+            or os.environ.get("GROK_SESSION_ID")
+            or ""
         ),
-        "model": data.get("model", ""),
+        "model": data.get("model") or data.get("modelId") or "",
         "repo": repo,
         "branch": git("git rev-parse --abbrev-ref HEAD"),
         "commit": git("git rev-parse --short HEAD"),
@@ -140,6 +186,27 @@ def normalize(data: dict, tool: str) -> dict | None:
             "tool_args": data.get("toolArgs"),
         })
 
+    elif tool == "grok":
+        prompt = (
+            data.get("prompt")
+            or data.get("userPrompt")
+            or data.get("text")
+            or ""
+        )
+        response = (
+            data.get("lastAssistantMessage")
+            or data.get("last_assistant_message")
+            or ""
+        )
+        tool_input = data.get("toolInput") or data.get("tool_input")
+        base.update({
+            "prompt": _clip(prompt, 1000),
+            "response_summary": _clip(response, 500),
+            "prompt_id": data.get("promptId") or data.get("prompt_id") or "",
+            "tool_name": data.get("toolName") or data.get("tool_name") or "",
+            "tool_input": tool_input,
+        })
+
     # Skip only true noise: no prompt AND no tool-specific payload (tool_input,
     # response_summary, tool_response, tool_args, files_context). Previously
     # this only checked `prompt`, which dropped Claude Bash/Edit events (their
@@ -147,7 +214,10 @@ def normalize(data: dict, tool: str) -> dict | None:
     # any Gemini/Cursor/Copilot turn that carried context but no plain prompt.
     _PAYLOAD_KEYS = ("prompt", "tool_input", "response_summary",
                      "tool_response", "tool_args", "files_context")
-    _LIFECYCLE_EVENTS = ("Stop", "stop", "SessionEnd", "sessionEnd", "AfterModel")
+    _LIFECYCLE_EVENTS = (
+        "Stop", "stop", "SessionEnd", "sessionEnd", "AfterModel",
+        "session_end", "StopFailure", "StopCancelled",
+    )
     has_payload = any(base.get(k) for k in _PAYLOAD_KEYS)
     if not has_payload and event not in _LIFECYCLE_EVENTS:
         return None
@@ -169,6 +239,9 @@ def main():
         sys.exit(0)
 
     tool = detect_tool(data)
+    if tool == _SKIP_GROK_COMPAT:
+        sys.exit(0)
+
     entry = normalize(data, tool)
     if not entry:
         sys.exit(0)
