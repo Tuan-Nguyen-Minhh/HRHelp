@@ -18,8 +18,8 @@ Technical Guidebook: <https://phoenix.note.transformerlabs.ai/technical-book>
 - **Technical Guidebook 10 chương** trong `docs/guide/`, đồng thời đọc được
   online.
 - **Checklist 10 deliverables** của Demo Day.
-- **AI usage logging** — hook cài sẵn cho 6 công cụ AI, log tự động gửi lên
-  grading server mỗi lần `git push`.
+- **AI usage logging** — hook cài sẵn cho 7 công cụ AI (gồm Grok), log tự động
+  gửi lên grading server mỗi lần `git push`.
 
 ## Yêu cầu
 
@@ -71,8 +71,8 @@ powershell -ExecutionPolicy Bypass -File scripts\setup_hooks.ps1 # Windows Power
 ```
 
 Chạy một lần sau khi clone. Hook ghi lại prompt khi bạn dùng Claude Code, Cursor,
-Codex CLI, Gemini CLI, Antigravity hoặc GitHub Copilot, và cài pre-push hook để
-đẩy log lên server.
+Codex CLI, Gemini CLI, Antigravity, GitHub Copilot hoặc Grok, và cài pre-push
+hook để đẩy log lên server.
 
 ### 5. Chạy server
 
@@ -104,8 +104,8 @@ docs/
   architecture_diagram.md
 eval/                Kết quả evaluation
 presentation/        Slide và video Demo Day
-.claude/ .codex/ .cursor/ .gemini/ .agents/ .github/hooks/
-                     Config hook cho từng công cụ
+.claude/ .codex/ .cursor/ .gemini/ .agents/ .github/hooks/ .grok/hooks/
+                     Config hook cho từng công cụ (Grok: `.grok/hooks/`)
 .github/workflows/   CI
 Dockerfile           Multi-stage build
 docker-compose.yml   Chạy backend bằng Docker
@@ -171,6 +171,7 @@ Mọi prompt được ghi vào `.ai-log/session.jsonl` và tự động gửi l�
 | Gemini CLI | `.gemini/settings.json` | mỗi lượt agent chạy |
 | GitHub Copilot | `.github/hooks/hooks.json` | mỗi prompt và cuối session |
 | Antigravity IDE | `.agents/hooks.json` | mỗi prompt, kèm lần quét lại lúc `git push` |
+| Grok | `.grok/hooks/ai-log.json` | mỗi prompt (`UserPromptSubmit`) và khi dừng (`Stop`) |
 
 Dùng ChatGPT hay công cụ web khác thì log thủ công:
 
