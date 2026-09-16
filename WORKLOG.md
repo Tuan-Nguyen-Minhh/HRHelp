@@ -1,29 +1,18 @@
-# Worklog — Team [Tên Team]
+# Worklog — Team AI20K
 
 > Ghi lại tất cả công việc đã làm theo ngày. Ai làm gì, kết quả gì.
 
 ---
 
-## [YYYY-MM-DD]
+## [2026-09-15]
 
 | Member | Task | Status | Output | Time |
 |--------|------|--------|--------|------|
-| [Tên] | [mô tả task] | ✅ Done | [link/kết quả] | 2h |
-| [Tên] | [mô tả task] | 🔄 WIP | [mô tả tiến độ] | 1.5h |
-| [Tên] | [mô tả task] | ❌ Blocked | [lý do block] | - |
+| Việt | Bổ sung AI hook logger hỗ trợ công cụ Grok & tối ưu cơ chế nhận diện tương thích | ✅ Done | Commit `5be2494` (`.grok/hooks/ai-log.json`, `scripts/log_hook.py`) | 2h |
 
-**Tổng kết ngày:** [1-2 câu về tiến độ chung]
-
----
-
-## [YYYY-MM-DD]
-
-| Member | Task | Status | Output | Time |
-|--------|------|--------|--------|------|
-| | | | | |
-
-**Tổng kết ngày:**
+**Tổng kết ngày:** Hoàn thiện tích hợp AI hook logger cho công cụ Grok, xử lý bỏ qua log trùng lặp khi Grok chạy các hook tương thích Claude/Cursor.
 
 ---
 
 <!-- Format: copy block trên cho mỗi ngày làm việc -->
+
