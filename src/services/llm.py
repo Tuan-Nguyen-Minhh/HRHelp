@@ -1,12 +1,11 @@
 from langchain_openai import ChatOpenAI
 
-from src.config import get_settings
+from src.core.config import settings
 
 
 def get_llm() -> ChatOpenAI:
-    settings = get_settings()
     return ChatOpenAI(
-        model=settings.model_name,
-        api_key=settings.openai_api_key,
-        temperature=settings.llm_temperature,
+        model=settings.MODEL_NAME,
+        api_key=settings.OPENAI_API_KEY,
+        temperature=settings.LLM_TEMPERATURE,
     )

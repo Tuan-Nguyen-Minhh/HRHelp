@@ -68,7 +68,7 @@ graph LR
 - **Migrations:** Alembic
 
 ### 5. Vector Store
-- **Type:** [ChromaDB / FAISS / Pinecone]
+- **Type:** pgvector
 - **Embeddings:** [model]
 - **Purpose:** [RAG / similarity search]
 
