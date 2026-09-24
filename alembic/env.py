@@ -1,12 +1,19 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from alembic.operations import ops
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import engine_from_config, pool
 
+import src.db.base_model  # noqa: F401  # register ORM models on Base.metadata
 from alembic import context
-
 from src.core.config import settings
 from src.db.base import Base
+
+_LANGCHAIN_TABLES = {"langchain_pg_collection", "langchain_pg_embedding"}
+_EXTENSIONS = (
+    ("vector", {"document_chunks", "disciplinary_decisions"}),
+    ("btree_gist", {"policy_versions"}),
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -37,6 +44,42 @@ target_metadata = Base.metadata
 # ... etc.
 
 
+def render_item(type_, obj, autogen_context):
+    if type_ == "type" and isinstance(obj, Vector):
+        autogen_context.imports.add("from pgvector.sqlalchemy import Vector")
+        if obj.dim is None:
+            return "Vector()"
+        return f"Vector({obj.dim})"
+    return False
+
+
+def include_object(object_, name, type_, reflected, compare_to):
+    if type_ == "table" and name in _LANGCHAIN_TABLES:
+        return False
+    table = getattr(object_, "table", None)
+    if table is not None and getattr(table, "name", None) in _LANGCHAIN_TABLES:
+        return False
+    return True
+
+
+def process_revision_directives(context, revision, directives):
+    if not getattr(getattr(context, "config", None), "cmd_opts", None):
+        return
+    if not getattr(context.config.cmd_opts, "autogenerate", False):
+        return
+
+    script = directives[0]
+    upgrade_ops = script.upgrade_ops
+    if upgrade_ops is None:
+        return
+
+    table_names = {op.table_name for op in upgrade_ops.ops if getattr(op, "table_name", None)}
+    statements = [
+        f"CREATE EXTENSION IF NOT EXISTS {extension}" for extension, tables in _EXTENSIONS if table_names & tables
+    ]
+    upgrade_ops.ops[:0] = [ops.ExecuteSQLOp(statement) for statement in statements]
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -55,6 +98,9 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        render_item=render_item,
+        include_object=include_object,
+        process_revision_directives=process_revision_directives,
     )
 
     with context.begin_transaction():
@@ -76,7 +122,11 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            render_item=render_item,
+            include_object=include_object,
+            process_revision_directives=process_revision_directives,
         )
 
         with context.begin_transaction():
