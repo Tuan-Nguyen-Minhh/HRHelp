@@ -153,7 +153,7 @@ bằng bất kỳ markdown viewer nào.
 |---|---|
 | Agent | LangGraph + LangChain 0.3 |
 | Backend | FastAPI 0.115 + Uvicorn |
-| LLM | OpenAI, mặc định `gpt-4o-mini` (đổi trong `src/config.py`) |
+| LLM | OpenAI, mặc định `gpt-4o-mini` (đổi trong `src/core/config.py`) |
 | Giao diện | Next.js hoặc Streamlit (đội tự chọn, hướng dẫn ở chương 6) |
 | Lint / test | ruff + pytest 8 |
 | DevOps | Docker + GitHub Actions |

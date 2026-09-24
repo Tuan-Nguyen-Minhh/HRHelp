@@ -3,6 +3,8 @@ import operator
 
 from langchain_core.tools import tool
 
+from src.services.vector_store import get_vector_store
+
 # Safe operator mapping for calculator
 _SAFE_OPERATORS = {
     ast.Add: operator.add,
@@ -19,7 +21,7 @@ _SAFE_OPERATORS = {
 
 @tool
 def search_knowledge(query: str) -> str:
-    """Tìm kiếm thông tin trong knowledge base.
+    """Tìm kiếm thông tin trong knowledge base (pgvector).
 
     Args:
         query: Câu hỏi cần tìm kiếm
@@ -27,8 +29,10 @@ def search_knowledge(query: str) -> str:
     Returns:
         Kết quả tìm kiếm
     """
-    # TODO: Implement actual search logic (e.g., RAG with vector store)
-    return f"Kết quả tìm kiếm cho: {query}"
+    docs = get_vector_store().similarity_search(query, k=3)
+    if not docs:
+        return "Không tìm thấy nội dung liên quan."
+    return "\n\n".join(doc.page_content for doc in docs)
 
 
 @tool

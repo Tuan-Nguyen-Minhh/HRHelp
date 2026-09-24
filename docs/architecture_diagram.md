@@ -10,7 +10,7 @@ graph TB
     Agent --> LLM[LLM Service<br/>GPT-4o / Gemini]
     Agent --> Tools[Agent Tools]
     Tools --> DB[(Database)]
-    Agent --> VS[Vector Store<br/>ChromaDB]
+    Agent --> VS[Vector Store<br/>pgvector]
 ```
 
 ## Agent Flow
@@ -35,4 +35,4 @@ graph LR
 | Agent | LangGraph | AI agent orchestration |
 | LLM | OpenAI/Gemini | Language model |
 | Database | PostgreSQL/SQLite | Data persistence |
-| Vector Store | ChromaDB | RAG / embeddings |
+| Vector Store | pgvector | RAG / embeddings |
