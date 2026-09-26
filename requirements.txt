@@ -8,6 +8,7 @@ python-dotenv>=1.0.0
 # AI / LangChain
 langchain>=0.3.0
 langchain-openai>=0.3.0
+langchain-mistralai>=0.2.0
 langgraph>=0.2.0
 
 # Database (uncomment as needed)
@@ -25,3 +26,10 @@ ruff>=0.8.0
 pytest>=8.0.0
 pytest-asyncio>=0.24.0
 httpx>=0.28.0
+
+# Data pipeline (Buoc 3: tokenizer BGE-M3 that + docx)
+tokenizers>=0.21.0
+python-docx>=1.1.0
+# Backend dem token Mistral that cho mistral-embed (offline sau pip)
+mistral-common>=1.12.0
+sentencepiece>=0.2.0
