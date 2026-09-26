@@ -166,6 +166,36 @@ class TestStep2Preprocessing(unittest.TestCase):
         start, end = detect_boundaries(lines_b)
         self.assertEqual(start, 2)
 
+    def test_tail_skips_candidate_with_content_after(self):
+        # Tail gia (title HOA + Dieu that phia sau) -> phai bo qua, giu Dieu 66-68
+        lines = [
+            "**CHƯƠNG V**",
+            "**Điều 63.** Nguyen tac",
+            "1. Noi dung khoan 1.",
+            "**ĐIỀU KHOẢN THI HÀNH**",
+            "**Điều 66.** Hieu luc",
+            "1. Nghi dinh co hieu luc.",
+            "|  |  |",
+            "| --- | --- |",
+            "| ***Nơi nhận:*** Foo |",
+        ]
+        start, end = detect_boundaries(lines)
+        self.assertEqual(end, 7)
+
+    def test_tail_keeps_footnote_definitions(self):
+        # Hotfix M1: bảng VPQH nằm TRƯỚC khối footnote -> không được cắt footnote
+        lines = [
+            "**CHƯƠNG XVII**",
+            "**ĐIỀU KHOẢN THI HÀNH**",
+            "**Điều 219.** Sửa đổi bổ sung",
+            "1. Nội dung khoản 1 của điều 219.",
+            "| **VĂN PHÒNG QUỐC HỘI** | **XÁC THỰC VĂN BẢN HỢP NHẤT** |",
+            "2. 2 Điểm này được sửa đổi theo Luật Giáo dục nghề nghiệp. [↑](#footnote-ref-2)",
+            "3. 3 Khoản này được sửa đổi theo Luật Dân số. [↑](#footnote-ref-3)",
+        ]
+        start, end = detect_boundaries(lines)
+        self.assertEqual(end, len(lines))
+
 
 if __name__ == "__main__":
     unittest.main()

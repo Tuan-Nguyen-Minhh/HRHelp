@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from langchain_openai import OpenAIEmbeddings
+from langchain_mistralai import MistralAIEmbeddings
 from langchain_postgres import PGVector
 
 from src.core.config import settings
@@ -8,10 +8,14 @@ from src.core.config import settings
 
 @lru_cache
 def get_vector_store() -> PGVector:
-    """Vector store on the project Postgres database (pgvector)."""
-    embeddings = OpenAIEmbeddings(
+    """Vector store on the project Postgres database (pgvector).
+
+    Embeddings: mistral-embed (1024-dim) theo DECISION 2026-09-26 trong
+    src/core/config.py. Can MISTRAL_API_KEY trong .env.
+    """
+    embeddings = MistralAIEmbeddings(
         model=settings.EMBEDDING_MODEL,
-        api_key=settings.OPENAI_API_KEY,
+        api_key=settings.MISTRAL_API_KEY,
     )
     return PGVector(
         embeddings=embeddings,

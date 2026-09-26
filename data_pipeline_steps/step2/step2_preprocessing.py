@@ -320,27 +320,52 @@ def detect_boundaries(lines: List[str]) -> Tuple[int, int]:
 
     # Quét trong phạm vi 2000 dòng cuối
     search_start = max(start_idx + 1, len(lines) - 2000)
+    struct_pat = re.compile(
+        r"^\s*(\*{0,2}|#{0,4})\s*(PHẦN|CHƯƠNG|MỤC|ĐIỀU)\s+"
+        r"([IVXLCDM\d]+|[0-9]+[a-z]?[\.:]?)",
+        re.IGNORECASE,
+    )
+
+    def _has_content_after(idx: int) -> bool:
+        """True nếu sau ứng viên tail còn heading cấu trúc thật
+        (Chương/Mục/Điều) -> ứng viên này là dương tính giả, phải bỏ qua."""
+        for k in range(idx + 1, min(idx + 151, len(lines))):
+            if struct_pat.match(lines[k]):
+                return True
+        return False
+
     for i in range(search_start, len(lines)):
         line = lines[i]
         matched = False
         clean_l = re.sub(r"[\*\_#\|]", "", line).strip()
-        
+
         for pat in tail_patterns:
             if pat.search(line):
                 # Kiểm tra thêm nếu là chữ ký thì phải không có dấu chấm phẩy kết thúc câu
                 if not (clean_l.endswith(".") or clean_l.endswith(";")):
-                    end_idx = i
-                    matched = True
+                    if not _has_content_after(i):
+                        end_idx = i
+                        matched = True
                     break
-                    
+
         # Check tổ hợp: dòng nằm trong 30 dòng cuối + chữ hoa toàn bộ + không kết thúc bằng . hoặc ,
         if not matched and (len(lines) - i) <= 30:
             if clean_l and clean_l.isupper() and not clean_l.endswith((".", ",")):
-                end_idx = i
-                matched = True
+                if not _has_content_after(i):
+                    end_idx = i
+                    matched = True
 
         if matched:
             break
+
+    # Hotfix Bước 3/M1: giữ định nghĩa footnote sửa đổi của VBHN.
+    # Bảng xác thực VĂN PHÒNG QUỐC HỘI nằm TRƯỚC khối footnote (dòng có
+    # backlink [↑](#footnote-ref-N)); cắt ở đó sẽ làm mất vĩnh viễn 6
+    # định nghĩa sửa đổi. Nếu còn footnote sau điểm cắt -> giữ tới EOF.
+    if end_idx < len(lines):
+        tail_probe = "\n".join(lines[end_idx:])
+        if "#footnote-ref-" in tail_probe:
+            end_idx = len(lines)
 
     return start_idx, end_idx
 
@@ -464,12 +489,16 @@ def transform_structure(content_lines: List[str]) -> List[str]:
     return output_lines
 
 
-def validate_articles(cleaned_text: str, metadata: Dict[str, Any], raw_text: str = "") -> Dict[str, Any]:
+def validate_articles(cleaned_text: str, metadata: Dict[str, Any], raw_text: str = "",
+                      full_raw_text: str = "") -> Dict[str, Any]:
     """
     Bước 5: Đánh giá tính toàn vẹn (Validation & Sanity Check)
     - Đếm số lượng #### Điều
     - So khớp số lớn nhất
     - Nhận diện các Điều bị khuyết và gán WARNING nếu không có placeholder
+    - Cross-check tập số Điều trong raw ĐẦY ĐỦ (trước cắt boundary) vs final
+      để bắt mất mát do tail-cut (VD NĐ283 mất Điều 66-68 mà max/total nội bộ
+      vẫn khớp 65/65). Chỉ so tập số (TOC trùng không gây báo giả).
     """
     article_matches = re.findall(r"^####\s*Điều\s+(\d+)([a-z]?)", cleaned_text, re.MULTILINE | re.IGNORECASE)
 
@@ -532,6 +561,21 @@ def validate_articles(cleaned_text: str, metadata: Dict[str, Any], raw_text: str
         "missing_article_numbers": missing_nums,
         "warnings": warnings,
     }
+
+    if full_raw_text:
+        raw_nums = set(
+            int(n) for n in re.findall(
+                r"^\s*(?:\*{0,2}|#{0,4})\s*Điều\s+(\d+)",
+                full_raw_text, re.MULTILINE | re.IGNORECASE)
+        )
+        lost = sorted(raw_nums - unique_nums)
+        if lost:
+            validation_result["status"] = "WARNING"
+            validation_result["warnings"].append(
+                f"Mất Điều sau cắt boundary (có trong raw, mất trong cleaned): {lost}"
+            )
+            validation_result["articles_lost_to_boundary"] = lost
+
     return validation_result
 
 
@@ -569,10 +613,18 @@ def process_single_file(input_path: Path, output_dir: Path) -> Dict[str, Any]:
 
     final_content = header_block + "\n".join(transformed_lines).strip() + "\n"
 
+    # Don rac cuoi file: dong chi gom khung bang (| ---) sot lai sau cat tail
+    # (VD '| | |' cuoi ND283). Cau tieng Viet that luon co chu cai.
+    _tail_lines = final_content.splitlines()
+    while _tail_lines and re.match(r"^[\s\|\-:]+$", _tail_lines[-1]):
+        _tail_lines.pop()
+    final_content = "\n".join(_tail_lines).strip() + "\n"
+
     # 5. Validation
     # So sánh cùng phạm vi: raw scope là content sau khi cắt boundary (tránh đếm trùng TOC)
     raw_scope_text = "\n".join(content_lines)
-    validation = validate_articles(final_content, metadata, raw_scope_text)
+    validation = validate_articles(final_content, metadata, raw_scope_text,
+                                   full_raw_text=cleaned_step1)
 
     # Lưu file đã làm sạch
     output_dir.mkdir(parents=True, exist_ok=True)

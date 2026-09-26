@@ -54,8 +54,8 @@
         }
       },
       "status": "SUCCESS",
-      "total_parsed_articles": 65,
-      "max_article_number": 65,
+      "total_parsed_articles": 68,
+      "max_article_number": 68,
       "missing_article_numbers": [],
       "warnings": []
     },

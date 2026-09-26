@@ -2170,5 +2170,3 @@ k) Nghị định số 41/2013/NĐ-CP ngày 08 tháng 05 năm 2013 của Chính 
 #### Điều 115. Trách nhiệm thi hành
 
 Các Bộ trưởng, Thủ trưởng cơ quan ngang bộ, Thủ trưởng cơ quan thuộc Chính phủ, Chủ tịch Ủy ban nhân dân tỉnh, thành phố trực thuộc trung ương và các cơ quan, doanh nghiệp, tổ chức và cá nhân có liên quan chịu trách nhiệm thi hành Nghị định này./.
-
-| | |
