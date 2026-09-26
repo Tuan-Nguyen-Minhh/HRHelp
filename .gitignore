@@ -28,8 +28,10 @@ env/
 .DS_Store
 Thumbs.db
 
-# Data (never commit large data)
-data/
+# Data (never commit large raw data; cleaned output is tracked)
+data/*
+!data/cleaned_markdown/
+!data/cleaned_markdown/**
 *.db
 *.sqlite3
 
