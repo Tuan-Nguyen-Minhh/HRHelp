@@ -21,7 +21,10 @@ from .cross_reference_resolver import (
 )
 
 STEP3_DIR = Path(__file__).resolve().parent
-OUT_DIR = STEP3_DIR / "output"
+WORKSPACE_ROOT = STEP3_DIR.parent.parent
+# Data-arch: chunk la data -> mac dinh xuat sang data/chunk
+# (giu STEP3_DIR/output lam fallback khi chay --out cu).
+OUT_DIR = WORKSPACE_ROOT / "data" / "chunk"
 
 
 def _is_scoped_to_blld(chapeau: str | None, body_head: str) -> bool:

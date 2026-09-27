@@ -1,0 +1,43 @@
+﻿.venv\Scripts\python.exe : sampled chunk used by V3-bis mutation : BLLD:CX:M00:A139:C04
+At line:1 char:64
++ ... NG="utf-8"; .venv\Scripts\python.exe scripts/mutation_test.py 2>&1 |  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (sampled chunk u...CX:M00:A139:C04:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+null-parent chunk used by V3-ter       : BLLD:CIII:M01:A013
+dangling-parent chunk used by V3-ter   : BLLD:CIII:M01:A018:C01
+resolvable parents in this dataset      : 0
+
+baseline: exit=0 fails=0
+
+[CAUGHT] alembic_version -> fake old revision
+         expect 'V1.alembic_current_eq_head' -> fails=['V1.alembic_current_eq_head']
+[CAUGHT] documents.chunk_count lies about the real row count
+         expect 'V2.BLLD.chunk_count_cross' -> fails=['V2.BLLD.chunk_count_cross']
+[CAUGHT] replace SQL NULL amended_by with a JSON 'null' (JSONB none_as_null trap)
+         expect 'V2.amended_by_is_object_or_null' -> fails=['V2.ND145_2020.amended_by_sql_null', 
+'V2.amended_by_is_object_or_null']
+[CAUGHT] store an empty object where amended_by should be SQL NULL
+         expect 'V2.ND283_2026.amended_by_sql_null' -> fails=['V2.ND283_2026.amended_by_sql_null']
+[CAUGHT] delete 1 BLLD chunk
+         expect 'V3.BLLD.count' -> fails=['V2.BLLD.article_count_cross', 'V2.BLLD.chunk_count_cross', 
+'V3.BLLD.article_coverage', 'V3.BLLD.count', 'V3.total', 'V6.count_chunks']
+[CAUGHT] tamper meta.has_chapeau on a SAMPLED chunk (BLLD:CX:M00:A139:C04)
+         expect 'V3-bis.special_columns' -> fails=['V3-bis.special_columns']
+[CAUGHT] clear is_quoted_external_text everywhere (expect exactly 20 True)
+         expect 'V3-bis.quoted_external_count' -> fails=['V3-bis.quoted_external_count']
+[CAUGHT] attach a dangling parent to a NULL-parent chunk (BLLD:CIII:M01:A013)
+         expect 'V3-ter.dangling_parent' -> fails=['V3-ter.dangling_parent', 'V6.rerun_exit_zero']
+Traceback (most recent call last):
+  File "C:\Users\tuan\Desktop\P-029\scripts\mutation_test.py", line 320, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "C:\Users\tuan\Desktop\P-029\scripts\mutation_test.py", line 303, in main
+    reseed()
+  File "C:\Users\tuan\Desktop\P-029\scripts\mutation_test.py", line 64, in reseed
+    subprocess.run(
+  File "C:\Users\tuan\AppData\Local\Programs\Python\Python312\Lib\subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['C:\\Users\\tuan\\Desktop\\P-029\\.venv\\Scripts\\python.exe', 
+'C:\\Users\\tuan\\Desktop\\P-029\\scripts\\seed_legal.py']' returned non-zero exit status 1.

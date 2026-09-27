@@ -1,0 +1,238 @@
+﻿.venv\Scripts\python.exe : 23:08:19 [INFO] Starting verify_db.py
+At line:1 char:207
++ ... _as_null)"; .venv\Scripts\python.exe scripts/verify_db.py 2>&1 | Out- ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (23:08:19 [INFO] Starting verify_db.py:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+23:08:19 [INFO] Database: localhost:5432/build_phase_p029
+23:08:19 [INFO] --- V1: connection + migration ---
+23:08:19 [INFO]   [PASS] V1.connection: SELECT 1 ok
+23:08:20 [INFO] setup plugin alembic.autogenerate.schemas
+23:08:20 [INFO] setup plugin alembic.autogenerate.tables
+23:08:20 [INFO] setup plugin alembic.autogenerate.types
+23:08:20 [INFO] setup plugin alembic.autogenerate.constraints
+23:08:20 [INFO] setup plugin alembic.autogenerate.defaults
+23:08:20 [INFO] setup plugin alembic.autogenerate.comments
+23:08:20 [INFO] setup plugin alembic.ext.checkconstraint_byname
+23:08:20 [INFO]   [PASS] V1.alembic_current_eq_head: current=0001_legal_schema head=0001_legal_schema
+23:08:20 [INFO]   [PASS] V1.table_documents: exists=True
+23:08:20 [INFO]   [PASS] V1.table_chunks: exists=True
+23:08:20 [INFO]   [PASS] V1.table_chunk_references: exists=True
+23:08:20 [INFO]   [PASS] V1.vector_extension: exists=True
+23:08:20 [INFO]   [PASS] V1.uq_nulls_not_distinct: UNIQUE NULLS NOT DISTINCT (source_chunk_id, target_chunk_id, 
+target_doc, article, clause, point, rule)
+23:08:20 [INFO]   [PASS] V1.doc_code_single_unique: unique indexes=1
+23:08:20 [INFO] --- V2: documents ---
+23:08:20 [INFO]   [PASS] V2.doc_count: count=3
+23:08:20 [INFO]   [PASS] V2.BLLD.article_count: expected=220 got=220
+23:08:20 [INFO]   [PASS] V2.BLLD.chunk_count_cross: expected=381 got=381
+23:08:20 [INFO]   [PASS] V2.BLLD.article_count_cross: expected=220 got=220
+23:08:20 [INFO]   [PASS] V2.ND145_2020.article_count: expected=115 got=115
+23:08:20 [INFO]   [PASS] V2.ND145_2020.chunk_count_cross: expected=377 got=377
+23:08:20 [INFO]   [PASS] V2.ND145_2020.article_count_cross: expected=115 got=115
+23:08:20 [INFO]   [PASS] V2.ND283_2026.article_count: expected=68 got=68
+23:08:20 [INFO]   [PASS] V2.ND283_2026.chunk_count_cross: expected=531 got=531
+23:08:20 [INFO]   [PASS] V2.ND283_2026.article_count_cross: expected=68 got=68
+23:08:20 [INFO]   [PASS] V2.BLLD.status: status=PARTIALLY_AMENDED
+23:08:20 [INFO]   [PASS] V2.BLLD.amended_by_non_null: keys=['2', '3', '4', '5', '6']
+23:08:20 [INFO]   [PASS] V2.amended_by_is_object_or_null: non-object amended_by=[]
+23:08:20 [INFO]   [PASS] V2.ND145_2020.amended_by_sql_null: IS NULL=True
+23:08:20 [INFO]   [PASS] V2.ND283_2026.amended_by_sql_null: IS NULL=True
+23:08:20 [INFO]   [PASS] V2.ND145_2020.status: status=ACTIVE
+23:08:20 [INFO]   [PASS] V2.ND283_2026.status: status=ACTIVE
+23:08:20 [INFO] --- V3: chunks ---
+23:08:20 [INFO]   [PASS] V3.BLLD.count: expected=381 got=381
+23:08:20 [INFO]   [PASS] V3.ND145_2020.count: expected=377 got=377
+23:08:20 [INFO]   [PASS] V3.ND283_2026.count: expected=531 got=531
+23:08:20 [INFO]   [PASS] V3.total: expected=1289 got=1289
+23:08:20 [INFO]   [PASS] V3.empty_text: empty=0
+23:08:20 [INFO]   [PASS] V3.dup_chunk_id: dups=0
+23:08:20 [INFO]   [PASS] V3.BLLD.article_coverage: missing=[] extra=[]
+23:08:20 [INFO]   [PASS] V3.ND145_2020.article_coverage: missing=[] extra=[]
+23:08:20 [INFO]   [PASS] V3.ND283_2026.article_coverage: missing=[] extra=[]
+23:08:20 [INFO] --- V3-bis: special columns (seed=42, 30 ids) ---
+23:08:20 [INFO]   sampled 30 ids (seed=42), full list for reproduction:
+23:08:20 [INFO]      1. BLLD:CX:M00:A139:C04
+23:08:20 [INFO]      2. BLLD:CIII:M01:A027
+23:08:20 [INFO]      3. ND145_2020:CVI:M01:A051:C01:P-a
+23:08:20 [INFO]      4. ND145_2020:CIX:M02:A081:C03
+23:08:20 [INFO]      5. ND145_2020:CIV:M03:A025:C04
+23:08:20 [INFO]      6. BLLD:CXIII:M00:A174:C01:P-g
+23:08:20 [INFO]      7. BLLD:CVIII:M01:A123
+23:08:20 [INFO]      8. ND283_2026:CIII:M00:A048:C12:P-i
+23:08:20 [INFO]      9. BLLD:CVII:M01:A107:C01
+23:08:20 [INFO]     10. ND283_2026:CIV:M00:A053:C03
+23:08:20 [INFO]     11. ND283_2026:CII:M02:A018:C03:P-c
+23:08:20 [INFO]     12. BLLD:CIII:M03:A034:C05
+23:08:20 [INFO]     13. BLLD:CIII:M03:A034:C01
+23:08:20 [INFO]     14. BLLD:CVII:M02:A113:C04
+23:08:20 [INFO]     15. ND145_2020:CIV:M03:A022
+23:08:20 [INFO]     16. ND145_2020:CIV:M03:A028:C05
+23:08:20 [INFO]     17. ND283_2026:CII:M04:A039:C01:P-h
+23:08:20 [INFO]     18. ND283_2026:CV:M01:A058:C05:P-a
+23:08:20 [INFO]     19. BLLD:CIII:M02:A029:C02
+23:08:20 [INFO]     20. ND283_2026:CIV:M00:A049:C08:P-b
+23:08:20 [INFO]     21. ND145_2020:CIII:M02:A008:C04:P-a
+23:08:20 [INFO]     22. ND283_2026:CII:M02:A018:C02:P-c
+23:08:20 [INFO]     23. ND145_2020:CIV:M03:A024:C03
+23:08:20 [INFO]     24. ND283_2026:CII:M02:A026:C01
+23:08:20 [INFO]     25. ND283_2026:CIV:M00:A052:C07
+23:08:20 [INFO]     26. ND145_2020:CVI:M01:A053:C01
+23:08:20 [INFO]     27. BLLD:CI:M00:A004:C03
+23:08:20 [INFO]     28. BLLD:CXIV:M03:A193:C01
+23:08:20 [INFO]     29. ND283_2026:CII:M02:A018:C04
+23:08:20 [INFO]     30. ND145_2020:CXI:M02:A100:C02
+23:08:20 [INFO]   [PASS] V3-bis.special_columns: mismatches=0
+23:08:20 [INFO]   [PASS] V3-bis.quoted_external_count: true=20 (expected 20)
+23:08:20 [INFO] --- V3-ter: dangling parent ---
+23:08:20 [INFO]   DB=1030  JSON=1030
+23:08:20 [INFO]   [PASS] V3-ter.dangling_parent: db=1030 json=1030
+23:08:20 [INFO] --- V4: references ---
+23:08:20 [INFO]   [PASS] V4.total: expected=565 got=565
+23:08:20 [INFO]   [PASS] V4.BLLD.count: expected=125 got=125
+23:08:20 [INFO]   [PASS] V4.ND145_2020.count: expected=233 got=233
+23:08:20 [INFO]   [PASS] V4.ND283_2026.count: expected=207 got=207
+23:08:20 [INFO]   [PASS] V4.target_doc_valid: invalid=[]
+23:08:20 [INFO]   [PASS] V4.internal_article_exists: missing=0
+23:08:20 [INFO]   [PASS] V4.needs_review_consistent: inconsistent=0
+23:08:20 [INFO] --- V4-bis: UNRESOLVED ---
+23:08:20 [INFO]   [PASS] V4-bis.unresolved: expected=0 got=0
+23:08:20 [INFO] --- V4-ter: needs_review aggregate ---
+23:08:20 [INFO]   [PASS] V4-ter.boundary: expected=3 got=3
+23:08:20 [INFO]   [PASS] V4-ter.unresolved: got=0
+23:08:20 [INFO]   [PASS] V4-ter.total_flagged: got=3
+23:08:20 [INFO] --- V5-auto: fixed traversal cases ---
+23:08:20 [INFO]   case V5.1_ND283_A044C01_to_BHXH_D28
+23:08:20 [INFO]   case V5.2_BLLD_D169_inbound_from_ND145
+23:08:20 [INFO]   case V5.3_A219C02_two_reference_directions
+23:08:20 [INFO]   case V5.4_ND145_A070C03_to_BLLD_D122_HIGH
+23:08:20 [INFO]   case V5.5_ND283_A066_LIST_self_D7_D14
+23:08:20 [INFO]   [PASS] V5.1_ND283_A044C01_to_BHXH_D28: rows=1 target_chunk_id=None (expect 1 row, NULL target)
+23:08:20 [INFO]   [PASS] V5.2_BLLD_D169_inbound_from_ND145: inbound=['ND145_2020:CIII:M02:A008:C01', 
+'ND145_2020:CX:M00:A089:C01:P-d1']
+23:08:20 [INFO]   [PASS] V5.3_A219C02_quoted_external: bhxh_refs=1 art=2 cl=1 pt=e target=None (expect 1: BHXH D2 cl1 
+pte, target NULL)
+23:08:20 [INFO]   [PASS] V5.3_A219C02_to_D169: refs=2 clauses=[2, 3] targets=['BLLD:CXII:M00:A169:C02', 
+'BLLD:CXII:M00:A169:C03']
+C:\Users\tuan\Desktop\P-029\scripts\verify_db.py:660: SAWarning: Column-expression-level unary distinct() should not 
+be used outside of an aggregate function. For general 'SELECT DISTINCT' supportuse select().distinct().
+  db.execute(
+23:08:20 [INFO]   [PASS] V5.3_reverse_inbound_BLLD:CXII:M00:A169:C02: distinct_sources=7 (expect >=2, exercises 
+reverse index)
+23:08:20 [INFO]   [PASS] V5.3_reverse_inbound_BLLD:CXII:M00:A169:C03: distinct_sources=2 (expect >=2, exercises 
+reverse index)
+23:08:20 [INFO]   [PASS] V5.4_ND145_A070C03_to_BLLD_D122_HIGH: rows=1 target=BLLD:CVIII:M01:A122:C01 level=CLAUSE cl=1 
+pt=c (expect 1 -> BLLD:CVIII:M01:A122:C01 CLAUSE, fallback from missing point)
+23:08:20 [INFO]   [PASS] V5.5_ND283_A066_LIST_self_D7_D14: articles=[7, 14] targets=['ND283_2026:CII:M01:A014:C01', 
+'ND283_2026:CI:M00:A007:C01'] (expect [7, 14], non-null)
+23:08:20 [INFO] --- V6: idempotent (re-running real CLI) ---
+23:08:22 [INFO]   [PASS] V6.rerun_exit_zero: returncode=0
+23:08:22 [INFO]   [PASS] V6.count_documents: before=3 after=3
+23:08:22 [INFO]   [PASS] V6.count_chunks: before=1289 after=1289
+23:08:22 [INFO]   [PASS] V6.count_refs: before=565 after=565
+23:08:22 [INFO]   [PASS] V6.ref_fingerprint: 50ae6e91147cf0b74ba1db49b7be2ae0 == 50ae6e91147cf0b74ba1db49b7be2ae0
+23:08:22 [INFO]   [PASS] V6.no_orphan_refs: orphans=0
+23:08:22 [INFO] --- V7: source untouched ---
+23:08:22 [INFO]   [PASS] V7.files_present: missing=[]
+23:08:22 [INFO]   chunks_BLLD.json: 79a7586e7d1800455c4a58896979a2c517ee66842f2c39d21650d04ff2ca2d28
+23:08:22 [INFO]   chunks_ND145_2020.json: b48b2b5a3b27130ef8d44debef0f9aa39188c3512f895faa0746aec1b0a98192
+23:08:22 [INFO]   chunks_ND283_2026.json: be52e4a329aaebd814402d9494c00dd8f00556a3bc7baa71a0b111f3bfc700af
+23:08:22 [INFO]   document_tree_BLLD.json: f7fdea870ac7beb73ec3543d224663d26292f9410422043ce05a457492647a66
+23:08:22 [INFO]   document_tree_ND145_2020.json: 45b303eada87f52d6b690140cfd87c20d095313c96f535b727460ec825eab630
+23:08:22 [INFO]   document_tree_ND283_2026.json: bf6987d3f155277bafc1ec29b6ce5c6f42c977267dfc75ffe525bfe664c443fb
+23:08:22 [INFO]   [PASS] V7.manifest_exists: source_manifest.json present
+23:08:22 [INFO]   [OK  ] chunks_BLLD.json: 79a7586e7d180045ΓÇª
+23:08:22 [INFO]   [OK  ] chunks_ND145_2020.json: b48b2b5a3b27130eΓÇª
+23:08:22 [INFO]   [OK  ] chunks_ND283_2026.json: be52e4a329aaebd8ΓÇª
+23:08:22 [INFO]   [OK  ] document_tree_BLLD.json: f7fdea870ac7beb7ΓÇª
+23:08:22 [INFO]   [OK  ] document_tree_ND145_2020.json: 45b303eada87f52dΓÇª
+23:08:22 [INFO]   [OK  ] document_tree_ND283_2026.json: bf6987d3f155277bΓÇª
+23:08:22 [INFO]   [PASS] V7.matches_pinned_manifest: drifted=[] absent=[]
+23:08:22 [INFO]   [PASS] V7.seed_did_not_modify_sources: changed=[]
+23:08:22 [INFO]   [PASS] V7.parse_chunks_BLLD.json: chunks=381
+23:08:22 [INFO]   [PASS] V7.parse_chunks_ND145_2020.json: chunks=377
+23:08:22 [INFO]   [PASS] V7.parse_chunks_ND283_2026.json: chunks=531
+23:08:22 [INFO] 
+23:08:22 [INFO] ========================================================================
+23:08:22 [INFO] SUMMARY
+23:08:22 [INFO] ========================================================================
+23:08:22 [INFO]   [PASS] V1.connection: SELECT 1 ok
+23:08:22 [INFO]   [PASS] V1.alembic_current_eq_head: current=0001_legal_schema head=0001_legal_schema
+23:08:22 [INFO]   [PASS] V1.table_documents: exists=True
+23:08:22 [INFO]   [PASS] V1.table_chunks: exists=True
+23:08:22 [INFO]   [PASS] V1.table_chunk_references: exists=True
+23:08:22 [INFO]   [PASS] V1.vector_extension: exists=True
+23:08:22 [INFO]   [PASS] V1.uq_nulls_not_distinct: UNIQUE NULLS NOT DISTINCT (source_chunk_id, target_chunk_id, 
+target_doc, article, clause, point, rule)
+23:08:22 [INFO]   [PASS] V1.doc_code_single_unique: unique indexes=1
+23:08:22 [INFO]   [PASS] V2.doc_count: count=3
+23:08:22 [INFO]   [PASS] V2.BLLD.article_count: expected=220 got=220
+23:08:22 [INFO]   [PASS] V2.BLLD.chunk_count_cross: expected=381 got=381
+23:08:22 [INFO]   [PASS] V2.BLLD.article_count_cross: expected=220 got=220
+23:08:22 [INFO]   [PASS] V2.ND145_2020.article_count: expected=115 got=115
+23:08:22 [INFO]   [PASS] V2.ND145_2020.chunk_count_cross: expected=377 got=377
+23:08:22 [INFO]   [PASS] V2.ND145_2020.article_count_cross: expected=115 got=115
+23:08:22 [INFO]   [PASS] V2.ND283_2026.article_count: expected=68 got=68
+23:08:22 [INFO]   [PASS] V2.ND283_2026.chunk_count_cross: expected=531 got=531
+23:08:22 [INFO]   [PASS] V2.ND283_2026.article_count_cross: expected=68 got=68
+23:08:22 [INFO]   [PASS] V2.BLLD.status: status=PARTIALLY_AMENDED
+23:08:22 [INFO]   [PASS] V2.BLLD.amended_by_non_null: keys=['2', '3', '4', '5', '6']
+23:08:22 [INFO]   [PASS] V2.amended_by_is_object_or_null: non-object amended_by=[]
+23:08:22 [INFO]   [PASS] V2.ND145_2020.amended_by_sql_null: IS NULL=True
+23:08:22 [INFO]   [PASS] V2.ND283_2026.amended_by_sql_null: IS NULL=True
+23:08:22 [INFO]   [PASS] V2.ND145_2020.status: status=ACTIVE
+23:08:22 [INFO]   [PASS] V2.ND283_2026.status: status=ACTIVE
+23:08:22 [INFO]   [PASS] V3.BLLD.count: expected=381 got=381
+23:08:22 [INFO]   [PASS] V3.ND145_2020.count: expected=377 got=377
+23:08:22 [INFO]   [PASS] V3.ND283_2026.count: expected=531 got=531
+23:08:22 [INFO]   [PASS] V3.total: expected=1289 got=1289
+23:08:22 [INFO]   [PASS] V3.empty_text: empty=0
+23:08:22 [INFO]   [PASS] V3.dup_chunk_id: dups=0
+23:08:22 [INFO]   [PASS] V3.BLLD.article_coverage: missing=[] extra=[]
+23:08:22 [INFO]   [PASS] V3.ND145_2020.article_coverage: missing=[] extra=[]
+23:08:22 [INFO]   [PASS] V3.ND283_2026.article_coverage: missing=[] extra=[]
+23:08:22 [INFO]   [PASS] V3-bis.special_columns: mismatches=0
+23:08:22 [INFO]   [PASS] V3-bis.quoted_external_count: true=20 (expected 20)
+23:08:22 [INFO]   [PASS] V3-ter.dangling_parent: db=1030 json=1030
+23:08:22 [INFO]   [PASS] V4.total: expected=565 got=565
+23:08:22 [INFO]   [PASS] V4.BLLD.count: expected=125 got=125
+23:08:22 [INFO]   [PASS] V4.ND145_2020.count: expected=233 got=233
+23:08:22 [INFO]   [PASS] V4.ND283_2026.count: expected=207 got=207
+23:08:22 [INFO]   [PASS] V4.target_doc_valid: invalid=[]
+23:08:22 [INFO]   [PASS] V4.internal_article_exists: missing=0
+23:08:22 [INFO]   [PASS] V4.needs_review_consistent: inconsistent=0
+23:08:22 [INFO]   [PASS] V4-bis.unresolved: expected=0 got=0
+23:08:22 [INFO]   [PASS] V4-ter.boundary: expected=3 got=3
+23:08:22 [INFO]   [PASS] V4-ter.unresolved: got=0
+23:08:22 [INFO]   [PASS] V4-ter.total_flagged: got=3
+23:08:22 [INFO]   [PASS] V5.1_ND283_A044C01_to_BHXH_D28: rows=1 target_chunk_id=None (expect 1 row, NULL target)
+23:08:22 [INFO]   [PASS] V5.2_BLLD_D169_inbound_from_ND145: inbound=['ND145_2020:CIII:M02:A008:C01', 
+'ND145_2020:CX:M00:A089:C01:P-d1']
+23:08:22 [INFO]   [PASS] V5.3_A219C02_quoted_external: bhxh_refs=1 art=2 cl=1 pt=e target=None (expect 1: BHXH D2 cl1 
+pte, target NULL)
+23:08:22 [INFO]   [PASS] V5.3_A219C02_to_D169: refs=2 clauses=[2, 3] targets=['BLLD:CXII:M00:A169:C02', 
+'BLLD:CXII:M00:A169:C03']
+23:08:22 [INFO]   [PASS] V5.3_reverse_inbound_BLLD:CXII:M00:A169:C02: distinct_sources=7 (expect >=2, exercises 
+reverse index)
+23:08:22 [INFO]   [PASS] V5.3_reverse_inbound_BLLD:CXII:M00:A169:C03: distinct_sources=2 (expect >=2, exercises 
+reverse index)
+23:08:22 [INFO]   [PASS] V5.4_ND145_A070C03_to_BLLD_D122_HIGH: rows=1 target=BLLD:CVIII:M01:A122:C01 level=CLAUSE cl=1 
+pt=c (expect 1 -> BLLD:CVIII:M01:A122:C01 CLAUSE, fallback from missing point)
+23:08:22 [INFO]   [PASS] V5.5_ND283_A066_LIST_self_D7_D14: articles=[7, 14] targets=['ND283_2026:CII:M01:A014:C01', 
+'ND283_2026:CI:M00:A007:C01'] (expect [7, 14], non-null)
+23:08:22 [INFO]   [PASS] V6.rerun_exit_zero: returncode=0
+23:08:22 [INFO]   [PASS] V6.count_documents: before=3 after=3
+23:08:22 [INFO]   [PASS] V6.count_chunks: before=1289 after=1289
+23:08:22 [INFO]   [PASS] V6.count_refs: before=565 after=565
+23:08:22 [INFO]   [PASS] V6.ref_fingerprint: 50ae6e91147cf0b74ba1db49b7be2ae0 == 50ae6e91147cf0b74ba1db49b7be2ae0
+23:08:22 [INFO]   [PASS] V6.no_orphan_refs: orphans=0
+23:08:22 [INFO]   [PASS] V7.files_present: missing=[]
+23:08:22 [INFO]   [PASS] V7.manifest_exists: source_manifest.json present
+23:08:22 [INFO]   [PASS] V7.matches_pinned_manifest: drifted=[] absent=[]
+23:08:22 [INFO]   [PASS] V7.seed_did_not_modify_sources: changed=[]
+23:08:22 [INFO]   [PASS] V7.parse_chunks_BLLD.json: chunks=381
+23:08:22 [INFO]   [PASS] V7.parse_chunks_ND145_2020.json: chunks=377
+23:08:22 [INFO]   [PASS] V7.parse_chunks_ND283_2026.json: chunks=531
+23:08:22 [INFO] 
+23:08:22 [INFO] Total: 69 PASS, 0 FAIL
