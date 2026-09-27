@@ -11,10 +11,13 @@ langchain-openai>=0.3.0
 langchain-mistralai>=0.2.0
 langgraph>=0.2.0
 
-# Database (uncomment as needed)
-sqlalchemy>=2.0.0
+# Database
+sqlalchemy[asyncio]>=2.0.0
 alembic>=1.14.0
 psycopg2-binary>=2.9.0
+# asyncpg backs src/db/session.py (SQLALCHEMY_DATABASE_URI); greenlet comes
+# from sqlalchemy[asyncio] and is required by the asyncio shim.
+asyncpg>=0.29.0
 
 # Vector store (pgvector)
 langchain-postgres>=0.0.14
