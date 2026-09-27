@@ -353,6 +353,20 @@ class ChunkingEngine:
             # Diem don le vuot nguong: khong be cau (vo toan ven phap ly),
             # gan co de audit (BGE-M3 ctx 8k van embed duoc)
             flags.append("POINT_BODY_OVER_LIMIT")
+        # P-029 FIX (Dieu 219 BLLD): danh dau doan trich dan nguyen van luat
+        # khac trong ngoac kep. Dieu 219 trich BHXH/To tung dan su... moi Dieu
+        # trich co khoan/diem danh so rieng -> so le voi cay Dieu 219 me.
+        # Muc toi thieu: metadata khong bi dung nham lam 'khoan N Dieu 219'.
+        low_full = (header + "\n" + body_text).lower()
+        is_quoted = False
+        if tree.doc_code == "BLLD" and art.number == 219:
+            if ("sửa đổi, bổ sung" in low_full and "luật" in low_full) \
+                    or "bảo hiểm xã hội" in low_full \
+                    or "“" in body_text or '"' in body_text:
+                is_quoted = True
+        else:
+            if "sửa đổi, bổ sung" in low_full and ("“" in body_text or '"' in body_text):
+                is_quoted = True
         meta = ChunkMetadata(
             document_id=tree.document_id,
             document_type=tree.document_type,
@@ -371,6 +385,7 @@ class ChunkingEngine:
             effective_status=status, amended_by=amended,
             anomaly_flags=sorted(set(flags)),
             token_count=tok_n,
+            is_quoted_external_text=is_quoted,
         )
         return Chunk(chunk_id=cid, parent_chunk_id=parent,
                      header_context=header, text=body_text, metadata=meta)

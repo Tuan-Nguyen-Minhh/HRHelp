@@ -140,7 +140,9 @@ class ParsedArticle:
 def _strip_md_inline(text: str) -> str:
     text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
     text = re.sub(r"\*(.+?)\*", r"\1", text)
-    text = re.sub(r"\[\[(.*?)\]\]\(.*?\)", r"\1", text)
+    # Footnote anchor trong title (VD Chuong XVII '...THI HANH [[6]]'):
+    # xoa han de tranh du '6' trong title (P-029 footnote fix).
+    text = re.sub(r"\s*\[\[.*?\]\]\(.*?\)", "", text)
     return re.sub(r"\s+", " ", text).strip()
 
 

@@ -34,7 +34,11 @@ def pre_clean_text(raw_text: str) -> str:
         cleaned_line = re.sub(r"[ \t]+", " ", line).rstrip()
         cleaned_lines.append(cleaned_line)
 
-    return "\n".join(cleaned_lines)
+    joined = "\n".join(cleaned_lines)
+    # Sua loi MarkItDown mat space sau marker Khoan/Diem + footnote dinh
+    # (BLLD D7/D61, ND145 D32/D107, footnote BLLD 5 vi tri; quet deu ND283).
+    joined = fix_markitdown_spacing(joined)
+    return joined
 
 
 def extract_metadata(text: str, filename: str) -> Dict[str, Any]:
@@ -370,6 +374,63 @@ def detect_boundaries(lines: List[str]) -> Tuple[int, int]:
     return start_idx, end_idx
 
 
+def _is_chapeau_line(clean_l: str) -> bool:
+    """Nhan dien dong dan nhap (chapeau) de KHONG gop vao tieu de Dieu/Chuong.
+
+    Can cu: chapeau luat VN thuong ket thuc bang ':' va chua cum dan nhu
+    'nhu sau', 'bao gom', 'duoc hieu/quy dinh/xac dinh...'.
+    Tieu de that khong bao gio ket thuc bang ':'.
+    """
+    low = clean_l.lower()
+    triggers = [
+        "như sau", "bao gồm:", "bao gồm", "gồm các", "cụ thể như sau",
+        "được hiểu", "được quy định", "được xác định",
+        "quy định như sau", "được quy định như sau",
+    ]
+    if any(t in low for t in triggers):
+        return True
+    if clean_l.strip().endswith(":"):
+        return True
+    return False
+
+
+def fix_markitdown_spacing(text: str) -> str:
+    """Sua loi MarkItDown lam mat khoang trang sau marker Khoan/Diem + footnote dinh.
+
+    Ap dung DONG DEU cho ca 3 van ban (BLLD, ND145, ND283):
+    - '2.Nguoi...' -> '2. Nguoi...' (khoan dinh)
+    - 'd)Tham gia...' / 'đ)Tham gia...' -> 'd) Tham gia...' (diem dinh)
+    - 'a)2[[2]](#footnote-2)Thanh...' -> 'a) [[2]](#footnote-2) Thanh...'
+    - '3.3[[3]](#footnote-3)' -> '3. [[3]](#footnote-3)'
+    - '**DIEU KHOAN THI HANH****6**[[6]]' -> '**DIEU KHOAN THI HANH** [[6]]'
+    Doi chieu .docx goc: moi khoan la 1 paragraph rieng biet.
+    """
+    lines = text.splitlines()
+    out: List[str] = []
+    for line in lines:
+        s = line
+        # 1. footnote bold number truoc anchor (VD chuong XVII): '**6**[[6]]' -> ' [[6]]'
+        s = re.sub(r"\*\*(\d+)\*\*(\s*)(\[\[\d+\]\]\(#footnote-\d+\))",
+                   r" \3", s)
+        # 2. so footnote le dan sau marker khoan/diem: 'a)2[[2]]' -> 'a)[[2]]'
+        #    (bao ca '3.3[[3]]', '1.4[[4]]', '8a.5[[5]]', 'd)X[[...]]')
+        s = re.sub(
+            r"^(\s*(?:\d+[a-z]?\.\s*|[a-zđ]\)\s*))(\d+)\s*(\[\[\d+\]\]\(#footnote-\d+\))",
+            r"\1\3", s, flags=re.IGNORECASE)
+        # 3. dam bao khoang trang truoc anchor footnote: 'HANH[[6]]' -> 'HANH [[6]]'
+        s = re.sub(r"(\S)(\[\[\d+\]\]\(#footnote-\d+\))", r"\1 \2", s)
+        # 4. dam bao khoang trang sau anchor: ')Thanh...' -> ') Thanh...'
+        s = re.sub(r"(\]\(#footnote-\d+\))([^\s])", r"\1 \2", s)
+        # 5. khoan dinh dau dong thieu space: '2.Nguoi' / '2.Định kỳ' -> '2. Nguoi'
+        s = re.sub(r"^(\s*\d+[a-z]?\.)([A-ZÀ-ỸÂĂĐÊÔƠƯa-zà-ỹ\[\(])",
+                   r"\1 \2", s)
+        # 6. diem dinh dau dong thieu space: 'đ)Tham gia' -> 'đ) Tham gia'
+        s = re.sub(r"^(\s*[a-zđ]\))([^\s])", r"\1 \2", s,
+                   flags=re.IGNORECASE)
+        out.append(s)
+    return "\n".join(out)
+
+
 def _collect_wrapped_title(lines: List[str], start_j: int, is_continuation: bool = False) -> Tuple[List[str], int]:
     title_parts = []
     j = start_j
@@ -379,7 +440,9 @@ def _collect_wrapped_title(lines: List[str], start_j: int, is_continuation: bool
         r"^\s*(\*{0,2}|#{0,4})\s*(PHẦN|CHƯƠNG|MỤC|ĐIỀU)\s+([IVXLCDM\d]+|[0-9]+[a-z]?[\.:]?)",
         re.IGNORECASE,
     )
-    clause_start_pat = re.compile(r"^\s*(\d+\.|[a-z]\))\s+")
+    # Nhan ca marker thieu space ('2.X', 'đ)X') de khong gop nham vao title.
+    clause_start_pat = re.compile(r"^\s*(\d+[a-z]?\.\s*|[a-zđ]\)\s*)",
+                                  re.IGNORECASE)
 
     while j < total:
         clean_l = re.sub(r"[\*\_]", "", lines[j]).strip()
@@ -391,10 +454,19 @@ def _collect_wrapped_title(lines: List[str], start_j: int, is_continuation: bool
             break
             
         if len(title_parts) == 0 and not is_continuation:
+            # Dong dau tien sau marker: neu la chapeau (ket thuc ':' / chua
+            # trigger) thi KHONG gop vao title, de lai lam body.
+            if _is_chapeau_line(clean_l):
+                break
             title_parts.append(clean_l)
             j += 1
         else:
-            if len(clean_l) < 80 and not clean_l.endswith("."):
+            # Guard chapeau: khong bao gio gop dong dan nhap vao tieu de.
+            # Sua heading-merge bug (BLLD D3/D99/D120, ND145 D69/D75, quet deu ND283).
+            if _is_chapeau_line(clean_l):
+                break
+            if len(clean_l) < 80 and not clean_l.endswith(".") \
+                    and not clean_l.endswith(":"):
                 title_parts.append(clean_l)
                 j += 1
             else:

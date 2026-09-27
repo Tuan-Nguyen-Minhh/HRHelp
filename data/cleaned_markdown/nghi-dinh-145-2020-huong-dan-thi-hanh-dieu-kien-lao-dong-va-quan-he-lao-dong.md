@@ -622,7 +622,7 @@ Danh mục công việc được thực hiện cho thuê lại lao động đư�
 
 1. Thực hiện đúng các quy định về mở tài khoản ký quỹ, nộp tiền ký quỹ, sử dụng tài khoản ký quỹ của doanh nghiệp cho thuê lại và các quy định liên quan đến tài khoản này.
 
-2.Định kỳ hằng quý báo cáo về tình hình thực hiện ký quỹ của doanh nghiệp cho thuê lại theo Mẫu số 11/PLIII Phụ lục III ban hành kèm theo Nghị định này gửi Ngân hàng Nhà nước chi nhánh, tỉnh, thành phố trực thuộc trung ương, Chủ tịch Ủy ban nhân dân cấp tỉnh, Sở Lao động - Thương binh và Xã hội nơi doanh nghiệp đặt trụ sở chính trước ngày 15 của tháng đầu quý sau.
+2. Định kỳ hằng quý báo cáo về tình hình thực hiện ký quỹ của doanh nghiệp cho thuê lại theo Mẫu số 11/PLIII Phụ lục III ban hành kèm theo Nghị định này gửi Ngân hàng Nhà nước chi nhánh, tỉnh, thành phố trực thuộc trung ương, Chủ tịch Ủy ban nhân dân cấp tỉnh, Sở Lao động - Thương binh và Xã hội nơi doanh nghiệp đặt trụ sở chính trước ngày 15 của tháng đầu quý sau.
 
 3. Thực hiện đầy đủ trách nhiệm của ngân hàng nhận ký quỹ theo quy định tại Chương này.
 
@@ -1233,7 +1233,9 @@ d) Vận hành, bảo dưỡng, sửa chữa hệ thống đường ống phân 
 ## Chương VIII. KỶ LUẬT LAO ĐỘNG, TRÁCH NHIỆM VẬT CHẤT
 
 
-#### Điều 69. Nội quy lao động Nội quy lao động tại Điều 118 của Bộ luật Lao động được quy định như sau:
+#### Điều 69. Nội quy lao động
+
+Nội quy lao động tại Điều 118 của Bộ luật Lao động được quy định như sau:
 
 1. Người sử dụng lao động phải ban hành nội quy lao động, nếu sử dụng từ 10 người lao động trở lên thì nội quy lao động phải bằng văn bản, nếu sử dụng dưới 10 người lao động thì không bắt buộc ban hành nội quy lao động bằng văn bản nhưng phải thỏa thuận nội dung về kỷ luật lao động, trách nhiệm vật chất trong hợp đồng lao động.
 
@@ -1337,7 +1339,9 @@ Người sử dụng lao động có sử dụng nhiều lao động nữ là ng
 3. Sử dụng từ 1.000 lao động nữ trở lên.
 
 
-#### Điều 75. Nơi có nhiều lao động Nơi có nhiều lao động được xác định như sau:
+#### Điều 75. Nơi có nhiều lao động
+
+Nơi có nhiều lao động được xác định như sau:
 
 1. Khu công nghiệp, cụm công nghiệp, khu chế xuất, khu kinh tế, khu công nghệ cao (gọi tắt là khu công nghiệp) có từ 5.000 người lao động trở lên đang làm việc trong các doanh nghiệp và có tham gia đóng bảo hiểm xã hội trên địa bàn khu công nghiệp.
 
@@ -2039,7 +2043,7 @@ a) Giải quyết tranh chấp lao động tập thể về lợi ích của hò
 
 b) Trường hợp hòa giải không thành hoặc hết thời hạn hòa giải quy định tại khoản 2 Điều 188 của Bộ luật Lao động mà hòa giải viên lao động không tiến hành hòa giải hoặc một trong các bên không thực hiện thỏa thuận trong biên bản hòa giải thành thì các bên tranh chấp có quyền yêu cầu Hội đồng trọng tài lao động hoặc Chủ tịch Ủy ban nhân dân cấp tỉnh giải quyết.
 
-3.Giải quyết tranh chấp lao động tập thể về lợi ích của Hội đồng trọng tài lao động
+3. Giải quyết tranh chấp lao động tập thể về lợi ích của Hội đồng trọng tài lao động
 
 a) Giải quyết tranh chấp lao động tập thể về lợi ích của Hội đồng trọng tài lao động thực hiện theo quy định tại các khoản 1, 2 và 3 Điều 197 của Bộ luật Lao động;
 

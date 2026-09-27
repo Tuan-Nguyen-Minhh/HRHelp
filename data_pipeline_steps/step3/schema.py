@@ -44,6 +44,10 @@ class ChunkMetadata:
     amended_by: Optional[Dict[str, Any]] = None
     anomaly_flags: List[str] = field(default_factory=list)
     token_count: int = 0
+    # P-029 FIX (Dieu 219 BLLD): chunk nam trong doan trich dan nguyen van
+    # luat khac trong ngoac kep -> True (tanh cay khoan/diem rieng, tranh
+    # dung nham 'khoan N Dieu 219' khi thuc chat la khoan cua luat khac).
+    is_quoted_external_text: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
