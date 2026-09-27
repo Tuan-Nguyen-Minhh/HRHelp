@@ -85,9 +85,11 @@ def count_tokens(text: str, backend: str = "") -> Tuple[int, bool]:
             return len(tok.encode(text).ids), True
         except Exception:
             pass
-    # Fallback: tieng Viet ~1.35 token/tu (ghi ro trong metadata audit)
+    # Fallback khi khong tai duoc tokenizer: he so PHONG THU (overestimate)
+    # theo backend de khong bao gio vuot nguong API (mistral-embed limit 8k).
     words = len(re.findall(r"\S+", text))
-    return int(words * 1.35), False
+    ratio = 4.0 if backend == "mistral" else 1.5
+    return int(words * ratio), False
 # Budget hien thi cho envelope nguc canh (TOKEN, tu dong thich nghi backend).
 # Metadata trich tu full text nen cat envelope khong mat du lieu.
 ENVELOPE_TOKEN_BUDGET = 150

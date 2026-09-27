@@ -44,6 +44,14 @@ def process_document(stem: str, out_dir: Path, engine: ChunkingEngine,
         json.dumps(tree.to_dict(), ensure_ascii=False, indent=1),
         encoding="utf-8")
 
+    # max_article hieu luc = max thuc te trong cay (chong stale khi van ban
+    # duoc amend/them Dieu); map chi de doi chieu canh bao.
+    tree_max = max((a.number for _, _, a in tree.all_articles()), default=0)
+    eff_max = tree_max or info["max_article"]
+    if tree_max and tree_max != info["max_article"] and verbose:
+        print(f"  [WARN] {info['doc_code']}: DOC_ID_MAP max={info['max_article']} "
+              f"!= tree max={tree_max} -> dung {eff_max}")
+
     chunks = engine.chunk_document(tree, formula_hits=formula_hits)
 
     # Gan cross-reference cho tung chunk
@@ -60,7 +68,7 @@ def process_document(stem: str, out_dir: Path, engine: ChunkingEngine,
     for c in chunks:
         md = c.metadata
         scope = DocScope(document_id=tree.document_id,
-                         max_article=info["max_article"],
+                         max_article=eff_max,
                          scoped_to_blld=(md.article_number in scoped_articles))
         c.references = resolve_cross_references(
             c.header_context + "\n" + c.text, scope,
