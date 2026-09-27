@@ -1,0 +1,12 @@
+{
+ "pinned_at": "2026-09-27T15:53:31.179742+00:00",
+ "note": "Known-good sha256 of the frozen step3 outputs consumed by B4/B5. Regenerate only after an intentional, reviewed source change: python scripts/verify_db.py --write-manifest",
+ "files": {
+  "chunks_BLLD.json": "79a7586e7d1800455c4a58896979a2c517ee66842f2c39d21650d04ff2ca2d28",
+  "chunks_ND145_2020.json": "b48b2b5a3b27130ef8d44debef0f9aa39188c3512f895faa0746aec1b0a98192",
+  "chunks_ND283_2026.json": "be52e4a329aaebd814402d9494c00dd8f00556a3bc7baa71a0b111f3bfc700af",
+  "document_tree_BLLD.json": "f7fdea870ac7beb73ec3543d224663d26292f9410422043ce05a457492647a66",
+  "document_tree_ND145_2020.json": "45b303eada87f52d6b690140cfd87c20d095313c96f535b727460ec825eab630",
+  "document_tree_ND283_2026.json": "bf6987d3f155277bafc1ec29b6ce5c6f42c977267dfc75ffe525bfe664c443fb"
+ }
+}
