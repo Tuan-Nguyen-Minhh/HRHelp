@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict i0vi5yusojWEz8XGm1BBpnkUfnNa0aDYNJd6W4Ge8oGfZCOQaJov9jUrGGMfu55
+\restrict zlsAUAdQ6Z6ZzOpSEhWeFI8Wf9bO0d4hS4RDIbz7T7pq2989TVRv6yEJU25ttei
 
 -- Dumped from database version 16.15 (Debian 16.15-1.pgdg12+2)
 -- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg12+2)
@@ -234,7 +234,7 @@ CREATE TABLE public.disciplinary_decisions (
     issued_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     is_precedent boolean DEFAULT false NOT NULL,
     precedent_summary text,
-    embedding public.vector(1536),
+    embedding public.vector(1024),
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT ck_disciplinary_decisions_precedent_summary CHECK (((NOT is_precedent) OR (precedent_summary IS NOT NULL))),
@@ -260,7 +260,7 @@ CREATE TABLE public.document_chunks (
     clause character varying(50),
     point character varying(50),
     metadata jsonb,
-    embedding public.vector(1536),
+    embedding public.vector(1024),
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
@@ -584,7 +584,7 @@ COPY public.agent_runs (id, conversation_id, message_id, output_message_id, stat
 --
 
 COPY public.alembic_version (version_num) FROM stdin;
-0001_legal_schema
+0002_unify_mistral_embed
 \.
 
 
@@ -3551,5 +3551,5 @@ ALTER TABLE ONLY public.tool_calls
 -- PostgreSQL database dump complete
 --
 
-\unrestrict i0vi5yusojWEz8XGm1BBpnkUfnNa0aDYNJd6W4Ge8oGfZCOQaJov9jUrGGMfu55
+\unrestrict zlsAUAdQ6Z6ZzOpSEhWeFI8Wf9bO0d4hS4RDIbz7T7pq2989TVRv6yEJU25ttei
 

@@ -47,4 +47,5 @@ class DisciplinaryDecision(TimestampMixin, Base):
     issued_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     is_precedent = Column(Boolean, nullable=False, default=False, server_default=text("FALSE"))
     precedent_summary = Column(Text, nullable=True)
-    embedding = Column(Vector(1536), nullable=True)
+    # Same unified model as document_chunks: mistral-embed (1024-dim).
+    embedding = Column(Vector(1024), nullable=True)

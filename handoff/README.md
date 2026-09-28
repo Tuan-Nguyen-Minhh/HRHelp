@@ -23,7 +23,7 @@ docker compose up -d db
 # 2. Kiểm tra file dump còn nguyên
 #    Windows:  certutil -hashfile b4b5_build_phase_p029.dump SHA256
 #    Linux/mac:  shasum -a 256 b4b5_build_phase_p029.dump
-#    So với:     ed6d644a500cf39101c894a2dcdec3711383cfba103411be2f64525f93723426
+#    So với:     f4ff3aa890cdffeaaa1385be48a032bb61b3d82138f25dee8f07b3e13e69fcfa
 #    Git đã bảo toàn file nên bước này là tùy chọn; hữu ích khi file bị tải
 #    lại qua trung gian hoặc khi muốn chắc chắn bản dump còn nguyên.
 
@@ -91,6 +91,17 @@ Dump **không** chỉ được tạo rồi đem đi. Nó đã được restore v
 
 Database tạm đã được xoá sau khi so sánh; container chỉ còn `postgres` và
 `build_phase_p029`.
+
+## 5-bis. Thống nhất embedding: mistral-embed 1024-dim (2026-09-28)
+
+Toàn bộ database dùng một model embedding duy nhất theo DECISION 2026-09-26.
+Hai cột `Vector(1536)` cũ (`document_chunks.embedding`,
+`disciplinary_decisions.embedding`) là di sản của template OpenAI —
+không code nào từng ghi vào đó, DB dev trống cả hai cột. Migration
+`0002_unify_mistral_embed` đổi cả hai về `Vector(1024)` và dựng lại index HNSW.
+Migration từ chối chạy nếu cột còn vector non-null thay vì cắt ngắn thành rác.
+
+Bảng legal (B6) sẽ có bảng embedding riêng, không tái dùng hai cột này.
 
 ## 6. Lưu ý khi dùng
 
