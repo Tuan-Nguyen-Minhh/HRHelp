@@ -15,7 +15,17 @@ Dưới đây là danh sách các văn bản luật có trong thư mục, bao g�
 ## Cấu trúc thư mục
 
 * **`raw/`**: Chứa các tệp tài liệu văn bản gốc ở định dạng Word (`.docx`).
-* **`markdown/`**: Chứa các tệp văn bản đã được trích xuất và chuyển đổi sang định dạng Markdown tương ứng (`.md`).
+* **`markdown/`**: Chứa các tệp văn bản đã được trích xuất và chuyển đổi sang định dạng Markdown tương ứng (`.md`) bằng MarkItDown (giữ nguyên lỗi spacing/heading gốc để step2 sửa).
+* **`cleaned_markdown/`**: Output bước 2 — `.md` đã sửa footnote dính, khoản dính (`2.X`), heading-merge (BLLD 220 / NĐ145 115 / NĐ283 68 Điều) + `metadata_summary.json`.
+* **`chunk/`**: Output bước 3 (chunk là data) — `document_tree_*.json` (cây Chương→Mục→Điều trung gian), `chunks_*.json` (BLLD 381 / NĐ145 377 / NĐ283 531, tổng 1289), `step3_stats.json`, `validation_report.md` (per-doc), `low_confidence_refs.json`, `references_sample_review.md/.csv`, `CHANGELOG.md`, `verify_final.log`.
+
+## Pipeline regenerate
+
+```bash
+python -m data_pipeline_steps.step2.step2_preprocessing  # markdown → cleaned_markdown
+python -m data_pipeline_steps.step3.run_step3            # cleaned → data/processed
+python -m data_pipeline_steps.step3.validate_step3       # audit per-doc
+```
 
 ## Phương pháp chuyển đổi
 

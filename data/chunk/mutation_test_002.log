@@ -1,0 +1,55 @@
+﻿.venv\Scripts\python.exe : sampled chunk used by V3-bis mutation : BLLD:CX:M00:A139:C04
+At line:1 char:64
++ ... NG="utf-8"; .venv\Scripts\python.exe scripts/mutation_test.py 2>&1 |  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (sampled chunk u...CX:M00:A139:C04:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+null-parent chunk used by V3-ter       : BLLD:CIII:M01:A013
+dangling-parent chunk used by V3-ter   : BLLD:CIII:M01:A018:C01
+resolvable parents in this dataset      : 0
+
+baseline: exit=0 fails=0
+
+[CAUGHT] alembic_version -> fake old revision
+         expect 'V1.alembic_current_eq_head' -> fails=['V1.alembic_current_eq_head']
+[CAUGHT] documents.chunk_count lies about the real row count
+         expect 'V2.BLLD.chunk_count_cross' -> fails=['V2.BLLD.chunk_count_cross']
+[CAUGHT] delete 1 BLLD chunk
+         expect 'V3.BLLD.count' -> fails=['V2.BLLD.article_count_cross', 'V2.BLLD.chunk_count_cross', 
+'V3.BLLD.article_coverage', 'V3.BLLD.count', 'V3.total', 'V6.count_chunks']
+[CAUGHT] tamper meta.has_chapeau on a SAMPLED chunk (BLLD:CX:M00:A139:C04)
+         expect 'V3-bis.special_columns' -> fails=['V3-bis.special_columns']
+[CAUGHT] clear is_quoted_external_text everywhere (expect exactly 20 True)
+         expect 'V3-bis.quoted_external_count' -> fails=['V3-bis.quoted_external_count']
+[CAUGHT] attach a dangling parent to a NULL-parent chunk (BLLD:CIII:M01:A013)
+         expect 'V3-ter.dangling_parent' -> fails=['V3-ter.dangling_parent']
+[CAUGHT] null out an existing dangling parent (BLLD:CIII:M01:A018:C01)
+         expect 'V3-ter.dangling_parent' -> fails=['V3-ter.dangling_parent']
+[CAUGHT] delete 1 chunk_references row
+         expect 'V4.BLLD.count' -> fails=['V4.BLLD.count', 'V4.total', 'V6.count_refs', 'V6.ref_fingerprint']
+[CAUGHT] point a ref at a non-existent internal article
+         expect 'V4.internal_article_exists' -> fails=['V4.internal_article_exists', 'V6.ref_fingerprint']
+[CAUGHT] break needs_review <-> needs_reason agreement
+         expect 'V4.needs_review_consistent' -> fails=['V4-ter.total_flagged', 'V4.needs_review_consistent', 
+'V6.ref_fingerprint']
+[CAUGHT] flag 1 ref as UNRESOLVED
+         expect 'V4-bis.unresolved' -> fails=['V4-bis.unresolved', 'V4-ter.total_flagged', 'V4-ter.unresolved', 
+'V6.ref_fingerprint']
+[CAUGHT] clear every BOUNDARY flag
+         expect 'V4-ter.boundary' -> fails=['V4-ter.boundary', 'V4-ter.total_flagged', 'V6.ref_fingerprint']
+[CAUGHT] give an EXTERNAL ref a non-null target_chunk_id
+         expect 'V5.1_ND283_A044C01_to_BHXH_D28' -> fails=['V5.1_ND283_A044C01_to_BHXH_D28', 'V6.ref_fingerprint']
+[CAUGHT] delete one inbound-to-D169 ref
+         expect 'V5.2_BLLD_D169_inbound_from_ND145' -> fails=['V4.ND145_2020.count', 'V4.total', 
+'V5.2_BLLD_D169_inbound_from_ND145', 'V6.count_refs', 'V6.ref_fingerprint']
+[CAUGHT] delete A066's LIST_EXPANSION ref to article 14
+         expect 'V5.5_ND283_A066_LIST_self_D7_D14' -> fails=['V4.ND283_2026.count', 'V4.total', 
+'V5.5_ND283_A066_LIST_self_D7_D14', 'V6.count_refs', 'V6.ref_fingerprint']
+[CAUGHT] corrupt a frozen source JSON (damage predating this run)
+         expect 'V7.matches_pinned_manifest' -> fails=['V7.matches_pinned_manifest']
+
+after restore: exit=0 fails=0
+source file restored byte-exact: True
+
+MUTATION TEST: ALL CAUGHT

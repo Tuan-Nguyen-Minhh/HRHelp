@@ -1,3 +1,12 @@
+from src.models.legal import Chunk, ChunkReference, Document
+from src.models.schemas import ChatRequest, ChatResponse
+
+__all__ = [
+    "ChatRequest",
+    "ChatResponse",
+    "Document",
+    "Chunk",
+    "ChunkReference",
 from src.models.agent_retrievals import AgentRetrieval
 from src.models.agent_runs import AgentRun
 from src.models.case_access import CaseAccess

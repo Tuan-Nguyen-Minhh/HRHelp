@@ -46,7 +46,19 @@ class Settings(BaseSettings):
 
     # pgvector lives in the same Postgres database.
     VECTOR_COLLECTION: str = "regulations"
-    EMBEDDING_MODEL: str = "text-embedding-3-small"
+    # -------------------------
+    # Embeddings (DECISION 2026-09-26, P-029):
+    # Model chot: "mistral-embed" (text embeddings, 1024-dim, input toi da 8k
+    # tokens theo doc Mistral; quota team: 20M TPM / 1 RPS).
+    # Loai bo: "codestral-embed" (chi cho code retrieval, quota 50K TPM,
+    # khong fit van ban luat tieng Viet) va OpenAI text-embedding-3-small
+    # (template cu). Chunking tuong ung: tokenizer Mistral (mistral-common,
+    # offline) + nguong 1000 tokens (~300 tu, tuong duong BGE-M3@500).
+    # -------------------------
+    MISTRAL_API_KEY: str = ""
+    EMBEDDING_MODEL: str = "mistral-embed"
+    EMBEDDING_DIMENSIONS: int = 1024
+    EMBEDDING_MAX_TOKENS: int = 1000
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:

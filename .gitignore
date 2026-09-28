@@ -28,14 +28,30 @@ env/
 .DS_Store
 Thumbs.db
 
-# Data (never commit large data)
-data/
+# Data (never commit large raw data; cleaned output is tracked)
+data/*
+!data/cleaned_markdown/
+!data/cleaned_markdown/**
+# B4/B5 deliverables must be tracked: verify_db.py hard-fails without the
+# pinned hash manifest, and the plan requires changelog/logs/sign-off to be part
+# of the handover. The bulky frozen step3 JSON inputs stay ignored.
+!data/chunk/
+data/chunk/*
+!data/chunk/source_manifest.json
+!data/chunk/CHANGELOG_B4B5.md
+!data/chunk/mutation_test_report.md
+!data/chunk/verify_db_manual.md
 *.db
 *.sqlite3
 
 # Logs
 logs/
 *.log
+# ...except the B4/B5 verification logs, which are part of the handover
+# evidence. These must stay BELOW `*.log` because git honours the last matching
+# pattern.
+!data/chunk/verify_db_*.log
+!data/chunk/mutation_test_*.log
 
 # Test coverage
 htmlcov/
