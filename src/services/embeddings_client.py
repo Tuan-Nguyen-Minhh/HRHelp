@@ -51,7 +51,16 @@ NO_SDK_RETRIES = RetryConfig(
 API_CALL_LOG = PROJECT_ROOT / "data" / "chunk" / "embed_api_calls.jsonl"
 
 #: Team quota, hard floor between two consecutive requests (plan 1: 1 RPS).
+#: V7 checks this floor and nothing else.
 MIN_REQUEST_INTERVAL_S = 1.0
+
+#: Safety margin paced on top of the floor. The delivered audit log passes V7
+#: with a 46 microsecond margin, and Windows sleep granularity (~15 ms) already
+#: produced one 0.987 s violation on the discarded first run. Pacing at floor +
+#: margin means normal jitter can never flip V7; V7 keeps checking the 1.0 s
+#: floor, not this constant.
+PACING_MARGIN_S = 0.05
+EFFECTIVE_INTERVAL_S = MIN_REQUEST_INTERVAL_S + PACING_MARGIN_S
 
 #: `purpose` values written to the log. V7's quota check counts only
 #: ``corpus``: calls that populate or repopulate stored vectors.
@@ -133,7 +142,7 @@ class RateLimiter:
     to be real, not approximately real.
     """
 
-    min_interval: float = MIN_REQUEST_INTERVAL_S
+    min_interval: float = EFFECTIVE_INTERVAL_S
     clock: Callable[[], float] = time.monotonic
     sleep: Callable[[float], None] = time.sleep
     _last_monotonic: float | None = field(default=None, init=False, repr=False)
@@ -234,7 +243,7 @@ class EmbeddingClient:
         last = self._last_logged_epoch
         if last is not None:
             while True:
-                gap = MIN_REQUEST_INTERVAL_S - (started - last)
+                gap = EFFECTIVE_INTERVAL_S - (started - last)
                 if gap <= 0:
                     break
                 time.sleep(gap)

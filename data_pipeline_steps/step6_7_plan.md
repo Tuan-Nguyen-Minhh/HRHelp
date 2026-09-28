@@ -141,6 +141,12 @@ từ B6.1. Ghi rõ phạm vi vào changelog. Sau B6/B7 phải chạy lại `veri
 - [V7] Quota + resume: tổng tokens đã gọi ≤ **1M** (trần 0,7M + dự phòng);
   khoảng cách giữa 2 request liên tiếp **≥ 1,0s** (đọc từ log timestamp);
   kill tiến trình giữa chừng rồi chạy lại thì đủ 1289 dòng không lỗi, không trùng.
+  (Ghi chú 2026-09-29, sau audit: "tổng tokens đã gọi" được đo trên run dựng
+  corpus — run `purpose=corpus` tốn nhiều token nhất, tức lần backfill đầu.
+  Các lần embed lại khi kiểm thử (V3 một dòng, V7 crash-test, V8 vá cascade)
+  báo cáo riêng trong log, không gộp vào trần. Run vi phạm 1 RPS đã bị loại,
+  lưu riêng ở `embed_api_calls_superseded_run1.jsonl`, không tính. Chi tiết ở
+  `data/chunk/CHANGELOG_B6B7.md` §7. Không đổi số, chỉ ghi rõ cách đo.)
 - [V8] Source untouched + không hồi quy: sha256 6 file JSON khớp
   `source_manifest.json`; `verify_db.py` (B4/B5) vẫn **70/70**; `mutation_test.py`
   vẫn **18/18**.

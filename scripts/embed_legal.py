@@ -45,6 +45,7 @@ import datetime as dt
 import hashlib
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -94,6 +95,80 @@ BATCH_SIZE = 32
 #: The 3 step3 chunks over the 1000-token threshold. Embedded anyway (the model
 #: takes 8k); the flag is carried through to the audit log.
 OVER_LIMIT_FLAG = "POINT_BODY_OVER_LIMIT"
+
+#: Cross-process guard. Two concurrent runs read the same snapshot of stored
+#: hashes and embed the same pending batches: the DB stays correct (PK upsert,
+#: last-wins) but the quota is spent twice. The plan assumes serial runs
+#: without saying so — this lock makes it explicit.
+#:
+#: The lock is an OS file lock held for the whole run, deliberately NOT a
+#: marker file: if the process is killed (including V7's kill test) the OS
+#: releases it, so the resume run is never blocked by a stale lock.
+LOCK_PATH = CHUNK_DIR / ".embed_legal.lock"
+
+
+class _ProcessLock:
+    """Exclusive, non-blocking OS file lock, held from acquire to release."""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self.fh = None
+
+    def acquire(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.fh = open(self.path, "a+b")
+        self.fh.write(b"\x00")
+        self.fh.flush()
+        # Lock byte 0 explicitly: without this seek the lock would land at the
+        # current position (offset 1, after the placeholder) while release()
+        # unlocks at offset 0 — and unlocking a region that was never locked
+        # raises PermissionError on Windows.
+        self.fh.seek(0)
+        try:
+            if os.name == "nt":
+                import msvcrt
+
+                msvcrt.locking(self.fh.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            self.fh.close()
+            self.fh = None
+            raise SystemExit(
+                f"another embed_legal process is running (lock {self.path}) — "
+                "refusing to run in parallel: two processes would embed the "
+                "same batches and burn quota twice."
+            )
+        self.fh.seek(0)
+        self.fh.truncate()
+        self.fh.write(f"{os.getpid()}\n".encode())
+        self.fh.flush()
+
+    def release(self) -> None:
+        if self.fh is None:
+            return
+        try:
+            if os.name == "nt":
+                import msvcrt
+
+                self.fh.seek(0)
+                msvcrt.locking(self.fh.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(self.fh.fileno(), fcntl.LOCK_UN)
+        finally:
+            self.fh.close()
+            self.fh = None
+            try:
+                self.path.unlink()
+            except FileNotFoundError:
+                pass
+
+
+_LOCK = _ProcessLock(LOCK_PATH)
 
 _engine = sa.create_engine(settings.SYNC_DATABASE_URI)
 SessionLocal = sessionmaker(bind=_engine, autoflush=False, expire_on_commit=False)
@@ -218,6 +293,7 @@ def main() -> int:
         help="report what would be embedded without calling the API",
     )
     args = parser.parse_args()
+    _LOCK.acquire()
 
     logger.info("Starting embed_legal.py")
     logger.info(f"Database: {settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}")
@@ -352,6 +428,7 @@ def main() -> int:
         raise
     finally:
         db.close()
+        _LOCK.release()
 
 
 if __name__ == "__main__":

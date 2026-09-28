@@ -6,7 +6,7 @@ tài liệu này là chữ ký của người đọc tay từng kết quả. **C
 nghiệm.**_
 
 - Ngày review: **2026-09-28**
-- Bộ đọc: `eval/legal_golden.json` v1 · `eval/results/retrieval_eval_20260928_104817.*`
+- Bộ đọc: `eval/legal_golden.json` v1 · `eval/results/retrieval_eval_20260928_110339.*` (bản `104817` giữ làm lịch sử; Q02 đã sửa text câu hỏi nên bảng dưới đọc theo bản mới)
 - Mô hình: `mistral-embed` 1024-dim · 1289 chunk · `hnsw ef_search=100` · RRF k=60
 - Người đọc: _(chưa ký)_
 
@@ -18,7 +18,7 @@ câu hỏi; `~` = có đúng **Điều** nhưng không đúng **chunk**; `✘` =
 | # | Query | top-5 hybrid đọc tay | Kết luận |
 |---|---|---|---|
 | Q01 | Tuổi nghỉ hưu điều kiện bình thường | A169:C02, A219:C04:P-a-2, A169:C01, A219:C04:P-a-3, A219:C04:P-b-2 | ✔ rank 1 đúng ngay. 3 điểm Điều 219 trong top-5 là dẫn chiếu về chính Điều 169 — nhiễu hợp lý, không sai |
-| Q02 | NSDLĐ không đăng ký NLĐ vào BHXH | A044:C02, A043:C03, A048:C10, **A044:C01**, A043:C02:P-a | ✔ rank 4. Xem mục 2 — **đáp án của tôi ban đầu sai** |
+| Q02 | NSDLĐ không đăng ký NLĐ vào BHXH | A043:C02:P-a, A043:C02:P-h, **A044:C01**, A043:C02:P-b, A043:C02:P-đ | ✔ rank 3 (bản 110339, câu hỏi đã sửa — xem mục 2; bản 104817 cũ rank 4 với top-5 khác hẳn) |
 | Q03 | Nội quy lao động, ai ban hành | A069:C04 (NĐ145), A069:C01 (NĐ145), **A118**, A069:C03, A069:C02:P-g | ✔ rank 3. 4/5 là Điều 69 NĐ145 về ban hành nội quy — cùng chủ đề, không phải câu trả lời |
 | Q04 | Không áp dụng nhiều hình thức kỷ luật | **A122:C02**, A122:C03, NĐ283 A025:C03:P-d, A122:C05, NĐ283 A025:C03:P-e | ✔ rank 1. Điểm d NĐ283 A025 nói đúng nguyên tắc nhưng là quy định khác |
 | Q05 | Làm thêm giờ tối đa bao nhiêu giờ/năm | A107:C02, NĐ145 Đ62, **A107:C03**, Đ114, NĐ283 A024:C01 | ✔ rank 3. Xem mục 2 — **đã sửa từ ngữ câu hỏi** |

@@ -318,6 +318,28 @@ def main() -> int:
     restored = SAMPLE_FILE.read_bytes() == _ORIGINAL_BYTES
     log.info(f"source file restored byte-exact: {restored}")
 
+    # Post-B6 check: mutation V3.BLLD.count DELETEs a legal_chunks row and the
+    # embeddings FK is ON DELETE CASCADE, while reseed() only restores
+    # legal_chunks / references — the missing vector does NOT come back by
+    # itself. Without this warning, running this script silently leaves V2 red
+    # until someone runs embed_legal.py.
+    has_emb = scalar(
+        "SELECT EXISTS (SELECT 1 FROM information_schema.tables "
+        "WHERE table_schema='public' AND table_name='legal_chunk_embeddings')"
+    )
+    if has_emb:
+        n_chunks = scalar("SELECT count(*) FROM legal_chunks")
+        n_emb = scalar("SELECT count(*) FROM legal_chunk_embeddings")
+        log.info(f"legal_chunk_embeddings rows: {n_emb} for {n_chunks} chunks")
+        if n_emb != n_chunks:
+            log.warning(
+                f"embeddings table is short by {n_chunks - n_emb} row(s) "
+                "(cascade-deleted, reseed does not restore vectors) — run "
+                "python scripts/embed_legal.py before verify_embeddings.py V2"
+            )
+    else:
+        log.info("legal_chunk_embeddings absent (pre-B6 database) — nothing to check")
+
     ok = all_caught and code == 0 and restored
     log.info("")
     log.info(f"MUTATION TEST: {'ALL CAUGHT' if ok else 'SOME MISSED'}")
