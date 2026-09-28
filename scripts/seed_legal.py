@@ -1,8 +1,8 @@
-"""Seed B4 (documents + chunks) and B5 (chunk_references) from data/chunk/*.json.
+"""Seed B4 (legal_documents + legal_chunks) and B5 (legal_chunk_references) from data/chunk/*.json.
 
-B4: Upsert documents, bulk insert chunks, compute chunk_count/article_count.
+B4: Upsert legal_documents, bulk insert legal_chunks, compute chunk_count/article_count.
     One transaction per chunk-file (plan 2.3).
-B5: DELETE all chunk_references then bulk insert resolved refs, ONE transaction
+B5: DELETE all legal_chunk_references then bulk insert resolved refs, ONE transaction
     (plan 3.6 — crash mid-way rolls back, no half-seeded state).
 
 Idempotent: safe to run any number of times.
@@ -12,7 +12,7 @@ Resolution policy (plan 3.5), deterministic and level-correct:
 A ref whose requested granularity has no matching chunk falls back to the
 article's *representative* chunk (ARTICLE chunk if present, else the lowest
 clause_number chunk). The fallback is deterministic and recorded in the seed
-log; `chunk_references` has no granularity column by plan design, so the
+log; `legal_chunk_references` has no granularity column by plan design, so the
 logical reference always stays readable via target_doc/article/clause/point.
 """
 from __future__ import annotations
@@ -41,9 +41,9 @@ from src.models.legal import (  # noqa: E402
     LEVEL_POINT,
     NEEDS_REASON_BOUNDARY,
     NEEDS_REASON_UNRESOLVED,
-    Chunk,
-    ChunkReference,
-    Document,
+    LegalChunk,
+    LegalChunkReference,
+    LegalDocument,
 )
 
 logging.basicConfig(
@@ -171,20 +171,20 @@ class ChunkIndex:
         lookup[(doc, article)]        = cid   # for every chunk
         lookup[(doc, article, clause)] = cid  # for every chunk with a clause
 
-    so trailing CLAUSE/POINT chunks silently overwrote the ARTICLE entry. That
+    so trailing CLAUSE/POINT legal_chunks silently overwrote the ARTICLE entry. That
     left 144/403 ARTICLE keys and 66/691 CLAUSE keys pointing at the wrong
     level, and put 105/565 stored refs (18.6%) on an arbitrary sibling clause or
     point. Each level now has its own namespace and the article representative
     is picked explicitly instead of by overwrite order.
     """
 
-    def __init__(self, chunks: list[dict[str, Any]]) -> None:
+    def __init__(self, legal_chunks: list[dict[str, Any]]) -> None:
         self.by_clause: dict[tuple, str] = {}
         self.by_point: dict[tuple, str] = {}
         # (doc, article) -> (level_rank, clause_number, point, chunk_id)
         article_candidates: dict[tuple, list[tuple]] = {}
 
-        for c in chunks:
+        for c in legal_chunks:
             m = c["metadata"]
             doc = m["document_id"]
             art = m["article_number"]
@@ -259,7 +259,7 @@ def _chunk_row(c: dict[str, Any]) -> dict[str, Any]:
 
 def seed_documents(db: Session) -> None:
     for d in DOCUMENTS:
-        stmt = pg_insert(Document).values(
+        stmt = pg_insert(LegalDocument).values(
             document_id=d["document_id"],
             doc_code=d["doc_code"],
             document_type=d["document_type"],
@@ -292,8 +292,8 @@ def seed_documents(db: Session) -> None:
         # earlier seed cannot survive. With JSONB(none_as_null=True) the empty
         # case lands as a real SQL NULL rather than JSON 'null'.
         db.execute(
-            sa.update(Document)
-            .where(Document.document_id == d["document_id"])
+            sa.update(LegalDocument)
+            .where(LegalDocument.document_id == d["document_id"])
             .values(amended_by=footnotes or None)
         )
         if footnotes:
@@ -306,11 +306,11 @@ def seed_documents(db: Session) -> None:
 
 def seed_chunk_file(db: Session, fname: str) -> int:
     """Insert one chunk file inside the caller's transaction."""
-    chunks = load_json(CHUNK_DIR / fname)
-    rows = [_chunk_row(c) for c in chunks]
+    legal_chunks = load_json(CHUNK_DIR / fname)
+    rows = [_chunk_row(c) for c in legal_chunks]
     for i in range(0, len(rows), BATCH_SIZE):
         batch = rows[i : i + BATCH_SIZE]
-        stmt = pg_insert(Chunk).values(batch)
+        stmt = pg_insert(LegalChunk).values(batch)
         stmt = stmt.on_conflict_do_update(
             index_elements=["chunk_id"],
             set_={
@@ -335,18 +335,18 @@ def recompute_counts(db: Session) -> None:
     for d in DOCUMENTS:
         doc_id = d["document_id"]
         chunk_count = db.scalar(
-            sa.select(sa.func.count()).select_from(Chunk).where(
-                Chunk.document_id == doc_id
+            sa.select(sa.func.count()).select_from(LegalChunk).where(
+                LegalChunk.document_id == doc_id
             )
         )
         article_count = db.scalar(
-            sa.select(sa.func.count(sa.distinct(Chunk.article_number)))
-            .select_from(Chunk)
-            .where(Chunk.document_id == doc_id)
+            sa.select(sa.func.count(sa.distinct(LegalChunk.article_number)))
+            .select_from(LegalChunk)
+            .where(LegalChunk.document_id == doc_id)
         )
         db.execute(
-            sa.update(Document)
-            .where(Document.document_id == doc_id)
+            sa.update(LegalDocument)
+            .where(LegalDocument.document_id == doc_id)
             .values(
                 chunk_count=chunk_count,
                 article_count=article_count,
@@ -360,11 +360,11 @@ def recompute_counts(db: Session) -> None:
 
 
 def seed_b4(db: Session) -> None:
-    """Documents + chunks. One transaction per chunk-file, then a final one."""
-    logger.info("=== B4: documents + chunks ===")
+    """Documents + legal_chunks. One transaction per chunk-file, then a final one."""
+    logger.info("=== B4: legal_documents + legal_chunks ===")
     seed_documents(db)
     db.commit()
-    logger.info(f"  upserted {len(DOCUMENTS)} documents")
+    logger.info(f"  upserted {len(DOCUMENTS)} legal_documents")
 
     total = 0
     for fname in CHUNK_FILES:
@@ -372,8 +372,8 @@ def seed_b4(db: Session) -> None:
         with db.begin():
             n = seed_chunk_file(db, fname)
         total += n
-        logger.info(f"  {fname}: {n} chunks committed")
-    logger.info(f"  total chunks: {total}")
+        logger.info(f"  {fname}: {n} legal_chunks committed")
+    logger.info(f"  total legal_chunks: {total}")
 
     recompute_counts(db)
     db.commit()
@@ -381,12 +381,12 @@ def seed_b4(db: Session) -> None:
 
 
 # ---------------------------------------------------------------------------
-# B5: Chunk References
+# B5: LegalChunk References
 # ---------------------------------------------------------------------------
 
 def seed_b5(db: Session) -> None:
     """DELETE then bulk insert, in ONE transaction (plan 3.6)."""
-    logger.info("=== B5: chunk_references ===")
+    logger.info("=== B5: legal_chunk_references ===")
 
     all_chunks: list[dict[str, Any]] = []
     for fname in CHUNK_FILES:
@@ -396,7 +396,7 @@ def seed_b5(db: Session) -> None:
     logger.info(f"  chunk index: {len(index)} entries")
 
     with db.begin():
-        db.execute(sa.delete(ChunkReference))
+        db.execute(sa.delete(LegalChunkReference))
 
         rows: list[dict[str, Any]] = []
         how_counter: Counter[str] = Counter()
@@ -454,9 +454,9 @@ def seed_b5(db: Session) -> None:
 
         for i in range(0, len(rows), BATCH_SIZE):
             batch = rows[i : i + BATCH_SIZE]
-            stmt = pg_insert(ChunkReference).values(batch)
+            stmt = pg_insert(LegalChunkReference).values(batch)
             stmt = stmt.on_conflict_do_update(
-                constraint="uq_chunk_references",
+                constraint="uq_legal_chunk_references",
                 set_={
                     "target_chunk_id": stmt.excluded.target_chunk_id,
                     "confidence": stmt.excluded.confidence,

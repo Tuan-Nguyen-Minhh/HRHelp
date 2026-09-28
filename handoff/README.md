@@ -6,7 +6,7 @@ _Ngày: 2026-09-27. Nguồn: PostgreSQL 16.15 + pgvector 0.8.6, container `p-029
 
 | File | Kích thước | Dùng để |
 |---|---|---|
-| `b4b5_build_phase_p029.dump` | 258 KB | **Dùng để import** — định dạng custom của `pg_dump`, nén |
+| `b4b5_build_phase_p029.dump` | 290 KB | **Dùng để import** — định dạng custom của `pg_dump`, nén |
 | `b4b5_build_phase_p029.dump.sha256` | — | Kiểm tra file còn nguyên (toàn bộ `handoff/` đã commit vào git) |
 | `b4b5_build_phase_p029.sql` | 2,4 MB | SQL thuần, để đọc/diff/review, không dùng để import |
 | `source_manifest.json` | — | sha256 của 6 file JSON nguồn mà B4/B5 đọc vào |
@@ -23,7 +23,7 @@ docker compose up -d db
 # 2. Kiểm tra file dump còn nguyên
 #    Windows:  certutil -hashfile b4b5_build_phase_p029.dump SHA256
 #    Linux/mac:  shasum -a 256 b4b5_build_phase_p029.dump
-#    So với:     6c2423e78e4636f62d1986d2ad7ebda9574ec832261f0198a83a6fd20d247cac
+#    So với:     ed6d644a500cf39101c894a2dcdec3711383cfba103411be2f64525f93723426
 #    Git đã bảo toàn file nên bước này là tùy chọn; hữu ích khi file bị tải
 #    lại qua trung gian hoặc khi muốn chắc chắn bản dump còn nguyên.
 
@@ -50,9 +50,9 @@ docker exec p-029-db-1 psql -U postgres -d build_phase_p029 -f /tmp/b4b5.sql
 
 | Bảng | Số dòng | Ý nghĩa |
 |---|---|---|
-| `documents` | 3 | 3 văn bản luật + hiệu lực + footnote sửa đổi |
-| `chunks` | 1289 | Nội dung luật đã chia nhỏ (Điều / khoản / điểm) |
-| `chunk_references` | 565 | Đồ thị dẫn chiếu nối 3 văn bản |
+| `legal_documents` | 3 | 3 văn bản luật + hiệu lực + footnote sửa đổi |
+| `legal_chunks` | 1289 | Nội dung luật đã chia nhỏ (Điều / khoản / điểm) |
+| `legal_chunk_references` | 565 | Đồ thị dẫn chiếu nối 3 văn bản |
 | `alembic_version` | 1 | Phiên bản migration đã áp dụng |
 
 Chi tiết hơn: `data/chunk/CHANGELOG_B4B5.md`.
@@ -94,15 +94,15 @@ Database tạm đã được xoá sau khi so sánh; container chỉ còn `postgr
 
 ## 6. Lưu ý khi dùng
 
-- **`parent_chunk_id` trong `chunks` không dùng để join.** 1030/1289 giá trị là
+- **`parent_chunk_id` trong `legal_chunks` không dùng để join.** 1030/1289 giá trị là
   tham chiếu treo (có trước từ step3, giữ nguyên theo quyết định thiết kế —
   không có FK constraint). Muốn cây Điều thì dùng `article_number` /
-  `clause_number` / `point_letter`, hoặc đi theo `chunk_references`.
+  `clause_number` / `point_letter`, hoặc đi theo `legal_chunk_references`.
 - **`target_chunk_id` NULL không phải dữ liệu hỏng** — đó là dẫn chiếu tới luật
   ngoài bộ 3 văn bản (Luật BHXH, Luật Công đoàn, số hiệu `124/2025/QH15`…).
   60/565 dòng ở trạng thái này.
 - **`amended_by` NULL với 2 nghị định** là SQL NULL thật (không phải JSON `null`).
-- **Bảng `chunks` nặng 34 MB** dù file dump chỉ 258 KB (nén tốt vì văn bản luật
+- **Bảng `legal_chunks` nặng 34 MB** dù file dump chỉ 290 KB (nén tốt vì văn bản luật
   lặp nhiều). Đừng ngạc nhiên.
-- `meta` trong `chunks` và `amended_by` trong `documents` là JSONB; cần
+- `meta` trong `legal_chunks` và `amended_by` trong `legal_documents` là JSONB; cần
   `psql` ≥ 9.6 hoặc client có hỗ trợ JSONB để hiển thị cho đẹp.

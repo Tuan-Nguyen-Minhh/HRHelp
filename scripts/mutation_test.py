@@ -98,17 +98,17 @@ def load_json(path: Path):
         return json.load(fh)
 
 
-# --- pick chunks that make each mutation meaningful ------------------------
+# --- pick legal_chunks that make each mutation meaningful ------------------------
 SAMPLE = sampled_ids()
 SAMPLED = SAMPLE[0]
 # every non-null parent in this dataset dangles, so to move the V3-ter count we
 # must attach a dangling parent to a chunk that currently has NULL
 NULL_PARENT = one(
-    "SELECT chunk_id FROM chunks WHERE parent_chunk_id IS NULL "
+    "SELECT chunk_id FROM legal_chunks WHERE parent_chunk_id IS NULL "
     "AND document_id='18/VBHN-VPQH' ORDER BY chunk_id LIMIT 1"
 )
 DANGLING_PARENT = one(
-    "SELECT chunk_id FROM chunks WHERE parent_chunk_id IS NOT NULL "
+    "SELECT chunk_id FROM legal_chunks WHERE parent_chunk_id IS NOT NULL "
     "AND document_id='18/VBHN-VPQH' ORDER BY chunk_id LIMIT 1"
 )
 
@@ -121,9 +121,9 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
     ),
     (
         "V2.BLLD.chunk_count_cross",
-        "documents.chunk_count lies about the real row count",
+        "legal_documents.chunk_count lies about the real row count",
         lambda: sql(
-            "UPDATE documents SET chunk_count=999 WHERE document_id='18/VBHN-VPQH'"
+            "UPDATE legal_documents SET chunk_count=999 WHERE document_id='18/VBHN-VPQH'"
         ),
         None,
     ),
@@ -131,7 +131,7 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
         "V2.amended_by_is_object_or_null",
         "replace SQL NULL amended_by with a JSON 'null' (JSONB none_as_null trap)",
         lambda: sql(
-            "UPDATE documents SET amended_by='null'::jsonb "
+            "UPDATE legal_documents SET amended_by='null'::jsonb "
             "WHERE document_id='145/2020/NĐ-CP'"
         ),
         None,
@@ -140,7 +140,7 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
         "V2.ND283_2026.amended_by_sql_null",
         "store an empty object where amended_by should be SQL NULL",
         lambda: sql(
-            "UPDATE documents SET amended_by='{}'::jsonb "
+            "UPDATE legal_documents SET amended_by='{}'::jsonb "
             "WHERE document_id='283/2026/NĐ-CP'"
         ),
         None,
@@ -148,14 +148,14 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
     (
         "V3.BLLD.count",
         "delete 1 BLLD chunk",
-        lambda: sql("DELETE FROM chunks WHERE chunk_id='BLLD:CI:M00:A001'"),
+        lambda: sql("DELETE FROM legal_chunks WHERE chunk_id='BLLD:CI:M00:A001'"),
         None,
     ),
     (
         "V3-bis.special_columns",
         f"tamper meta.has_chapeau on a SAMPLED chunk ({SAMPLED})",
         lambda: sql(
-            "UPDATE chunks SET meta=jsonb_set(meta,'{has_chapeau}','true') "
+            "UPDATE legal_chunks SET meta=jsonb_set(meta,'{has_chapeau}','true') "
             f"WHERE chunk_id='{SAMPLED}'"
         ),
         None,
@@ -164,7 +164,7 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
         "V3-bis.quoted_external_count",
         "clear is_quoted_external_text everywhere (expect exactly 20 True)",
         lambda: sql(
-            "UPDATE chunks SET meta=jsonb_set(meta,'{is_quoted_external_text}','false')"
+            "UPDATE legal_chunks SET meta=jsonb_set(meta,'{is_quoted_external_text}','false')"
         ),
         None,
     ),
@@ -172,7 +172,7 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
         "V3-ter.dangling_parent",
         f"attach a dangling parent to a NULL-parent chunk ({NULL_PARENT})",
         lambda: sql(
-            f"UPDATE chunks SET parent_chunk_id='NOPE:X' WHERE chunk_id='{NULL_PARENT}'"
+            f"UPDATE legal_chunks SET parent_chunk_id='NOPE:X' WHERE chunk_id='{NULL_PARENT}'"
         ),
         None,
     ),
@@ -180,16 +180,16 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
         "V3-ter.dangling_parent",
         f"null out an existing dangling parent ({DANGLING_PARENT})",
         lambda: sql(
-            f"UPDATE chunks SET parent_chunk_id=NULL WHERE chunk_id='{DANGLING_PARENT}'"
+            f"UPDATE legal_chunks SET parent_chunk_id=NULL WHERE chunk_id='{DANGLING_PARENT}'"
         ),
         None,
     ),
     (
         "V4.BLLD.count",
-        "delete 1 chunk_references row",
+        "delete 1 legal_chunk_references row",
         lambda: sql(
-            "DELETE FROM chunk_references "
-            "WHERE ref_id=(SELECT min(ref_id) FROM chunk_references)"
+            "DELETE FROM legal_chunk_references "
+            "WHERE ref_id=(SELECT min(ref_id) FROM legal_chunk_references)"
         ),
         None,
     ),
@@ -197,9 +197,9 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
         "V4.internal_article_exists",
         "point a ref at a non-existent internal article",
         lambda: sql(
-            "UPDATE chunk_references SET target_doc='18/VBHN-VPQH', article=9999, "
+            "UPDATE legal_chunk_references SET target_doc='18/VBHN-VPQH', article=9999, "
             "target_chunk_id=NULL "
-            "WHERE ref_id=(SELECT min(ref_id) FROM chunk_references)"
+            "WHERE ref_id=(SELECT min(ref_id) FROM legal_chunk_references)"
         ),
         None,
     ),
@@ -207,7 +207,7 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
         "V4.needs_review_consistent",
         "break needs_review <-> needs_reason agreement",
         lambda: sql(
-            "UPDATE chunk_references SET needs_review=false WHERE needs_reason='BOUNDARY'"
+            "UPDATE legal_chunk_references SET needs_review=false WHERE needs_reason='BOUNDARY'"
         ),
         None,
     ),
@@ -215,8 +215,8 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
         "V4-bis.unresolved",
         "flag 1 ref as UNRESOLVED",
         lambda: sql(
-            "UPDATE chunk_references SET needs_reason='UNRESOLVED', needs_review=true "
-            "WHERE ref_id=(SELECT min(ref_id) FROM chunk_references)"
+            "UPDATE legal_chunk_references SET needs_reason='UNRESOLVED', needs_review=true "
+            "WHERE ref_id=(SELECT min(ref_id) FROM legal_chunk_references)"
         ),
         None,
     ),
@@ -224,7 +224,7 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
         "V4-ter.boundary",
         "clear every BOUNDARY flag",
         lambda: sql(
-            "UPDATE chunk_references SET needs_reason=NULL, needs_review=false "
+            "UPDATE legal_chunk_references SET needs_reason=NULL, needs_review=false "
             "WHERE needs_reason='BOUNDARY'"
         ),
         None,
@@ -233,7 +233,7 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
         "V5.1_ND283_A044C01_to_BHXH_D28",
         "give an EXTERNAL ref a non-null target_chunk_id",
         lambda: sql(
-            "UPDATE chunk_references SET target_chunk_id='ND283_2026:CI:M00:A001' "
+            "UPDATE legal_chunk_references SET target_chunk_id='ND283_2026:CI:M00:A001' "
             "WHERE source_chunk_id='ND283_2026:CIII:M00:A044:C01'"
         ),
         None,
@@ -242,7 +242,7 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
         "V5.2_BLLD_D169_inbound_from_ND145",
         "delete one inbound-to-D169 ref",
         lambda: sql(
-            "DELETE FROM chunk_references "
+            "DELETE FROM legal_chunk_references "
             "WHERE source_chunk_id='ND145_2020:CX:M00:A089:C01:P-d1'"
         ),
         None,
@@ -251,7 +251,7 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
         "V5.5_ND283_A066_LIST_self_D7_D14",
         "delete A066's LIST_EXPANSION ref to article 14",
         lambda: sql(
-            "DELETE FROM chunk_references "
+            "DELETE FROM legal_chunk_references "
             "WHERE source_chunk_id='ND283_2026:CVI:M00:A066' "
             "AND rule='LIST_EXPANSION' AND article=14"
         ),
@@ -276,7 +276,7 @@ def main() -> int:
     log.info(f"null-parent chunk used by V3-ter       : {NULL_PARENT}")
     log.info(f"dangling-parent chunk used by V3-ter   : {DANGLING_PARENT}")
     log.info(f"resolvable parents in this dataset      : "
-             f"{scalar('SELECT count(*) FROM chunks c JOIN chunks p ON p.chunk_id=c.parent_chunk_id')}")
+             f"{scalar('SELECT count(*) FROM legal_chunks c JOIN legal_chunks p ON p.chunk_id=c.parent_chunk_id')}")
     log.info("")
 
     code, failed = run_verify()

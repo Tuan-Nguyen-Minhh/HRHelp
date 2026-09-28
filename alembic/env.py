@@ -8,7 +8,11 @@ import src.db.base_model  # noqa: F401  # register ORM models on Base.metadata
 from alembic import context
 from src.core.config import settings
 from src.db.base import Base
-from src.models.legal import Chunk, ChunkReference, Document  # noqa: F401
+from src.models.legal import (  # noqa: F401
+    LegalChunk,
+    LegalChunkReference,
+    LegalDocument,
+)
 
 _LANGCHAIN_TABLES = {"langchain_pg_collection", "langchain_pg_embedding"}
 _EXTENSIONS = (

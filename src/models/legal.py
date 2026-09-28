@@ -1,18 +1,23 @@
-"""SQLAlchemy models for legal documents, chunks, and cross-references.
+"""SQLAlchemy models for the legal corpus (B4: metadata, B5: graph).
 
-B4: documents + chunks (metadata & effectiveness)
-B5: chunk_references (cross-reference graph)
+Tables live under the ``legal_`` prefix on purpose: the generic application
+tables (``documents``, ``document_chunks``, ...) belong to the HR Help bounded
+context on ``main``. Both contexts share one Postgres database, so the legal
+corpus gets its own namespace instead of colliding on ``documents``.
+
+B4: legal_documents + legal_chunks (metadata & effectiveness)
+B5: legal_chunk_references (cross-reference graph)
 
 All tables have created_at/updated_at. parent_chunk_id is TEXT with NO FK
 constraint (dangling values exist by design — see V3-ter).
 
 Two column decisions that are easy to get wrong:
 
-* `parent_chunk_id` deliberately has no ForeignKey. Every non-null value in the
+* ``parent_chunk_id`` deliberately has no ForeignKey. Every non-null value in the
   current dataset dangles (0 resolve), which is inherited from step3's
   chunking design. Adding an FK would make the seed impossible to run.
-* The JSONB columns use `none_as_null=True`. SQLAlchemy's default serialises a
-  Python None as JSON `null`, which is *not* SQL NULL — so `amended_by IS NULL`
+* The JSONB columns use ``none_as_null=True``. SQLAlchemy's default serialises a
+  Python None as JSON ``null``, which is *not* SQL NULL — so ``amended_by IS NULL``
   would silently not match the two documents that have no footnotes.
 """
 from __future__ import annotations
@@ -38,7 +43,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from src.db.base import Base
 
 # ---------------------------------------------------------------------------
-# Document
+# LegalDocument
 # ---------------------------------------------------------------------------
 
 # Status values: ACTIVE | PARTIALLY_AMENDED | INACTIVE | SUPERSEDED
@@ -55,13 +60,13 @@ ALL_DOC_STATUSES = [
 ]
 
 
-class Document(Base):
-    __tablename__ = "documents"
+class LegalDocument(Base):
+    __tablename__ = "legal_documents"
 
     # PK: text, keeps "/" in ID (API must encode when putting into URL)
     document_id: Mapped[str] = mapped_column(String(64), primary_key=True)
 
-    # unique=True + index=True => exactly ONE unique index named ix_documents_doc_code
+    # unique=True + index=True => exactly ONE unique index
     # (no extra UNIQUE constraint -> no redundant duplicate index)
     doc_code: Mapped[str] = mapped_column(
         String(32), unique=True, nullable=False, index=True
@@ -96,13 +101,13 @@ class Document(Base):
     __table_args__ = (
         CheckConstraint(
             "status IN ('ACTIVE', 'PARTIALLY_AMENDED', 'INACTIVE', 'SUPERSEDED')",
-            name="ck_documents_status",
+            name="ck_legal_documents_status",
         ),
     )
 
 
 # ---------------------------------------------------------------------------
-# Chunk
+# LegalChunk
 # ---------------------------------------------------------------------------
 
 LEVEL_ARTICLE = "ARTICLE"
@@ -112,15 +117,15 @@ LEVEL_POINT = "POINT"
 ALL_CHUNK_LEVELS = [LEVEL_ARTICLE, LEVEL_CLAUSE, LEVEL_POINT]
 
 
-class Chunk(Base):
-    __tablename__ = "chunks"
+class LegalChunk(Base):
+    __tablename__ = "legal_chunks"
 
     chunk_id: Mapped[str] = mapped_column(String(128), primary_key=True)
 
-    # FK → documents (enforced)
+    # FK → legal_documents (enforced)
     document_id: Mapped[str] = mapped_column(
         String(64),
-        ForeignKey("documents.document_id", ondelete="CASCADE"),
+        ForeignKey("legal_documents.document_id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -159,13 +164,13 @@ class Chunk(Base):
     __table_args__ = (
         CheckConstraint(
             "chunk_level IN ('ARTICLE', 'CLAUSE', 'POINT')",
-            name="ck_chunks_chunk_level",
+            name="ck_legal_chunks_chunk_level",
         ),
     )
 
 
 # ---------------------------------------------------------------------------
-# ChunkReference
+# LegalChunkReference
 # ---------------------------------------------------------------------------
 
 # needs_reason values
@@ -175,23 +180,23 @@ NEEDS_REASON_UNRESOLVED = "UNRESOLVED"
 ALL_NEEDS_REASONS = [NEEDS_REASON_BOUNDARY, NEEDS_REASON_UNRESOLVED]
 
 
-class ChunkReference(Base):
-    __tablename__ = "chunk_references"
+class LegalChunkReference(Base):
+    __tablename__ = "legal_chunk_references"
 
     # Surrogate PK (target_chunk_id nullable for external refs)
     ref_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    # FK → chunks (enforced, source)
+    # FK → legal_chunks (enforced, source)
     source_chunk_id: Mapped[str] = mapped_column(
         String(128),
-        ForeignKey("chunks.chunk_id", ondelete="CASCADE"),
+        ForeignKey("legal_chunks.chunk_id", ondelete="CASCADE"),
         nullable=False,
     )
 
-    # FK → chunks (enforced, target; NULL = external law)
+    # FK → legal_chunks (enforced, target; NULL = external law)
     target_chunk_id: Mapped[str | None] = mapped_column(
         String(128),
-        ForeignKey("chunks.chunk_id", ondelete="SET NULL"),
+        ForeignKey("legal_chunks.chunk_id", ondelete="SET NULL"),
         nullable=True,
     )
 
@@ -219,11 +224,11 @@ class ChunkReference(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "confidence IN ('HIGH', 'LOW')", name="ck_chunk_references_confidence"
+            "confidence IN ('HIGH', 'LOW')", name="ck_legal_chunk_references_confidence"
         ),
         CheckConstraint(
             "needs_reason IN ('BOUNDARY', 'UNRESOLVED')",
-            name="ck_chunk_references_needs_reason",
+            name="ck_legal_chunk_references_needs_reason",
         ),
         # ONE UNIQUE constraint, NULLS NOT DISTINCT (PostgreSQL 15+)
         UniqueConstraint(
@@ -234,12 +239,12 @@ class ChunkReference(Base):
             "clause",
             "point",
             "rule",
-            name="uq_chunk_references",
+            name="uq_legal_chunk_references",
             postgresql_nulls_not_distinct=True,
         ),
         # Reverse index for graph traversal
         Index(
-            "ix_chunk_references_target_source",
+            "ix_legal_chunk_references_target_source",
             "target_chunk_id",
             "source_chunk_id",
             postgresql_nulls_not_distinct=True,
