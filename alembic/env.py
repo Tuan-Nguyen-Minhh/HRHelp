@@ -10,6 +10,7 @@ from src.core.config import settings
 from src.db.base import Base
 from src.models.legal import (  # noqa: F401
     LegalChunk,
+    LegalChunkEmbedding,
     LegalChunkReference,
     LegalDocument,
 )

@@ -70,9 +70,9 @@ def reseed() -> None:
     )
 
 
-def sql(query: str) -> None:
+def sql(query: str, params: dict | None = None) -> None:
     with _engine.begin() as conn:
-        conn.execute(sa.text(query))
+        conn.execute(sa.text(query), params or {})
 
 
 def scalar(query: str):
@@ -101,6 +101,13 @@ def load_json(path: Path):
 # --- pick legal_chunks that make each mutation meaningful ------------------------
 SAMPLE = sampled_ids()
 SAMPLED = SAMPLE[0]
+# Revision stamped in the database at startup. Captured, NOT hard-coded: this
+# used to restore the literal '0001_legal_schema', which was correct while
+# 0001 was the head but silently rewound alembic_version once B6 added
+# 0003_legal_embeddings — leaving verify_db.py's V1 permanently red and this
+# script unable to even reach its own baseline. Capture-and-restore survives
+# every future migration without editing this file.
+ALEMBIC_REVISION = one("SELECT version_num FROM alembic_version")
 # every non-null parent in this dataset dangles, so to move the V3-ter count we
 # must attach a dangling parent to a chunk that currently has NULL
 NULL_PARENT = one(
@@ -117,7 +124,9 @@ MUTATIONS: list[tuple[str, str, Callable[[], None], Callable[[], None] | None]] 
         "V1.alembic_current_eq_head",
         "alembic_version -> fake old revision",
         lambda: sql("UPDATE alembic_version SET version_num='0000_bogus'"),
-        lambda: sql("UPDATE alembic_version SET version_num='0001_legal_schema'"),
+        lambda: sql(
+            "UPDATE alembic_version SET version_num=:r", {"r": ALEMBIC_REVISION}
+        ),
     ),
     (
         "V2.BLLD.chunk_count_cross",
@@ -273,6 +282,7 @@ def main() -> int:
     _ORIGINAL_BYTES = SAMPLE_FILE.read_bytes()
 
     log.info(f"sampled chunk used by V3-bis mutation : {SAMPLED}")
+    log.info(f"alembic revision captured for restore     : {ALEMBIC_REVISION}")
     log.info(f"null-parent chunk used by V3-ter       : {NULL_PARENT}")
     log.info(f"dangling-parent chunk used by V3-ter   : {DANGLING_PARENT}")
     log.info(f"resolvable parents in this dataset      : "

@@ -10,6 +10,12 @@ langchain>=0.3.0
 langchain-openai>=0.3.0
 langchain-mistralai>=0.2.0
 langgraph>=0.2.0
+# B6 calls the Mistral embeddings endpoint directly (32-text batches, a 1 RPS
+# throttle and a per-request audit log), so the SDK is a direct dependency, not
+# just a transitive one. Pinned <2 on purpose: mistralai 2.10.1 ships a wheel
+# whose top-level mistralai/ has no __init__.py, so `from mistralai import
+# Mistral` fails with an empty namespace package.
+mistralai>=1.12,<2
 
 # Database
 sqlalchemy[asyncio]>=2.0.0

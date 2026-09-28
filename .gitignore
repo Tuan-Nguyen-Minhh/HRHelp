@@ -56,6 +56,19 @@ data/chunk/*
 !data/chunk/CHANGELOG_B4B5.md
 !data/chunk/mutation_test_report.md
 !data/chunk/verify_db_manual.md
+# B6/B7 deliverables: the embedding provenance log (verify_embeddings V3/V7
+# read it — it is the only evidence for token spend and 1 RPS spacing), the
+# changelog, the run logs and the manual sign-off.
+!data/chunk/CHANGELOG_B6B7.md
+!data/chunk/embed_api_calls.jsonl
+# The first full embedding run was superseded because its audit log proves a
+# 0.987 s gap between two requests (1.013 RPS, over the team budget). It is
+# kept, not deleted: the changelog cites it as the reason the run was redone.
+!data/chunk/embed_api_calls_superseded_run1.jsonl
+!data/chunk/verify_embeddings_manual.md
+# embed_progress.json is intentionally NOT un-ignored: it is transient resume
+# state, and the database (content_sha256) is the real resume authority.
+data/chunk/embed_progress.json
 *.db
 *.sqlite3
 
@@ -67,6 +80,8 @@ logs/
 # pattern.
 !data/chunk/verify_db_*.log
 !data/chunk/mutation_test_*.log
+!data/chunk/verify_embeddings_*.log
+!data/chunk/eval_retrieval_*.log
 
 # Test coverage
 htmlcov/

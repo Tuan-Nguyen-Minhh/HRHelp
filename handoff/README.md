@@ -103,6 +103,39 @@ Migration từ chối chạy nếu cột còn vector non-null thay vì cắt ng�
 
 Bảng legal (B6) sẽ có bảng embedding riêng, không tái dùng hai cột này.
 
+## 5-ter. B6 + B7 — embedding và hybrid search (2026-09-28)
+
+Plan `data_pipeline_steps/step6_7_plan.md` thêm bảng `legal_chunk_embeddings`
+(1289 vector `mistral-embed` 1024-dim) + HNSW + GIN trên `search_tsv`. **Dump
+`b4b5_*.dump` đã cũ** — nó không có bảng này, import vào rồi chạy `verify_db.py`
+thì xanh nhưng `verify_embeddings.py` đỏ ngay.
+
+| File | Dùng để |
+|---|---|
+| `b6b7_build_phase_p029.dump` | **dùng để import** (thay cho `b4b5_*.dump`) |
+| `b6b7_build_phase_p029.dump.sha256` | kiểm tra file còn nguyên |
+| `b6b7_build_phase_p029.sql` | **SQL thuần chỉ phần schema** (50 KB) để review DDL của `0003`; KHÔNG phải data dump thuần như `b4b5_*.sql` |
+
+Sau khi import bản `b6b7` thì `alembic_version` là `0003_legal_embeddings`.
+
+### Đã kiểm chứng thế nào (bản `b6b7`)
+
+Không chỉ tạo rồi đem đi. Đã `pg_restore` vào database tạm `p029_restore_b6b7`
+trên chính container này rồi so với database nguồn:
+
+| Hạng mục | Kết quả |
+|---|---|
+| `alembic_version` | `0003_legal_embeddings` — khớp |
+| Số dòng 4 bảng legal | 3 / 1289 / 565 / **1289** — khớp |
+| md5 1289 `chunk_id` | `27837afbdc8fa5ec3308cdfa98920211` — khớp |
+| **md5 toàn bộ 1289 vector** | `60e61f8afdb5c9ffa8071f7561563884` — khớp |
+| md5 `chunk_id` + `content_sha256` | `70c21de5179a728a101054db748c0c62` — khớp |
+| `search_tsv` NULL | 0 |
+| `vector_dims(embedding) <> 1024` | 0 |
+
+Database tạm đã bị xoá sau khi so sánh; container chỉ còn `postgres` và
+`build_phase_p029`.
+
 ## 6. Lưu ý khi dùng
 
 - **`parent_chunk_id` trong `legal_chunks` không dùng để join.** 1030/1289 giá trị là
@@ -115,5 +148,13 @@ Bảng legal (B6) sẽ có bảng embedding riêng, không tái dùng hai cột 
 - **`amended_by` NULL với 2 nghị định** là SQL NULL thật (không phải JSON `null`).
 - **Bảng `legal_chunks` nặng 34 MB** dù file dump chỉ 290 KB (nén tốt vì văn bản luật
   lặp nhiều). Đừng ngạc nhiên.
+- **`legal_chunk_embeddings` lặp lại `header_context` và `text`.** Bản sao có
+  chủ đích: `search_tsv` là GENERATED ALWAYS STORED nên không thể đọc cột của
+  bảng khác. FK `ON DELETE CASCADE` giữ hai bảng đồng bộ và
+  `verify_embeddings.py` V2 assert từng dòng lệch 0. Chi tiết ở
+  `data/chunk/CHANGELOG_B6B7.md` mục 1.1.
+- **Sửa `text` một chunk thì vector cũ thành stale**, nhưng `embed_legal.py` tự
+  nhận ra qua `content_sha256` và chỉ embed lại đúng dòng đó — không tốn quota cho
+  1288 dòng còn lại.
 - `meta` trong `legal_chunks` và `amended_by` trong `legal_documents` là JSONB; cần
   `psql` ≥ 9.6 hoặc client có hỗ trợ JSONB để hiển thị cho đẹp.

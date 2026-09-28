@@ -11,6 +11,7 @@ from src.models.document_chunks import DocumentChunk
 from src.models.documents import Document
 from src.models.legal import (
     LegalChunk,
+    LegalChunkEmbedding,
     LegalChunkReference,
     LegalDocument,
 )
@@ -40,6 +41,7 @@ __all__ = [
     "Document",
     "DocumentChunk",
     "LegalChunk",
+    "LegalChunkEmbedding",
     "LegalChunkReference",
     "LegalDocument",
     "Message",
