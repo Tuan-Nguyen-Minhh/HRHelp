@@ -27,7 +27,7 @@ và file nguồn khôi phục **byte-exact**.
 | # | Mutation | Check phải FAIL | Kết quả |
 |---|---|---|---|
 | 1 | `alembic_version` → revision giả | `V1.alembic_current_eq_head` | CAUGHT |
-| 2 | `documents.chunk_count` nói dối (999) | `V2.BLLD.chunk_count_cross` | CAUGHT |
+| 2 | `legal_documents.chunk_count` nói dối (999) | `V2.BLLD.chunk_count_cross` | CAUGHT |
 | 3 | `amended_by` thành JSON `null` thay vì SQL NULL | `V2.amended_by_is_object_or_null` | CAUGHT |
 | 4 | `amended_by` thành `{}` ở nơi phải là SQL NULL | `V2.ND283_2026.amended_by_sql_null` | CAUGHT |
 | 5 | xoá 1 chunk BLLD | `V3.BLLD.count` | CAUGHT |
@@ -35,7 +35,7 @@ và file nguồn khôi phục **byte-exact**.
 | 5 | xoá `is_quoted_external_text` toàn bộ | `V3-bis.quoted_external_count` | CAUGHT |
 | 6 | gắn parent treo cho chunk đang có parent NULL | `V3-ter.dangling_parent` | CAUGHT |
 | 7 | xoá parent của chunk đang có parent treo | `V3-ter.dangling_parent` | CAUGHT |
-| 8 | xoá 1 dòng `chunk_references` | `V4.BLLD.count` | CAUGHT |
+| 8 | xoá 1 dòng `legal_chunk_references` | `V4.BLLD.count` | CAUGHT |
 | 9 | trỏ ref tới Điều không tồn tại | `V4.internal_article_exists` | CAUGHT |
 | 10 | phá vỡ `needs_review` ↔ `needs_reason` | `V4.needs_review_consistent` | CAUGHT |
 | 11 | gắn cờ UNRESOLVED cho 1 ref | `V4-bis.unresolved` | CAUGHT |
@@ -91,7 +91,7 @@ chunk với seed cố định, in đủ 30 ID để tái lập — không soi 12
 
 Mutation thêm `parent_chunk_id='NOPE:...'` cho `BLLD:CI:M00:A003:C01`, nhưng chunk đó
 vốn đã có parent là `BLLD:CI:M00:A003` — mà article id này **không tồn tại** trong
-bảng `chunks` (Điều 3 bị tách hết thành khoản). Nên nó đã treo sẵn, thêm parent treo
+bảng `legal_chunks` (Điều 3 bị tách hết thành khoản). Nên nó đã treo sẵn, thêm parent treo
 nữa thì count không đổi.
 
 Kiểm tra sâu hơn cho thấy: **toàn bộ 1030 `parent_chunk_id` non-null đều treo, 0
@@ -103,7 +103,7 @@ treo — cả hai đều bị bắt (mục 3 #6, #7).
 
 ### 4.5 Sai tên check trong chính harness (lần chạy 003)
 
-Mutation #4 nhắm `documents.document_id = '283/2026/NĐ-CP'` nhưng lại viết kỳ vọng
+Mutation #4 nhắm `legal_documents.document_id = '283/2026/NĐ-CP'` nhưng lại viết kỳ vọng
 là `V2.ND145_2020.amended_by_sql_null`. Chạy tay để kiểm: mutation có hiệu lực
 (rowcount = 1) và verify **thực sự** báo FAIL — nhưng tên check thật là
 `V2.ND283_2026.amended_by_sql_null`. Tức là **check bắt đúng, harness của tôi khai

@@ -1,12 +1,3 @@
-from src.models.legal import Chunk, ChunkReference, Document
-from src.models.schemas import ChatRequest, ChatResponse
-
-__all__ = [
-    "ChatRequest",
-    "ChatResponse",
-    "Document",
-    "Chunk",
-    "ChunkReference",
 from src.models.agent_retrievals import AgentRetrieval
 from src.models.agent_runs import AgentRun
 from src.models.case_access import CaseAccess
@@ -18,12 +9,19 @@ from src.models.conversations import Conversation
 from src.models.disciplinary_decisions import DisciplinaryDecision
 from src.models.document_chunks import DocumentChunk
 from src.models.documents import Document
+from src.models.legal import (
+    LegalChunk,
+    LegalChunkEmbedding,
+    LegalChunkReference,
+    LegalDocument,
+)
 from src.models.messages import Message
 from src.models.policies import Policy
 from src.models.policy_versions import PolicyVersion
 from src.models.recommendation_citations import RecommendationCitation
 from src.models.recommendations import Recommendation
 from src.models.reviews import Review
+from src.models.schemas import ChatRequest, ChatResponse
 from src.models.tool_calls import ToolCall
 from src.models.users import User
 from src.models.violation_types import ViolationType
@@ -36,10 +34,16 @@ __all__ = [
     "CaseDraft",
     "CaseFact",
     "CaseViolation",
+    "ChatRequest",
+    "ChatResponse",
     "Conversation",
     "DisciplinaryDecision",
     "Document",
     "DocumentChunk",
+    "LegalChunk",
+    "LegalChunkEmbedding",
+    "LegalChunkReference",
+    "LegalDocument",
     "Message",
     "Policy",
     "PolicyVersion",

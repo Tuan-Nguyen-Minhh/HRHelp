@@ -4,25 +4,41 @@ _Ngày: 2026-09-27. Plan: `data_pipeline_steps/step4_5_plan.md` REV.2._
 
 ## 0. Trạng thái
 
-- Migration `0001_legal_schema` đã áp dụng sạch (drop toàn bộ 3 bảng → `alembic upgrade head`
-  từ đầu, không warning, để đảm bảo DB khớp đúng nội dung file migration).
-- Seed: 3 documents, 1289 chunks, 565 refs.
-- Verify: **70 check, 70 PASS, 0 FAIL** (`data/chunk/verify_db_009.log` — lần bàn giao).
-  Mutation test: **18/18 mutation bị bắt** (`data/chunk/mutation_test_005.log`).
+- Migration `0001_legal_schema` (nối sau `04e5c85e7957`, single head) đã áp dụng sạch.
+- Seed: 3 legal_documents, 1289 legal_chunks, 565 refs.
+- Verify: **70 check, 70 PASS, 0 FAIL** (`data/chunk/verify_db_014.log` — lần bàn giao sau rename).
+  Mutation test: **18/18 mutation bị bắt** (`data/chunk/mutation_test_007.log`).
 - V5-manual: **CHƯA ký** — xem `verify_db_manual.md`.
+
+## 0-bis. Đổi tên `legal_*` (2026-09-28)
+
+Bảng legal từng tên là `documents` / `chunks` / `chunk_references`, trùng tên bảng
+`documents` của HR Help trên `main` (migration `04e5c85e7957`): hai head alembic,
+hai class `Document` cùng `__tablename__`, metadata hỏng. Vì code legal còn trong PR
+chưa merge còn bên HR đã lên `main` với ~20 bảng, bên legal đổi tên rẻ hơn:
+`legal_documents` / `legal_chunks` / `legal_chunk_references`
+(`LegalDocument` / `LegalChunk` / `LegalChunkReference`).
+
+Đổi thẳng trong `0001_legal_schema.py` thay vì CREATE-rồi-RENAME vì chưa có production
+DB nào chạy tên cũ — dump cũ đã bỏ, dump mới tạo lại từ JSON nguồn. Migration đồng
+thời nối chuỗi `down_revision = "04e5c85e7957"` nên `alembic heads` chỉ còn một.
+`alembic/env.py` giữ nguyên helper pgvector của `main`, chỉ sửa dòng import legal.
+Bảng HR (`documents`, `document_chunks` với `embedding Vector(1536)` cho file upload)
+giữ nguyên, không đụng. Embedding legal (B6, `mistral-embed` 1024-dim theo
+`.env:26`) sẽ nằm bảng riêng, không tái dùng cột 1536-dim kia.
 
 ## 1. Migration
 
-- Revision `0001_legal_schema`, 3 bảng: `documents`, `chunks`, `chunk_references`.
+- Revision `0001_legal_schema`, 3 bảng: `legal_documents`, `legal_chunks`, `legal_chunk_references`.
 - `UNIQUE NULLS NOT DISTINCT (source_chunk_id, target_chunk_id, target_doc, article,
   clause, point, rule)` — dùng `postgresql_nulls_not_distinct=True` (SQLAlchemy 2.1.1
   nhận kwarg này dù không nằm trong `Index.__init__` signature).
-- Index ngược `ix_chunk_references_target_source (target_chunk_id, source_chunk_id)`
+- Index ngược `ix_legal_chunk_references_target_source (target_chunk_id, source_chunk_id)`
   cũng `NULLS NOT DISTINCT`.
-- CHECK: `ck_documents_status`, `ck_chunks_chunk_level`, `ck_chunk_references_confidence`
-  (HIGH|LOW), `ck_chunk_references_needs_reason` (BOUNDARY|UNRESOLVED).
+- CHECK: `ck_legal_documents_status`, `ck_legal_chunks_chunk_level`, `ck_legal_chunk_references_confidence`
+  (HIGH|LOW), `ck_legal_chunk_references_needs_reason` (BOUNDARY|UNRESOLVED).
 - `parent_chunk_id` là TEXT **không FK** (thiết kế gốc, xem [V3-ter]).
-- `documents.doc_code`: chỉ **một** unique index (`ix_documents_doc_code`). Bản đầu
+- `legal_documents.doc_code`: chỉ **một** unique index (`ix_legal_documents_doc_code`). Bản đầu
   tạo cả UNIQUE constraint + unique index → 2 index trùng nhau trên 1 cột, đã bỏ.
 
 ## 2. B4 — Documents + Chunks
@@ -36,7 +52,7 @@ _Ngày: 2026-09-27. Plan: `data_pipeline_steps/step4_5_plan.md` REV.2._
 - `amended_by` BLLD = 5 footnote (key 2,3,4,5,6) từ `document_tree_BLLD.json`.
   *Lưu ý: plan mục 2.3 ghi "6 footnote" nhưng `document_tree_BLLD.json` thực tế có
   5 mục (footnote 1 không dùng hệ `[[n]]`). Đã theo dữ liệu thật.*
-- `chunk_count` / `article_count` **tính lại từ bảng `chunks`**, không hard-code.
+- `chunk_count` / `article_count` **tính lại từ bảng `legal_chunks`**, không hard-code.
 - Transaction **riêng cho từng chunk-file** (plan 2.3), batch 500.
 - `updated_at` được set thủ công (`sa.func.now()`) trong mọi `on_conflict_do_update`.
   `onupdate=func.now()` của ORM **không** áp dụng cho `pg_insert().on_conflict_do_update()`
@@ -82,7 +98,7 @@ một chunk ngẫu nhiên. Phân bố thực tế:
 `fallback` xảy ra khi văn bản hợp nhất đã cấu trúc lại (ví dụ Điều bị tách hết thành
 khoản nên không còn chunk cấp Điều, hoặc điểm/khoản được dẫn không tồn tại trong bản
 hợp nhất). 108 ca được in mẫu ra log seed. Không thêm cột granularity vì
-`chunk_references` không có cột đó theo plan; tham chiếu logic vẫn đọc được qua
+`legal_chunk_references` không có cột đó theo plan; tham chiếu logic vẫn đọc được qua
 `target_doc` / `article` / `clause` / `point`.
 
 ### 3.3 needs_review
@@ -158,7 +174,7 @@ Log: `mutation_test_001.log` … `mutation_test_005.log` (giữ hết, kể cả
 
 ### 4.4 Sửa thêm: `amended_by` là JSON `null` chứ không phải SQL NULL
 
-Rà soát trạng thái cuối phát hiện `documents.amended_by` của NĐ145 và NĐ283 **không
+Rà soát trạng thái cuối phát hiện `legal_documents.amended_by` của NĐ145 và NĐ283 **không
 phải SQL NULL** mà là JSON `null` nằm bên trong JSONB (`jsonb_typeof` = `'null'`, còn
 `amended_by IS NULL` = false). Nguyên nhân: SQLAlchemy khai `JSONB` không có
 `none_as_null`, nên Python `None` được serialize thành JSON `null` thay vì SQL NULL.
@@ -167,7 +183,7 @@ này.
 
 Đã sửa:
 
-- model: `JSONB(none_as_null=True)` cho cả `documents.amended_by` và `chunks.meta`
+- model: `JSONB(none_as_null=True)` cho cả `legal_documents.amended_by` và `legal_chunks.meta`
 - seed: bỏ hẳn `amended_by=None` khỏi giá trị insert, và **luôn** ghi lại `amended_by`
   (kể cả với `{}` → SQL NULL) để giá trị cũ không sống sót qua lần seed sau
 - verify: thêm `V2.amended_by_is_object_or_null` + `V2.ND145_2020.amended_by_sql_null`

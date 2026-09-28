@@ -4,10 +4,10 @@ Tightened to match `data_pipeline_steps/step4_5_plan.md` REV.2 exactly. Every
 check asserts a concrete, recomputed value — no check is hard-coded to pass.
 
   V1      connection + migration: alembic current == head, 3 tables, vector ext
-  V2      documents: 3 rows; 220/115/68; BLLD PARTIALLY_AMENDED; 2 ND ACTIVE;
+  V2      legal_documents: 3 rows; 220/115/68; BLLD PARTIALLY_AMENDED; 2 ND ACTIVE;
           amended_by BLLD non-null; chunk_count/article_count cross-checked
           against real rows
-  V3      chunks: hard 381/377/531 = 1289; 0 empty; 0 dup id; article coverage
+  V3      legal_chunks: hard 381/377/531 = 1289; 0 empty; 0 dup id; article coverage
   V3-bis  special columns: seed=42, 30 chunk ids PRINTED IN FULL, JSON<->DB 100%
   V3-ter  dangling parent: DB count == JSON count (both printed)
   V4      refs: hard 565 = 125+233+207; target_doc valid; internal article exists;
@@ -41,9 +41,9 @@ from src.core.config import settings  # noqa: E402
 from src.models.legal import (  # noqa: E402
     DOC_STATUS_ACTIVE,
     DOC_STATUS_PARTIALLY_AMENDED,
-    Chunk,
-    ChunkReference,
-    Document,
+    LegalChunk,
+    LegalChunkReference,
+    LegalDocument,
 )
 
 logging.basicConfig(
@@ -188,7 +188,7 @@ def verify_v1(db: Session) -> None:
         f"current={current} head={head}",
     )
 
-    for table in ("documents", "chunks", "chunk_references"):
+    for table in ("legal_documents", "legal_chunks", "legal_chunk_references"):
         exists = db.execute(
             sa.text(
                 "SELECT EXISTS (SELECT 1 FROM information_schema.tables "
@@ -207,7 +207,7 @@ def verify_v1(db: Session) -> None:
     cdef = db.execute(
         sa.text(
             "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
-            "WHERE conrelid='chunk_references'::regclass AND conname='uq_chunk_references'"
+            "WHERE conrelid='legal_chunk_references'::regclass AND conname='uq_legal_chunk_references'"
         )
     ).scalar()
     record(
@@ -220,7 +220,7 @@ def verify_v1(db: Session) -> None:
     ixdef = db.execute(
         sa.text(
             "SELECT indexdef FROM pg_indexes "
-            "WHERE indexname='ix_chunk_references_target_source'"
+            "WHERE indexname='ix_legal_chunk_references_target_source'"
         )
     ).scalar()
     record(
@@ -231,12 +231,12 @@ def verify_v1(db: Session) -> None:
         f"{ixdef}",
     )
 
-    # No redundant duplicate unique index on documents.doc_code
+    # No redundant duplicate unique index on legal_documents.doc_code
     dup_uniques = db.execute(
         sa.text(
             "SELECT count(*) FROM pg_index i "
             "JOIN pg_class c ON c.oid=i.indexrelid "
-            "WHERE i.indrelid='documents'::regclass AND i.indisunique "
+            "WHERE i.indrelid='legal_documents'::regclass AND i.indisunique "
             "AND i.indpred IS NULL "
             "AND (SELECT array_agg(a.attname ORDER BY a.attname) "
             "     FROM unnest(i.indkey) k JOIN pg_attribute a "
@@ -247,16 +247,16 @@ def verify_v1(db: Session) -> None:
 
 
 # ---------------------------------------------------------------------------
-# V2: documents
+# V2: legal_documents
 # ---------------------------------------------------------------------------
 
 def verify_v2(db: Session) -> None:
-    logger.info("--- V2: documents ---")
-    doc_count = db.scalar(sa.select(sa.func.count()).select_from(Document))
+    logger.info("--- V2: legal_documents ---")
+    doc_count = db.scalar(sa.select(sa.func.count()).select_from(LegalDocument))
     record("V2.doc_count", doc_count == 3, f"count={doc_count}")
 
     for doc_id, expected_art in EXPECTED_ARTICLE_COUNTS.items():
-        doc = db.get(Document, doc_id)
+        doc = db.get(LegalDocument, doc_id)
         if doc is None:
             record(f"V2.{DOC_ID_TO_CODE[doc_id]}.exists", False, "missing")
             continue
@@ -266,8 +266,8 @@ def verify_v2(db: Session) -> None:
             f"expected={expected_art} got={doc.article_count}",
         )
         real_chunks = db.scalar(
-            sa.select(sa.func.count()).select_from(Chunk).where(
-                Chunk.document_id == doc_id
+            sa.select(sa.func.count()).select_from(LegalChunk).where(
+                LegalChunk.document_id == doc_id
             )
         )
         record(
@@ -276,9 +276,9 @@ def verify_v2(db: Session) -> None:
             f"expected={real_chunks} got={doc.chunk_count}",
         )
         real_articles = db.scalar(
-            sa.select(sa.func.count(sa.distinct(Chunk.article_number)))
-            .select_from(Chunk)
-            .where(Chunk.document_id == doc_id)
+            sa.select(sa.func.count(sa.distinct(LegalChunk.article_number)))
+            .select_from(LegalChunk)
+            .where(LegalChunk.document_id == doc_id)
         )
         record(
             f"V2.{doc.doc_code}.article_count_cross",
@@ -286,7 +286,7 @@ def verify_v2(db: Session) -> None:
             f"expected={real_articles} got={doc.article_count}",
         )
 
-    blld = db.get(Document, "18/VBHN-VPQH")
+    blld = db.get(LegalDocument, "18/VBHN-VPQH")
     record(
         "V2.BLLD.status",
         blld is not None and blld.status == DOC_STATUS_PARTIALLY_AMENDED,
@@ -304,7 +304,7 @@ def verify_v2(db: Session) -> None:
         row[0]
         for row in db.execute(
             sa.text(
-                "SELECT doc_code FROM documents "
+                "SELECT doc_code FROM legal_documents "
                 "WHERE amended_by IS NOT NULL AND jsonb_typeof(amended_by) <> 'object' "
                 "ORDER BY doc_code"
             )
@@ -318,12 +318,12 @@ def verify_v2(db: Session) -> None:
     for doc_id in ("145/2020/NĐ-CP", "283/2026/NĐ-CP"):
         code = DOC_ID_TO_CODE[doc_id]
         is_sql_null = db.scalar(
-            sa.text("SELECT amended_by IS NULL FROM documents WHERE document_id = :d"),
+            sa.text("SELECT amended_by IS NULL FROM legal_documents WHERE document_id = :d"),
             {"d": doc_id},
         )
         record(f"V2.{code}.amended_by_sql_null", bool(is_sql_null), f"IS NULL={is_sql_null}")
     for doc_id in ("145/2020/NĐ-CP", "283/2026/NĐ-CP"):
-        d = db.get(Document, doc_id)
+        d = db.get(LegalDocument, doc_id)
         record(
             f"V2.{DOC_ID_TO_CODE[doc_id]}.status",
             d is not None and d.status == DOC_STATUS_ACTIVE,
@@ -332,15 +332,15 @@ def verify_v2(db: Session) -> None:
 
 
 # ---------------------------------------------------------------------------
-# V3: chunks
+# V3: legal_chunks
 # ---------------------------------------------------------------------------
 
 def verify_v3(db: Session) -> None:
-    logger.info("--- V3: chunks ---")
+    logger.info("--- V3: legal_chunks ---")
     for doc_id, expected in EXPECTED_CHUNK_COUNTS.items():
         count = db.scalar(
-            sa.select(sa.func.count()).select_from(Chunk).where(
-                Chunk.document_id == doc_id
+            sa.select(sa.func.count()).select_from(LegalChunk).where(
+                LegalChunk.document_id == doc_id
             )
         )
         record(
@@ -349,19 +349,19 @@ def verify_v3(db: Session) -> None:
             f"expected={expected} got={count}",
         )
 
-    total = db.scalar(sa.select(sa.func.count()).select_from(Chunk))
+    total = db.scalar(sa.select(sa.func.count()).select_from(LegalChunk))
     record("V3.total", total == TOTAL_CHUNKS, f"expected={TOTAL_CHUNKS} got={total}")
 
     empty = db.scalar(
-        sa.select(sa.func.count()).select_from(Chunk).where(
-            sa.or_(Chunk.text == "", sa.func.length(Chunk.text) == 0)
+        sa.select(sa.func.count()).select_from(LegalChunk).where(
+            sa.or_(LegalChunk.text == "", sa.func.length(LegalChunk.text) == 0)
         )
     )
     record("V3.empty_text", empty == 0, f"empty={empty}")
 
     dups = db.execute(
-        sa.select(Chunk.chunk_id)
-        .group_by(Chunk.chunk_id)
+        sa.select(LegalChunk.chunk_id)
+        .group_by(LegalChunk.chunk_id)
         .having(sa.func.count() > 1)
     ).fetchall()
     record("V3.dup_chunk_id", not dups, f"dups={len(dups)}")
@@ -378,8 +378,8 @@ def verify_v3(db: Session) -> None:
                     tree_articles.add(a["number"])
         db_articles = set(
             db.execute(
-                sa.select(Chunk.article_number)
-                .where(Chunk.document_id == doc_id)
+                sa.select(LegalChunk.article_number)
+                .where(LegalChunk.document_id == doc_id)
                 .distinct()
             ).scalars()
         )
@@ -418,7 +418,7 @@ def verify_v3_bis(db: Session) -> None:
     mismatches: list[str] = []
     for cid in sample:
         src = by_id[cid]["metadata"]
-        row = db.get(Chunk, cid)
+        row = db.get(LegalChunk, cid)
         if row is None:
             mismatches.append(f"{cid}: absent from DB")
             continue
@@ -439,8 +439,8 @@ def verify_v3_bis(db: Session) -> None:
     # plan: BLLD Dieu 219 must have exactly 20 is_quoted_external_text = True
     n_quoted = db.scalar(
         sa.select(sa.func.count())
-        .select_from(Chunk)
-        .where(Chunk.meta["is_quoted_external_text"].astext == "true")
+        .select_from(LegalChunk)
+        .where(LegalChunk.meta["is_quoted_external_text"].astext == "true")
     )
     record("V3-bis.quoted_external_count", n_quoted == 20, f"true={n_quoted} (expected 20)")
 
@@ -453,16 +453,16 @@ def verify_v3_ter(db: Session) -> None:
     logger.info("--- V3-ter: dangling parent ---")
     db_dangling = db.scalar(
         sa.select(sa.func.count())
-        .select_from(Chunk)
+        .select_from(LegalChunk)
         .where(
-            Chunk.parent_chunk_id.is_not(None),
-            Chunk.parent_chunk_id.not_in(sa.select(Chunk.chunk_id)),
+            LegalChunk.parent_chunk_id.is_not(None),
+            LegalChunk.parent_chunk_id.not_in(sa.select(LegalChunk.chunk_id)),
         )
     )
-    chunks = all_source_chunks()
-    ids = {c["chunk_id"] for c in chunks}
+    legal_chunks = all_source_chunks()
+    ids = {c["chunk_id"] for c in legal_chunks}
     json_dangling = sum(
-        1 for c in chunks if c.get("parent_chunk_id") and c["parent_chunk_id"] not in ids
+        1 for c in legal_chunks if c.get("parent_chunk_id") and c["parent_chunk_id"] not in ids
     )
     logger.info(f"  DB={db_dangling}  JSON={json_dangling}")
     record(
@@ -478,15 +478,15 @@ def verify_v3_ter(db: Session) -> None:
 
 def verify_v4(db: Session) -> None:
     logger.info("--- V4: references ---")
-    total = db.scalar(sa.select(sa.func.count()).select_from(ChunkReference))
+    total = db.scalar(sa.select(sa.func.count()).select_from(LegalChunkReference))
     record("V4.total", total == TOTAL_REFS, f"expected={TOTAL_REFS} got={total}")
 
     for doc_id, expected in EXPECTED_REF_COUNTS.items():
         count = db.scalar(
             sa.select(sa.func.count())
-            .select_from(ChunkReference)
-            .join(Chunk, ChunkReference.source_chunk_id == Chunk.chunk_id)
-            .where(Chunk.document_id == doc_id)
+            .select_from(LegalChunkReference)
+            .join(LegalChunk, LegalChunkReference.source_chunk_id == LegalChunk.chunk_id)
+            .where(LegalChunk.document_id == doc_id)
         )
         record(
             f"V4.{DOC_ID_TO_CODE[doc_id]}.count",
@@ -496,7 +496,7 @@ def verify_v4(db: Session) -> None:
 
     invalid = sorted(
         td
-        for td in db.execute(sa.select(ChunkReference.target_doc).distinct()).scalars()
+        for td in db.execute(sa.select(LegalChunkReference.target_doc).distinct()).scalars()
         if td not in INTERNAL_DOC_IDS
         and td not in EXTERNAL_LAW_ALLOWLIST
         and not LAW_NUMBER_RE.match(td)
@@ -508,10 +508,10 @@ def verify_v4(db: Session) -> None:
         sa.text(
             """
             SELECT r.source_chunk_id, r.target_doc, r.article
-            FROM chunk_references r
+            FROM legal_chunk_references r
             WHERE r.target_doc IN ('18/VBHN-VPQH','145/2020/NĐ-CP','283/2026/NĐ-CP')
               AND NOT EXISTS (
-                SELECT 1 FROM chunks t
+                SELECT 1 FROM legal_chunks t
                 WHERE t.document_id = r.target_doc AND t.article_number = r.article)
             """
         )
@@ -521,16 +521,16 @@ def verify_v4(db: Session) -> None:
     # needs_review must agree with needs_reason (single source of truth)
     inconsistent = db.scalar(
         sa.select(sa.func.count())
-        .select_from(ChunkReference)
+        .select_from(LegalChunkReference)
         .where(
             sa.or_(
                 sa.and_(
-                    ChunkReference.needs_reason.is_(None),
-                    ChunkReference.needs_review.is_(True),
+                    LegalChunkReference.needs_reason.is_(None),
+                    LegalChunkReference.needs_review.is_(True),
                 ),
                 sa.and_(
-                    ChunkReference.needs_reason.is_not(None),
-                    ChunkReference.needs_review.is_(False),
+                    LegalChunkReference.needs_reason.is_not(None),
+                    LegalChunkReference.needs_review.is_(False),
                 ),
             )
         )
@@ -546,8 +546,8 @@ def verify_v4_bis(db: Session) -> None:
     logger.info("--- V4-bis: UNRESOLVED ---")
     n = db.scalar(
         sa.select(sa.func.count())
-        .select_from(ChunkReference)
-        .where(ChunkReference.needs_reason == "UNRESOLVED")
+        .select_from(LegalChunkReference)
+        .where(LegalChunkReference.needs_reason == "UNRESOLVED")
     )
     record("V4-bis.unresolved", n == EXPECTED_UNRESOLVED, f"expected=0 got={n}")
 
@@ -556,8 +556,8 @@ def verify_v4_ter(db: Session) -> None:
     logger.info("--- V4-ter: needs_review aggregate ---")
     boundary = db.scalar(
         sa.select(sa.func.count())
-        .select_from(ChunkReference)
-        .where(ChunkReference.needs_reason == "BOUNDARY")
+        .select_from(LegalChunkReference)
+        .where(LegalChunkReference.needs_reason == "BOUNDARY")
     )
     record(
         "V4-ter.boundary",
@@ -566,14 +566,14 @@ def verify_v4_ter(db: Session) -> None:
     )
     unresolved = db.scalar(
         sa.select(sa.func.count())
-        .select_from(ChunkReference)
-        .where(ChunkReference.needs_reason == "UNRESOLVED")
+        .select_from(LegalChunkReference)
+        .where(LegalChunkReference.needs_reason == "UNRESOLVED")
     )
     record("V4-ter.unresolved", unresolved == 0, f"got={unresolved}")
     total_flagged = db.scalar(
         sa.select(sa.func.count())
-        .select_from(ChunkReference)
-        .where(ChunkReference.needs_review.is_(True))
+        .select_from(LegalChunkReference)
+        .where(LegalChunkReference.needs_review.is_(True))
     )
     record(
         "V4-ter.total_flagged",
@@ -593,11 +593,11 @@ def verify_v5_auto(db: Session) -> None:
 
     # Case 1: ND283 A044:C01 -> BHXH D28, target_chunk_id must be NULL
     rows = db.execute(
-        sa.select(ChunkReference)
+        sa.select(LegalChunkReference)
         .where(
-            ChunkReference.source_chunk_id == V5_CASES["V5.1_ND283_A044C01_to_BHXH_D28"],
-            ChunkReference.target_doc == "Luật Bảo hiểm xã hội",
-            ChunkReference.article == 28,
+            LegalChunkReference.source_chunk_id == V5_CASES["V5.1_ND283_A044C01_to_BHXH_D28"],
+            LegalChunkReference.target_doc == "Luật Bảo hiểm xã hội",
+            LegalChunkReference.article == 28,
         )
     ).scalars().all()
     ok = len(rows) == 1 and rows[0].target_chunk_id is None
@@ -611,12 +611,12 @@ def verify_v5_auto(db: Session) -> None:
     # Case 2: BLLD D169 has inbound from ND145 (exactly 2 sources)
     inbound = (
         db.execute(
-            sa.select(ChunkReference.source_chunk_id)
-            .join(Chunk, ChunkReference.source_chunk_id == Chunk.chunk_id)
+            sa.select(LegalChunkReference.source_chunk_id)
+            .join(LegalChunk, LegalChunkReference.source_chunk_id == LegalChunk.chunk_id)
             .where(
-                Chunk.document_id == "145/2020/NĐ-CP",
-                ChunkReference.target_doc == "18/VBHN-VPQH",
-                ChunkReference.article == 169,
+                LegalChunk.document_id == "145/2020/NĐ-CP",
+                LegalChunkReference.target_doc == "18/VBHN-VPQH",
+                LegalChunkReference.article == 169,
             )
         )
         .scalars()
@@ -634,11 +634,11 @@ def verify_v5_auto(db: Session) -> None:
     # this dataset, so "2 chiều" is read as "2 reference directions", matching
     # data/chunk/CHANGELOG.md item 1. The reverse-direction check below
     # therefore asserts multi-source reachability of the D169 targets, which
-    # is what ix_chunk_references_target_source exists for.
+    # is what ix_legal_chunk_references_target_source exists for.
     a219 = V5_CASES["V5.3_A219C02_two_reference_directions"]
     r219 = (
         db.execute(
-            sa.select(ChunkReference).where(ChunkReference.source_chunk_id == a219)
+            sa.select(LegalChunkReference).where(LegalChunkReference.source_chunk_id == a219)
         )
         .scalars()
         .all()
@@ -673,8 +673,8 @@ def verify_v5_auto(db: Session) -> None:
     for tgt in ("BLLD:CXII:M00:A169:C02", "BLLD:CXII:M00:A169:C03"):
         srcs = (
             db.execute(
-                sa.select(sa.distinct(ChunkReference.source_chunk_id)).where(
-                    ChunkReference.target_chunk_id == tgt
+                sa.select(sa.distinct(LegalChunkReference.source_chunk_id)).where(
+                    LegalChunkReference.target_chunk_id == tgt
                 )
             )
             .scalars()
@@ -687,17 +687,17 @@ def verify_v5_auto(db: Session) -> None:
         )
 
     # Case 4: ND145 A070:C03 -> BLLD D122 HIGH.
-    # The ref carries point 'c', but BLLD D122 only has CLAUSE chunks (C01-C06),
+    # The ref carries point 'c', but BLLD D122 only has CLAUSE legal_chunks (C01-C06),
     # so resolution deterministically falls back to clause 1. Pinned exactly so
     # any change in fallback behaviour is caught.
     r4 = (
         db.execute(
-            sa.select(ChunkReference).where(
-                ChunkReference.source_chunk_id
+            sa.select(LegalChunkReference).where(
+                LegalChunkReference.source_chunk_id
                 == V5_CASES["V5.4_ND145_A070C03_to_BLLD_D122_HIGH"],
-                ChunkReference.target_doc == "18/VBHN-VPQH",
-                ChunkReference.article == 122,
-                ChunkReference.confidence == "HIGH",
+                LegalChunkReference.target_doc == "18/VBHN-VPQH",
+                LegalChunkReference.article == 122,
+                LegalChunkReference.confidence == "HIGH",
             )
         )
         .scalars()
@@ -705,8 +705,8 @@ def verify_v5_auto(db: Session) -> None:
     )
     tgt_level = (
         db.scalar(
-            sa.select(Chunk.chunk_level).where(
-                Chunk.chunk_id == "BLLD:CVIII:M01:A122:C01"
+            sa.select(LegalChunk.chunk_level).where(
+                LegalChunk.chunk_id == "BLLD:CVIII:M01:A122:C01"
             )
         )
         if r4
@@ -728,10 +728,10 @@ def verify_v5_auto(db: Session) -> None:
     # Case 5: ND283 A066 LIST_EXPANSION self -> D7 and D14
     r5 = (
         db.execute(
-            sa.select(ChunkReference).where(
-                ChunkReference.source_chunk_id == V5_CASES["V5.5_ND283_A066_LIST_self_D7_D14"],
-                ChunkReference.rule == "LIST_EXPANSION",
-                ChunkReference.target_doc == "283/2026/NĐ-CP",
+            sa.select(LegalChunkReference).where(
+                LegalChunkReference.source_chunk_id == V5_CASES["V5.5_ND283_A066_LIST_self_D7_D14"],
+                LegalChunkReference.rule == "LIST_EXPANSION",
+                LegalChunkReference.target_doc == "283/2026/NĐ-CP",
             )
         )
         .scalars()
@@ -756,7 +756,7 @@ def verify_v6() -> None:
         with SessionLocal() as s:
             counts = {
                 t: s.scalar(sa.select(sa.func.count()).select_from(t))
-                for t in (Document, Chunk, ChunkReference)
+                for t in (LegalDocument, LegalChunk, LegalChunkReference)
             }
             # Content fingerprint, deliberately NOT keyed on ref_id: B5 reseeds
             # with DELETE+INSERT so SERIAL ids shift, the data must not.
@@ -767,7 +767,7 @@ def verify_v6() -> None:
                     "         ||article::text||coalesce(clause::text,'~')"
                     "         ||coalesce(point,'~')||rule||confidence"
                     "         ||needs_review::text||coalesce(needs_reason,'~') AS x"
-                    "  FROM chunk_references) s"
+                    "  FROM legal_chunk_references) s"
                 )
             ).scalar()
             return counts, fp
@@ -787,7 +787,7 @@ def verify_v6() -> None:
         return
 
     after, fp_after = fingerprint()
-    for t, name in ((Document, "documents"), (Chunk, "chunks"), (ChunkReference, "refs")):
+    for t, name in ((LegalDocument, "legal_documents"), (LegalChunk, "legal_chunks"), (LegalChunkReference, "refs")):
         record(
             f"V6.count_{name}",
             before[t] == after[t],
@@ -798,8 +798,8 @@ def verify_v6() -> None:
     with SessionLocal() as s:
         stale = s.scalar(
             sa.text(
-                "SELECT count(*) FROM chunk_references r "
-                "WHERE NOT EXISTS (SELECT 1 FROM chunks c WHERE c.chunk_id=r.source_chunk_id)"
+                "SELECT count(*) FROM legal_chunk_references r "
+                "WHERE NOT EXISTS (SELECT 1 FROM legal_chunks c WHERE c.chunk_id=r.source_chunk_id)"
             )
         )
     record("V6.no_orphan_refs", stale == 0, f"orphans={stale}")
@@ -895,7 +895,7 @@ def verify_v7(before: dict[str, str], write_manifest_flag: bool) -> bool:
     for f in CHUNK_FILES:
         try:
             n = len(load_json(CHUNK_DIR / f))
-            record(f"V7.parse_{f}", n > 0, f"chunks={n}")
+            record(f"V7.parse_{f}", n > 0, f"legal_chunks={n}")
         except Exception as exc:
             record(f"V7.parse_{f}", False, str(exc))
     return True

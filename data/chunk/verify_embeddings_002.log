@@ -1,0 +1,228 @@
+11:26:16 [INFO] Starting verify_embeddings.py
+11:26:16 [INFO] Database: localhost:5432/build_phase_p029
+11:26:16 [INFO] Model: mistral-embed (1024-dim)
+11:26:16 [INFO] Audit log: data\chunk\embed_api_calls.jsonl
+11:26:16 [INFO] golden set: 10 queries
+11:26:16 [INFO] --- V1: migration + schema ---
+11:26:16 [INFO]   [PASS] V1.connection: SELECT 1 ok
+11:26:16 [INFO] setup plugin alembic.autogenerate.schemas
+11:26:16 [INFO] setup plugin alembic.autogenerate.tables
+11:26:16 [INFO] setup plugin alembic.autogenerate.types
+11:26:16 [INFO] setup plugin alembic.autogenerate.constraints
+11:26:16 [INFO] setup plugin alembic.autogenerate.defaults
+11:26:16 [INFO] setup plugin alembic.autogenerate.comments
+11:26:16 [INFO] setup plugin alembic.ext.checkconstraint_byname
+11:26:16 [INFO]   [PASS] V1.alembic_current_eq_head: current=0003_legal_embeddings head=0003_legal_embeddings expected=0003_legal_embeddings
+11:26:16 [INFO]   [PASS] V1.table_exists: exists=True
+11:26:16 [INFO]   [PASS] V1.embedding_is_vector1024: format_type=vector(1024)
+11:26:16 [INFO]   [PASS] V1.content_sha256_is_char64: format_type=character(64)
+11:26:16 [INFO]   [PASS] V1.search_tsv_is_generated_stored: type=tsvector attgenerated=s (expected 's' = GENERATED ALWAYS STORED)
+11:26:16 [INFO]   [PASS] V1.column_chunk_id: got=character varying(128) want=character varying(128)
+11:26:16 [INFO]   [PASS] V1.column_model: got=character varying(64) want=character varying(64)
+11:26:16 [INFO]   [PASS] V1.column_dimensions: got=integer want=integer
+11:26:16 [INFO]   [PASS] V1.column_header_context: got=text want=text
+11:26:16 [INFO]   [PASS] V1.column_text: got=text want=text
+11:26:16 [INFO]   [PASS] V1.fk_cascade_to_legal_chunks: confdeltype=c (expected 'c' = CASCADE)
+11:26:16 [INFO]   [PASS] V1.dimensions_check: CHECK ((dimensions = 1024))
+11:26:16 [INFO]   [PASS] V1.hnsw_index: CREATE INDEX ix_legal_embeddings_hnsw ON public.legal_chunk_embeddings USING hnsw (embedding vector_cosine_ops) WITH (m='16', ef_construction='64')
+11:26:16 [INFO]   [PASS] V1.gin_index: CREATE INDEX ix_legal_chunk_embeddings_search_tsv ON public.legal_chunk_embeddings USING gin (search_tsv)
+11:26:16 [INFO]   [PASS] V1.hr_document_chunks_still_vector1024: document_chunks.embedding=vector(1024)
+11:26:16 [INFO]   [PASS] V1.hr_disciplinary_decisions_still_vector1024: disciplinary_decisions.embedding=vector(1024)
+11:26:16 [INFO] --- V2: complete + correct + fresh ---
+11:26:16 [INFO]   [PASS] V2.row_count: expected=1289 got=1289
+11:26:16 [INFO]   [PASS] V2.covers_every_chunk: embeddings=1289 chunks=1289 expected=1289
+11:26:16 [INFO]   [PASS] V2.no_null_embedding: nulls=0
+11:26:16 [INFO]   [PASS] V2.dimensions_column: wrong=0
+11:26:16 [INFO]   [PASS] V2.vector_dims: rows whose vector_dims <> 1024: 0
+11:26:16 [INFO]   [PASS] V2.model: rows with model <> mistral-embed: 0
+11:26:16 [INFO]   [PASS] V2.no_orphans: orphans=0
+11:26:16 [INFO]   [PASS] V2.content_sha256_fresh: checked=1289 mismatched=0 []
+11:26:16 [INFO]   [PASS] V2.denormalised_text_matches: drifted rows=0
+11:26:16 [INFO] --- V3: idempotent + quota arithmetic ---
+11:26:16 [INFO]   vector md5 before : 60e61f8afdb5c9ffa8071f7561563884
+11:26:16 [INFO]   audit log lines   : 123
+11:26:16 [INFO]   $ C:\Users\tuan\Desktop\P-029\.venv\Scripts\python.exe C:\Users\tuan\Desktop\P-029\scripts\embed_legal.py
+11:26:18 [INFO]   [PASS] V3.rerun_exit_zero: returncode=0
+11:26:18 [INFO]   [PASS] V3.skipped_equals_1289: chunks with a stale hash after the rerun=0 (so skipped=1289), rows=1289
+11:26:18 [INFO]   [PASS] V3.zero_new_api_requests: audit log lines 123 -> 123
+11:26:18 [INFO]   [PASS] V3.vector_md5_unchanged: before=60e61f8afdb5c9ffa8071f7561563884 after=60e61f8afdb5c9ffa8071f7561563884
+11:26:18 [INFO]   $ C:\Users\tuan\Desktop\P-029\.venv\Scripts\python.exe C:\Users\tuan\Desktop\P-029\scripts\embed_legal.py
+11:26:21 [INFO]   [PASS] V3.edit_rerun_exit_zero: returncode=0
+11:26:21 [INFO]   [PASS] V3.edit_costs_exactly_one_request: new audit log lines=1 (expected 1)
+11:26:21 [INFO]   [PASS] V3.edit_new_sha_matches: stored=74346bd898e75ec1… expected=74346bd898e75ec1…
+11:26:21 [INFO]   $ C:\Users\tuan\Desktop\P-029\.venv\Scripts\python.exe C:\Users\tuan\Desktop\P-029\scripts\embed_legal.py
+11:26:24 [INFO]   [PASS] V3.restore_sha_matches: chunk=BLLD:CIII:M01:A013
+11:26:24 [INFO]   [PASS] V3.vector_fingerprint_restored: before=60e61f8afdb5c9ffa8071f7561563884 after=60e61f8afdb5c9ffa8071f7561563884 (identical vectors are re-derived, not restored from a backup)
+11:26:25 [INFO] HTTP Request: POST https://api.mistral.ai/v1/embeddings "HTTP/1.1 200 OK"
+11:26:26 [INFO] HTTP Request: POST https://api.mistral.ai/v1/embeddings "HTTP/1.1 200 OK"
+11:26:27 [INFO] HTTP Request: POST https://api.mistral.ai/v1/embeddings "HTTP/1.1 200 OK"
+11:26:28 [INFO] HTTP Request: POST https://api.mistral.ai/v1/embeddings "HTTP/1.1 200 OK"
+11:26:29 [INFO] HTTP Request: POST https://api.mistral.ai/v1/embeddings "HTTP/1.1 200 OK"
+11:26:31 [INFO] HTTP Request: POST https://api.mistral.ai/v1/embeddings "HTTP/1.1 200 OK"
+11:26:32 [INFO] HTTP Request: POST https://api.mistral.ai/v1/embeddings "HTTP/1.1 200 OK"
+11:26:33 [INFO] HTTP Request: POST https://api.mistral.ai/v1/embeddings "HTTP/1.1 200 OK"
+11:26:34 [INFO] HTTP Request: POST https://api.mistral.ai/v1/embeddings "HTTP/1.1 200 OK"
+11:26:35 [INFO] HTTP Request: POST https://api.mistral.ai/v1/embeddings "HTTP/1.1 200 OK"
+11:26:35 [INFO] --- V4: vector-only golden ---
+11:26:35 [INFO]   [FAIL] V4.vector_top5_contains_expected: queries missing an expected chunk in vector-only top-5: ['Q03', 'Q09', 'Q10']
+11:26:35 [INFO]   [Q01] vector top-5: ['18/VBHN-VPQH#D169', '18/VBHN-VPQH#D169', '18/VBHN-VPQH#D148', '18/VBHN-VPQH#D169', '18/VBHN-VPQH#D169']
+11:26:35 [INFO]   [Q02] vector top-5: ['283/2026/NĐ-CP#D44', '283/2026/NĐ-CP#D48', '283/2026/NĐ-CP#D48', '283/2026/NĐ-CP#D48', '283/2026/NĐ-CP#D48']
+11:26:35 [INFO]   [Q03] vector top-5: ['145/2020/NĐ-CP#D69', '18/VBHN-VPQH#D121', '145/2020/NĐ-CP#D69', '145/2020/NĐ-CP#D73', '18/VBHN-VPQH#D131']
+11:26:35 [INFO]   [Q04] vector top-5: ['18/VBHN-VPQH#D122', '18/VBHN-VPQH#D122', '18/VBHN-VPQH#D122', '283/2026/NĐ-CP#D40', '18/VBHN-VPQH#D122']
+11:26:35 [INFO]   [Q05] vector top-5: ['18/VBHN-VPQH#D107', '145/2020/NĐ-CP#D60', '145/2020/NĐ-CP#D61', '18/VBHN-VPQH#D107', '145/2020/NĐ-CP#D62']
+11:26:35 [INFO]   [Q06] vector top-5: ['18/VBHN-VPQH#D113', '18/VBHN-VPQH#D113', '18/VBHN-VPQH#D114', '18/VBHN-VPQH#D113', '18/VBHN-VPQH#D113']
+11:26:35 [INFO]   [Q07] vector top-5: ['18/VBHN-VPQH#D21', '18/VBHN-VPQH#D21', '18/VBHN-VPQH#D21', '18/VBHN-VPQH#D13', '18/VBHN-VPQH#D21']
+11:26:35 [INFO]   [Q08] vector top-5: ['18/VBHN-VPQH#D35', '18/VBHN-VPQH#D36', '18/VBHN-VPQH#D36', '145/2020/NĐ-CP#D7', '18/VBHN-VPQH#D41']
+11:26:35 [INFO]   [Q09] vector top-5: ['145/2020/NĐ-CP#D45', '145/2020/NĐ-CP#D5', '145/2020/NĐ-CP#D5', '145/2020/NĐ-CP#D5', '145/2020/NĐ-CP#D5']
+11:26:35 [INFO]   [Q10] vector top-5: ['18/VBHN-VPQH#D174', '18/VBHN-VPQH#D174', '18/VBHN-VPQH#D174', '18/VBHN-VPQH#D174', '18/VBHN-VPQH#D174']
+11:26:35 [INFO]   [PASS] V4.all_norms_finite: non-finite vectors=0
+11:26:35 [INFO]   [PASS] V4.sample_norms_finite: checked 64 rows, non-finite norms=0
+11:26:36 [INFO] HTTP Request: POST https://api.mistral.ai/v1/embeddings "HTTP/1.1 200 OK"
+11:26:37 [INFO]   [PASS] V4.reembed_cosine: worst cosine=1.000000 on BLLD:CIII:M01:A015 (floor 0.999, 5 chunks re-embedded)
+11:26:37 [INFO] --- V5: BM25 + hybrid ---
+11:26:37 [INFO]   [FAIL] V5.article_in_top5.vector: queries whose must_contain_article is absent from vector top-5: ['Q03', 'Q09', 'Q10']
+11:26:37 [INFO]   [PASS] V5.article_in_top5.bm25: queries whose must_contain_article is absent from bm25 top-5: []
+11:26:37 [INFO]   [PASS] V5.article_in_top5.hybrid: queries whose must_contain_article is absent from hybrid top-5: []
+11:26:37 [INFO]   [PASS] V5.rrf_k_is_60: RRF_K=60
+11:26:37 [INFO]   [PASS] V5.rrf_formula: d1=0.032522 d2=0.016129 d3=0.032266 d4=0.015873 (expect 1/61+1/62, 1/62, 1/63+1/61, 1/63)
+11:26:37 [INFO]   [PASS] V5.rrf_ranks_are_1_based: single arm, rank 1 -> 1/(k+1) = 1/61
+11:26:37 [INFO]   [PASS] V5.rrf_order: order=['d1', 'd3', 'd2', 'd4'] (expected by descending score, not by any single arm)
+11:26:37 [INFO]   [PASS] V5.rrf_tiebreak_deterministic: symmetric input resolves to ['a', 'b'] (ties broken by id)
+11:26:37 [INFO]   [PASS] V5.rrf_empty_input: empty arms -> []
+11:26:37 [INFO]   [PASS] V5.rrf_rejects_k_zero: k=0 raises ValueError
+11:26:37 [INFO] --- V6: metrics floor ---
+11:26:37 [INFO]   vector  Hit@1=0.600 Hit@5=0.700 MRR=0.625 Article@5=0.700
+11:26:37 [INFO]   bm25    Hit@1=0.300 Hit@5=0.700 MRR=0.475 Article@5=1.000
+11:26:37 [INFO]   hybrid  Hit@1=0.500 Hit@5=0.900 MRR=0.650 Article@5=1.000
+11:26:37 [INFO]   [PASS] V6.hybrid_hit_at_5_floor: hybrid Hit@5=0.900 (floor 0.8)
+11:26:37 [INFO]   [PASS] V6.hybrid_mrr_floor: hybrid MRR=0.650 (floor 0.6)
+11:26:37 [INFO]   [PASS] V6.hybrid_not_behind_vector.hit_at_5: hybrid 0.900 vs vector 0.700 -> loss -0.200 (allowed 0.1)
+11:26:37 [INFO]   [PASS] V6.hybrid_not_behind_vector.mrr: hybrid 0.650 vs vector 0.625 -> loss -0.025 (allowed 0.1)
+11:26:37 [INFO]   [PASS] V6.hybrid_not_behind_bm25.hit_at_5: hybrid 0.900 vs bm25 0.700 -> loss -0.200 (allowed 0.1)
+11:26:37 [INFO]   [PASS] V6.hybrid_not_behind_bm25.mrr: hybrid 0.650 vs bm25 0.475 -> loss -0.175 (allowed 0.1)
+11:26:37 [INFO] --- V7: quota + resume ---
+11:26:37 [INFO]   audit log: 136 request(s) total, 61 corpus
+11:26:37 [INFO]   corpus run ids: 15; tokens by run: {'corpus-20260928T033236-d895': 683096, 'corpus-20260928T035252-56d6': 451, 'corpus-20260928T035256-04f6': 446, 'corpus-20260928T035314-bf40': 40684, 'corpus-20260928T035742-4fbf': 286, 'corpus-20260928T035757-d520': 451, 'corpus-20260928T035800-248b': 446, 'corpus-20260928T035817-453d': 40684, 'corpus-20260928T035959-86b5': 286, 'corpus-20260928T040033-b60d': 451, 'corpus-20260928T040036-e81c': 446, 'corpus-20260928T040054-f6c2': 40684, 'corpus-20260928T040231-0c0d': 286, 'corpus-20260928T042619-cbfc': 451, 'corpus-20260928T042623-4cb3': 446}
+11:26:37 [INFO]   build run (largest) = corpus-20260928T033236-d895: 683096 tokens | all-time corpus-purpose total = 809594 tokens
+11:26:37 [INFO]   [PASS] V7.corpus_tokens_under_ceiling: build run corpus-20260928T033236-d895 spent 683096 prompt tokens (ceiling 1000000); all-time corpus-purpose total 809594 including verification re-embeds
+11:26:37 [INFO]   [PASS] V7.no_failed_requests: failed calls=0
+11:26:37 [INFO]   min request gap=1.0s over 135 consecutive pairs
+11:26:37 [INFO]   [PASS] V7.min_request_gap: min gap=1.0s (floor 1.0s) across 135 consecutive requests
+11:26:37 [INFO]   crash test: deleted 96 row(s) -> 1193 left, killing the CLI after 2.5s
+11:26:39 [INFO]   after kill: killed_while_running=True, rows=1193, returncode=1
+11:26:39 [INFO]   [PASS] V7.killed_mid_run: process was still running after 2.5s and was killed (returncode=1); 1193 rows survived the partial run
+11:26:39 [INFO]   $ C:\Users\tuan\Desktop\P-029\.venv\Scripts\python.exe C:\Users\tuan\Desktop\P-029\scripts\embed_legal.py
+11:26:50 [INFO]   [PASS] V7.resume_exit_zero: returncode=0
+11:26:50 [INFO]   [PASS] V7.resume_restores_full_count: rows=1289 expected=1289
+11:26:50 [INFO]   [PASS] V7.no_duplicate_rows: duplicated chunk_ids=0
+11:26:50 [INFO]   [PASS] V7.every_chunk_has_a_vector: chunks without a vector after resume: []
+11:26:50 [INFO]   [PASS] V7.resumed_rows_fresh: re-embedded 96 row(s), stale among them: 0 []
+11:26:50 [INFO] --- V8: source untouched + no regression ---
+11:26:50 [INFO]   [PASS] V8.manifest_exists: source_manifest.json
+11:26:50 [INFO]   [OK  ] chunks_BLLD.json: 79a7586e7d180045…
+11:26:50 [INFO]   [OK  ] chunks_ND145_2020.json: b48b2b5a3b27130e…
+11:26:50 [INFO]   [OK  ] chunks_ND283_2026.json: be52e4a329aaebd8…
+11:26:50 [INFO]   [OK  ] document_tree_BLLD.json: f7fdea870ac7beb7…
+11:26:50 [INFO]   [OK  ] document_tree_ND145_2020.json: 45b303eada87f52d…
+11:26:50 [INFO]   [OK  ] document_tree_ND283_2026.json: bf6987d3f155277b…
+11:26:50 [INFO]   [PASS] V8.sources_match_pinned_manifest: drifted=[] absent=[] present=6/6
+11:26:50 [INFO]   $ C:\Users\tuan\Desktop\P-029\.venv\Scripts\python.exe C:\Users\tuan\Desktop\P-029\scripts\verify_db.py
+11:26:53 [INFO]   [PASS] V8.verify_db_still_70_of_70: exit=0 fails=[] (B4/B5 must not regress)
+11:26:53 [INFO]   $ C:\Users\tuan\Desktop\P-029\.venv\Scripts\python.exe C:\Users\tuan\Desktop\P-029\scripts\mutation_test.py
+11:28:19 [INFO]   [PASS] V8.mutation_test_still_18_of_18: exit=0 caught=18/18 missed=0
+11:28:19 [INFO]   $ C:\Users\tuan\Desktop\P-029\.venv\Scripts\python.exe C:\Users\tuan\Desktop\P-029\scripts\embed_legal.py
+11:28:21 [INFO]   [PASS] V8.restore_after_mutations: embed_legal.py exit=0 (re-embeds rows cascade-deleted by V8)
+11:28:21 [INFO] --- V2.final: complete + correct + fresh ---
+11:28:21 [INFO]   [PASS] V2.final.row_count: expected=1289 got=1289
+11:28:21 [INFO]   [PASS] V2.final.covers_every_chunk: embeddings=1289 chunks=1289 expected=1289
+11:28:21 [INFO]   [PASS] V2.final.no_null_embedding: nulls=0
+11:28:21 [INFO]   [PASS] V2.final.dimensions_column: wrong=0
+11:28:21 [INFO]   [PASS] V2.final.vector_dims: rows whose vector_dims <> 1024: 0
+11:28:21 [INFO]   [PASS] V2.final.model: rows with model <> mistral-embed: 0
+11:28:21 [INFO]   [PASS] V2.final.no_orphans: orphans=0
+11:28:21 [INFO]   [PASS] V2.final.content_sha256_fresh: checked=1289 mismatched=0 []
+11:28:21 [INFO]   [PASS] V2.final.denormalised_text_matches: drifted rows=0
+11:28:21 [INFO] 
+11:28:21 [INFO] ========================================================================
+11:28:21 [INFO] SUMMARY
+11:28:21 [INFO] ========================================================================
+11:28:21 [INFO]   [PASS] V1.connection: SELECT 1 ok
+11:28:21 [INFO]   [PASS] V1.alembic_current_eq_head: current=0003_legal_embeddings head=0003_legal_embeddings expected=0003_legal_embeddings
+11:28:21 [INFO]   [PASS] V1.table_exists: exists=True
+11:28:21 [INFO]   [PASS] V1.embedding_is_vector1024: format_type=vector(1024)
+11:28:21 [INFO]   [PASS] V1.content_sha256_is_char64: format_type=character(64)
+11:28:21 [INFO]   [PASS] V1.search_tsv_is_generated_stored: type=tsvector attgenerated=s (expected 's' = GENERATED ALWAYS STORED)
+11:28:21 [INFO]   [PASS] V1.column_chunk_id: got=character varying(128) want=character varying(128)
+11:28:21 [INFO]   [PASS] V1.column_model: got=character varying(64) want=character varying(64)
+11:28:21 [INFO]   [PASS] V1.column_dimensions: got=integer want=integer
+11:28:21 [INFO]   [PASS] V1.column_header_context: got=text want=text
+11:28:21 [INFO]   [PASS] V1.column_text: got=text want=text
+11:28:21 [INFO]   [PASS] V1.fk_cascade_to_legal_chunks: confdeltype=c (expected 'c' = CASCADE)
+11:28:21 [INFO]   [PASS] V1.dimensions_check: CHECK ((dimensions = 1024))
+11:28:21 [INFO]   [PASS] V1.hnsw_index: CREATE INDEX ix_legal_embeddings_hnsw ON public.legal_chunk_embeddings USING hnsw (embedding vector_cosine_ops) WITH (m='16', ef_construction='64')
+11:28:21 [INFO]   [PASS] V1.gin_index: CREATE INDEX ix_legal_chunk_embeddings_search_tsv ON public.legal_chunk_embeddings USING gin (search_tsv)
+11:28:21 [INFO]   [PASS] V1.hr_document_chunks_still_vector1024: document_chunks.embedding=vector(1024)
+11:28:21 [INFO]   [PASS] V1.hr_disciplinary_decisions_still_vector1024: disciplinary_decisions.embedding=vector(1024)
+11:28:21 [INFO]   [PASS] V2.row_count: expected=1289 got=1289
+11:28:21 [INFO]   [PASS] V2.covers_every_chunk: embeddings=1289 chunks=1289 expected=1289
+11:28:21 [INFO]   [PASS] V2.no_null_embedding: nulls=0
+11:28:21 [INFO]   [PASS] V2.dimensions_column: wrong=0
+11:28:21 [INFO]   [PASS] V2.vector_dims: rows whose vector_dims <> 1024: 0
+11:28:21 [INFO]   [PASS] V2.model: rows with model <> mistral-embed: 0
+11:28:21 [INFO]   [PASS] V2.no_orphans: orphans=0
+11:28:21 [INFO]   [PASS] V2.content_sha256_fresh: checked=1289 mismatched=0 []
+11:28:21 [INFO]   [PASS] V2.denormalised_text_matches: drifted rows=0
+11:28:21 [INFO]   [PASS] V3.rerun_exit_zero: returncode=0
+11:28:21 [INFO]   [PASS] V3.skipped_equals_1289: chunks with a stale hash after the rerun=0 (so skipped=1289), rows=1289
+11:28:21 [INFO]   [PASS] V3.zero_new_api_requests: audit log lines 123 -> 123
+11:28:21 [INFO]   [PASS] V3.vector_md5_unchanged: before=60e61f8afdb5c9ffa8071f7561563884 after=60e61f8afdb5c9ffa8071f7561563884
+11:28:21 [INFO]   [PASS] V3.edit_rerun_exit_zero: returncode=0
+11:28:21 [INFO]   [PASS] V3.edit_costs_exactly_one_request: new audit log lines=1 (expected 1)
+11:28:21 [INFO]   [PASS] V3.edit_new_sha_matches: stored=74346bd898e75ec1… expected=74346bd898e75ec1…
+11:28:21 [INFO]   [PASS] V3.restore_sha_matches: chunk=BLLD:CIII:M01:A013
+11:28:21 [INFO]   [PASS] V3.vector_fingerprint_restored: before=60e61f8afdb5c9ffa8071f7561563884 after=60e61f8afdb5c9ffa8071f7561563884 (identical vectors are re-derived, not restored from a backup)
+11:28:21 [INFO]   [FAIL] V4.vector_top5_contains_expected: queries missing an expected chunk in vector-only top-5: ['Q03', 'Q09', 'Q10']
+11:28:21 [INFO]   [PASS] V4.all_norms_finite: non-finite vectors=0
+11:28:21 [INFO]   [PASS] V4.sample_norms_finite: checked 64 rows, non-finite norms=0
+11:28:21 [INFO]   [PASS] V4.reembed_cosine: worst cosine=1.000000 on BLLD:CIII:M01:A015 (floor 0.999, 5 chunks re-embedded)
+11:28:21 [INFO]   [FAIL] V5.article_in_top5.vector: queries whose must_contain_article is absent from vector top-5: ['Q03', 'Q09', 'Q10']
+11:28:21 [INFO]   [PASS] V5.article_in_top5.bm25: queries whose must_contain_article is absent from bm25 top-5: []
+11:28:21 [INFO]   [PASS] V5.article_in_top5.hybrid: queries whose must_contain_article is absent from hybrid top-5: []
+11:28:21 [INFO]   [PASS] V5.rrf_k_is_60: RRF_K=60
+11:28:21 [INFO]   [PASS] V5.rrf_formula: d1=0.032522 d2=0.016129 d3=0.032266 d4=0.015873 (expect 1/61+1/62, 1/62, 1/63+1/61, 1/63)
+11:28:21 [INFO]   [PASS] V5.rrf_ranks_are_1_based: single arm, rank 1 -> 1/(k+1) = 1/61
+11:28:21 [INFO]   [PASS] V5.rrf_order: order=['d1', 'd3', 'd2', 'd4'] (expected by descending score, not by any single arm)
+11:28:21 [INFO]   [PASS] V5.rrf_tiebreak_deterministic: symmetric input resolves to ['a', 'b'] (ties broken by id)
+11:28:21 [INFO]   [PASS] V5.rrf_empty_input: empty arms -> []
+11:28:21 [INFO]   [PASS] V5.rrf_rejects_k_zero: k=0 raises ValueError
+11:28:21 [INFO]   [PASS] V6.hybrid_hit_at_5_floor: hybrid Hit@5=0.900 (floor 0.8)
+11:28:21 [INFO]   [PASS] V6.hybrid_mrr_floor: hybrid MRR=0.650 (floor 0.6)
+11:28:21 [INFO]   [PASS] V6.hybrid_not_behind_vector.hit_at_5: hybrid 0.900 vs vector 0.700 -> loss -0.200 (allowed 0.1)
+11:28:21 [INFO]   [PASS] V6.hybrid_not_behind_vector.mrr: hybrid 0.650 vs vector 0.625 -> loss -0.025 (allowed 0.1)
+11:28:21 [INFO]   [PASS] V6.hybrid_not_behind_bm25.hit_at_5: hybrid 0.900 vs bm25 0.700 -> loss -0.200 (allowed 0.1)
+11:28:21 [INFO]   [PASS] V6.hybrid_not_behind_bm25.mrr: hybrid 0.650 vs bm25 0.475 -> loss -0.175 (allowed 0.1)
+11:28:21 [INFO]   [PASS] V7.corpus_tokens_under_ceiling: build run corpus-20260928T033236-d895 spent 683096 prompt tokens (ceiling 1000000); all-time corpus-purpose total 809594 including verification re-embeds
+11:28:21 [INFO]   [PASS] V7.no_failed_requests: failed calls=0
+11:28:21 [INFO]   [PASS] V7.min_request_gap: min gap=1.0s (floor 1.0s) across 135 consecutive requests
+11:28:21 [INFO]   [PASS] V7.killed_mid_run: process was still running after 2.5s and was killed (returncode=1); 1193 rows survived the partial run
+11:28:21 [INFO]   [PASS] V7.resume_exit_zero: returncode=0
+11:28:21 [INFO]   [PASS] V7.resume_restores_full_count: rows=1289 expected=1289
+11:28:21 [INFO]   [PASS] V7.no_duplicate_rows: duplicated chunk_ids=0
+11:28:21 [INFO]   [PASS] V7.every_chunk_has_a_vector: chunks without a vector after resume: []
+11:28:21 [INFO]   [PASS] V7.resumed_rows_fresh: re-embedded 96 row(s), stale among them: 0 []
+11:28:21 [INFO]   [PASS] V8.manifest_exists: source_manifest.json
+11:28:21 [INFO]   [PASS] V8.sources_match_pinned_manifest: drifted=[] absent=[] present=6/6
+11:28:21 [INFO]   [PASS] V8.verify_db_still_70_of_70: exit=0 fails=[] (B4/B5 must not regress)
+11:28:21 [INFO]   [PASS] V8.mutation_test_still_18_of_18: exit=0 caught=18/18 missed=0
+11:28:21 [INFO]   [PASS] V8.restore_after_mutations: embed_legal.py exit=0 (re-embeds rows cascade-deleted by V8)
+11:28:21 [INFO]   [PASS] V2.final.row_count: expected=1289 got=1289
+11:28:21 [INFO]   [PASS] V2.final.covers_every_chunk: embeddings=1289 chunks=1289 expected=1289
+11:28:21 [INFO]   [PASS] V2.final.no_null_embedding: nulls=0
+11:28:21 [INFO]   [PASS] V2.final.dimensions_column: wrong=0
+11:28:21 [INFO]   [PASS] V2.final.vector_dims: rows whose vector_dims <> 1024: 0
+11:28:21 [INFO]   [PASS] V2.final.model: rows with model <> mistral-embed: 0
+11:28:21 [INFO]   [PASS] V2.final.no_orphans: orphans=0
+11:28:21 [INFO]   [PASS] V2.final.content_sha256_fresh: checked=1289 mismatched=0 []
+11:28:21 [INFO]   [PASS] V2.final.denormalised_text_matches: drifted rows=0
+11:28:21 [INFO] 
+11:28:21 [INFO] Total: 76 PASS, 2 FAIL

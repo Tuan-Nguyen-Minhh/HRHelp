@@ -74,8 +74,8 @@ cần ghi lại và xử lý ở B5 (chỉ chạy lại từ B5, không đụng 
 SELECT r.source_chunk_id, r.target_doc, r.article, r.clause, r.point,
        r.rule, r.confidence, r.target_chunk_id, r.needs_review, r.needs_reason,
        left(t.text, 120) AS target_text
-FROM chunk_references r
-LEFT JOIN chunks t ON t.chunk_id = r.target_chunk_id
+FROM legal_chunk_references r
+LEFT JOIN legal_chunks t ON t.chunk_id = r.target_chunk_id
 WHERE r.rule = 'EXPLICIT_SELF'
 ORDER BY r.ref_id
 LIMIT 20;
@@ -84,16 +84,16 @@ LIMIT 20;
 ```sql
 -- 108 ca fallback: chunk cấp Điều nhưng ref mang granularity không resolve được
 SELECT r.source_chunk_id, r.target_doc, r.article, r.clause, r.point, r.rule
-FROM chunk_references r
+FROM legal_chunk_references r
 WHERE r.target_chunk_id IS NOT NULL
   AND r.target_doc IN ('18/VBHN-VPQH','145/2020/NĐ-CP','283/2026/NĐ-CP')
   AND (
         (r.point IS NOT NULL AND NOT EXISTS (
-            SELECT 1 FROM chunks c WHERE c.document_id=r.target_doc
+            SELECT 1 FROM legal_chunks c WHERE c.document_id=r.target_doc
               AND c.article_number=r.article AND c.clause_number=r.clause
               AND c.point_letter=lower(r.point) AND c.chunk_level='POINT'))
      OR (r.point IS NULL AND r.clause IS NOT NULL AND NOT EXISTS (
-            SELECT 1 FROM chunks c WHERE c.document_id=r.target_doc
+            SELECT 1 FROM legal_chunks c WHERE c.document_id=r.target_doc
               AND c.article_number=r.article AND c.clause_number=r.clause
               AND c.chunk_level='CLAUSE'))
         )

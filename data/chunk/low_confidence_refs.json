@@ -1,0 +1,32 @@
+[
+ {
+  "chunk": "ND283_2026:CIII:M00:A047:C03",
+  "text": "Phạt tiền từ 2.000.000 đồng đến 4.000.000 đồng khi vi phạm với mỗi người lao động nhưng tối đa không quá 75.000.000 đồng đối với người sử dụng lao động có hành ",
+  "target_doc": "18/VBHN-VPQH",
+  "article": 79,
+  "clause": 1,
+  "point": null,
+  "confidence": "LOW",
+  "rule": "BOUNDARY_CHECK"
+ },
+ {
+  "chunk": "ND145_2020:CIII:M02:A008:C03:P-a",
+  "text": "Điểm a) Tổng thời gian người lao động đã làm việc thực tế cho người sử dụng lao động bao gồm: thời gian người lao động đã trực tiếp làm việc; thời gian thử việc",
+  "target_doc": "18/VBHN-VPQH",
+  "article": 176,
+  "clause": 3,
+  "point": null,
+  "confidence": "LOW",
+  "rule": "BOUNDARY_CHECK"
+ },
+ {
+  "chunk": "ND145_2020:CX:M00:A089:C06:P-a",
+  "text": "Điểm a) Người sử dụng lao động và người lao động xác định cụ thể các hành vi, hình thức xử lý kỷ luật lao động, trách nhiệm vật chất theo quy định tại khoản 2 Đ",
+  "target_doc": "18/VBHN-VPQH",
+  "article": 118,
+  "clause": 2,
+  "point": null,
+  "confidence": "LOW",
+  "rule": "BOUNDARY_CHECK"
+ }
+]

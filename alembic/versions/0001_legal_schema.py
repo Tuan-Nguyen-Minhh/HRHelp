@@ -1,8 +1,19 @@
-"""B4+B5: create documents, chunks, chunk_references
+"""B4+B5: create legal_documents, legal_chunks, legal_chunk_references.
 
 Revision ID: 0001_legal_schema
-Revises:
+Revises: 04e5c85e7957
 Create Date: 2026-09-27
+
+Table-naming note (2026-09-28): the legal corpus tables were first created as
+``documents`` / ``chunks`` / ``chunk_references``, which collide with the HR
+Help bounded context on ``main`` (``documents`` + ``document_chunks``,
+migration ``04e5c85e7957``). Two heads, one duplicated table name, and two
+Python classes both called ``Document``. The legal tables were renamed to the
+``legal_`` prefix *before this branch merged*, so no production database ever
+saw the old names — the handoff dump was regenerated from the JSON sources.
+This revision is therefore written directly with the final names instead of a
+CREATE-then-RENAME pair, and it chains after ``04e5c85e7957`` so ``alembic
+heads`` reports a single head.
 """
 from collections.abc import Sequence
 
@@ -13,17 +24,17 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "0001_legal_schema"
-down_revision: str | None = None
+down_revision: str | Sequence[str] | None = "04e5c85e7957"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
     # ------------------------------------------------------------------
-    # documents
+    # legal_documents
     # ------------------------------------------------------------------
     op.create_table(
-        "documents",
+        "legal_documents",
         sa.Column("document_id", sa.String(64), primary_key=True),
         sa.Column("doc_code", sa.String(32), nullable=False),
         sa.Column("document_type", sa.String(32), nullable=False),
@@ -47,17 +58,19 @@ def upgrade() -> None:
         ),
         sa.CheckConstraint(
             "status IN ('ACTIVE', 'PARTIALLY_AMENDED', 'INACTIVE', 'SUPERSEDED')",
-            name="ck_documents_status",
+            name="ck_legal_documents_status",
         ),
     )
     # SINGLE unique index on doc_code (no redundant UNIQUE constraint)
-    op.create_index("ix_documents_doc_code", "documents", ["doc_code"], unique=True)
+    op.create_index(
+        "ix_legal_documents_doc_code", "legal_documents", ["doc_code"], unique=True
+    )
 
     # ------------------------------------------------------------------
-    # chunks
+    # legal_chunks
     # ------------------------------------------------------------------
     op.create_table(
-        "chunks",
+        "legal_chunks",
         sa.Column("chunk_id", sa.String(128), primary_key=True),
         sa.Column("document_id", sa.String(64), nullable=False),
         # TEXT, NO FK constraint on purpose (dangling values by design)
@@ -88,26 +101,32 @@ def upgrade() -> None:
         ),
         sa.ForeignKeyConstraint(
             ["document_id"],
-            ["documents.document_id"],
+            ["legal_documents.document_id"],
             ondelete="CASCADE",
-            name="fk_chunks_document_id",
+            name="fk_legal_chunks_document_id",
         ),
         sa.CheckConstraint(
             "chunk_level IN ('ARTICLE', 'CLAUSE', 'POINT')",
-            name="ck_chunks_chunk_level",
+            name="ck_legal_chunks_chunk_level",
         ),
     )
-    op.create_index("ix_chunks_document_id", "chunks", ["document_id"])
-    op.create_index("ix_chunks_article_number", "chunks", ["article_number"])
-    op.create_index("ix_chunks_clause_number", "chunks", ["clause_number"])
-    op.create_index("ix_chunks_point_letter", "chunks", ["point_letter"])
-    op.create_index("ix_chunks_chunk_level", "chunks", ["chunk_level"])
+    op.create_index("ix_legal_chunks_document_id", "legal_chunks", ["document_id"])
+    op.create_index(
+        "ix_legal_chunks_article_number", "legal_chunks", ["article_number"]
+    )
+    op.create_index(
+        "ix_legal_chunks_clause_number", "legal_chunks", ["clause_number"]
+    )
+    op.create_index(
+        "ix_legal_chunks_point_letter", "legal_chunks", ["point_letter"]
+    )
+    op.create_index("ix_legal_chunks_chunk_level", "legal_chunks", ["chunk_level"])
 
     # ------------------------------------------------------------------
-    # chunk_references
+    # legal_chunk_references
     # ------------------------------------------------------------------
     op.create_table(
-        "chunk_references",
+        "legal_chunk_references",
         sa.Column("ref_id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("source_chunk_id", sa.String(128), nullable=False),
         sa.Column("target_chunk_id", sa.String(128), nullable=True),
@@ -138,22 +157,23 @@ def upgrade() -> None:
         ),
         sa.ForeignKeyConstraint(
             ["source_chunk_id"],
-            ["chunks.chunk_id"],
+            ["legal_chunks.chunk_id"],
             ondelete="CASCADE",
-            name="fk_chunk_references_source_chunk_id",
+            name="fk_legal_chunk_references_source_chunk_id",
         ),
         sa.ForeignKeyConstraint(
             ["target_chunk_id"],
-            ["chunks.chunk_id"],
+            ["legal_chunks.chunk_id"],
             ondelete="SET NULL",
-            name="fk_chunk_references_target_chunk_id",
+            name="fk_legal_chunk_references_target_chunk_id",
         ),
         sa.CheckConstraint(
-            "confidence IN ('HIGH', 'LOW')", name="ck_chunk_references_confidence"
+            "confidence IN ('HIGH', 'LOW')",
+            name="ck_legal_chunk_references_confidence",
         ),
         sa.CheckConstraint(
             "needs_reason IN ('BOUNDARY', 'UNRESOLVED')",
-            name="ck_chunk_references_needs_reason",
+            name="ck_legal_chunk_references_needs_reason",
         ),
         sa.UniqueConstraint(
             "source_chunk_id",
@@ -163,14 +183,14 @@ def upgrade() -> None:
             "clause",
             "point",
             "rule",
-            name="uq_chunk_references",
+            name="uq_legal_chunk_references",
             postgresql_nulls_not_distinct=True,
         ),
     )
     # Reverse index for graph traversal
     op.create_index(
-        "ix_chunk_references_target_source",
-        "chunk_references",
+        "ix_legal_chunk_references_target_source",
+        "legal_chunk_references",
         ["target_chunk_id", "source_chunk_id"],
         unique=False,
         postgresql_nulls_not_distinct=True,
@@ -178,15 +198,18 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("ix_chunk_references_target_source", table_name="chunk_references")
-    op.drop_table("chunk_references")
+    op.drop_index(
+        "ix_legal_chunk_references_target_source",
+        table_name="legal_chunk_references",
+    )
+    op.drop_table("legal_chunk_references")
 
-    op.drop_index("ix_chunks_chunk_level", table_name="chunks")
-    op.drop_index("ix_chunks_point_letter", table_name="chunks")
-    op.drop_index("ix_chunks_clause_number", table_name="chunks")
-    op.drop_index("ix_chunks_article_number", table_name="chunks")
-    op.drop_index("ix_chunks_document_id", table_name="chunks")
-    op.drop_table("chunks")
+    op.drop_index("ix_legal_chunks_chunk_level", table_name="legal_chunks")
+    op.drop_index("ix_legal_chunks_point_letter", table_name="legal_chunks")
+    op.drop_index("ix_legal_chunks_clause_number", table_name="legal_chunks")
+    op.drop_index("ix_legal_chunks_article_number", table_name="legal_chunks")
+    op.drop_index("ix_legal_chunks_document_id", table_name="legal_chunks")
+    op.drop_table("legal_chunks")
 
-    op.drop_index("ix_documents_doc_code", table_name="documents")
-    op.drop_table("documents")
+    op.drop_index("ix_legal_documents_doc_code", table_name="legal_documents")
+    op.drop_table("legal_documents")

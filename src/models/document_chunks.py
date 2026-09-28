@@ -32,5 +32,8 @@ class DocumentChunk(Base):
     clause = Column(String(50), nullable=True)
     point = Column(String(50), nullable=True)
     chunk_metadata = Column("metadata", JSONB, nullable=True)
-    embedding = Column(Vector(1536), nullable=True)
+    # Unified embedding model for the whole database: mistral-embed (1024-dim),
+    # DECISION 2026-09-26 P-029. Was Vector(1536) from the OpenAI template, but
+    # no code ever wrote that column and no production vectors exist.
+    embedding = Column(Vector(1024), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
