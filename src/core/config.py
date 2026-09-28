@@ -60,8 +60,12 @@ class Settings(BaseSettings):
     EMBEDDING_DIMENSIONS: int = 1024
     EMBEDDING_MAX_TOKENS: int = 1000
 
+    # Uppercase on purpose: these property names mirror environment
+    # variable names and are read from alembic/env.py, src/db/session.py,
+    # src/services/vector_store.py and the scripts/ helpers. Renaming them
+    # would break those call sites.
     @property
-    def SQLALCHEMY_DATABASE_URI(self) -> str:
+    def SQLALCHEMY_DATABASE_URI(self) -> str:  # noqa: N802
         return (
             f"postgresql+asyncpg://"
             f"{self.DB_USER}:{self.DB_PASSWORD}"
@@ -69,7 +73,7 @@ class Settings(BaseSettings):
         )
 
     @property
-    def SYNC_DATABASE_URI(self) -> str:
+    def SYNC_DATABASE_URI(self) -> str:  # noqa: N802
         return (
             f"postgresql+psycopg2://"
             f"{self.DB_USER}:{self.DB_PASSWORD}"
@@ -77,7 +81,7 @@ class Settings(BaseSettings):
         )
 
     @property
-    def VECTOR_DATABASE_URI(self) -> str:
+    def VECTOR_DATABASE_URI(self) -> str:  # noqa: N802
         # langchain-postgres requires the psycopg 3 driver name.
         return (
             f"postgresql+psycopg://"

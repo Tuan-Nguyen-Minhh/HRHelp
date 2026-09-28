@@ -37,7 +37,22 @@ data/*
 # of the handover. The bulky frozen step3 JSON inputs stay ignored.
 !data/chunk/
 data/chunk/*
+# The 6 frozen step3 JSON inputs MUST be tracked: seed_legal.py reads them and
+# verify_db.py V7 checks them against the pinned manifest. A clone without them
+# cannot seed and fails V7 even after importing handoff/*.dump.
+!data/chunk/chunks_*.json
+!data/chunk/document_tree_*.json
+!data/chunk/step3_stats.json
+!data/chunk/low_confidence_refs.json
 !data/chunk/source_manifest.json
+# step3 deliverables that moved out of data_pipeline_steps/step3/output/.
+# validation_report.md was tracked there and was deleted in d876159 -- it has to
+# be tracked here or it leaves the repository entirely.
+!data/chunk/CHANGELOG.md
+!data/chunk/validation_report.md
+!data/chunk/references_sample_review.md
+!data/chunk/references_sample_review.csv
+!data/chunk/deep_sweep.log
 !data/chunk/CHANGELOG_B4B5.md
 !data/chunk/mutation_test_report.md
 !data/chunk/verify_db_manual.md
