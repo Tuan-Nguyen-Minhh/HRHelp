@@ -1,6 +1,6 @@
 # Handoff — snapshot database (bản full + lịch sử)
 
-_Ngày: 2026-09-27 (B4/B5), bổ sung 2026-09-28 (B6/B7). Nguồn: PostgreSQL 16.15 + pgvector 0.8.6, container `p-029-db-1`._
+_Ngày: 2026-09-27 (B4/B5), bổ sung 2026-09-28 (B6/B7), đổi tên dump `b6b7_*` → `full_*` 2026-09-29. Nguồn: PostgreSQL 16.15 + pgvector 0.8.6, container `p-029-db-1`._
 
 ## 0. Dùng bản nào — đọc trước
 
@@ -79,10 +79,11 @@ python scripts/verify_embeddings.py # 76 check + 2 FAIL đã biết (V4/V5 đư�
 Kết quả mong đợi: `Total: 70 PASS, 0 FAIL` cho `verify_db.py`;
 `Total: 76 PASS, 2 FAIL` cho `verify_embeddings.py`.
 
-## 5. Đã kiểm chứng thế nào (bản B4/B5)
+## 5. Đã kiểm chứng thế nào (bản `b4b5` — lịch sử, không phải bản deploy)
 
-Dump **không** chỉ được tạo rồi đem đi. Nó đã được restore vào một database tạm
-`p029_restore_test` trên chính container này, rồi so sánh với database nguồn:
+Dump **này** (`b4b5_*`) không chỉ được tạo rồi đem đi. Nó đã được restore vào
+một database tạm `p029_restore_test` trên chính container này, rồi so sánh với
+database nguồn:
 
 | Hạng mục | Kết quả |
 |---|---|
@@ -111,7 +112,7 @@ không code nào từng ghi vào đó, DB dev trống cả hai cột. Migration
 `0002_unify_mistral_embed` đổi cả hai về `Vector(1024)` và dựng lại index HNSW.
 Migration từ chối chạy nếu cột còn vector non-null thay vì cắt ngắn thành rác.
 
-Bảng legal (B6) sẽ có bảng embedding riêng, không tái dùng hai cột này.
+Bảng legal (B6) có bảng embedding riêng (`legal_chunk_embeddings`), không tái dùng hai cột này.
 
 ## 5-ter. B6 + B7 — embedding và hybrid search (2026-09-28)
 
@@ -147,8 +148,8 @@ Database tạm đã bị xoá sau khi so sánh; container chỉ còn `postgres` 
   ngoài bộ 3 văn bản (Luật BHXH, Luật Công đoàn, số hiệu `124/2025/QH15`…).
   60/565 dòng ở trạng thái này.
 - **`amended_by` NULL với 2 nghị định** là SQL NULL thật (không phải JSON `null`).
-- **Bảng `legal_chunks` nặng 34 MB** dù file dump chỉ 290 KB (nén tốt vì văn bản luật
-  lặp nhiều). Đừng ngạc nhiên.
+- **Bảng `legal_chunks` nặng 34 MB** dù bản dump `b4b5` cũ chỉ 290 KB (nén tốt vì
+  văn bản luật lặp nhiều). Bản full ~5,4 MB vì thêm 1289 vector. Đừng ngạc nhiên.
 - **`legal_chunk_embeddings` lặp lại `header_context` và `text`.** Bản sao có
   chủ đích: `search_tsv` là GENERATED ALWAYS STORED nên không thể đọc cột của
   bảng khác. FK `ON DELETE CASCADE` giữ hai bảng đồng bộ và
