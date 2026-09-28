@@ -283,12 +283,38 @@ lần kiểm thử của chính V3/V7/V8 chạy nhiều vòng — nêu đầy đ
 
 Min gap giữa **122** request trong log bàn giao: **1,0000 s** — đúng trần 1 RPS.
 
-## 8. Vì sao bỏ `langchain_postgres.PGVector`
+## 8. pgvector CÓ dùng — cái bị loại là wrapper `langchain_postgres.PGVector`
 
-`PGVector` tự quản schema, không có `content_sha256`, không audit được, và
-không đọc được cột generated tsvector đã index. B7 đọc thẳng
-`legal_chunk_embeddings`. `src/services/vector_store.py` **giữ nguyên** cho agent
-runtime (bảng `regulations` của langchain-postgres, HR Help).
+**pgvector là xương sống của B6+B7.** Cột `embedding vector(1024)`, toán tử `<=>`,
+`vector_dims()`, index HNSW với `vector_cosine_ops` — tất cả là pgvector. Không
+có pgvector thì plan này không tồn tại.
+
+Cái plan 2.3 loại ra là **wrapper** `langchain_postgres.PGVector` (lớp Python của
+langchain) — không phải pgvector. Lý do đo được:
+
+| PGVector làm gì | Vấn đề với bảng này |
+|---|---|
+| Tự tạo/quản lý schema của nó | Không thêm được `content_sha256`, `model`, `dimensions` — tức mất sẵn cơ chế phát hiện vector stale (plan 2.1) |
+| Tự sinh cột `embedding` của mình | Không đọc được cột generated `search_tsv` đã index GIN, tức mất đường BM25 |
+| Bọc trong `langchain_core.documents.Document` + `metadata` JSONB | Thêm một tầng chuyển đổi cho 1289 dòng, không thêm giá trị gì |
+
+Nên B7 đọc thẳng `legal_chunk_embeddings` bằng SQLAlchemy + SQL thuần.
+
+`src/services/vector_store.py` **giữ nguyên, không sửa dòng nào** — nó phục vụ
+agent runtime qua bảng `langchain_pg_embedding` (collection `regulations`) của
+HR Help, là đường khác, không liên quan corpus legal.
+
+## 8-bis. Ba chỗ "không dùng" khác trong plan — đều là giữ cột/bảng cũ, không phải
+bỏ công nghệ
+
+- **Không dùng `PGVector`** (mục 8 trên) — bỏ *wrapper*, giữ pgvector.
+- **Không dùng Qdrant / Elasticsearch / Typesense** (plan 3.4) — 3 văn bản
+  luật là 1289 dòng, GIN + HNSW trong chính Postgres là đủ; thêm service ngoài là
+  thêm một thứ phải vận hành mà không đổi được chất lượng trả lời.
+- **Không dùng cột `Vector(1024)` có sẵn** (`document_chunks`,
+  `disciplinary_decisions`) — không phải vì xấu, mà vì thuộc bounded context
+  HR Help và không có `content_sha256` để phát hiện stale. V1 assert chúng vẫn
+  nguyên `vector(1024)`, B6 không đụng vào.
 
 ## 9. Việc còn lại — cần người review chọn
 
