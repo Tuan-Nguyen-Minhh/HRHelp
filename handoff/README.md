@@ -1,61 +1,68 @@
-# Handoff — dữ liệu B4 + B5
+# Handoff — snapshot database (bản full + lịch sử)
 
-_Ngày: 2026-09-27. Nguồn: PostgreSQL 16.15 + pgvector 0.8.6, container `p-029-db-1`._
+_Ngày: 2026-09-27 (B4/B5), bổ sung 2026-09-28 (B6/B7). Nguồn: PostgreSQL 16.15 + pgvector 0.8.6, container `p-029-db-1`._
+
+## 0. Dùng bản nào — đọc trước
+
+- **Máy mới / deploy: chỉ dùng `full_build_phase_p029.dump`.** Đó là snapshot
+  **full** của cả database ở head `0003` — đủ 4 bảng legal
+  (documents 3 / chunks 1289 / references 565 / **embeddings 1289**).
+- `b4b5_*` là **lịch sử**, giữ lại để biết B4/B5 bàn giao cái gì. Nó **thiếu
+  bảng vector** — import bản này rồi chạy `verify_db.py` thì xanh nhưng
+  `verify_embeddings.py` đỏ ngay. Đừng dùng để deploy.
 
 ## 1. Có gì trong thư mục này
 
 | File | Kích thước | Dùng để |
 |---|---|---|
-| `b4b5_build_phase_p029.dump` | 290 KB | **Dùng để import** — định dạng custom của `pg_dump`, nén |
-| `b4b5_build_phase_p029.dump.sha256` | — | Kiểm tra file còn nguyên (toàn bộ `handoff/` đã commit vào git) |
-| `b4b5_build_phase_p029.sql` | 2,4 MB | SQL thuần, để đọc/diff/review, không dùng để import |
+| `full_build_phase_p029.dump` | ~5,4 MB | **DÙNG BẢN NÀY để import** — snapshot full, định dạng custom của `pg_dump`, nén |
+| `full_build_phase_p029.dump.sha256` | — | Kiểm tra file còn nguyên (toàn bộ `handoff/` đã commit vào git) |
+| `full_build_phase_p029.schema.sql` | 50 KB | **Chỉ phần schema, không có data** — để đọc/diff/review DDL (nhất là `0003`); KHÔNG dùng để import |
+| `b4b5_build_phase_p029.dump` | 290 KB | Lịch sử B4/B5 (thiếu bảng vector) — không dùng để deploy |
+| `b4b5_build_phase_p029.dump.sha256` | — | Kiểm tra file lịch sử còn nguyên |
+| `b4b5_build_phase_p029.sql` | 2,4 MB | SQL thuần B4/B5, để đọc/diff/review |
 | `source_manifest.json` | — | sha256 của 6 file JSON nguồn mà B4/B5 đọc vào |
 
-Cả thư mục `handoff/` (2,57 MB) đã nằm trong git, clone về là có đủ — không cần
+Cả thư mục `handoff/` đã nằm trong git, clone về là có đủ — không cần
 chuyển file qua Zalo/Drive.
 
-## 2. Import vào máy mới
+## 2. Import vào máy mới (bản full)
 
 ```bash
 # 1. Bật Postgres (đã có trong docker-compose.yml, service tên `db`)
 docker compose up -d db
 
 # 2. Kiểm tra file dump còn nguyên
-#    Windows:  certutil -hashfile b4b5_build_phase_p029.dump SHA256
-#    Linux/mac:  shasum -a 256 b4b5_build_phase_p029.dump
-#    So với:     f4ff3aa890cdffeaaa1385be48a032bb61b3d82138f25dee8f07b3e13e69fcfa
+#    Windows:  certutil -hashfile full_build_phase_p029.dump SHA256
+#    Linux/mac:  shasum -a 256 full_build_phase_p029.dump
+#    So với:     d5d8b794ddb07d142607ff7e3ab372955ece3d3bfa9d25ef72d522ee0821da1f
 #    Git đã bảo toàn file nên bước này là tùy chọn; hữu ích khi file bị tải
 #    lại qua trung gian hoặc khi muốn chắc chắn bản dump còn nguyên.
 
 # 3. Import
-docker cp b4b5_build_phase_p029.dump p-029-db-1:/tmp/b4b5.dump
+docker cp full_build_phase_p029.dump p-029-db-1:/tmp/full.dump
 docker exec p-029-db-1 pg_restore \
   -U postgres -d build_phase_p029 \
   --no-owner --no-privileges --clean --if-exists \
-  /tmp/b4b5.dump
+  /tmp/full.dump
 ```
 
 **Không cần chạy Alembic** — dump đã chứa cả bảng `alembic_version` với giá trị
-`0001_legal_schema`, và cả extension `vector` sẽ được tạo lại nếu máy mới thiếu
+`0003_legal_embeddings`, và cả extension `vector` sẽ được tạo lại nếu máy mới thiếu
 (yêu cầu image Postgres có pgvector, giống `p029-postgres`).
 
-Nếu muốn nạp từ bản SQL thuần thay vì file `.dump`:
-
-```bash
-docker cp b4b5_build_phase_p029.sql p-029-db-1:/tmp/b4b5.sql
-docker exec p-029-db-1 psql -U postgres -d build_phase_p029 -f /tmp/b4b5.sql
-```
-
-## 3. Nội dung
+## 3. Nội dung (bản full)
 
 | Bảng | Số dòng | Ý nghĩa |
 |---|---|---|
 | `legal_documents` | 3 | 3 văn bản luật + hiệu lực + footnote sửa đổi |
 | `legal_chunks` | 1289 | Nội dung luật đã chia nhỏ (Điều / khoản / điểm) |
 | `legal_chunk_references` | 565 | Đồ thị dẫn chiếu nối 3 văn bản |
-| `alembic_version` | 1 | Phiên bản migration đã áp dụng |
+| `legal_chunk_embeddings` | 1289 | Vector `mistral-embed` 1024-dim + tsvector BM25 (B6/B7) |
+| `alembic_version` | 1 | Phiên bản migration đã áp dụng (`0003_legal_embeddings`) |
 
-Chi tiết hơn: `data/chunk/CHANGELOG_B4B5.md`.
+Chi tiết B4/B5: `data/chunk/CHANGELOG_B4B5.md`. Chi tiết B6/B7:
+`data/chunk/CHANGELOG_B6B7.md`.
 
 ## 4. Sau khi import phải chạy lại verify
 
@@ -64,12 +71,15 @@ Không tin lời tôi, tự kiểm. Cần `data/chunk/*.json` (6 file) và
 
 ```bash
 python -m alembic upgrade head      # no-op, dump đã ở head
-python scripts/verify_db.py         # 70 check
+python scripts/verify_db.py         # 70 check B4/B5
+python scripts/verify_embeddings.py # 76 check + 2 FAIL đã biết (V4/V5 đường
+                                    # vector-only — xem CHANGELOG_B6B7.md mục 5)
 ```
 
-Kết quả mong đợi: `Total: 70 PASS, 0 FAIL`.
+Kết quả mong đợi: `Total: 70 PASS, 0 FAIL` cho `verify_db.py`;
+`Total: 76 PASS, 2 FAIL` cho `verify_embeddings.py`.
 
-## 5. Đã kiểm chứng thế nào
+## 5. Đã kiểm chứng thế nào (bản B4/B5)
 
 Dump **không** chỉ được tạo rồi đem đi. Nó đã được restore vào một database tạm
 `p029_restore_test` trên chính container này, rồi so sánh với database nguồn:
@@ -106,19 +116,10 @@ Bảng legal (B6) sẽ có bảng embedding riêng, không tái dùng hai cột 
 ## 5-ter. B6 + B7 — embedding và hybrid search (2026-09-28)
 
 Plan `data_pipeline_steps/step6_7_plan.md` thêm bảng `legal_chunk_embeddings`
-(1289 vector `mistral-embed` 1024-dim) + HNSW + GIN trên `search_tsv`. **Dump
-`b4b5_*.dump` đã cũ** — nó không có bảng này, import vào rồi chạy `verify_db.py`
-thì xanh nhưng `verify_embeddings.py` đỏ ngay.
+(1289 vector `mistral-embed` 1024-dim) + HNSW + GIN trên `search_tsv`. Bản dump
+`b4b5_*` ở trên không có bảng này. **Bản full ở mục 0–4 mới là bản deploy.**
 
-| File | Dùng để |
-|---|---|
-| `b6b7_build_phase_p029.dump` | **dùng để import** (thay cho `b4b5_*.dump`) |
-| `b6b7_build_phase_p029.dump.sha256` | kiểm tra file còn nguyên |
-| `b6b7_build_phase_p029.sql` | **SQL thuần chỉ phần schema** (50 KB) để review DDL của `0003`; KHÔNG phải data dump thuần như `b4b5_*.sql` |
-
-Sau khi import bản `b6b7` thì `alembic_version` là `0003_legal_embeddings`.
-
-### Đã kiểm chứng thế nào (bản `b6b7`)
+### Đã kiểm chứng thế nào (bản full)
 
 Không chỉ tạo rồi đem đi. Đã `pg_restore` vào database tạm `p029_restore_b6b7`
 trên chính container này rồi so với database nguồn:

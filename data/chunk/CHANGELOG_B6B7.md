@@ -329,7 +329,9 @@ bỏ công nghệ
      khác (`bge-m3` tiếng Việt) — tốn thêm 1 vòng embed ~0,7 M token.
 2. **V-manual chưa ký.** `eval/verify_retrieval_manual.md` là checklist đọc tay
    top-5 của cả 10 query; chưa có chữ ký thì theo plan mục 4 **chưa nghiệm**.
-3. **Dump milestone.** `handoff/` còn bản `b4b5_*` cũ, thiếu bảng vector.
+3. **Dump milestone.** ~~`handoff/` còn bản `b4b5_*` cũ, thiếu bảng vector.~~
+   Xong 2026-09-29: `handoff/full_build_phase_p029.dump` là snapshot full
+   (đủ 4 bảng legal, head `0003`); `b4b5_*` giữ làm lịch sử.
 
 ## 10. Không làm
 
