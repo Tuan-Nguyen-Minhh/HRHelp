@@ -38,10 +38,10 @@ Ba vai trò trong schema là `HR`, `MANAGER`, `LEGAL`. Mức chế tài là khi�
 | # | Feature | Vì sao cần | Bám bảng nào |
 |---|---|---|---|
 | 1 | Đăng nhập và phân quyền | Hồ sơ kỷ luật là dữ liệu nhạy cảm. Người tạo hồ sơ, người được xem, người được duyệt phải khác nhau | `users`, `case_access` |
-| 2 | Mở hồ sơ vụ việc | Mọi tư vấn phải gắn một vụ, một nhân viên, một ngày xảy ra | `cases` |
-| 3 | Chat làm rõ tình tiết | Luật không áp được nếu thiếu loại hợp đồng, số ngày nghỉ, đã lập biên bản chưa, đã yêu cầu giải trình chưa | `conversations`, `messages`, `case_facts` |
+| 2 | Mở hồ sơ vụ việc | Mọi tư vấn phải gắn một vụ, một nhân viên, một ngày xảy ra | `cases`, `conversations` |
+| 3 | Chat làm rõ tình tiết | Luật không áp được nếu thiếu loại hợp đồng, số ngày nghỉ, đã lập biên bản chưa, đã yêu cầu giải trình chưa | `conversations`, `messages`, `case_facts`, `agent_runs` |
 | 4 | Kho văn bản theo ngày hiệu lực | Căn cứ là bản đang có hiệu lực vào `incident_date`, không phải bản đang mở hôm nay | `policies`, `policy_versions`, `documents`, `document_chunks` |
-| 5 | Đối chiếu và trích dẫn | Đề xuất không có điều, khoản, điểm thì HR không dùng được | `recommendation_citations` |
+| 5 | Đối chiếu và trích dẫn | Đề xuất không có điều, khoản, điểm thì HR không dùng được | `tool_calls`, `agent_retrievals` |
 | 6 | Đề xuất chế tài, quy trình, mức rủi ro | Đây là đầu ra cốt lõi của PRD | `recommendations`, `case_violations` |
 | 7 | Soạn nháp | Biên bản, yêu cầu giải trình, quyết định, ticket. HR chọn có soạn hay chỉ lưu lời tư vấn | `case_drafts` |
 | 8 | Pháp chế duyệt | Người kết luận vẫn là người. Agent không tự ban hành | `reviews` |
@@ -170,99 +170,149 @@ sequenceDiagram
 
 ## 2. Mở hồ sơ vụ việc
 
-Mọi tư vấn gắn một vụ, một nhân viên và một ngày xảy ra. `incident_date` là mốc để feature 5 chọn phiên bản văn bản còn hiệu lực.
+Mọi tư vấn gắn một vụ, một nhân viên và một ngày xảy ra. `incident_date` là mốc để feature 5 chọn phiên bản văn bản còn hiệu lực. `POST /api/v1/cases` chạy node `open` của case graph rồi dừng. Chưa có tin nhắn, chưa có `agent_runs`, chưa rút fact.
+
+Client gửi header `X-User-Id`. User phải đang active, role `HR` hoặc `MANAGER`.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor HR as HR hoặc Quản lý
-    participant UI as Web
     participant API as FastAPI
+    participant CG as Case graph
     participant DB as PostgreSQL
 
-    HR->>UI: Mở form hồ sơ mới
-    UI->>API: POST /cases
+    HR->>API: POST /api/v1/cases, header X-User-Id
     Note right of API: body gồm case_code, employee_code, employee_name, description, incident_date
-    API->>DB: SELECT cases theo case_code
-    alt case_code đã tồn tại
-        API-->>UI: 409
-        UI-->>HR: Mã hồ sơ bị trùng
-    else Mã hợp lệ
-        API->>DB: INSERT cases created_by, status OPEN
-        API->>DB: INSERT conversations user_id, case_id, status ACTIVE
-        API-->>UI: case_id và conversation_id
-        UI-->>HR: Mở màn chat của hồ sơ, status OPEN
+    API->>DB: SELECT users theo X-User-Id
+    alt Không có user hoặc is_active false
+        API-->>HR: 401
+    else Role không phải HR hoặc MANAGER
+        API-->>HR: 403
+    else Được mở hồ sơ
+        API->>CG: ainvoke step = open
+        CG->>DB: SELECT cases theo case_code
+        alt case_code đã tồn tại
+            CG-->>API: 409
+            API-->>HR: Mã hồ sơ bị trùng
+        else Mã hợp lệ
+            CG->>DB: INSERT cases created_by, status OPEN
+            CG->>DB: INSERT conversations user_id, case_id, title = case_code, status ACTIVE
+            CG-->>API: case_id, conversation_id, status OPEN
+            API-->>HR: 201
+        end
+    end
+
+    HR->>API: GET /api/v1/cases/id, header X-User-Id
+    API->>DB: SELECT cases và conversations ACTIVE
+    alt Không phải người tạo
+        API-->>HR: 403
+    else Hồ sơ không có
+        API-->>HR: 404
+    else Đúng người tạo
+        API-->>HR: Header hồ sơ và conversation_id
     end
 ```
 
 ## 3. Chat làm rõ tình tiết
 
-Agent không nhảy tới một mức chế tài khi chưa biết loại hợp đồng, đã báo vắng bằng hình thức nào, đã lập biên bản chưa, đã gửi yêu cầu giải trình chưa.
+`POST /api/v1/cases/{id}/messages` chỉ chạy `step = clarify`. Graph đi `extract`, rồi `ask` hoặc dừng. Lượt chat này không vào retrieval và không đề xuất mức.
 
-Fact bắt buộc cố định theo loại việc, lưu ở `case_facts` với `fact_key`. Ví dụ nghỉ không phép: `contract_type`, `absence_days`, `notice_form`, `minutes_made`, `explanation_requested`. HR xác nhận thì `confirmed = true`. Chỉ fact đã xác nhận mới được đưa vào đề xuất.
+`case_facts` là phiếu tình tiết hiện tại của hồ sơ, một dòng cho mỗi `fact_key`. Fact đã `confirmed` không bị câu sau đè. Fact chưa xác nhận thì được thay bằng giá trị mới rút từ `cases.description` và các tin `USER`. Chat ghi `confirmed = false` cùng `source_message_id`. HR xác nhận ở `POST /api/v1/cases/{id}/facts/confirm` thì dòng đó thành `confirmed = true`, có `confirmed_by` và `confirmed_at`.
+
+Bộ fact bắt buộc theo loại vụ:
+
+| Loại vụ | `fact_key` |
+|---|---|
+| Nghỉ không phép `UNAUTHORIZED_ABSENCE` | `contract_type`, `absence_days`, `notice_form`, `minutes_made`, `explanation_requested` |
+| Đi muộn `LATE` | `contract_type`, `late_days`, `minutes_made`, `explanation_requested` |
+| Chung `GENERAL` | `contract_type`, `violation_summary`, `minutes_made`, `explanation_requested` |
+
+Hồ sơ còn nhận tin khi status là `OPEN`, `NEED_INFO`, `ANALYZED`, hoặc `REJECTED`. Status sau đó trả 409.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor HR as HR
-    participant UI as Web
+    actor HR as HR hoặc Quản lý
     participant API as FastAPI
-    participant AG as LangGraph
+    participant CG as Case graph
+    participant EX as extract
+    participant ASK as ask
     participant DB as PostgreSQL
 
-    loop Cho đến khi mọi fact bắt buộc được xác nhận
-        HR->>UI: Gửi mô tả hoặc câu trả lời
-        UI->>API: POST /cases/id/messages
-        API->>DB: INSERT messages role USER, gắn conversation_id
-        API->>DB: INSERT agent_runs status RUNNING, message_id
-        API->>AG: invoke query, case_id, incident_date, history
-        AG->>DB: SELECT case_facts của hồ sơ
-        AG->>AG: Trích fact_key và fact_value từ tin nhắn
-        AG->>DB: UPSERT case_facts, source_message_id, confirmed false
-        alt Còn thiếu fact bắt buộc
-            AG->>DB: UPDATE cases status NEED_INFO
-            AG->>DB: INSERT messages role ASSISTANT, đúng câu còn thiếu
-            AG->>DB: UPDATE agent_runs SUCCEEDED, output_message_id
-            API-->>UI: Câu hỏi làm rõ
-            UI-->>HR: Hiện câu hỏi, chưa có mức chế tài
-        else Đủ key nhưng HR chưa xác nhận
-            AG->>DB: INSERT messages role ASSISTANT, danh sách fact chờ xác nhận
-            AG->>DB: UPDATE agent_runs SUCCEEDED
-            API-->>UI: Form từng fact
-            HR->>UI: Xác nhận hoặc sửa giá trị
-            UI->>API: POST /cases/id/facts/confirm
-            API->>DB: UPDATE case_facts confirmed true, confirmed_by, confirmed_at
+    HR->>API: POST /api/v1/cases/id/messages, X-User-Id
+    API->>DB: SELECT users, cases, conversations ACTIVE
+    alt Không được sửa hồ sơ
+        API-->>HR: 401, 403, 404 hoặc 409
+    else Được chat
+        API->>DB: INSERT messages role USER
+        API->>DB: INSERT agent_runs RUNNING, model hr-help-rules
+        API->>CG: ainvoke step = clarify
+        CG->>EX: description + tin USER + case_facts đã lưu
+        EX->>EX: Gộp fact, dòng confirmed giữ nguyên
+        alt Còn thiếu ô hoặc chưa confirmed
+            EX->>ASK: Một câu hỏi hoặc danh sách chờ xác nhận
+            ASK-->>API: dừng
+            API->>DB: UPSERT case_facts confirmed false
+            API->>DB: cases status NEED_INFO
+            API->>DB: INSERT messages ASSISTANT, agent_runs SUCCEEDED
+            API-->>HR: Câu hỏi, chưa có CaseHandoff
+        else Fact bắt buộc đã khóa
+            EX-->>API: dừng, không vào retrieve
+            API->>DB: INSERT messages ASSISTANT, agent_runs SUCCEEDED
+            alt Đã có câu trả lời lưu sẵn
+                API-->>HR: Fact đã khóa, câu trả lời đang giữ
+            else Chưa có câu trả lời
+                API-->>HR: Xác nhận lại để đối chiếu
+            end
         end
     end
-    API->>DB: INSERT case_violations violation_type_id, severity, evidence
-    API->>AG: Fact đã khóa, bắt đầu đối chiếu văn bản
+
+    HR->>API: POST /api/v1/cases/id/facts/confirm
+    API->>CG: ainvoke step = clarify, đọc family và fact hiện có
+    alt fact_key không thuộc bộ của vụ
+        API-->>HR: 422
+    else Payload không đổi và vẫn thiếu fact
+        API-->>HR: Câu hỏi tiếp, không ghi thêm
+    else Payload không đổi, fact đã khóa, đã có câu trả lời
+        API-->>HR: Câu trả lời đang lưu
+    else Payload không đổi, fact đã khóa, chưa có câu trả lời
+        Note over API,CG: Cùng request chuyển sang feature 5
+    else HR sửa hoặc xác nhận
+        API->>DB: UPDATE case_facts confirmed, confirmed_by, confirmed_at
+        API->>CG: ainvoke step = clarify lần nữa
+        alt Vẫn thiếu fact bắt buộc
+            API->>DB: cases NEED_INFO, messages ASSISTANT
+            API-->>HR: Câu hỏi tiếp
+        else Mọi fact đã khóa
+            Note over API,CG: Cùng request chuyển sang feature 5
+        end
+    end
 ```
 
-Bên trong LangGraph, một lượt chat đi qua các node sau. Node tra cứu và node đề xuất chỉ chạy sau khi fact đã khóa.
+`GET /api/v1/cases/{id}/facts` chỉ đọc form tình tiết. Nó chạy `extract` để chiếu giá trị đang đọc được từ mô tả và tin `USER`, không ghi database.
+
+Graph của một lượt chat:
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant API as FastAPI
-    participant EX as Node trích fact
-    participant ASK as Node hỏi lại
-    participant RET as Node tra cứu
-    participant PRE as Node tiền lệ
-    participant REC as Node đề xuất
+    participant CG as Case graph
+    participant EX as extract
+    participant ASK as ask
     participant DB as PostgreSQL
 
-    API->>EX: State gồm tin nhắn, fact cũ, incident_date
-    EX->>DB: Đọc và ghi case_facts
-    alt Thiếu fact hoặc chưa confirmed
-        EX->>ASK: Danh sách key còn thiếu
-        ASK->>DB: Ghi câu hỏi vào messages
-        ASK-->>API: Dừng graph, chờ HR trả lời
-    else Fact đã confirmed
-        EX->>RET: Fact khóa và incident_date
-        RET->>PRE: Chunk văn bản đã lọc theo ngày
-        PRE->>REC: Tiền lệ và số vụ tái phạm
-        REC->>DB: Ghi recommendation và citation
-        REC-->>API: Câu trả lời cho HR
+    API->>CG: step = clarify
+    CG->>EX: text và stored facts
+    alt Còn thiếu fact hoặc chưa confirmed
+        EX->>ASK: missing_keys
+        ASK-->>CG: question
+        CG-->>API: dừng
+        API->>DB: case_facts confirmed false, messages ASSISTANT
+    else facts_locked
+        EX-->>CG: facts và fact_lines
+        CG-->>API: dừng
     end
 ```
 
@@ -315,33 +365,64 @@ sequenceDiagram
 
 ## 5. Đối chiếu và trích dẫn
 
-Truy vấn lọc trước theo ngày: chỉ lấy phiên bản có `effective_from <= incident_date` và `effective_to` trống hoặc `effective_to >= incident_date`. Sau đó mới xếp theo độ giống nội dung.
+Nhánh này chạy trong cùng request `POST /api/v1/cases/{id}/facts/confirm` sau khi mọi fact bắt buộc đã `confirmed` và hồ sơ có `incident_date`. Case graph nhận `step = cite`, đi `extract` → `retrieve` → `handoff`, rồi dừng ở `CaseHandoff`. Feature 6 đọc message đó khi được gắn.
 
-Nghị định 283 chỉ được gắn như căn cứ cảnh báo thanh tra. Nó không đi vào mức kỷ luật nội bộ. Cách tách này làm ở feature 11.
+`retrieve` dựng `SearchQuery` từ `cases.description` và `fact_lines`, rồi gọi retrieval graph. Ba nhánh `similarity`, `bm25`, `lexical` đọc chunk của phiên bản `ACTIVE` còn hiệu lực tại `incident_date` (`effective_from` đến `effective_to`, `effective_to` tính cả ngày đó), tài liệu `CHUNKED` hoặc `EMBEDDED`. `similarity` chỉ trả đoạn khi query có vector 1536 chiều. Một nhánh lỗi thì kênh đó rỗng, hai nhánh kia vẫn được gộp. `rrf` rồi `rerank` giữ tối đa 8 đoạn, `retrieval = hybrid`. Cả ba rỗng thì `page_index` lấy đầu điều theo cụm neo của family. Mục lục cũng không khớp thì `passages` rỗng và `retrieval = empty`.
+
+`missing_internal_rule` trên message là `true` khi không đoạn nào có `policy_type = INTERNAL_RULE`.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant AG as LangGraph
+    actor HR as HR hoặc Quản lý
+    participant API as FastAPI
+    participant CG as Case graph
+    participant EX as extract
+    participant RET as retrieve
+    participant RG as Retrieval graph
+    participant HO as handoff
     participant DB as PostgreSQL
-    participant VS as pgvector
 
-    AG->>DB: SELECT policy_versions còn hiệu lực tại incident_date
-    Note right of DB: effective_from nhỏ hơn hoặc bằng ngày vụ việc, effective_to trống hoặc lớn hơn hoặc bằng ngày đó, status ACTIVE
-    DB-->>AG: Danh sách policy_version_id hợp lệ
-    AG->>DB: INSERT tool_calls tên search_policy, input là query và incident_date
-    AG->>VS: Tìm chunk trong các version hợp lệ
-    VS-->>AG: Chunk, điểm similarity, article, clause, point
-    loop Từng chunk được giữ lại
-        AG->>DB: INSERT agent_retrievals chunk_id, score
-        AG->>DB: Giữ quote, article, clause, point để gắn citation ở bước đề xuất
+    Note over HR,CG: Tiếp từ feature 3 khi fact đã khóa
+    alt Hồ sơ chưa có incident_date
+        API-->>HR: 422
+    else Có ngày vụ việc
+        API->>DB: INSERT messages SYSTEM, fact đã chốt
+        API->>DB: INSERT agent_runs RUNNING, model hr-help-rules
+        API->>CG: ainvoke step = cite
+        CG->>EX: fact đã confirmed
+        EX->>EX: fact_lines
+        EX->>RET: description, fact_lines, incident_date
+        RET->>DB: INSERT tool_calls search_policy RUNNING
+        Note right of DB: input gồm query, incident_date, terms, bốn tên nhánh
+        RET->>RG: ainvoke RetrievalState
+        par Chunk còn hiệu lực tại incident_date
+            RG->>DB: similarity
+            RG->>DB: bm25
+            RG->>DB: lexical
+        end
+        RG->>RG: rrf đọc cả ba kênh
+        RG->>RG: rerank, tối đa 8 đoạn
+        alt Còn đoạn
+            RG-->>RET: hits, retrieval = hybrid
+        else Ba nhánh rỗng
+            RG->>DB: page_index, đầu điều theo family
+            alt Mục lục khớp
+                RG-->>RET: hits, retrieval = page_index
+            else Mục lục không khớp
+                RG-->>RET: hits rỗng, retrieval = empty
+            end
+        end
+        RET->>DB: UPDATE tool_calls SUCCEEDED, output số đoạn và retrieval
+        RET->>DB: INSERT agent_retrievals chunk_id, score, rank
+        RET->>HO: hits và facts đã khóa
+        HO->>HO: đóng CaseHandoff
+        Note right of HO: missing_internal_rule khi không có đoạn INTERNAL_RULE
+        HO-->>API: dừng
+        API->>DB: INSERT messages ASSISTANT, metadata.kind = handoff
+        API->>DB: UPDATE agent_runs SUCCEEDED, output_message_id
+        API-->>HR: CaseHandoff
     end
-    alt Không có chunk nội quy INTERNAL_RULE
-        AG->>AG: Đánh dấu thiếu nội quy, risk sẽ lên HIGH
-    else Có cả luật và nội quy
-        AG->>AG: Giữ hai nhóm căn cứ riêng
-    end
-    AG->>DB: UPDATE tool_calls output và thời điểm kết thúc
 ```
 
 ## 6. Đề xuất chế tài, quy trình, mức rủi ro

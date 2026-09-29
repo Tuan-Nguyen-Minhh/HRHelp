@@ -1,0 +1,374 @@
+"""Clarify a case in chat, then cite once HR confirms the facts."""
+
+import logging
+from uuid import UUID
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.agents.case_graph import build_case_graph
+from src.agents.handoff import CaseHandoff
+from src.agents.runs import finish_run, mark_run_failed, start_run
+from src.common.access import require_case, require_mutable_case
+from src.common.errors import AppError
+from src.features.answer.model.answers import load, withdraw
+from src.features.answer.schema import AnswerView
+from src.features.cite.model.search import search_policies
+from src.features.clarify.model.assess import ClarifyPlan, StoredFact, build_question
+from src.features.clarify.model.catalog import required_specs
+from src.features.clarify.model.store import (
+    FactWrite,
+    NewMessage,
+    add_message,
+    list_fact_rows,
+    list_user_text,
+    save_extracted,
+    write_fact,
+)
+from src.features.clarify.schema import (
+    ConfirmFactsRequest,
+    FactConfirmItem,
+    FactListResponse,
+    SendMessageRequest,
+    TurnResponse,
+)
+from src.features.clarify.schema.present import present_facts
+from src.features.opencase.model.cases import active_conversation
+from src.models.agent_runs import AgentRun
+from src.models.cases import Case
+from src.models.conversations import Conversation
+from src.models.users import User
+
+logger = logging.getLogger(__name__)
+
+_PIPELINE = "hr-help-rules"
+_LOCKED = (
+    "Tình tiết bắt buộc đã được khóa. Câu trả lời đã lưu vẫn giữ. "
+    "Muốn sửa một fact, hãy gửi giá trị mới qua xác nhận tình tiết."
+)
+_NEED_PUBLISH = "Tình tiết đã khóa nhưng chưa có câu trả lời. Hãy xác nhận lại để chạy đối chiếu."
+
+
+async def handle_message(
+    session: AsyncSession,
+    actor: User,
+    case_id: UUID,
+    payload: SendMessageRequest,
+) -> TurnResponse:
+    """Store the user message, extract facts, and ask for whatever is still open."""
+    case = await require_mutable_case(session, case_id, actor)
+    conversation = await _conversation(session, case.id)
+    message = await add_message(session, NewMessage(conversation.id, "USER", payload.content))
+    run = await start_run(session, conversation.id, message.id, _PIPELINE)
+    await session.commit()
+    try:
+        return await _clarify(session, case, conversation, run, message.id)
+    except Exception as exc:
+        await _fail(session, run.id, exc)
+        if isinstance(exc, AppError):
+            raise
+        raise AppError(500, "Không xử lý được lượt chat. Hồ sơ giữ nguyên trạng thái trước đó.") from exc
+
+
+async def confirm_facts(
+    session: AsyncSession,
+    actor: User,
+    case_id: UUID,
+    payload: ConfirmFactsRequest,
+) -> TurnResponse:
+    """Confirm facts. A complete set runs retrieval and stores the answer.
+
+    The fact update and the answer commit together. A failed search leaves the
+    case unchanged, and HR can confirm again.
+    """
+    case = await require_mutable_case(session, case_id, actor)
+    conversation = await _conversation(session, case.id)
+    try:
+        response = await _confirm(session, actor, case, conversation, payload.facts)
+        await session.commit()
+    except AppError:
+        await session.rollback()
+        raise
+    except Exception as exc:
+        logger.exception("confirm failed")
+        await session.rollback()
+        raise AppError(500, "Không chốt được câu trả lời. Hồ sơ chưa đổi.") from exc
+    return response
+
+
+async def list_facts(session: AsyncSession, actor: User, case_id: UUID) -> FactListResponse:
+    """Project stored facts plus values already readable from the narrative."""
+    case = await require_case(session, case_id, actor)
+    conversation = await active_conversation(session, case.id)
+    conversation_id = conversation.id if conversation else None
+    plan = await _plan(session, case, conversation_id)
+    return FactListResponse(
+        case_id=case.id,
+        case_status=case.status,
+        family=plan.family,
+        facts=present_facts(plan.family, plan.merged),
+        missing_fact_keys=plan.missing_keys,
+        facts_locked=plan.locked,
+    )
+
+
+async def _clarify(
+    session: AsyncSession,
+    case: Case,
+    conversation: Conversation,
+    run: AgentRun,
+    source_id: UUID,
+) -> TurnResponse:
+    plan = await _planned(session, case, conversation.id, source_id)
+    if plan.locked:
+        answer = await load(session, case)
+        text = _LOCKED if answer is not None else _NEED_PUBLISH
+    else:
+        await _reopen(session, case)
+        answer = None
+        text = _question(plan)
+    assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", text, {"kind": "clarify"}))
+    finish_run(run, assistant.id)
+    await session.commit()
+    return _turn(case, conversation.id, plan, text, answer, None, run.id)
+
+
+async def _confirm(
+    session: AsyncSession,
+    actor: User,
+    case: Case,
+    conversation: Conversation,
+    items: list[FactConfirmItem],
+) -> TurnResponse:
+    plan = await _plan(session, case, conversation.id)
+    stored = await _stored(session, case.id)
+    _check_keys(plan.family, items)
+    if not _changed(stored, plan.merged, items):
+        return await _unchanged(session, case, conversation, plan)
+    await _apply(session, actor.id, case.id, stored, plan.merged, items)
+    plan = await _planned(session, case, conversation.id, None)
+    if not plan.locked:
+        await _reopen(session, case)
+        question = _question(plan)
+        await add_message(session, NewMessage(conversation.id, "ASSISTANT", question, {"kind": "clarify"}))
+        return _turn(case, conversation.id, plan, question, None, None, None)
+    return await _cite(session, case, conversation, plan)
+
+
+async def _unchanged(session: AsyncSession, case: Case, conversation: Conversation, plan: ClarifyPlan) -> TurnResponse:
+    if not plan.locked:
+        question = _question(plan)
+        return _turn(case, conversation.id, plan, question, None, None, None)
+    existing = await load(session, case)
+    if existing is not None:
+        return _turn(case, conversation.id, plan, _LOCKED, existing, None, existing.agent_run_id)
+    return await _cite(session, case, conversation, plan)
+
+
+async def _cite(session: AsyncSession, case: Case, conversation: Conversation, plan: ClarifyPlan) -> TurnResponse:
+    """Run cite and return the handoff. The sanction agent is a later, separate graph."""
+    if case.incident_date is None:
+        raise AppError(422, "Hồ sơ chưa có ngày xảy ra việc nên chưa đối chiếu được văn bản.")
+    facts = _locked_facts(plan)
+    text = await _transcript(session, case, conversation.id)
+    system = await add_message(
+        session, NewMessage(conversation.id, "SYSTEM", _confirmed_text(facts), {"kind": "facts_confirmed"})
+    )
+    run = await start_run(session, conversation.id, system.id, _PIPELINE)
+    graph = build_case_graph(lambda query: search_policies(session, query))
+    state = await graph.ainvoke(
+        {
+            "step": "cite",
+            "text": text,
+            "stored": {key: StoredFact(value, True) for key, value in facts.items()},
+            "description": case.description or "",
+            "incident_date": case.incident_date,
+            "employee_name": case.employee_name,
+            "agent_run_id": run.id,
+        }
+    )
+    message = state.get("handoff")
+    if not isinstance(message, CaseHandoff):
+        raise AppError(422, "Tình tiết chưa khóa nên chưa đối chiếu văn bản.")
+    note = _cited_text(message)
+    assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff"}))
+    finish_run(run, assistant.id)
+    return _turn(case, conversation.id, plan, note, None, message, run.id)
+
+
+async def _planned(session: AsyncSession, case: Case, conversation_id: UUID, source_id: UUID | None) -> ClarifyPlan:
+    """Extract, then persist new unconfirmed values before the caller commits."""
+    plan = await _plan(session, case, conversation_id)
+    stored = await _stored(session, case.id)
+    await _persist_extracted(session, case.id, stored, plan.merged, source_id)
+    return plan
+
+
+async def _plan(session: AsyncSession, case: Case, conversation_id: UUID | None) -> ClarifyPlan:
+    text = await _transcript(session, case, conversation_id)
+    stored = await _stored(session, case.id)
+    graph = build_case_graph(lambda query: search_policies(session, query))
+    state = await graph.ainvoke(
+        {
+            "step": "clarify",
+            "text": text,
+            "stored": stored,
+            "description": case.description or "",
+        }
+    )
+    return ClarifyPlan(
+        state["family"],
+        state["merged"],
+        list(state.get("missing_keys") or []),
+        bool(state["facts_locked"]),
+        state.get("question") or "",
+    )
+
+
+def _turn(
+    case: Case,
+    conversation_id: UUID,
+    plan: ClarifyPlan,
+    assistant_text: str,
+    answer: AnswerView | None,
+    handoff: CaseHandoff | None,
+    run_id: UUID | None,
+) -> TurnResponse:
+    return TurnResponse(
+        case_id=case.id,
+        case_status=case.status,
+        conversation_id=conversation_id,
+        family=plan.family,
+        assistant_message=assistant_text,
+        facts=present_facts(plan.family, plan.merged),
+        missing_fact_keys=plan.missing_keys,
+        facts_locked=plan.locked,
+        answer=answer,
+        handoff=handoff,
+        agent_run_id=run_id,
+    )
+
+
+def _question(plan: ClarifyPlan) -> str:
+    """Use the ask node's text. Rebuild it only when that node did not run."""
+    if plan.question:
+        return plan.question
+    return build_question(plan.family, plan.missing_keys, plan.merged)
+
+
+def _cited_text(message: CaseHandoff) -> str:
+    """Status line for HR. The structured payload is ``handoff``, not this sentence."""
+    if message.retrieval == "empty" or not message.passages:
+        return (
+            "Không tìm thấy đoạn còn hiệu lực cho hồ sơ này. "
+            "Chưa lập căn cứ trích dẫn. Message để trống phần văn bản cho agent đề xuất chế tài."
+        )
+    if message.retrieval == "page_index":
+        lead = (
+            f"Tìm theo từ khóa không ra đoạn. Đã lấy {len(message.passages)} đầu điều "
+            "từ mục lục văn bản còn hiệu lực vào ngày vụ việc. "
+        )
+    else:
+        lead = f"Đã đối chiếu {len(message.passages)} đoạn còn hiệu lực vào ngày vụ việc. "
+    gap = " Chưa có nội quy còn hiệu lực trong các đoạn giữ lại." if message.missing_internal_rule else ""
+    return f"{lead}Message đã sẵn sàng cho agent đề xuất chế tài.{gap}"
+
+
+async def _reopen(session: AsyncSession, case: Case) -> None:
+    if case.status == "ANALYZED":
+        await withdraw(session, case.id)
+    case.status = "NEED_INFO"
+
+
+async def _persist_extracted(
+    session: AsyncSession,
+    case_id: UUID,
+    stored: dict[str, StoredFact],
+    merged: dict[str, StoredFact],
+    source_id: UUID | None,
+) -> None:
+    for key, item in merged.items():
+        current = stored.get(key)
+        if item.confirmed or (current is not None and current.value == item.value):
+            continue
+        await save_extracted(session, FactWrite(case_id, key, item.value, False, None, source_id))
+
+
+async def _apply(
+    session: AsyncSession,
+    actor_id: UUID,
+    case_id: UUID,
+    stored: dict[str, StoredFact],
+    projected: dict[str, StoredFact],
+    items: list[FactConfirmItem],
+) -> None:
+    for item in items:
+        value = _value(item, stored, projected)
+        if not value:
+            raise AppError(422, f"Tình tiết {item.fact_key} chưa có giá trị.")
+        actor = actor_id if item.confirmed else None
+        await write_fact(session, FactWrite(case_id, item.fact_key, value, item.confirmed, actor))
+
+
+def _changed(stored: dict[str, StoredFact], projected: dict[str, StoredFact], items: list[FactConfirmItem]) -> bool:
+    for item in items:
+        value = _value(item, stored, projected)
+        current = stored.get(item.fact_key)
+        if current is None or current.value != value or current.confirmed != item.confirmed:
+            return True
+    return False
+
+
+def _value(item: FactConfirmItem, stored: dict[str, StoredFact], projected: dict[str, StoredFact]) -> str | None:
+    if item.fact_value:
+        return item.fact_value
+    current = stored.get(item.fact_key)
+    if current is not None and current.value:
+        return current.value
+    suggested = projected.get(item.fact_key)
+    if suggested is not None and suggested.value:
+        return suggested.value
+    return None
+
+
+def _check_keys(family: str, items: list[FactConfirmItem]) -> None:
+    allowed = {spec.key for spec in required_specs(family)}
+    for item in items:
+        if item.fact_key not in allowed:
+            raise AppError(422, "Tình tiết không thuộc bộ fact của vụ này.")
+
+
+def _locked_facts(plan: ClarifyPlan) -> dict[str, str]:
+    return {spec.key: plan.merged[spec.key].value for spec in required_specs(plan.family)}
+
+
+def _confirmed_text(facts: dict[str, str]) -> str:
+    body = "\n".join(f"{key}={value}" for key, value in facts.items())
+    return f"Đã xác nhận tình tiết:\n{body}"
+
+
+async def _conversation(session: AsyncSession, case_id: UUID) -> Conversation:
+    conversation = await active_conversation(session, case_id)
+    if conversation is None:
+        raise AppError(409, "Hồ sơ chưa có hội thoại đang mở.")
+    return conversation
+
+
+async def _transcript(session: AsyncSession, case: Case, conversation_id: UUID | None) -> str:
+    spoken = await list_user_text(session, conversation_id) if conversation_id else ""
+    return "\n".join(part for part in (case.description or "", spoken) if part)
+
+
+async def _stored(session: AsyncSession, case_id: UUID) -> dict[str, StoredFact]:
+    rows = await list_fact_rows(session, case_id)
+    stored = {}
+    for row in rows:
+        if row.fact_value:
+            stored[row.fact_key] = StoredFact(value=row.fact_value, confirmed=bool(row.confirmed))
+    return stored
+
+
+async def _fail(session: AsyncSession, run_id: UUID, exc: Exception) -> None:
+    logger.exception("clarify turn failed")
+    await session.rollback()
+    await mark_run_failed(session, run_id, str(exc))
+    await session.commit()
