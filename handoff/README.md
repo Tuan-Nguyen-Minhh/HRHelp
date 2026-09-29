@@ -48,18 +48,22 @@ docker exec p-029-db-1 pg_restore \
 ```
 
 **Không cần chạy Alembic** — dump đã chứa cả bảng `alembic_version` với giá trị
-`0003_legal_embeddings`, và cả extension `vector` sẽ được tạo lại nếu máy mới thiếu
+`0004_document_chunks_tsv`, và cả extension `vector` sẽ được tạo lại nếu máy mới thiếu
 (yêu cầu image Postgres có pgvector, giống `p029-postgres`).
 
 ## 3. Nội dung (bản full)
 
 | Bảng | Số dòng | Ý nghĩa |
 |---|---|---|
+| `policies` | 3 | 3 văn bản luật (BLLĐ 2019, NĐ 145/2020, NĐ 283/2026) |
+| `policy_versions` | 3 | Thời gian hiệu lực từng luật (bảo vệ bằng ExcludeConstraint) |
+| `documents` | 3 | Bản ghi tài liệu nguồn (`ingest_status='EMBEDDED'`) |
+| `document_chunks` | 1289 | 1289 chunks đầy đủ text, vector 1024-dim, và search_tsv (GIN) |
 | `legal_documents` | 3 | 3 văn bản luật + hiệu lực + footnote sửa đổi |
 | `legal_chunks` | 1289 | Nội dung luật đã chia nhỏ (Điều / khoản / điểm) |
 | `legal_chunk_references` | 565 | Đồ thị dẫn chiếu nối 3 văn bản |
 | `legal_chunk_embeddings` | 1289 | Vector `mistral-embed` 1024-dim + tsvector BM25 (B6/B7) |
-| `alembic_version` | 1 | Phiên bản migration đã áp dụng (`0003_legal_embeddings`) |
+| `alembic_version` | 1 | Phiên bản migration đã áp dụng (`0004_document_chunks_tsv`) |
 
 Chi tiết B4/B5: `data/chunk/CHANGELOG_B4B5.md`. Chi tiết B6/B7:
 `data/chunk/CHANGELOG_B6B7.md`.
