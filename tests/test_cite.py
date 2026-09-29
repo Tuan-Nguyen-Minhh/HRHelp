@@ -13,7 +13,8 @@ from src.features.cite.model.pipeline import compile_retrieval
 from src.features.cite.model.query import SearchQuery
 from src.features.cite.model.rank import rank_passages
 from src.features.cite.model.rrf import reciprocal_rank_fusion
-from src.features.cite.model.store import ChunkHit, article_index_stmt, in_force_filter
+from src.features.cite.model.similarity import similarity_passages
+from src.features.cite.model.store import ChunkHit, article_index_stmt, bm25_stmt, in_force_filter
 from src.features.cite.model.terms import search_terms
 from src.features.clarify.model.catalog import ABSENCE
 from src.features.clarify.model.turns import _cited_text
@@ -203,6 +204,38 @@ def test_article_index_stmt_reads_the_outline_inside_the_in_force_window():
     assert "effective_from" in sql
     assert "ACTIVE" in sql
     assert "đơn phương chấm dứt" in sql
+
+
+def test_bm25_stmt_ranks_search_tsv_inside_the_in_force_window():
+    stmt = bm25_stmt(date(2026, 3, 1), 8)
+    sql = str(stmt.compile(dialect=postgresql.dialect()))
+    assert "search_tsv" in sql
+    assert "ts_rank" in sql
+    assert "@@" in sql
+    assert "effective_from" in sql
+    assert "policy_versions.status" in sql
+    assert "ingest_status" in sql
+
+
+@pytest.mark.asyncio
+async def test_similarity_without_a_vector_stays_empty_when_the_key_is_missing(monkeypatch):
+    monkeypatch.setattr("src.features.cite.model.similarity._client", None)
+    monkeypatch.setattr("src.core.config.settings.MISTRAL_API_KEY", "")
+    assert await similarity_passages(None, _query(), 8) == []
+
+
+@pytest.mark.asyncio
+async def test_similarity_skips_a_1536_vector_without_embedding_again():
+    query = SearchQuery(
+        text="nghỉ không phép",
+        incident_date=date(2026, 3, 1),
+        agent_run_id=uuid4(),
+        family=ABSENCE,
+        fact_lines=[],
+        description="nghỉ không phép",
+        embedding=tuple(0.0 for _ in range(1536)),
+    )
+    assert await similarity_passages(None, query, 8) == []
 
 
 def test_in_force_filter_requires_the_incident_date_on_both_bounds():

@@ -47,9 +47,9 @@ Prefix mọi route: `/api/v1`. Client gửi header `X-User-Id`.
 - [x] Mục lục không khớp thì `CaseHandoff.retrieval = empty` và `passages` để trống.
 - [x] Lọc văn bản còn hiệu lực tại `incident_date` trước khi chấm điểm, kể cả bước mục lục.
 - [x] Ghi `tool_calls` tên `search_policy` và `agent_retrievals` cho đoạn được giữ. `output.retrieval` là `hybrid`, `page_index`, hoặc `empty`.
-- [x] `similarity` dùng cosine trên `document_chunks.embedding` khi query có vector 1536 chiều. Chưa có vector thì nhánh đó rỗng.
-- [x] `bm25` chấm Okapi BM25 trên chunk còn hiệu lực.
-- [x] `lexical` khớp từ trong nội dung chunk.
+- [x] `similarity` dùng cosine trên `document_chunks.embedding` (mistral-embed, 1024 chiều). Query chưa có vector thì embed `SearchQuery.text`. Sai số chiều, thiếu `MISTRAL_API_KEY`, hoặc embed lỗi thì nhánh đó rỗng.
+- [x] `bm25` gọi `ts_rank` trên `document_chunks.search_tsv` của mọi chunk còn hiệu lực, giữ tối đa 8 đoạn.
+- [x] `lexical` khớp `ILIKE` trong `content`, trần 40 dòng.
 - [x] `rerank` giữ thứ tự sau RRF, là chỗ gắn cross-encoder sau.
 - [x] Response `facts/confirm` trả `handoff`. Tin `ASSISTANT` báo số đoạn hybrid, số đầu điều từ mục lục, hoặc nói chưa lập căn cứ khi rỗng.
 
@@ -86,8 +86,8 @@ sequenceDiagram
         API->>DB: messages SYSTEM, agent_runs RUNNING
         API->>AG: step = cite
         AG->>RET: SearchQuery
-        par Ba nhánh
-            RET->>DB: similarity, bm25, lexical trên chunk còn hiệu lực
+        par Ba nhánh trên document_chunks còn hiệu lực
+            RET->>DB: similarity cosine 1024, bm25 ts_rank search_tsv, lexical ILIKE
         end
         RET->>RET: rrf rồi rerank
         alt Ba nhánh đều rỗng
@@ -196,7 +196,7 @@ agent_runs
 | `policies` | đọc | `is_active`, `policy_type`, `code`, `name` |
 | `policy_versions` | đọc | `ACTIVE`, còn hiệu lực tại `incident_date` |
 | `documents` | đọc | `ingest_status` là `CHUNKED` hoặc `EMBEDDED` |
-| `document_chunks` | đọc | Nội dung, điều, khoản, điểm, `section_title`, `metadata.article_title`, embedding nếu có |
+| `document_chunks` | đọc | `content`, điều, khoản, điểm, `section`, `section_title`, `metadata.article_title`, `embedding` 1024 chiều, `search_tsv` |
 | `tool_calls` | ghi | `search_policy`. Input có query, ngày vụ, từ khóa, bốn tên nhánh. Output có số đoạn, `chunk_id`, và `retrieval` |
 | `agent_retrievals` | ghi | Một dòng mỗi đoạn được giữ: `chunk_id`, `score`, `rank` |
 

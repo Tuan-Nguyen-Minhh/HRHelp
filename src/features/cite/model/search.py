@@ -1,6 +1,6 @@
 """Run the retrieval graph and audit it on the agent ledger.
 
-The graph is similarity, BM25, and lexical search in parallel, then RRF, then rerank.
+The graph is similarity, ts_rank on ``search_tsv``, and lexical search in parallel, then RRF, then rerank.
 An empty rerank walks the article outline before the handoff is packed.
 """
 

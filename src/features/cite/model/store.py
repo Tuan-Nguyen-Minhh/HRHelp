@@ -1,10 +1,10 @@
 """Read chunks whose policy version was in force on the incident date."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import bindparam, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
@@ -36,6 +36,16 @@ class ChunkHit:
 
 CANDIDATE_LIMIT = 40
 _READABLE = ("CHUNKED", "EMBEDDED")
+_TS_CONFIG = "simple"
+_OR_TSQUERY = text(
+    """
+    SELECT COALESCE(
+        string_agg(to_tsquery(CAST(:cfg AS regconfig), t.lexeme)::text, ' | '),
+        ''
+    )
+    FROM unnest(to_tsvector(CAST(:cfg AS regconfig), :q)) AS t(lexeme)
+    """
+)
 
 
 def in_force_filter(incident_date: date) -> ColumnElement[bool]:
@@ -67,6 +77,45 @@ async def fetch_by_similarity(
     )
     rows = (await session.execute(stmt)).all()
     return [_hit(row) for row in rows]
+
+
+async def fetch_by_bm25(
+    session: AsyncSession, incident_date: date, terms: list[str], limit: int
+) -> list[Passage]:
+    """Rank every in-force chunk with ``ts_rank`` on ``document_chunks.search_tsv``.
+
+    The column is the generated ``simple`` tsvector of ``section_title`` and
+    ``content`` (migration 0004). Terms are OR-ed, so one matching lexeme is enough.
+    """
+    if not terms or limit <= 0:
+        return []
+    tsquery = await _or_tsquery(session, terms)
+    if not tsquery:
+        return []
+    stmt = bm25_stmt(incident_date, limit)
+    rows = (await session.execute(stmt, {"cfg": _TS_CONFIG, "tsq": tsquery})).all()
+    return [replace(to_passage(_hit(row)), score=float(row.arm_score or 0.0)) for row in rows]
+
+
+def bm25_stmt(incident_date: date, limit: int):
+    """In-force chunks ordered by ``ts_rank``. ``:cfg`` is the regconfig, ``:tsq`` the OR query."""
+    parsed = func.to_tsquery(text("CAST(:cfg AS regconfig)"), bindparam("tsq"))
+    rank = func.ts_rank(DocumentChunk.search_tsv, parsed, 1).label("arm_score")
+    return (
+        _candidate_stmt(incident_date)
+        .add_columns(rank)
+        .where(DocumentChunk.search_tsv.bool_op("@@")(parsed))
+        .order_by(rank.desc(), DocumentChunk.id)
+        .limit(limit)
+    )
+
+
+async def _or_tsquery(session: AsyncSession, terms: list[str]) -> str:
+    """Lexemes of ``terms`` joined with OR. Postgres quotes each lexeme."""
+    found = (
+        await session.execute(_OR_TSQUERY, {"cfg": _TS_CONFIG, "q": " ".join(terms)})
+    ).scalar_one()
+    return found or ""
 
 
 async def fetch_candidates(session: AsyncSession, incident_date: date, terms: list[str]) -> list[ChunkHit]:

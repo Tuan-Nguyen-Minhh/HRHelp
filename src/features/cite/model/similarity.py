@@ -1,22 +1,71 @@
-"""Vector retriever. It runs only when the query carries an embedding.
+"""Vector retriever over ``document_chunks.embedding``.
 
-``document_chunks.embedding`` is 1024-dimensional (mistral-embed, DECISION
-2026-09-26). A vector of another width is skipped so this arm cannot fail the
-BM25 and lexical arms.
+The column is mistral-embed, ``settings.EMBEDDING_DIMENSIONS`` wide (1024).
+A query that arrives without a vector is embedded here. A missing API key, a
+failed call, or a vector of another width leaves this arm empty so BM25 and
+lexical still run.
 """
 
+import asyncio
+import logging
+
+from src.core.config import settings
 from src.features.cite.model.passage import Passage
 from src.features.cite.model.query import SearchQuery
 from src.features.cite.model.store import fetch_by_similarity, to_passage
 
-# DECISION 2026-09-26: unified on mistral-embed 1024-dim.
-# Was 1536 (OpenAI template) — fixed to match migration 0002_unify_mistral_embed.
-EMBEDDING_DIM = 1024
+logger = logging.getLogger(__name__)
+
+# DECISION 2026-09-26: one model for the database. Was 1536 on the OpenAI template.
+EMBEDDING_DIM = settings.EMBEDDING_DIMENSIONS
+
+_client: object | None = None
 
 
 async def similarity_passages(session, query: SearchQuery, limit: int) -> list[Passage]:
-    """Nearest in-force chunks, or an empty list when no usable vector was supplied."""
-    if query.embedding is None or len(query.embedding) != EMBEDDING_DIM:
+    """Nearest in-force chunks. An unusable vector yields an empty list."""
+    embedding = await _query_vector(query)
+    if embedding is None or len(embedding) != EMBEDDING_DIM:
         return []
-    hits = await fetch_by_similarity(session, query.incident_date, list(query.embedding), limit)
+    hits = await fetch_by_similarity(session, query.incident_date, list(embedding), limit)
     return [to_passage(hit) for hit in hits]
+
+
+async def _query_vector(query: SearchQuery) -> tuple[float, ...] | None:
+    """Use a vector the caller already computed, otherwise embed ``query.text``."""
+    if query.embedding is not None:
+        return query.embedding
+    text = query.text.strip()
+    if not text:
+        return None
+    client = _embedding_client()
+    if client is None:
+        return None
+    from src.services.embeddings_client import PURPOSE_QUERY, new_run_id
+
+    try:
+        vectors = await asyncio.to_thread(
+            client.embed,
+            [text],
+            purpose=PURPOSE_QUERY,
+            run_id=new_run_id("cite"),
+        )
+    except Exception:
+        logger.exception("similarity query embed failed")
+        return None
+    if not vectors:
+        return None
+    return tuple(vectors[0])
+
+
+def _embedding_client():
+    """One audited client per process. An empty key leaves the arm idle."""
+    global _client
+    if _client is not None:
+        return _client
+    if not settings.MISTRAL_API_KEY:
+        return None
+    from src.services.embeddings_client import EmbeddingClient
+
+    _client = EmbeddingClient()
+    return _client
