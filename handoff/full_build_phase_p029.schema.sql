@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict QLi0tv0kBb287fVgTmRVu9NRhBRiYRPW1XpUnP2ezsU9lkNTxM1U1v52JuhK2CQ
+\restrict AGhGhootuGzqMiVngHAngfQKvzFeRUm0paWIjgchd492ncRGagdjKcV3lebYPeA
 
 -- Dumped from database version 16.15 (Debian 16.15-1.pgdg12+2)
 -- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg12+2)
@@ -255,13 +255,14 @@ CREATE TABLE public.document_chunks (
     content text NOT NULL,
     page_number integer,
     section character varying(255),
-    section_title character varying(255),
+    section_title text,
     article character varying(50),
     clause character varying(50),
     point character varying(50),
     metadata jsonb,
     embedding public.vector(1024),
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    search_tsv tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, ((COALESCE(section_title, ''::text) || ' '::text) || COALESCE(content, ''::text)))) STORED
 );
 
 
@@ -1161,6 +1162,13 @@ CREATE INDEX idx_tool_calls_agent_run_id ON public.tool_calls USING btree (agent
 
 
 --
+-- Name: ix_document_chunks_search_tsv; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_document_chunks_search_tsv ON public.document_chunks USING gin (search_tsv);
+
+
+--
 -- Name: ix_legal_chunk_embeddings_search_tsv; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1546,5 +1554,5 @@ ALTER TABLE ONLY public.tool_calls
 -- PostgreSQL database dump complete
 --
 
-\unrestrict QLi0tv0kBb287fVgTmRVu9NRhBRiYRPW1XpUnP2ezsU9lkNTxM1U1v52JuhK2CQ
+\unrestrict AGhGhootuGzqMiVngHAngfQKvzFeRUm0paWIjgchd492ncRGagdjKcV3lebYPeA
 

@@ -1,6 +1,6 @@
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import Column, Computed, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR, UUID
 
 from src.db.base import Base
 
@@ -19,6 +19,11 @@ class DocumentChunk(Base):
             postgresql_ops={"embedding": "vector_cosine_ops"},
             postgresql_where=text("embedding IS NOT NULL"),
         ),
+        Index(
+            "ix_document_chunks_search_tsv",
+            "search_tsv",
+            postgresql_using="gin",
+        ),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
@@ -27,7 +32,7 @@ class DocumentChunk(Base):
     content = Column(Text, nullable=False)
     page_number = Column(Integer, nullable=True)
     section = Column(String(255), nullable=True)
-    section_title = Column(String(255), nullable=True)
+    section_title = Column(Text, nullable=True)
     article = Column(String(50), nullable=True)
     clause = Column(String(50), nullable=True)
     point = Column(String(50), nullable=True)
@@ -36,4 +41,11 @@ class DocumentChunk(Base):
     # DECISION 2026-09-26 P-029. Was Vector(1536) from the OpenAI template, but
     # no code ever wrote that column and no production vectors exist.
     embedding = Column(Vector(1024), nullable=True)
+    # BM25 DB-native full-text search. Same 'simple' config as legal_chunk_embeddings.
+    # GENERATED STORED so GIN index is maintained automatically on INSERT/UPDATE.
+    search_tsv = Column(
+        TSVECTOR,
+        Computed("to_tsvector('simple', coalesce(section_title,'') || ' ' || coalesce(content,''))", persisted=True),
+        nullable=True,
+    )
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
