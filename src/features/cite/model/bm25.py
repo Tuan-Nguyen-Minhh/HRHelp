@@ -1,6 +1,8 @@
-"""Okapi BM25 over in-force chunk text.
+"""In-process Okapi BM25 over chunk text.
 
-This is one retriever in the cite pipeline. It does not see embeddings.
+The cite request path ranks with ``ts_rank`` on ``document_chunks.search_tsv``.
+This scorer stays for tests and for a caller that already holds the passages.
+It does not see embeddings.
 """
 
 import math

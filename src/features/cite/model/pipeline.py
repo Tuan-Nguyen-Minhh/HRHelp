@@ -1,4 +1,4 @@
-"""Retrieval sub-graph: similarity, BM25, and lexical search, then RRF, then rerank.
+"""Retrieval sub-graph: similarity, ts_rank BM25, and lexical search, then RRF, then rerank.
 
 Each retriever writes its own channel. RRF waits until all three have finished.
 A failing retriever yields an empty list and the other arms still fuse.
@@ -12,7 +12,6 @@ from typing import TypedDict
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from src.features.cite.model.bm25 import bm25_rank
 from src.features.cite.model.page_index import anchors_for, select_article_heads
 from src.features.cite.model.passage import Passage
 from src.features.cite.model.query import SearchQuery
@@ -20,12 +19,11 @@ from src.features.cite.model.rank import rank_passages
 from src.features.cite.model.rerank import rerank
 from src.features.cite.model.rrf import reciprocal_rank_fusion
 from src.features.cite.model.similarity import similarity_passages
-from src.features.cite.model.store import fetch_article_index, fetch_candidates, fetch_in_force, to_passage
+from src.features.cite.model.store import fetch_article_index, fetch_by_bm25, fetch_candidates, to_passage
 
 logger = logging.getLogger(__name__)
 
 RETRIEVAL_K = 8
-_BM25_POOL = 200
 _INDEX_POOL = 80
 
 
@@ -120,9 +118,12 @@ async def _page_index(session, state: RetrievalState) -> dict:
 
 
 async def _bm25(session, state: RetrievalState) -> list[Passage]:
-    hits = await fetch_in_force(session, state["query"].incident_date, _BM25_POOL)
-    passages = [to_passage(hit) for hit in hits]
-    return bm25_rank(passages, list(state.get("terms") or []), RETRIEVAL_K)
+    return await fetch_by_bm25(
+        session,
+        state["query"].incident_date,
+        list(state.get("terms") or []),
+        RETRIEVAL_K,
+    )
 
 
 async def _lexical(session, state: RetrievalState) -> list[Passage]:

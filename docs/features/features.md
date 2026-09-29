@@ -27,7 +27,7 @@ Thành phần dùng chung trong các sơ đồ:
 | Sản phẩm | PRD: HR nhập tình huống, agent hỏi thêm, đối chiếu luật và nội quy, đề xuất quy trình, pháp chế duyệt, người ban hành quyết định | Giao diện, đăng nhập, màn hình hồ sơ |
 | Agent | LangGraph 2 node `analyze` → `respond`, một API `POST /chat` | Làm rõ tình tiết, RAG, trích dẫn, đề xuất, nháp văn bản |
 | Dữ liệu | 20 bảng: user, hồ sơ, fact, hội thoại, chính sách theo phiên bản, chunk, đề xuất, trích dẫn, nháp, review, quyết định, tiền lệ | API và service ghi vào các bảng này |
-| Kho luật | Bộ luật Lao động hợp nhất, Nghị định 145/2020, Nghị định 283/2026 (file trong `data/`) | Nội quy công ty, pipeline nạp tài liệu, lọc đúng ngày xảy ra việc |
+| Kho luật | `scripts/seed_hr_from_legal.py` đổ Bộ luật Lao động, Nghị định 145/2020 và Nghị định 283/2026 vào `policies` → `policy_versions` → `documents` → `document_chunks` (1289 chunk, embedding 1024 chiều, `search_tsv`) | Nội quy công ty. Feature 5 không đọc bốn bảng `legal_*` |
 
 Ba vai trò trong schema là `HR`, `MANAGER`, `LEGAL`. Mức chế tài là khiển trách (`WARNING`), cảnh cáo (`REPRIMAND`), kéo dài nâng lương (`WAGE_POSTPONEMENT`), cách chức (`DEMOTION`), sa thải (`DISMISSAL`) và chấm dứt hợp đồng (`TERMINATION`). Sa thải và chấm dứt hợp đồng là hai căn cứ khác nhau. Agent phải tách chúng.
 
@@ -170,9 +170,9 @@ sequenceDiagram
 
 ## 2. Mở hồ sơ vụ việc
 
-Mọi tư vấn gắn một vụ, một nhân viên và một ngày xảy ra. `incident_date` là mốc để feature 5 chọn phiên bản văn bản còn hiệu lực. `POST /api/v1/cases` chạy node `open` của case graph rồi dừng. Chưa có tin nhắn, chưa có `agent_runs`, chưa rút fact.
+Mọi tư vấn gắn một vụ, một nhân viên và một ngày xảy ra. `incident_date` ghi trên `cases` là mốc feature 5 dùng để chọn `policy_versions` còn hiệu lực. Kho chữ luật hiện có là `BLLD_2019` (`LAW`, từ 2021-01-01), `ND145_2020` (`DECREE`, 2021-02-01 đến 2026-09-09) và `ND283_2026` (`DECREE`, từ 2026-09-10), nằm trên `policies` → `policy_versions` → `documents` → `document_chunks`. Bước mở hồ sơ chỉ ghi `cases` và `conversations`.
 
-Client gửi header `X-User-Id`. User phải đang active, role `HR` hoặc `MANAGER`.
+`POST /api/v1/cases` chạy node `open` của case graph rồi dừng. Chưa có tin nhắn, chưa có `agent_runs`, chưa rút fact. Client gửi header `X-User-Id`. User phải đang active, role `HR` hoặc `MANAGER`.
 
 ```mermaid
 sequenceDiagram
@@ -200,6 +200,7 @@ sequenceDiagram
             CG->>DB: INSERT conversations user_id, case_id, title = case_code, status ACTIVE
             CG-->>API: case_id, conversation_id, status OPEN
             API-->>HR: 201
+            Note over CG,DB: incident_date nằm trên cases. Bước này chỉ ghi cases và conversations
         end
     end
 
@@ -230,6 +231,8 @@ Bộ fact bắt buộc theo loại vụ:
 
 Hồ sơ còn nhận tin khi status là `OPEN`, `NEED_INFO`, `ANALYZED`, hoặc `REJECTED`. Status sau đó trả 409.
 
+Lượt `clarify` đọc và ghi hội thoại với phiếu fact. Cửa đọc của đối chiếu là `document_chunks`, và cửa đó chỉ mở ở feature 5 sau khi fact bắt buộc đã khóa. `legal_documents`, `legal_chunks`, `legal_chunk_references` và `legal_chunk_embeddings` không tham gia lượt chat.
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -248,6 +251,7 @@ sequenceDiagram
         API->>DB: INSERT messages role USER
         API->>DB: INSERT agent_runs RUNNING, model hr-help-rules
         API->>CG: ainvoke step = clarify
+        Note over CG,DB: extract và ask chỉ đọc cases, messages, case_facts
         CG->>EX: description + tin USER + case_facts đã lưu
         EX->>EX: Gộp fact, dòng confirmed giữ nguyên
         alt Còn thiếu ô hoặc chưa confirmed
@@ -304,6 +308,7 @@ sequenceDiagram
     participant DB as PostgreSQL
 
     API->>CG: step = clarify
+    Note over CG,DB: Chỉ extract, rồi ask hoặc dừng
     CG->>EX: text và stored facts
     alt Còn thiếu fact hoặc chưa confirmed
         EX->>ASK: missing_keys
@@ -318,7 +323,7 @@ sequenceDiagram
 
 ## 4. Nạp văn bản và khóa theo ngày hiệu lực
 
-Ba file trong `data/` mới là bản Markdown thô. Chưa có bước cắt điều khoản, gắn phiên bản, hay embed. Mỗi chính sách (`LAW`, `DECREE`, `CIRCULAR`, `INTERNAL_RULE`, `PRECEDENT`) có nhiều phiên bản. Hai phiên bản của cùng một chính sách không được chồng ngày hiệu lực. Ràng buộc này đã nằm trong `policy_versions`.
+Ba văn bản luật đã nằm trên chuỗi HR: `scripts/seed_hr_from_legal.py` ghi `policies`, `policy_versions`, `documents` (`EMBEDDED`) và `document_chunks` (embedding `mistral-embed` 1024 chiều, `search_tsv`). Sơ đồ dưới đây là API tải file về sau, cho nội quy và văn bản mới. Mỗi chính sách (`LAW`, `DECREE`, `CIRCULAR`, `INTERNAL_RULE`, `PRECEDENT`) có nhiều phiên bản. Hai phiên bản của cùng một chính sách không được chồng ngày hiệu lực. Ràng buộc này đã nằm trong `policy_versions`.
 
 Nội quy công ty chưa có trong kho. Không có nội quy thì agent chỉ trích luật, chưa trả lời được mức công ty được phép dùng.
 
@@ -348,7 +353,7 @@ sequenceDiagram
             API->>API: Cắt nội dung theo điều, khoản, điểm
             API->>DB: INSERT document_chunks article, clause, point, content
             API->>DB: UPDATE documents ingest_status CHUNKED
-            API->>VS: Embed từng chunk, 1536 chiều
+            API->>VS: Embed từng chunk, 1024 chiều, mistral-embed
             alt Embed lỗi
                 API->>DB: UPDATE documents ingest_status FAILED
                 API-->>UI: Báo lỗi, cho chạy lại từ chunk chưa có embedding
@@ -367,9 +372,15 @@ sequenceDiagram
 
 Nhánh này chạy trong cùng request `POST /api/v1/cases/{id}/facts/confirm` sau khi mọi fact bắt buộc đã `confirmed` và hồ sơ có `incident_date`. Case graph nhận `step = cite`, đi `extract` → `retrieve` → `handoff`, rồi dừng ở `CaseHandoff`. Feature 6 đọc message đó khi được gắn.
 
-`retrieve` dựng `SearchQuery` từ `cases.description` và `fact_lines`, rồi gọi retrieval graph. Ba nhánh `similarity`, `bm25`, `lexical` đọc chunk của phiên bản `ACTIVE` còn hiệu lực tại `incident_date` (`effective_from` đến `effective_to`, `effective_to` tính cả ngày đó), tài liệu `CHUNKED` hoặc `EMBEDDED`. `similarity` chỉ trả đoạn khi query có vector 1536 chiều. Một nhánh lỗi thì kênh đó rỗng, hai nhánh kia vẫn được gộp. `rrf` rồi `rerank` giữ tối đa 8 đoạn, `retrieval = hybrid`. Cả ba rỗng thì `page_index` lấy đầu điều theo cụm neo của family. Mục lục cũng không khớp thì `passages` rỗng và `retrieval = empty`.
+`retrieve` dựng `SearchQuery` từ `cases.description` và `fact_lines`, rồi gọi retrieval graph. Cả ba nhánh và bước mục lục dùng một cửa đọc:
 
-`missing_internal_rule` trên message là `true` khi không đoạn nào có `policy_type = INTERNAL_RULE`.
+`policies.is_active` → `policy_versions` trạng thái `ACTIVE`, `effective_from` ≤ `incident_date` và `effective_to` tính cả ngày đó (`NULL` nghĩa là còn mở) → `documents.ingest_status` là `CHUNKED` hoặc `EMBEDDED` → `document_chunks`.
+
+Ngày vụ 2026-03-01 gặp `BLLD_2019` và `ND145_2020`. Ngày vụ từ 2026-09-10 gặp `BLLD_2019` và `ND283_2026`. Script `scripts/seed_hr_from_legal.py` ghi `documents.ingest_status = EMBEDDED`. Mỗi chunk có `content`, `article`, `clause`, `point`, `section` (`ARTICLE`, `CLAUSE` hoặc `POINT`), `section_title` là breadcrumb dạng `TEXT`, và `metadata` giữ `article_title` cùng `legal_chunk_id`. `embedding` là `mistral-embed` 1024 chiều. `search_tsv` là `tsvector` sinh sẵn từ `section_title` và `content`, config `simple`, index GIN, migration `0004_document_chunks_tsv`.
+
+`similarity` lấy cosine trên `document_chunks.embedding`. Query chưa có vector thì nhánh này embed `SearchQuery.text`. Vector khác 1024 chiều, thiếu `MISTRAL_API_KEY`, hoặc embed lỗi thì nhánh đó rỗng. `bm25` gọi `ts_rank` trên `search_tsv` của mọi chunk còn hiệu lực và giữ tối đa 8 đoạn. `lexical` là `ILIKE` trên `content`, trần 40 dòng, rồi giữ tối đa 8. Một nhánh lỗi thì kênh đó rỗng, hai nhánh kia vẫn được gộp. `rrf` rồi `rerank` giữ tối đa 8 đoạn, `retrieval = hybrid`. Cả ba rỗng thì `page_index` lấy đầu điều theo cụm neo của family, khớp `content`, `section_title` hoặc `metadata.article_title`. Mục lục cũng không khớp thì `passages` rỗng và `retrieval = empty`.
+
+`missing_internal_rule` trên message là `true` khi không đoạn nào có `policy_type = INTERNAL_RULE`. Bản đổ hiện có luật và nghị định, chưa có nội quy, nên cờ này đúng với kho đang nạp.
 
 ```mermaid
 sequenceDiagram
@@ -396,10 +407,11 @@ sequenceDiagram
         RET->>DB: INSERT tool_calls search_policy RUNNING
         Note right of DB: input gồm query, incident_date, terms, bốn tên nhánh
         RET->>RG: ainvoke RetrievalState
+        Note right of DB: policies → policy_versions ACTIVE → documents CHUNKED hoặc EMBEDDED → document_chunks
         par Chunk còn hiệu lực tại incident_date
-            RG->>DB: similarity
-            RG->>DB: bm25
-            RG->>DB: lexical
+            RG->>DB: similarity, cosine embedding 1024 chiều
+            RG->>DB: bm25, ts_rank trên search_tsv
+            RG->>DB: lexical, ILIKE content
         end
         RG->>RG: rrf đọc cả ba kênh
         RG->>RG: rerank, tối đa 8 đoạn
@@ -594,7 +606,7 @@ sequenceDiagram
         SG->>UI: Nhập precedent_summary
         UI->>API: POST /cases/id/decisions/precedent
         API->>API: Từ chối nếu precedent_summary trống
-        API->>VS: Embed precedent_summary, 1536 chiều
+        API->>VS: Embed precedent_summary, 1024 chiều, mistral-embed
         VS-->>API: embedding
         API->>DB: UPDATE disciplinary_decisions is_precedent true, precedent_summary, embedding
         API->>DB: UPDATE cases status CLOSED
