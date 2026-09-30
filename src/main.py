@@ -4,9 +4,12 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.api.routes import router
+from src.agents.http import router as template_router
 from src.common.errors import AppError
 from src.core.config import settings
+from src.features.answer.controller import router as answer_router
+from src.features.clarify.controller import router as clarify_router
+from src.features.opencase.controller import router as opencase_router
 
 
 @asynccontextmanager
@@ -31,7 +34,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router, prefix="/api/v1")
+app.include_router(opencase_router, prefix="/api/v1")
+app.include_router(clarify_router, prefix="/api/v1")
+app.include_router(answer_router, prefix="/api/v1")
+app.include_router(template_router, prefix="/api/v1")
 
 
 @app.exception_handler(AppError)

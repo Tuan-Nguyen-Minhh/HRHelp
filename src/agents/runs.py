@@ -1,7 +1,7 @@
 """System-wide agent ledger: runs, tool calls, and retrievals.
 
 Features call this module when they open a turn or record a search.
-The template graph for ``POST /chat`` stays in ``src.agents.graph``.
+The template graph for ``POST /chat`` stays in ``src.agents.graph``. Its routes are ``src.agents.http``.
 """
 
 from dataclasses import dataclass
