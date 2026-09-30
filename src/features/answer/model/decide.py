@@ -40,6 +40,7 @@ class DecisionInput:
     family: str
     facts: dict[str, str]
     layered: LayeredBasis
+    retrieval: str = "hybrid"
 
 
 def decide(data: DecisionInput) -> SanctionDecision:
@@ -78,12 +79,16 @@ def absence_meets_dismissal(text: str) -> bool:
 
 
 def _blocked(data: DecisionInput, steps: list[ProcessStep], missing_rule: bool) -> SanctionDecision | None:
+    if data.retrieval == "page_index":
+        return _open(steps, "HIGH", _PAGE_INDEX, missing_rule)
     if _no_applicable_layer(data.layered):
         if data.layered.inspection_risk:
             return _open(steps, "HIGH", _INSPECTION, True)
         return _open(steps, "CRITICAL", _EMPTY, True)
     if _probation(data.facts.get("contract_type", "")):
         return _open(steps, "HIGH", _PROBATION, missing_rule)
+    if not data.layered.legal_basis:
+        return _open(steps, "HIGH", _NO_LAW, missing_rule)
     if not _procedure_ready(data.facts):
         return _open(steps, "HIGH", _PROCEDURE, missing_rule)
     if missing_rule:
@@ -181,6 +186,8 @@ _PROCEDURE = "Chưa lập biên bản hoặc chưa gửi yêu cầu giải trìn
 _NO_RULE = (
     "Đã có căn cứ luật nhưng chưa có nội quy nội bộ còn hiệu lực vào ngày xảy ra việc. Chưa chốt mức công ty được dùng."
 )
+_NO_LAW = "Chưa có căn cứ luật còn hiệu lực trong các đoạn đã lấy. Chưa chốt mức kỷ luật chỉ từ nội quy hoặc tiền lệ."
+_PAGE_INDEX = "Chỉ tìm được đầu điều từ mục lục. Chưa đủ nội dung điều khoản để chốt mức kỷ luật."
 _WINDOW = "Số ngày nghỉ đã từ 5 nhưng fact chưa khóa khoảng 30 ngày hay 365 ngày. Chưa chốt sa thải."
 _DISMISSAL = (
     "Fact đã khóa khớp ngưỡng sa thải của luật và nội quy đang hiệu lực có điều khoản sa thải cho nghỉ không phép. "

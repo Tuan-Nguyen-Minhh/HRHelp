@@ -27,11 +27,12 @@ class AnswerInput:
     incident_date: date
     layered: LayeredBasis
     precedent_note: str
+    retrieval: str = "hybrid"
 
 
 def draft_answer(data: AnswerInput) -> AnswerDraft:
     """Decide the level, then write the message HR will read."""
-    decision = decide(DecisionInput(family=data.family, facts=data.facts, layered=data.layered))
+    decision = decide(DecisionInput(family=data.family, facts=data.facts, layered=data.layered, retrieval=data.retrieval))
     prose = render(
         RenderInput(
             employee_name=data.employee_name,

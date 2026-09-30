@@ -6,8 +6,9 @@ from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.common.errors import AppError
+from src.agents.handoff import CaseHandoff, CitedPassage
 from src.common.text import clip_quote
+from src.features.answer.model.agent import build_recommend_agent
 from src.features.answer.model.draft import AnswerDraft
 from src.features.answer.model.store import (
     CitationDraft,
@@ -29,23 +30,18 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class PublishWork:
-    """A locked case ready to be matched against the corpus."""
+    """A locked case and the feature 5 message consumed by feature 6."""
 
     case: Case
-    family: str
-    facts: dict[str, str]
-    fact_lines: list[str]
+    handoff: CaseHandoff
     run_id: UUID
-    text: str
 
 
 async def publish(session: AsyncSession, work: PublishWork) -> AnswerView:
-    """Supersede the previous draft, search, and store the new proposal.
+    """Supersede the previous draft and store a proposal from the handoff.
 
     The caller commits. A failure rolls the new rows back with the fact update.
     """
-    if work.case.incident_date is None:
-        raise AppError(422, "Hồ sơ chưa có ngày xảy ra việc nên chưa đối chiếu được văn bản.")
     await supersede_drafts(session, work.case.id)
     draft, hits = await _draft(session, work)
     await _link_violation(session, work, draft.decision.risk_level)
@@ -70,20 +66,20 @@ async def withdraw(session: AsyncSession, case_id: UUID) -> None:
 
 async def _draft(session: AsyncSession, work: PublishWork) -> tuple[AnswerDraft, list[Passage]]:
     state = await _run_graph(session, work)
-    return state["draft"], list(state.get("hits") or [])
+    return state["draft"], [_passage(item) for item in work.handoff.passages]
 
 
 async def _run_graph(session: AsyncSession, work: PublishWork) -> dict:
-    """Feature 6 fills this in. The case agent stops at ``CaseHandoff`` and does not draft."""
-    del session, work
-    raise AppError(501, "Agent đề xuất chế tài chưa gắn. Case agent chỉ trả message CaseHandoff.")
+    """Run the separate recommendation graph on feature 5's message."""
+    del session
+    return await build_recommend_agent().ainvoke({"handoff": work.handoff})
 
 
 async def _link_violation(session: AsyncSession, work: PublishWork, severity: str) -> None:
-    evidence = "; ".join(f"{key}={value}" for key, value in sorted(work.facts.items()))[:2000]
-    linked = await ensure_violation(session, work.case.id, work.family, evidence, severity)
+    evidence = "; ".join(f"{key}={value}" for key, value in sorted(work.handoff.facts.items()))[:2000]
+    linked = await ensure_violation(session, work.case.id, work.handoff.family, evidence, severity)
     if not linked:
-        logger.info("violation type %s is not seeded", work.family)
+        logger.info("violation type %s is not seeded", work.handoff.family)
 
 
 async def _store(session: AsyncSession, work: PublishWork, draft: AnswerDraft, hits: list[Passage]) -> tuple:
@@ -116,4 +112,20 @@ def _citation(passage: Passage) -> CitationDraft:
         clause=passage.clause,
         point=passage.point,
         score=passage.score,
+    )
+
+
+def _passage(item: CitedPassage) -> Passage:
+    return Passage(
+        chunk_id=item.chunk_id,
+        policy_version_id=item.policy_version_id,
+        content=item.content,
+        article=item.article,
+        clause=item.clause,
+        point=item.point,
+        score=item.score,
+        policy_type=item.policy_type,
+        policy_code=item.policy_code,
+        policy_name=item.policy_name,
+        origin=item.origin,
     )
