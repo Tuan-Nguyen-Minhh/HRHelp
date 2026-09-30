@@ -12,12 +12,16 @@ from src.models.disciplinary_decisions import DisciplinaryDecision
 from src.models.document_chunks import DocumentChunk
 from src.models.documents import Document
 from src.models.messages import Message
+from src.models.permission_roles import PermissionRole
+from src.models.permissions import Permission
 from src.models.policies import Policy
 from src.models.policy_versions import PolicyVersion
 from src.models.recommendation_citations import RecommendationCitation
 from src.models.recommendations import Recommendation
 from src.models.reviews import Review
+from src.models.roles import Role
 from src.models.tool_calls import ToolCall
+from src.models.user_roles import UserRole
 from src.models.users import User
 from src.models.violation_types import ViolationType
 
@@ -34,12 +38,16 @@ __all__ = [
     "Document",
     "DocumentChunk",
     "Message",
+    "Permission",
+    "PermissionRole",
     "Policy",
     "PolicyVersion",
     "Recommendation",
     "RecommendationCitation",
     "Review",
+    "Role",
     "ToolCall",
     "User",
+    "UserRole",
     "ViolationType",
 ]

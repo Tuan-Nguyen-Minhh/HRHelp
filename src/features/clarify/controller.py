@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.common.deps import get_actor, get_session
+from src.core.security.guards import require_permissions
+from src.core.security.rbac import PermissionEnum
 from src.features.clarify.model.turns import confirm_facts, handle_message, list_facts
 from src.features.clarify.schema import (
     ConfirmFactsRequest,
@@ -25,6 +27,7 @@ async def post_message(
     payload: SendMessageRequest,
     actor: Annotated[User, Depends(get_actor)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    _: Annotated[dict, Depends(require_permissions(PermissionEnum.CASE_CHAT))],
 ) -> TurnResponse:
     """Gửi mô tả hoặc câu trả lời. Chưa chốt mức khi fact còn thiếu."""
     return await handle_message(session, actor, case_id, payload)
@@ -36,6 +39,7 @@ async def post_confirm(
     payload: ConfirmFactsRequest,
     actor: Annotated[User, Depends(get_actor)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    _: Annotated[dict, Depends(require_permissions(PermissionEnum.CASE_CONFIRM))],
 ) -> TurnResponse:
     """Xác nhận fact. Khi đủ, đối chiếu văn bản và trả message cho agent đề xuất."""
     return await confirm_facts(session, actor, case_id, payload)
@@ -46,6 +50,7 @@ async def read_facts(
     case_id: UUID,
     actor: Annotated[User, Depends(get_actor)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    _: Annotated[dict, Depends(require_permissions(PermissionEnum.CASE_READ))],
 ) -> FactListResponse:
     """Form tình tiết của hồ sơ."""
     return await list_facts(session, actor, case_id)
