@@ -2,7 +2,7 @@
 
 Ngày đối chiếu code: 29/09/2026.
 
-Case agent là một LangGraph. Nó gồm mở hồ sơ, chat làm rõ tình tiết, và đối chiếu văn bản. Graph dừng ở message `CaseHandoff`. Feature 6, đề xuất chế tài, không phải node của graph này.
+Case agent là một LangGraph. Nó gồm mở hồ sơ, chat làm rõ tình tiết, và đối chiếu văn bản. Graph dừng ở message `CaseHandoff`. Feature 6 là graph riêng đọc message đó trong cùng request xác nhận fact, rồi lưu recommendation DRAFT và citation.
 
 Prefix mọi route: `/api/v1`. Client gửi header `X-User-Id`.
 
@@ -119,7 +119,7 @@ lexical    ─┘                └→ page_index → hits (page_index) hoặc 
 
 RRF chờ cả ba nhánh. Một nhánh lỗi thì danh sách nhánh đó rỗng, hai nhánh kia vẫn được gộp. Tối đa 8 đoạn vào `CaseHandoff.passages`. Điểm trên đoạn hybrid là điểm RRF. Đoạn từ mục lục có `origin = page_index` và điểm 0.
 
-`CaseHandoff` gồm `incident_date`, `employee_name`, `description`, `family`, `facts` đã confirmed, `fact_lines`, `passages`, `missing_internal_rule`, `agent_run_id`, `query`, `retrieval`. Message này là đầu ra của feature 5. Feature 6 đọc message đó khi được gắn sau.
+`CaseHandoff` gồm `incident_date`, `employee_name`, `description`, `family`, `facts` đã confirmed, `fact_lines`, `passages`, `missing_internal_rule`, `agent_run_id`, `query`, `retrieval`. Message này là đầu ra của feature 5. Feature 6 đọc message đó để tạo đề xuất trong cùng request.
 
 ## Fallback khi retrieval rỗng
 

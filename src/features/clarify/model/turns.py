@@ -10,7 +10,7 @@ from src.agents.handoff import CaseHandoff
 from src.agents.runs import finish_run, mark_run_failed, start_run
 from src.common.access import require_case, require_mutable_case
 from src.common.errors import AppError
-from src.features.answer.model.answers import load, withdraw
+from src.features.answer.model.answers import PublishWork, load, publish, withdraw
 from src.features.answer.schema import AnswerView
 from src.features.cite.model.search import search_policies
 from src.features.clarify.model.assess import ClarifyPlan, StoredFact, build_question
@@ -165,7 +165,7 @@ async def _unchanged(session: AsyncSession, case: Case, conversation: Conversati
 
 
 async def _cite(session: AsyncSession, case: Case, conversation: Conversation, plan: ClarifyPlan) -> TurnResponse:
-    """Run cite and return the handoff. The sanction agent is a later, separate graph."""
+    """Run cite, then pass its locked handoff to the recommendation agent."""
     if case.incident_date is None:
         raise AppError(422, "Hồ sơ chưa có ngày xảy ra việc nên chưa đối chiếu được văn bản.")
     facts = _locked_facts(plan)
@@ -192,7 +192,13 @@ async def _cite(session: AsyncSession, case: Case, conversation: Conversation, p
     note = _cited_text(message)
     assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff"}))
     finish_run(run, assistant.id)
-    return _turn(case, conversation.id, plan, note, None, message, run.id)
+    recommend_run = await start_run(session, conversation.id, assistant.id, "hr-help-recommendation")
+    answer = await publish(session, PublishWork(case=case, handoff=message, run_id=recommend_run.id))
+    proposal = await add_message(
+        session, NewMessage(conversation.id, "ASSISTANT", answer.message, {"kind": "recommendation"})
+    )
+    finish_run(recommend_run, proposal.id)
+    return _turn(case, conversation.id, plan, answer.message, answer, message, recommend_run.id)
 
 
 async def _planned(session: AsyncSession, case: Case, conversation_id: UUID, source_id: UUID | None) -> ClarifyPlan:

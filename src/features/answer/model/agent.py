@@ -1,7 +1,7 @@
-"""Scaffold for the sanction agent. The case sub-agent does not call this graph.
+"""Feature 6 graph: turn a confirmed case handoff into a draft proposal.
 
-Feature 6 reads ``CaseHandoff`` and is owned by another developer. Wire
-``build_recommend_agent`` only when that agent is ready to join the system.
+The case sub-agent ends at ``CaseHandoff``. The confirm flow invokes this graph
+separately and persists its answer in the same request.
 """
 
 from typing import TypedDict
@@ -58,6 +58,7 @@ def recommend_node(state: dict) -> dict:
             incident_date=message.incident_date,
             layered=layered,
             precedent_note=state.get("precedent_note", ""),
+            retrieval=message.retrieval,
         )
     )
     return {"layered": layered, "draft": draft}

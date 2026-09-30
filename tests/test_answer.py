@@ -1,10 +1,13 @@
 from datetime import date
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
 
 from src.agents.case_graph import build_case_graph
 from src.agents.handoff import CaseHandoff, CitedPassage
+from src.features.answer.model import answers
 from src.features.answer.model.agent import build_recommend_agent
 from src.features.answer.model.decide import DecisionInput, absence_meets_dismissal, decide
 from src.features.answer.model.draft import AnswerInput, draft_answer
@@ -14,6 +17,7 @@ from src.features.cite.model.passage import Passage
 from src.features.cite.model.query import SearchQuery
 from src.features.clarify.model.assess import StoredFact
 from src.features.clarify.model.catalog import ABSENCE
+from src.models.cases import Case
 
 _READY = {
     "contract_type": "xác định thời hạn",
@@ -76,6 +80,23 @@ def test_missing_internal_rule_keeps_the_level_open():
     assert decision.sanction_type is None
     assert decision.risk_level == "HIGH"
     assert decision.missing_internal_rule is True
+
+
+def test_internal_rule_without_law_does_not_lock_a_sanction():
+    rule = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Nghỉ không phép thì bị sa thải.")
+    decision = _decide(_layered(rule))
+    assert decision.sanction_type is None
+    assert decision.risk_level == "HIGH"
+
+
+def test_page_index_headings_do_not_lock_a_sanction():
+    layered = _layered(
+        _passage("LAW", "BLLD-2019", "Bộ luật Lao động", "Sa thải."),
+        _passage("INTERNAL_RULE", "NQ", "Nội quy", "Nghỉ không phép thì bị sa thải."),
+    )
+    decision = decide(DecisionInput(family=ABSENCE, facts=_READY, layered=layered, retrieval="page_index"))
+    assert decision.sanction_type is None
+    assert decision.risk_level == "HIGH"
 
 
 def test_incomplete_procedure_blocks_dismissal():
@@ -180,6 +201,42 @@ async def test_recommend_agent_reads_only_the_handoff_message():
     assert state["draft"].decision.sanction_type is None
     assert state["draft"].decision.risk_level == "HIGH"
     assert state["layered"].inspection_risk[0].policy_code == "283_2026_ND-CP"
+
+
+@pytest.mark.asyncio
+async def test_publish_stores_a_draft_and_citations_from_the_handoff(monkeypatch):
+    law = _passage("LAW", "BLLD-2019", "Bộ luật Lao động", "Kỷ luật lao động sa thải.")
+    case = Case(id=uuid4(), incident_date=date(2026, 3, 1), status="NEED_INFO")
+    handoff = CaseHandoff(
+        incident_date=case.incident_date,
+        employee_name="An",
+        family=ABSENCE,
+        facts=_READY,
+        passages=[_cited(law)],
+        missing_internal_rule=True,
+        agent_run_id=uuid4(),
+    )
+    supersede = AsyncMock()
+    insert_recommendation = AsyncMock(side_effect=lambda _session, row: row)
+    insert_citations = AsyncMock(return_value=[SimpleNamespace(id=uuid4())])
+    monkeypatch.setattr(answers, "supersede_drafts", supersede)
+    monkeypatch.setattr(answers, "ensure_violation", AsyncMock(return_value=False))
+    monkeypatch.setattr(answers, "insert_recommendation", insert_recommendation)
+    monkeypatch.setattr(answers, "insert_citations", insert_citations)
+
+    view = await answers.publish(object(), answers.PublishWork(case, handoff, uuid4()))
+
+    row = insert_recommendation.await_args.args[1]
+    citation = insert_citations.await_args.args[2][0]
+    assert row.status == "DRAFT"
+    assert row.sanction_type is None
+    assert row.risk_level == "HIGH"
+    assert row.agent_run_id == view.agent_run_id
+    assert citation.chunk_id == law.chunk_id
+    assert citation.quote == law.content
+    assert case.status == "ANALYZED"
+    assert view.legal_basis[0].chunk_id == law.chunk_id
+    supersede.assert_awaited_once()
 
 
 def _cited(passage: Passage) -> CitedPassage:
