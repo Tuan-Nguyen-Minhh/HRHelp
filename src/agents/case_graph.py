@@ -5,6 +5,8 @@ this graph stops at ``CaseHandoff``, the message that agent consumes.
 
     open → end
     clarify: extract → ask → end
+             extract → end
+             extract → retrieve → handoff → end
     cite: extract → retrieve → handoff → end
 """
 
@@ -42,10 +44,16 @@ class CaseState(TypedDict, total=False):
     text: str
     stored: dict[str, StoredFact]
     advance: bool
+    semantic: bool
     family: str
     merged: dict[str, StoredFact]
     missing_keys: list[str]
     facts_locked: bool
+    conflicts: list[dict]
+    requested_action: str
+    planner_fallback: bool
+    user_intent: str
+    ambiguities: list[str]
     facts: dict[str, str]
     fact_lines: list[str]
     question: str

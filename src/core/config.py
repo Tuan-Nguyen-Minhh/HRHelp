@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     MODEL_NAME: str = "gpt-4o-mini"
     LLM_TEMPERATURE: float = Field(default=0.7, ge=0.0, le=2.0)
+    # Clarify planner. OpenAI-compatible SpaceXAI endpoint. An empty key keeps
+    # the chat turn on the safe clarification decision and does not retrieve.
+    XAI_API_KEY: str = ""
+    XAI_MODEL: str = "grok-4.7"
+    XAI_BASE_URL: str = "https://api.x.ai/v1"
 
     # -------------------------
     # Database

@@ -21,6 +21,11 @@ _YES = frozenset({"true", "yes", "1", "có", "co", "đã", "da", "rồi", "roi",
 _NO = frozenset({"false", "no", "0", "không", "khong", "chưa", "chua", "không có", "chưa có"})
 
 
+def explicit_facts(text: str, keys: set[str]) -> dict[str, str]:
+    """Return facts the user wrote as ``key: value``. Free text is left to the planner."""
+    return _explicit(text, keys)
+
+
 def extract_facts(family: str, text: str) -> dict[str, str]:
     """Return only keys this family asks for. An explicit ``key: value`` line wins."""
     keys = {spec.key for spec in required_specs(family)}

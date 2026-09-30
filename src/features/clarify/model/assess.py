@@ -15,6 +15,16 @@ class StoredFact:
 
 
 @dataclass(frozen=True)
+class FactConflict:
+    """A new value that disagrees with a fact HR already confirmed."""
+
+    key: str
+    confirmed_value: str
+    proposed_value: str
+    evidence: str = ""
+
+
+@dataclass(frozen=True)
 class ClarifyPlan:
     """What extract and ask decided for one turn."""
 
@@ -23,6 +33,13 @@ class ClarifyPlan:
     missing_keys: list[str]
     locked: bool
     question: str = ""
+    conflicts: tuple[FactConflict, ...] = ()
+    requested_action: str = ""
+    planner_fallback: bool = False
+    user_intent: str = ""
+    ambiguities: tuple[str, ...] = ()
+    validation: str = "ok"
+    accepted_keys: tuple[str, ...] = ()
 
 
 def assess(text: str, stored: dict[str, StoredFact]) -> ClarifyPlan:
@@ -71,6 +88,17 @@ def _missing(family: str, merged: dict[str, StoredFact]) -> list[str]:
 
 def _all_confirmed(family: str, merged: dict[str, StoredFact]) -> bool:
     return all(merged[spec.key].confirmed for spec in required_specs(family))
+
+
+def conflict_question(family: str, conflicts: list[dict]) -> str:
+    """Ask HR which confirmed value stands. The stored value is left unchanged."""
+    labels = {spec.key: spec.label for spec in required_specs(family)}
+    lines = []
+    for item in conflicts:
+        label = labels.get(item["key"], item["key"])
+        lines.append(f"- {label}: hồ sơ đang giữ '{item['confirmed_value']}', tin nhắn nói '{item['proposed_value']}'.")
+    listed = "\n".join(lines)
+    return f"Có tình tiết đã xác nhận bị nói khác. Chưa ghi đè giá trị đang lưu.\n{listed}\nHãy xác nhận giá trị đúng."
 
 
 def _pending(merged: dict[str, StoredFact], key: str) -> bool:

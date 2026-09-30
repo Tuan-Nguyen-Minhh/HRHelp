@@ -13,7 +13,7 @@ from src.common.errors import AppError
 from src.features.answer.model.answers import PublishWork, load, publish, withdraw
 from src.features.answer.schema import AnswerView
 from src.features.cite.model.search import search_policies
-from src.features.clarify.model.assess import ClarifyPlan, StoredFact, build_question
+from src.features.clarify.model.assess import ClarifyPlan, FactConflict, StoredFact, build_question
 from src.features.clarify.model.catalog import required_specs
 from src.features.clarify.model.store import (
     FactWrite,
@@ -61,7 +61,7 @@ async def handle_message(
     run = await start_run(session, conversation.id, message.id, _PIPELINE)
     await session.commit()
     try:
-        return await _clarify(session, case, conversation, run, message.id)
+        return await _clarify(session, case, conversation, run, message.id, actor.id)
     except Exception as exc:
         await _fail(session, run.id, exc)
         if isinstance(exc, AppError):
@@ -100,7 +100,7 @@ async def list_facts(session: AsyncSession, actor: User, case_id: UUID) -> FactL
     case = await require_case(session, case_id, actor)
     conversation = await active_conversation(session, case.id)
     conversation_id = conversation.id if conversation else None
-    plan = await _plan(session, case, conversation_id)
+    plan, _handoff = await _plan(session, case, conversation_id)
     return FactListResponse(
         case_id=case.id,
         case_status=case.status,
@@ -117,8 +117,18 @@ async def _clarify(
     conversation: Conversation,
     run: AgentRun,
     source_id: UUID,
+    actor_id: UUID,
 ) -> TurnResponse:
-    plan = await _planned(session, case, conversation.id, source_id)
+    plan, handoff = await _planned(
+        session, case, conversation.id, source_id, semantic=True, actor_id=actor_id, run_id=run.id
+    )
+    if handoff is not None:
+        note = _cited_text(handoff)
+        assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff"}))
+        finish_run(run, assistant.id)
+        answer, recommend_run_id = await _recommend(session, case, conversation, handoff, assistant.id)
+        await session.commit()
+        return _turn(case, conversation.id, plan, answer.message, answer, handoff, recommend_run_id)
     if plan.locked:
         answer = await load(session, case)
         text = _LOCKED if answer is not None else _NEED_PUBLISH
@@ -139,13 +149,13 @@ async def _confirm(
     conversation: Conversation,
     items: list[FactConfirmItem],
 ) -> TurnResponse:
-    plan = await _plan(session, case, conversation.id)
+    plan, _handoff = await _plan(session, case, conversation.id)
     stored = await _stored(session, case.id)
     _check_keys(plan.family, items)
     if not _changed(stored, plan.merged, items):
         return await _unchanged(session, case, conversation, plan)
     await _apply(session, actor.id, case.id, stored, plan.merged, items)
-    plan = await _planned(session, case, conversation.id, None)
+    plan, _handoff = await _planned(session, case, conversation.id, None)
     if not plan.locked:
         await _reopen(session, case)
         question = _question(plan)
@@ -192,24 +202,52 @@ async def _cite(session: AsyncSession, case: Case, conversation: Conversation, p
     note = _cited_text(message)
     assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff"}))
     finish_run(run, assistant.id)
-    recommend_run = await start_run(session, conversation.id, assistant.id, "hr-help-recommendation")
+    answer, recommend_run_id = await _recommend(session, case, conversation, message, assistant.id)
+    return _turn(case, conversation.id, plan, answer.message, answer, message, recommend_run_id)
+
+
+async def _recommend(
+    session: AsyncSession,
+    case: Case,
+    conversation: Conversation,
+    message: CaseHandoff,
+    source_id: UUID,
+) -> tuple[AnswerView, UUID]:
+    """Feature 6 reads only the handoff. It does not see planner state or graph edges."""
+    recommend_run = await start_run(session, conversation.id, source_id, "hr-help-recommendation")
     answer = await publish(session, PublishWork(case=case, handoff=message, run_id=recommend_run.id))
     proposal = await add_message(
         session, NewMessage(conversation.id, "ASSISTANT", answer.message, {"kind": "recommendation"})
     )
     finish_run(recommend_run, proposal.id)
-    return _turn(case, conversation.id, plan, answer.message, answer, message, recommend_run.id)
+    return answer, recommend_run.id
 
 
-async def _planned(session: AsyncSession, case: Case, conversation_id: UUID, source_id: UUID | None) -> ClarifyPlan:
+async def _planned(
+    session: AsyncSession,
+    case: Case,
+    conversation_id: UUID,
+    source_id: UUID | None,
+    *,
+    semantic: bool = False,
+    actor_id: UUID | None = None,
+    run_id: UUID | None = None,
+) -> tuple[ClarifyPlan, CaseHandoff | None]:
     """Extract, then persist new unconfirmed values before the caller commits."""
-    plan = await _plan(session, case, conversation_id)
+    plan, handoff = await _plan(session, case, conversation_id, semantic=semantic, run_id=run_id)
     stored = await _stored(session, case.id)
-    await _persist_extracted(session, case.id, stored, plan.merged, source_id)
-    return plan
+    await _persist_extracted(session, case.id, stored, plan.merged, source_id, actor_id)
+    return plan, handoff
 
 
-async def _plan(session: AsyncSession, case: Case, conversation_id: UUID | None) -> ClarifyPlan:
+async def _plan(
+    session: AsyncSession,
+    case: Case,
+    conversation_id: UUID | None,
+    *,
+    semantic: bool = False,
+    run_id: UUID | None = None,
+) -> tuple[ClarifyPlan, CaseHandoff | None]:
     text = await _transcript(session, case, conversation_id)
     stored = await _stored(session, case.id)
     graph = build_case_graph(lambda query: search_policies(session, query))
@@ -219,15 +257,29 @@ async def _plan(session: AsyncSession, case: Case, conversation_id: UUID | None)
             "text": text,
             "stored": stored,
             "description": case.description or "",
+            "semantic": semantic,
+            "incident_date": case.incident_date,
+            "employee_name": case.employee_name,
+            "agent_run_id": run_id,
         }
     )
-    return ClarifyPlan(
+    message = state.get("handoff")
+    handoff = message if isinstance(message, CaseHandoff) else None
+    plan = ClarifyPlan(
         state["family"],
         state["merged"],
         list(state.get("missing_keys") or []),
         bool(state["facts_locked"]),
         state.get("question") or "",
+        _conflicts(state.get("conflicts")),
+        state.get("requested_action") or "",
+        bool(state.get("planner_fallback")),
+        state.get("user_intent") or "",
+        tuple(state.get("ambiguities") or []),
+        state.get("validation") or "ok",
+        tuple(state.get("accepted_keys") or []),
     )
+    return plan, handoff
 
 
 def _turn(
@@ -291,12 +343,33 @@ async def _persist_extracted(
     stored: dict[str, StoredFact],
     merged: dict[str, StoredFact],
     source_id: UUID | None,
+    actor_id: UUID | None = None,
 ) -> None:
     for key, item in merged.items():
         current = stored.get(key)
-        if item.confirmed or (current is not None and current.value == item.value):
+        if item.confirmed:
+            if actor_id is None or current is None:
+                continue
+            if current.value != item.value or not current.confirmed:
+                await write_fact(session, FactWrite(case_id, key, item.value, True, actor_id, source_id))
+            continue
+        if current is not None and (current.confirmed or current.value == item.value):
             continue
         await save_extracted(session, FactWrite(case_id, key, item.value, False, None, source_id))
+
+
+def _conflicts(raw: list[dict] | None) -> tuple[FactConflict, ...]:
+    found = []
+    for item in raw or []:
+        found.append(
+            FactConflict(
+                key=item["key"],
+                confirmed_value=item["confirmed_value"],
+                proposed_value=item["proposed_value"],
+                evidence=item.get("evidence", ""),
+            )
+        )
+    return tuple(found)
 
 
 async def _apply(

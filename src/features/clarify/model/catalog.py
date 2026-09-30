@@ -83,6 +83,14 @@ def required_specs(family: str) -> tuple[FactSpec, ...]:
     return _SPECS.get(family, _SPECS[GENERAL])
 
 
+def catalog_keys() -> set[str]:
+    """Every fact key a family can require. The planner may not invent keys outside this set."""
+    keys: set[str] = set()
+    for specs in _SPECS.values():
+        keys.update(spec.key for spec in specs)
+    return keys
+
+
 def fact_lines(family: str, facts: dict[str, str]) -> list[str]:
     """Label confirmed values in catalog order for the answer and the search text."""
     lines = []
