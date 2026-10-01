@@ -51,5 +51,20 @@
   "tree_anomalies": [
    "CHUONG XI: DUPLICATE_CHAPTER_NUMBER:XI-> XII"
   ]
+ },
+ {
+  "stem": "noi_quy_mau_cong_ty",
+  "document_id": "NQLD-HRCORP-2026",
+  "tokenizer": "mistral",
+  "max_tokens": 1000,
+  "articles_in_tree": 18,
+  "chunks": 18,
+  "levels": {
+   "ARTICLE": 18
+  },
+  "chunks_over_token_limit": 0,
+  "chunks_with_anomaly_flags": 0,
+  "tokenizer_fallback_used": false,
+  "tree_anomalies": []
  }
 ]

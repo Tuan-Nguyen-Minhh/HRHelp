@@ -89,6 +89,14 @@ DOCUMENTS: list[dict[str, Any]] = [
         "title": "Nghị định 283/2026/NĐ-CP",
         "status": DOC_STATUS_ACTIVE,
     },
+    {
+        "document_id": "NQLD-HRCORP-2026",
+        "doc_code": "NQCT",
+        "document_type": "NOI_QUY",
+        "document_form": "VAN_BAN_NOI_BO",
+        "title": "NỘI QUY LAO ĐỘNG",
+        "status": DOC_STATUS_ACTIVE,
+    },
 ]
 
 INTERNAL_DOC_IDS: set[str] = {d["document_id"] for d in DOCUMENTS}
@@ -120,6 +128,7 @@ CHUNK_FILES = [
     "chunks_BLLD.json",
     "chunks_ND145_2020.json",
     "chunks_ND283_2026.json",
+    "chunks_NQCT.json",
 ]
 
 BATCH_SIZE = 500

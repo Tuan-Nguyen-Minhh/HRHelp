@@ -174,6 +174,46 @@ class TestStep3Golden(unittest.TestCase):
         self.assertFalse(any(t == "18/VBHN-VPQH" and art == 32
                              for t, art, _ in targets))
 
+    def test_tc10_bare_qualifier_nd145_number(self):
+        # P-029 FIX 2026-10-01 (NQCT): 'Dieu 84 Nghi dinh 145/2020/ND-CP'
+        # (khong 'cua') -> 145/2020/ND-CP EXPLICIT HIGH, TUYET DOI khong
+        # roi ve BLLD via BOUNDARY_CHECK.
+        from data_pipeline_steps.step3.cross_reference_resolver import (
+            resolve_cross_references as _resolve, DocScope as _Scope)
+        text = ("Nghiêm cấm mọi hành vi quấy rối tình dục dưới bất kỳ hình thức "
+                "nào tại nơi làm việc theo quy định tại Điều 84 "
+                "Nghị định 145/2020/NĐ-CP.")
+        refs = _resolve(text, _Scope(document_id="NQLD-HRCORP-2026",
+                                     max_article=18))
+        targets = {(r.target_doc, r.article, r.rule, r.confidence) for r in refs}
+        self.assertIn(("145/2020/NĐ-CP", 84, "EXPLICIT", "HIGH"), targets)
+        self.assertFalse(any(t == "18/VBHN-VPQH" for t, _, _, _ in targets))
+
+    def test_tc11_bare_qualifier_blld_name(self):
+        # P-029 FIX 2026-10-01 (NQCT): 'Dieu 29 Bo luat Lao dong'
+        # (khong 'cua') -> BLLD EXPLICIT HIGH, khong BOUNDARY_CHECK LOW.
+        from data_pipeline_steps.step3.cross_reference_resolver import (
+            resolve_cross_references as _resolve, DocScope as _Scope)
+        text = ("Quy trình và chế độ tiền lương khi chuyển người lao động làm "
+                "công việc khác tuân thủ nghiêm ngặt quy định tại Điều 29 "
+                "Bộ luật Lao động.")
+        refs = _resolve(text, _Scope(document_id="NQLD-HRCORP-2026",
+                                     max_article=18))
+        targets = {(r.target_doc, r.article, r.rule, r.confidence) for r in refs}
+        self.assertIn(("18/VBHN-VPQH", 29, "EXPLICIT", "HIGH"), targets)
+
+    def test_tc12_internal_self_noi_quy_nay(self):
+        # P-029 FIX 2026-10-01 (NQCT): 'Dieu 8 Noi quy nay' -> self
+        # EXPLICIT_SELF HIGH, khong DEFAULT_SELF mo ho.
+        from data_pipeline_steps.step3.cross_reference_resolver import (
+            resolve_cross_references as _resolve, DocScope as _Scope)
+        text = ("quấy rối tình dục tại nơi làm việc quy định tại "
+                "Điều 8 Nội quy này.")
+        refs = _resolve(text, _Scope(document_id="NQLD-HRCORP-2026",
+                                     max_article=18))
+        targets = {(r.target_doc, r.article, r.rule, r.confidence) for r in refs}
+        self.assertIn(("NQLD-HRCORP-2026", 8, "EXPLICIT_SELF", "HIGH"), targets)
+
 
 if __name__ == "__main__":
     unittest.main()

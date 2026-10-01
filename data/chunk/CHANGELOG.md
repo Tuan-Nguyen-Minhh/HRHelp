@@ -171,3 +171,54 @@ OUT_OF_SEQUENCE còn 20 (toàn Điều 219, có lý do cụ thể, không `khôn
 - `references_sample_review.md/.csv` (60 mẫu, 20/văn bản, stratified theo rule).
 - `verify_final.log` (lần chạy cuối DAT a-f cùng lúc).
 - Tests: `step2` 14 passed, `step3 golden` 9 passed (TC9 law-number giữ đúng).
+
+## Bổ sung 2026-10-01 — tài liệu nội bộ NQCT + qualifier trần (P-029 review)
+
+_Ngày: 2026-10-01. Phạm vi: thêm văn bản thứ 4 (Nội quy lao động HRCorp,
+`NQLD-HRCORP-2026`/`NQCT`, 18 Điều/18 chunk) + sửa bug resolver phát hiện nhờ
+tài liệu mới. Tổng corpus: 1307 chunk / 568 ref, BOUNDARY về lại 3._
+
+**1. Qualifier trần không có "của" (`cross_reference_resolver.py`):**
+- Triệu chứng: "Điều 84 Nghị định 145/2020/NĐ-CP" và "Điều 29 Bộ luật Lao động"
+  (cách viết không "của", hoàn toàn hợp lệ) không match `QUALIFIER_RE` (bắt buộc
+  `của\s+`) → rơi xuống Rule 3 `BOUNDARY_CHECK`: `art > max_article (18)` → gán
+  cứng về `18/VBHN-VPQH` LOW. Điều 15 NQCT trỏ sai sang BLLD Điều 84 trong khi
+  NĐ145 Điều 84 ("Quấy rối tình dục tại nơi làm việc") mới là đích đúng.
+- Sửa: `BARE_QUALIFIER_RE` (anchor `^` trên window — chỉ khi kề sát sau mention,
+  không nuốt luật của Điều khác) + `BARE_SELF_RE` ("Nội quy này" kề sát → self);
+  `BARE_LAW_NO_RE` trích số hiệu trần (`145/2020/NĐ-CP` không cần chữ "số");
+  `QUALIFIER_RE`/`SELF_WORDS`/`SELF_QUAL_RE` thêm "Nội quy"/"Nội quy này";
+  mapping "nội quy này" → self; `is_specific_law` nhận số hiệu trần.
+- Tác dụng phụ đúng (verified từng câu chữ): 3 ref NĐ145 A081
+  (`Điều 5/8/10 Nghị định số 105/2020/NĐ-CP`) trước đây `DEFAULT_SELF` sai về
+  NĐ145, nay `EXPLICIT` đúng về `105/2020/NĐ-CP`. Count NĐ145 giữ nguyên 233
+  (thay thế, không thêm); BLLD/NĐ283 không đổi ref nào (semantic-equal 100%).
+- Sau sửa, NQCT có 3 ref: `NQCT→145/2020/NĐ-CP D84` (EXPLICIT HIGH),
+  `NQCT→18/VBHN-VPQH D29` (EXPLICIT HIGH), `NQCT→NQLD-HRCORP-2026 D8`
+  (EXPLICIT_SELF HIGH). BOUNDARY toàn corpus: 5 → 3.
+
+**2. Nội dung nội quy (đánh số lại + giờ làm việc):**
+- 18 Điều từng xếp `1,2,3,4,5,6,14,15,16,7,…,13,17,18` (Điều 14 đứng trước Điều 7)
+  → đánh số lại tuần tự 1–18 theo thứ tự đọc; ref nội bộ "Điều 15 Nội quy này"
+  (sa thải) → "Điều 8" (quấy rối, sau đánh số lại).
+- Điều 3: "không quá 40 giờ/tuần" đứng một mình dễ đọc thành trần luật (trần luật
+  là 48 giờ/tuần, BLLD Điều 105) → giữ 40 giờ làm chuẩn công ty (Mon–Fri, hợp
+  pháp vì thấp hơn trần) và ghi rõ trần 48 giờ/tuần theo BLLD.
+
+**3. Pipeline/metadata:**
+- `step2_preprocessing.py`: giữ `VĂN BẢN NỘI BỘ` (đọc dòng `Hình thức:`, KHÔNG quét
+  cả body — bản đầu quét cả body đã nhận nhầm NĐ145/NĐ283 vì chữ "nội bộ" trong
+  thân văn bản, đã sửa); fallback dòng `Loại văn bản:` cho `NỘI QUY`.
+- `verify_db.py`: `CHUNK_FILES`/`TREE_FILES` thêm NQCT (trước đây artifact mới nằm
+  ngoài V7/provenance); `EXPECTED_BOUNDARY` 5 → 3; docstring 565 → 568;
+  `V4.internal_article_exists` thêm `NQLD-HRCORP-2026`.
+- `.gitattributes` mới: `data/chunk/chunks_*.json` + `document_tree_*.json`
+  `text eol=crlf` để sha256 trong `source_manifest.json` ổn định đa nền tảng.
+- `source_manifest.json` re-pin (reviewed): BLLD/NĐ283/trees giữ nguyên hash,
+  NĐ145 đổi hash do 3 ref sửa đúng, thêm 2 file NQCT.
+- Tests: `step2` 14 → 15 (+nội quy metadata), `step3 golden` 9 → 12
+  (TC10 bare-số hiệu NĐ, TC11 bare-tên BLLD, TC12 self "Nội quy này").
+- Verify: `verify_db.py` 77 PASS / 0 FAIL; `pytest` 32 passed;
+  `ruff check src/ tests/` sạch.
+- Embedding: resume theo `content_sha256` — chỉ 1 request cho 18 chunk NQCT
+  (7 456 prompt tokens), 1289 vector cũ giữ nguyên.

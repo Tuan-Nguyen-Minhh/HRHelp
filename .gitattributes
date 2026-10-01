@@ -1,0 +1,6 @@
+# P-029: freeze line endings for the hash-pinned step3 artifacts so
+# data/chunk/source_manifest.json sha256 is stable across Windows/Linux
+# checkouts (scripts/verify_db.py V7 compares working-tree bytes).
+# Python's json.dump via open(..., "w") emits CRLF on Windows; pin that.
+data/chunk/chunks_*.json text eol=crlf
+data/chunk/document_tree_*.json text eol=crlf

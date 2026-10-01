@@ -4,13 +4,13 @@ Tightened to match `data_pipeline_steps/step4_5_plan.md` REV.2 exactly. Every
 check asserts a concrete, recomputed value — no check is hard-coded to pass.
 
   V1      connection + migration: alembic current == head, 3 tables, vector ext
-  V2      legal_documents: 3 rows; 220/115/68; BLLD PARTIALLY_AMENDED; 2 ND ACTIVE;
-          amended_by BLLD non-null; chunk_count/article_count cross-checked
-          against real rows
-  V3      legal_chunks: hard 381/377/531 = 1289; 0 empty; 0 dup id; article coverage
+  V2      legal_documents: 4 rows; 220/115/68/18; BLLD PARTIALLY_AMENDED; 2 ND ACTIVE;
+          NQCT ACTIVE (NOI_QUY/VAN_BAN_NOI_BO); amended_by BLLD non-null; chunk_count/article_count
+          cross-checked against real rows
+  V3      legal_chunks: hard 381/377/531/18 = 1307; 0 empty; 0 dup id; article coverage
   V3-bis  special columns: seed=42, 30 chunk ids PRINTED IN FULL, JSON<->DB 100%
   V3-ter  dangling parent: DB count == JSON count (both printed)
-  V4      refs: hard 565 = 125+233+207; target_doc valid; internal article exists;
+  V4      refs: hard 568 = 125+233+207+3; target_doc valid; internal article exists;
           anchor level matches ref granularity
   V4-bis  UNRESOLVED == 0
   V4-ter  BOUNDARY == 3 AND UNRESOLVED == 0
@@ -61,11 +61,13 @@ CHUNK_FILES = [
     "chunks_BLLD.json",
     "chunks_ND145_2020.json",
     "chunks_ND283_2026.json",
+    "chunks_NQCT.json",
 ]
 TREE_FILES = [
     "document_tree_BLLD.json",
     "document_tree_ND145_2020.json",
     "document_tree_ND283_2026.json",
+    "document_tree_NQCT.json",
 ]
 SOURCE_FILES = CHUNK_FILES + TREE_FILES
 # Pinned known-good hashes. Without this anchor, a "before/after" comparison
@@ -75,11 +77,15 @@ SOURCE_FILES = CHUNK_FILES + TREE_FILES
 MANIFEST_PATH = CHUNK_DIR / "source_manifest.json"
 
 # Frozen expectations (plan 4) — hard, never recomputed from the DB.
-EXPECTED_CHUNK_COUNTS = {"18/VBHN-VPQH": 381, "145/2020/NĐ-CP": 377, "283/2026/NĐ-CP": 531}
-EXPECTED_ARTICLE_COUNTS = {"18/VBHN-VPQH": 220, "145/2020/NĐ-CP": 115, "283/2026/NĐ-CP": 68}
-EXPECTED_REF_COUNTS = {"18/VBHN-VPQH": 125, "145/2020/NĐ-CP": 233, "283/2026/NĐ-CP": 207}
-TOTAL_CHUNKS = 1289
-TOTAL_REFS = 565
+# P-029 FIX 2026-10-01 (NQCT + bare-qualifier): tong van 568 = 125+233+207+3.
+# Bare-qualifier sua 3 ref ND145 A081 (DEFAULT_SELF sai -> EXPLICIT dung ve
+# NĐ 105/2020, giu nguyen count) va 3 ref NQCT (2 BOUNDARY sai -> EXPLICIT,
+# 1 DEFAULT_SELF -> EXPLICIT_SELF) nen BOUNDARY 5->3.
+EXPECTED_CHUNK_COUNTS = {"18/VBHN-VPQH": 381, "145/2020/NĐ-CP": 377, "283/2026/NĐ-CP": 531, "NQLD-HRCORP-2026": 18}
+EXPECTED_ARTICLE_COUNTS = {"18/VBHN-VPQH": 220, "145/2020/NĐ-CP": 115, "283/2026/NĐ-CP": 68, "NQLD-HRCORP-2026": 18}
+EXPECTED_REF_COUNTS = {"18/VBHN-VPQH": 125, "145/2020/NĐ-CP": 233, "283/2026/NĐ-CP": 207, "NQLD-HRCORP-2026": 3}
+TOTAL_CHUNKS = 1307
+TOTAL_REFS = 568
 EXPECTED_BOUNDARY = 3
 EXPECTED_UNRESOLVED = 0
 
@@ -88,6 +94,7 @@ DOC_ID_TO_CODE = {
     "18/VBHN-VPQH": "BLLD",
     "145/2020/NĐ-CP": "ND145_2020",
     "283/2026/NĐ-CP": "ND283_2026",
+    "NQLD-HRCORP-2026": "NQCT",
 }
 
 EXTERNAL_LAW_ALLOWLIST: set[str] = {
@@ -253,7 +260,7 @@ def verify_v1(db: Session) -> None:
 def verify_v2(db: Session) -> None:
     logger.info("--- V2: legal_documents ---")
     doc_count = db.scalar(sa.select(sa.func.count()).select_from(LegalDocument))
-    record("V2.doc_count", doc_count == 3, f"count={doc_count}")
+    record("V2.doc_count", doc_count == 4, f"count={doc_count}")
 
     for doc_id, expected_art in EXPECTED_ARTICLE_COUNTS.items():
         doc = db.get(LegalDocument, doc_id)
@@ -504,12 +511,13 @@ def verify_v4(db: Session) -> None:
     record("V4.target_doc_valid", not invalid, f"invalid={invalid}")
 
     # every internal ref must point at an article that exists
+    # P-029 FIX 2026-10-01: them NQCT (self-ref NOI_QUY phai duoc kiem tra).
     missing = db.execute(
         sa.text(
             """
             SELECT r.source_chunk_id, r.target_doc, r.article
             FROM legal_chunk_references r
-            WHERE r.target_doc IN ('18/VBHN-VPQH','145/2020/NĐ-CP','283/2026/NĐ-CP')
+            WHERE r.target_doc IN ('18/VBHN-VPQH','145/2020/NĐ-CP','283/2026/NĐ-CP','NQLD-HRCORP-2026')
               AND NOT EXISTS (
                 SELECT 1 FROM legal_chunks t
                 WHERE t.document_id = r.target_doc AND t.article_number = r.article)
