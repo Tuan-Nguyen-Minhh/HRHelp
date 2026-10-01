@@ -31,11 +31,12 @@ class Settings(BaseSettings):
     # -------------------------
     # LLM
     # -------------------------
+    # Clarify and sanction synthesis. An empty key keeps chat on the rule
+    # extractor and leaves the sanction level unset.
     OPENAI_API_KEY: str = ""
     MODEL_NAME: str = "gpt-4o-mini"
     LLM_TEMPERATURE: float = Field(default=0.7, ge=0.0, le=2.0)
-    # Clarify planner. OpenAI-compatible SpaceXAI endpoint. An empty key keeps
-    # the chat turn on the safe clarification decision and does not retrieve.
+    # Unused by the case agents. Left so an old env file still loads.
     XAI_API_KEY: str = ""
     XAI_MODEL: str = "grok-4.7"
     XAI_BASE_URL: str = "https://api.x.ai/v1"

@@ -1,16 +1,16 @@
 """One company sanction and one process, after the retrieved sources are split.
 
-The matching internal rule states the company level. Law and a guiding decree
-state the ceiling. A level is kept only when both say so. An administrative
-penalty and a precedent cannot set or raise that level. Termination is never
-the company sanction.
+A level is kept only when the synthesis assessment cites an internal rule and
+a law or guiding decree verbatim. An administrative penalty and a precedent
+cannot set or raise that level. Termination is never the company sanction.
 """
 
 from src.features.answer.schema import SANCTION_LABELS, AppliedStandard, LayerEffect, ProcessStep
 
 RULE = (
-    "Một chuẩn. Luật và nghị định hướng dẫn là trần mức được dùng. "
-    "Nội quy khớp hành vi nêu mức công ty, và chỉ mức còn trong trần được chốt. "
+    "Một chuẩn. Mức chỉ được chốt khi đoạn luật hoặc nghị định hướng dẫn và đoạn nội quy "
+    "đã retrieval được trích nguyên văn. "
+    "Thiếu fact thì chưa chốt. Nhiều mức cùng được chứng minh thì chưa chọn. "
     "Nghị định xử phạt và tiền lệ không đổi mức. "
     "Sa thải và chấm dứt hợp đồng không trộn."
 )
@@ -35,15 +35,15 @@ def applied_standard(
             LayerEffect(
                 layer="legal_basis",
                 effect="basis",
-                note="Luật và nghị định hướng dẫn là trần mức được dùng.",
+                note="Luật và nghị định hướng dẫn chỉ đứng khi được trích nguyên văn.",
             ),
             LayerEffect(
                 layer="internal_rule",
                 effect="level" if aligned else "open",
                 note=(
-                    "Mức lấy từ đoạn nội quy khớp hành vi và còn trong trần."
+                    "Mức lấy từ đoạn nội quy được trích nguyên văn."
                     if aligned
-                    else "Chưa có mức nội quy nào khớp hành vi và còn trong trần."
+                    else "Chưa có mức nội quy nào được trích dẫn đủ."
                 ),
             ),
             LayerEffect(layer="precedent", effect="compare", note="Tiền lệ không nâng mức."),

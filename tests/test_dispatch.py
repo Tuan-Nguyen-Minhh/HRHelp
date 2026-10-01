@@ -7,11 +7,20 @@ import pytest
 
 from src.agents.handoff import CaseHandoff, CitedPassage
 from src.features.answer.model.agent import build_recommend_agent
+from src.features.answer.model.assessment import (
+    Assessment,
+    CaseSummary,
+    DownstreamHandoff,
+    EvidenceRef,
+    RiskAssessment,
+    SanctionAssessment,
+)
 from src.features.answer.model.dispatch import build_dispatch_agent, hold_code
 from src.features.answer.model.layers import BasisLayer
 from src.features.answer.model.proposal import ProposalHandoff, close_proposal
 from src.features.answer.model.release import DispatchError, save_submission
 from src.features.answer.model.standard import applied_standard
+from src.features.answer.model.synthesis import guard, unavailable_assessment
 from src.features.answer.schema import AnswerView, CitationView, ProcessStep
 from src.features.cite.model.passage import Passage
 from src.features.clarify.model.catalog import ABSENCE
@@ -177,7 +186,11 @@ _ART_125 = (
 
 
 @pytest.mark.asyncio
-async def test_company_level_above_the_retrieved_ceiling_is_held():
+async def test_company_level_above_the_retrieved_ceiling_is_held(monkeypatch):
+    async def ungrounded(message, _layered):
+        return unavailable_assessment(message.facts, "Fact chỉ có đi muộn, đoạn nội quy không chứng minh được mức.")
+
+    monkeypatch.setattr("src.features.answer.model.agent.synthesize", ungrounded)
     handoff = _handoff(
         [
             _passage("LAW", "BLLD", "1. Khiển trách.\n2. Kéo dài thời hạn nâng lương không quá 06 tháng.\n3. Cách chức."),
@@ -195,7 +208,27 @@ async def test_company_level_above_the_retrieved_ceiling_is_held():
 
 
 @pytest.mark.asyncio
-async def test_locked_dismissal_from_feature_6_is_submitted():
+async def test_locked_dismissal_from_feature_6_is_submitted(monkeypatch):
+    async def grounded(_message, layered):
+        law = layered.legal_basis[0]
+        rule = layered.internal_rule[0]
+        raw = Assessment(
+            case_summary=CaseSummary(violation="nghỉ không phép", facts=dict(_READY)),
+            sanction_assessment=SanctionAssessment(
+                status="SUPPORTED",
+                recommended_sanction="DISMISSAL",
+                reason="Đoạn luật và nội quy đã lấy nêu sa thải.",
+                evidence=[
+                    EvidenceRef(chunk_id=str(law.chunk_id), quote="05 ngày cộng dồn trong thời hạn 30 ngày"),
+                    EvidenceRef(chunk_id=str(rule.chunk_id), quote=rule.content),
+                ],
+            ),
+            risk_assessment=RiskAssessment(level="LOW", reasons=["Đủ trích dẫn."]),
+            downstream_handoff=DownstreamHandoff(can_recommend=True),
+        )
+        return guard(raw, [law, rule])
+
+    monkeypatch.setattr("src.features.answer.model.agent.synthesize", grounded)
     handoff = _handoff(
         [
             _passage("LAW", "BLLD", _ART_125),
