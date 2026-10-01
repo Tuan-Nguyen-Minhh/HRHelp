@@ -31,18 +31,19 @@ LIST_RE = re.compile(
 # Capture THAM (greedy, KHONG lookahead punct) de giu luat co ','.
 # _clean se cat gon tai boundary + allowlist. Khong dung lookahead vi cau dai
 # khong co punct trong 80 ky tu se fail match (VD Dieu 65/Dieu 20).
+# P-029 FIX 2026-10-01 (NQCT): them 'Noi quy' (tai lieu noi bo trich 'cua Noi quy...').
 QUALIFIER_RE = re.compile(
     r"của\s+(Bộ luật[^\n:.;]{1,80}|Luật[^\n:.;]{1,80}|Nghị định[^\n:.;]{1,80}|"
-    r"Pháp lệnh[^\n:.;]{1,80}|Hiến pháp)",
+    r"Pháp lệnh[^\n:.;]{1,80}|Hiến pháp|Nội quy[^\n:.;]{1,80})",
     re.IGNORECASE,
 )
 SELF_WORDS = re.compile(
-    r"(Nghị định này|Điều này|Khoản này|Bộ luật này)", re.IGNORECASE
+    r"(Nghị định này|Điều này|Khoản này|Bộ luật này|Nội quy này)", re.IGNORECASE
 )
 # Qualifier self mo rong: 'cua Luat nay/Bo luat nay...' co the dung truoc text
 # thuong (khong nhat thiet truoc dau cau) -> match rieng khong yeu cau punctuation.
 SELF_QUAL_RE = re.compile(
-    r"của\s+(Luật này|Bộ luật này|Nghị định này|Điều này|Khoản này)\b",
+    r"của\s+(Luật này|Bộ luật này|Nghị định này|Điều này|Khoản này|Nội quy này)\b",
     re.IGNORECASE,
 )
 # 'Luat nay' mo ho: trong quote external -> tro ve luat ngoai; ngoai quote -> self.
@@ -51,6 +52,26 @@ SELF_QUAL_RE = re.compile(
 LUAT_NAY_RE = re.compile(r"Luật này", re.IGNORECASE)
 BO_LUAT_NAY_RE = re.compile(r"Bộ luật này", re.IGNORECASE)
 LAW_NO_RE = re.compile(r"số\s+([0-9]+/[0-9]{4}/[A-ZĐ0-9\-]+)")
+# P-029 FIX 2026-10-01 (NQCT): so hieu luat TRAN (khong co 'so').
+# VD 'Dieu 84 Nghi dinh 145/2020/ND-CP' -> '145/2020/ND-CP'.
+# (LAW_NO_RE cu chi bat 'so 92/2015/QH13' theo TC9.)
+BARE_LAW_NO_RE = re.compile(r"(\d{2,3}/20\d{2}/[A-ZĐ0-9\-]+)")
+# P-029 FIX 2026-10-01 (NQCT): qualifier TRAN khong co 'cua', ke sat mention.
+# VD 'Dieu 84 Nghi dinh 145/2020/ND-CP.' / 'Dieu 29 Bo luat Lao dong.'
+# Chi match khi KE SAT sau mention (anchor ^ tren window) de tranh nhan nham
+# luat cua Dieu khac cach xa trong cung cau dai. Loai tru '... nay' de
+# nhuong cho logic self/ambiguous phia duoi.
+BARE_QUALIFIER_RE = re.compile(
+    r"^\s*(Nghị định\s+\d{2,3}/20\d{2}/[A-ZĐ0-9\-]+|Bộ luật Lao động\b|"
+    r"Luật\s+(?!này\b)[^\n:.;]{1,60}|Bộ luật\s+(?!này\b)[^\n:.;]{1,60}|"
+    r"Nghị định\s+(?!này\b)[^\n:.;]{1,60})",
+    re.IGNORECASE,
+)
+# Self TRAN ke sat mention (khong co 'cua'): 'Dieu 15 Noi quy nay' -> self.
+BARE_SELF_RE = re.compile(
+    r"^\s*(Nội quy này|Nghị định này|Bộ luật này|Điều này|Khoản này)\b",
+    re.IGNORECASE,
+)
 
 
 def _has_standalone_luat_nay(text: str) -> bool:
@@ -163,12 +184,19 @@ def _nearest_qualifier_after(body: str, mention_end_body: int,
     khong duoc nhan 'cua Bo luat' cua Dieu 169).
     """
     window = body[mention_end_body:mention_end_body + max_dist]
+    # P-029 FIX 2026-10-01 (NQCT): bare ke sat (khong 'cua') uu tien nhat.
+    # VD 'Dieu 84 Nghi dinh 145/2020/ND-CP' / 'Dieu 29 Bo luat Lao dong'.
+    # Anchor ^ tren window de khong nuot luat cua Dieu khac o xa.
+    m_bare_self = BARE_SELF_RE.match(window)
+    m_bare = BARE_QUALIFIER_RE.match(window)
     # Self truoc (khong yeu cau punctuation): 'cua Luat nay...'
     m_self = SELF_QUAL_RE.search(window)
     m_exp = QUALIFIER_RE.search(window)
     cands = []
-    if m_self:
-        cands.append((m_self.start(), m_self))
+    if m_bare_self:
+        cands.append((m_bare_self.start(), m_bare_self))
+    if m_bare:
+        cands.append((m_bare.start(), m_bare))
     if m_exp:
         cands.append((m_exp.start(), m_exp))
     if not cands:
@@ -188,16 +216,23 @@ def _resolve_named(qualifier: str) -> Tuple[str, bool]:
     # Uu tien so hieu luat trong RAW (VD 'Bo luat To tung dan su so 92/2015/QH13'
     # -> '92/2015/QH13', theo TC9). Tim truoc khi clean cat bo so hieu.
     # Ngoai tru BLLD (khong dung so hieu, dung ID 18/VBHN-VPQH).
+    # P-029 FIX 2026-10-01: them so hieu TRAN ('Nghi dinh 145/2020/ND-CP').
     if not any(a in raw.lower() for a in BLLD_ALIASES):
         m_raw = LAW_NO_RE.search(raw)
         if m_raw:
             return m_raw.group(1), False
+        m_bare = BARE_LAW_NO_RE.search(raw)
+        if m_bare:
+            return m_bare.group(1), False
     cleaned = _clean_law_name(raw)
     if any(a in cleaned.lower() for a in BLLD_ALIASES):
         return BLLD_ID, False
     m = LAW_NO_RE.search(cleaned)
     if m:
         return m.group(1), False
+    m2 = BARE_LAW_NO_RE.search(cleaned)
+    if m2:
+        return m2.group(1), False
     # 'Nghi dinh nay' -> se duoc caller map ve self; giu nguyen de nhan dien
     return cleaned, (not _is_valid_target(cleaned))
 
@@ -291,6 +326,12 @@ def resolve_cross_references(text: str, scope: DocScope,
         tail_cut = re.split(r"[\n:;]", tail, maxsplit=1)[0]
         qm = re.match(r"\s*(của\s+[^\n:.;]{1,80})", tail_cut, re.IGNORECASE)
         qualifier = qm.group(1) if qm else None
+        if qualifier is None:
+            # P-029 FIX 2026-10-01: list co the trich tran ('Dieu 7 va Dieu 14
+            # Bo luat Lao dong') — thu bare ke sat.
+            bm = BARE_QUALIFIER_RE.match(tail_cut)
+            if bm:
+                qualifier = bm.group(1) if bm.lastindex else bm.group(0)
         if qualifier:
             # Neu qualifier la self-word ('Nghi dinh nay...') -> map ve self
             if SELF_WORDS.search(qualifier):
@@ -299,7 +340,7 @@ def resolve_cross_references(text: str, scope: DocScope,
             else:
                 target, _flag = _resolve_named(qualifier)
                 # 'Nghi dinh nay' sau clean van giu -> map self
-                if target.lower() in ("nghị định này", "bộ luật này"):
+                if target.lower() in ("nghị định này", "bộ luật này", "nội quy này"):
                     target = scope.document_id
                 conf = "HIGH" if _is_valid_target(target) else "LOW"
             for am in re.finditer(r"Điều\s+(\d+)([a-z]?)", lm.group(0),
@@ -349,11 +390,15 @@ def resolve_cross_references(text: str, scope: DocScope,
                 target_pre == BLLD_ID
                 or target_pre in KNOWN_LONG_LAWS
                 or bool(LAW_NO_RE.search(target_pre))
+                or bool(BARE_LAW_NO_RE.search(target_pre))
                 or (target_pre in KNOWN_LAW_PREFIXES
                     and "này" not in target_pre.lower())
             )
             # Chi coi la self khi target khong phai law cu the
-            if (SELF_QUAL_RE.search(raw_q) or SELF_WORDS.search(raw_q)) \
+            # (P-029 FIX 2026-10-01: BARE_SELF_RE de bat 'Noi quy nay' ke sat,
+            # SELF_WORDS da bao gom 'Noi quy nay').
+            if (SELF_QUAL_RE.search(raw_q) or SELF_WORDS.search(raw_q)
+                    or BARE_SELF_RE.search(raw_q)) \
                     and not is_specific_law:
                 # 'Bo luat nay' -> self ro rang; 'Luat nay' doc lap moi mo ho.
                 if _raw_is_standalone_luat_nay(raw_q) \
@@ -386,7 +431,7 @@ def resolve_cross_references(text: str, scope: DocScope,
                 continue
             target, _ = _resolve_named(
                 near_qm.group(1) if near_qm.lastindex else near_qm.group(0))
-            if target.lower() in ("nghị định này",):
+            if target.lower() in ("nghị định này", "bộ luật này", "nội quy này"):
                 target = scope.document_id
             conf = "HIGH" if _is_valid_target(target) else "LOW"
             rule = "EXPLICIT" if conf == "HIGH" else "EXPLICIT_LOW"

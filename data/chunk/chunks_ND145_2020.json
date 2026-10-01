@@ -9258,12 +9258,12 @@
   },
   "references": [
    {
-    "target_doc": "145/2020/NĐ-CP",
+    "target_doc": "105/2020/NĐ-CP",
     "article": 5,
     "clause": null,
     "point": null,
     "confidence": "HIGH",
-    "rule": "DEFAULT_SELF"
+    "rule": "EXPLICIT"
    }
   ]
  },
@@ -9300,12 +9300,12 @@
   },
   "references": [
    {
-    "target_doc": "145/2020/NĐ-CP",
+    "target_doc": "105/2020/NĐ-CP",
     "article": 8,
     "clause": null,
     "point": null,
     "confidence": "HIGH",
-    "rule": "DEFAULT_SELF"
+    "rule": "EXPLICIT"
    }
   ]
  },
@@ -9342,12 +9342,12 @@
   },
   "references": [
    {
-    "target_doc": "145/2020/NĐ-CP",
+    "target_doc": "105/2020/NĐ-CP",
     "article": 10,
     "clause": null,
     "point": null,
     "confidence": "HIGH",
-    "rule": "DEFAULT_SELF"
+    "rule": "EXPLICIT"
    }
   ]
  },

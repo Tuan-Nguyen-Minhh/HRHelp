@@ -1,12 +1,14 @@
 # Handoff — snapshot database (bản full + lịch sử)
 
-_Ngày: 2026-09-27 (B4/B5), bổ sung 2026-09-28 (B6/B7), đổi tên dump `b6b7_*` → `full_*` 2026-09-29. Nguồn: PostgreSQL 16.15 + pgvector 0.8.6, container `p-029-db-1`._
+_Ngày: 2026-09-27 (B4/B5), bổ sung 2026-09-28 (B6/B7), đổi tên dump `b6b7_*` → `full_*`
+2026-09-29, bổ sung tài liệu nội bộ NQCT + fix qualifier trần 2026-10-01 (xem
+`data/chunk/CHANGELOG.md` mục mới nhất). Nguồn: PostgreSQL 16.15 + pgvector 0.8.6, container `p-029-db-1`._
 
 ## 0. Dùng bản nào — đọc trước
 
 - **Máy mới / deploy: chỉ dùng `full_build_phase_p029.dump`.** Đó là snapshot
-  **full** của cả database ở head `0003` — đủ 4 bảng legal
-  (documents 3 / chunks 1289 / references 565 / **embeddings 1289**).
+  **full** của cả database ở head `0004` — đủ 4 bảng legal
+  (documents 4 / chunks 1307 / references 568 / **embeddings 1307**).
 - `b4b5_*` là **lịch sử**, giữ lại để biết B4/B5 bàn giao cái gì. Nó **thiếu
   bảng vector** — import bản này rồi chạy `verify_db.py` thì xanh nhưng
   `verify_embeddings.py` đỏ ngay. Đừng dùng để deploy.
@@ -26,25 +28,31 @@ _Ngày: 2026-09-27 (B4/B5), bổ sung 2026-09-28 (B6/B7), đổi tên dump `b6b7
 Cả thư mục `handoff/` đã nằm trong git, clone về là có đủ — không cần
 chuyển file qua Zalo/Drive.
 
-## 2. Import vào máy mới (bản full)
+> Team member đổ data mới / thêm văn bản mới: đọc
+> [`RUNBOOK_DO_DATA_MOI.md`](./RUNBOOK_DO_DATA_MOI.md) — checklist từng bước +
+> số kỳ vọng + sự cố thường gặp.
 
-```bash
-# 1. Bật Postgres (đã có trong docker-compose.yml, service tên `db`)
-docker compose up -d db
+## 2. Import vào máy mới (bản full) — 1 lệnh
 
-# 2. Kiểm tra file dump còn nguyên
-#    Windows:  certutil -hashfile full_build_phase_p029.dump SHA256
-#    Linux/mac:  shasum -a 256 full_build_phase_p029.dump
-#    So với:     d5d8b794ddb07d142607ff7e3ab372955ece3d3bfa9d25ef72d522ee0821da1f
-#    Git đã bảo toàn file nên bước này là tùy chọn; hữu ích khi file bị tải
-#    lại qua trung gian hoặc khi muốn chắc chắn bản dump còn nguyên.
+```powershell
+docker compose up -d db   # bật Postgres trước, chờ healthy (docker ps)
+powershell -ExecutionPolicy Bypass -File scripts/restore_handoff.ps1
+```
 
-# 3. Import
-docker cp full_build_phase_p029.dump p-029-db-1:/tmp/full.dump
-docker exec p-029-db-1 pg_restore \
-  -U postgres -d build_phase_p029 \
-  --no-owner --no-privileges --clean --if-exists \
-  /tmp/full.dump
+Script tự làm hết: check container → check sha256 của dump → copy vào
+container → `pg_restore` (`--clean --if-exists`, chạy lại thoải mái).
+Xong chạy `python scripts/verify_db.py` (kỳ vọng 77 PASS, 0 FAIL).
+
+Làm tay (khi script không chạy được, VD container tên khác — kiểm tra bằng
+`docker ps` rồi thay tên):
+
+```powershell
+certutil -hashfile handoff\full_build_phase_p029.dump SHA256
+# phải khớp handoff\full_build_phase_p029.dump.sha256:
+# 31ACFE408E0CFB97AB9334F7CA3747B3F22399880C93C122BE19EB6BCF3433AF
+docker cp handoff\full_build_phase_p029.dump p-029-db-1:/tmp/full.dump
+docker exec p-029-db-1 pg_restore -U postgres -d build_phase_p029 --no-owner --no-privileges --clean --if-exists /tmp/full.dump
+```
 ```
 
 **Không cần chạy Alembic** — dump đã chứa cả bảng `alembic_version` với giá trị
@@ -55,14 +63,14 @@ docker exec p-029-db-1 pg_restore \
 
 | Bảng | Số dòng | Ý nghĩa |
 |---|---|---|
-| `policies` | 3 | 3 văn bản luật (BLLĐ 2019, NĐ 145/2020, NĐ 283/2026) |
-| `policy_versions` | 3 | Thời gian hiệu lực từng luật (bảo vệ bằng ExcludeConstraint) |
-| `documents` | 3 | Bản ghi tài liệu nguồn (`ingest_status='EMBEDDED'`) |
-| `document_chunks` | 1289 | 1289 chunks đầy đủ text, vector 1024-dim, và search_tsv (GIN) |
-| `legal_documents` | 3 | 3 văn bản luật + hiệu lực + footnote sửa đổi |
-| `legal_chunks` | 1289 | Nội dung luật đã chia nhỏ (Điều / khoản / điểm) |
-| `legal_chunk_references` | 565 | Đồ thị dẫn chiếu nối 3 văn bản |
-| `legal_chunk_embeddings` | 1289 | Vector `mistral-embed` 1024-dim + tsvector BM25 (B6/B7) |
+| `policies` | 4 | 3 văn bản luật (BLLĐ 2019, NĐ 145/2020, NĐ 283/2026) + Nội quy HRCorp (`INTERNAL_RULE`) |
+| `policy_versions` | 4 | Thời gian hiệu lực từng văn bản (bảo vệ bằng ExcludeConstraint) |
+| `documents` | 4 | Bản ghi tài liệu nguồn (`ingest_status='EMBEDDED'`) |
+| `document_chunks` | 1307 | 1307 chunks đầy đủ text, vector 1024-dim, và search_tsv (GIN) |
+| `legal_documents` | 4 | 3 văn bản luật + 1 nội quy (`NOI_QUY`/`VAN_BAN_NOI_BO`) + footnote sửa đổi |
+| `legal_chunks` | 1307 | Nội dung đã chia nhỏ (Điều / khoản / điểm), 18 chunk NQCT đánh số tuần tự 1–18 |
+| `legal_chunk_references` | 568 | Đồ thị dẫn chiếu (NQCT: 2 EXPLICIT + 1 EXPLICIT_SELF, 0 BOUNDARY; BOUNDARY toàn corpus = 3) |
+| `legal_chunk_embeddings` | 1307 | Vector `mistral-embed` 1024-dim + tsvector BM25 (B6/B7) |
 | `alembic_version` | 1 | Phiên bản migration đã áp dụng (`0004_document_chunks_tsv`) |
 
 Chi tiết B4/B5: `data/chunk/CHANGELOG_B4B5.md`. Chi tiết B6/B7:
@@ -70,18 +78,30 @@ Chi tiết B4/B5: `data/chunk/CHANGELOG_B4B5.md`. Chi tiết B6/B7:
 
 ## 4. Sau khi import phải chạy lại verify
 
-Không tin lời tôi, tự kiểm. Cần `data/chunk/*.json` (6 file) và
+Không tin lời tôi, tự kiểm. Cần `data/chunk/*.json` (8 file: 4 chunks + 4 tree) và
 `data/chunk/source_manifest.json` trong repo:
 
 ```bash
 python -m alembic upgrade head      # no-op, dump đã ở head
-python scripts/verify_db.py         # 70 check B4/B5
+python scripts/verify_db.py         # 77 check B4/B5
 python scripts/verify_embeddings.py # 76 check + 2 FAIL đã biết (V4/V5 đường
                                     # vector-only — xem CHANGELOG_B6B7.md mục 5)
 ```
 
-Kết quả mong đợi: `Total: 70 PASS, 0 FAIL` cho `verify_db.py`;
+Kết quả mong đợi: `Total: 77 PASS, 0 FAIL` cho `verify_db.py`;
 `Total: 76 PASS, 2 FAIL` cho `verify_embeddings.py`.
+
+## 4-bis. Đã kiểm chứng dump full 2026-10-01 thế nào
+
+Dump mới (`full_build_phase_p029.dump`, có NQCT) đã được `pg_restore` vào
+database tạm `p029_restore_verify` trên chính container này rồi so với database
+nguồn trước khi xóa DB tạm:
+
+| Hạng mục | Kết quả |
+|---|---|
+| Số dòng 5 bảng (`legal_documents`/`legal_chunks`/`legal_chunk_references`/`legal_chunk_embeddings`/`document_chunks`) | 4 / 1307 / 568 / 1307 / 1307 — khớp |
+| md5 `chunk_id` + mẫu `text` toàn bộ `legal_chunks` | `7e96921afb1c0eb942bd37520f8d5c43` — khớp |
+| md5 toàn bộ `legal_chunk_references` | `8d871e6a618131b49788d0210b45de59` — khớp |
 
 ## 5. Đã kiểm chứng thế nào (bản `b4b5` — lịch sử, không phải bản deploy)
 
