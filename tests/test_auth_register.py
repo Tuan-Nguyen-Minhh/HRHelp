@@ -1,10 +1,14 @@
 """Registration contract. These checks stop before the database."""
 
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
 import pytest
 from pydantic import ValidationError
 
 from src.common.auth import RegisterRequest
 from src.core.security.rbac import RoleEnum
+from src.core.security.tokens import load_roles_and_permissions
 
 
 def test_register_request_folds_email_and_name():
@@ -42,3 +46,12 @@ async def test_register_route_rejects_a_bad_email(client):
         json={"email": "khong-phai-email", "password": "mat-khau-1"},
     )
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_legacy_database_without_rbac_tables_uses_role_permissions():
+    session = SimpleNamespace(scalar=AsyncMock(return_value=None))
+    user = SimpleNamespace(role="HR")
+    claims = await load_roles_and_permissions(session, user)
+    assert claims["roles"] == ["HR"]
+    assert "case:open" in claims["permissions"]
