@@ -1,10 +1,8 @@
-"""Feature 6 graph: reconcile feature 5's passages into one sanction standard.
+"""Feature 6 graph: synthesize feature 5's passages into one sanction assessment.
 
 The case sub-agent ends at ``CaseHandoff``. This graph reads that retrieval,
-splits law, guiding decrees, internal rules, precedents, and penalty decrees,
-then returns one sanction and one process. The level is the internal rule that
-matches the case and still sits inside the ceiling read from the retrieved law
-and guiding decree. Those sources do not each pick a level.
+asks the synthesis model for one evidence-grounded assessment, and keeps a
+level only when the cited quotes are verbatim spans of those passages.
 """
 
 from typing import TypedDict
@@ -13,8 +11,10 @@ from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from src.agents.handoff import CaseHandoff, CitedPassage
+from src.features.answer.model.decide import DecisionInput, blocked
 from src.features.answer.model.draft import AnswerDraft, AnswerInput, draft_answer
 from src.features.answer.model.layers import LayeredBasis, split_passages
+from src.features.answer.model.synthesis import synthesize
 from src.features.cite.model.passage import Passage
 
 
@@ -48,10 +48,19 @@ def precedent_node(state: dict) -> dict:
     return {"precedent_note": note}
 
 
-def recommend_node(state: dict) -> dict:
-    """Synthesize the retrieved layers into one sanction, process, and risk."""
+async def recommend_node(state: dict) -> dict:
+    """Ask the synthesis model for one assessment, then keep only a grounded level."""
     message = _message(state)
     layered = split_passages([_passage(item) for item in message.passages])
+    data = DecisionInput(
+        family=message.family,
+        facts=dict(message.facts),
+        layered=layered,
+        retrieval=message.retrieval,
+        description=message.description,
+        fact_lines=tuple(message.fact_lines),
+    )
+    assessment = None if blocked(data) is not None else await synthesize(message, layered)
     draft = draft_answer(
         AnswerInput(
             family=message.family,
@@ -63,7 +72,8 @@ def recommend_node(state: dict) -> dict:
             precedent_note=state.get("precedent_note", ""),
             retrieval=message.retrieval,
             description=message.description,
-        )
+        ),
+        assessment,
     )
     return {"layered": layered, "draft": draft}
 

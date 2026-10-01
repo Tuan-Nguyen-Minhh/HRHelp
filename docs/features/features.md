@@ -42,7 +42,7 @@ Ba vai trò trong schema là `HR`, `MANAGER`, `LEGAL`. Mức chế tài là khi�
 | 3 | Chat làm rõ tình tiết | Luật không áp được nếu thiếu loại hợp đồng, số ngày nghỉ, đã lập biên bản chưa, đã yêu cầu giải trình chưa | `conversations`, `messages`, `case_facts`, `agent_runs` |
 | 4 | Kho văn bản theo ngày hiệu lực | Căn cứ là bản đang có hiệu lực vào `incident_date`, không phải bản đang mở hôm nay | `policies`, `policy_versions`, `documents`, `document_chunks` |
 | 5 | Đối chiếu và trích dẫn | Đề xuất không có điều, khoản, điểm thì HR không dùng được | `tool_calls`, `agent_retrievals` |
-| 6 | Đề xuất chế tài, quy trình, mức rủi ro | Sub-agent đối chiếu nội quy khớp hành vi với trần đọc từ luật và nghị định đã retrieval, rồi chốt một mức | `recommendations`, `case_violations` |
+| 6 | Đề xuất chế tài, quy trình, mức rủi ro | Sub-agent tổng hợp fact và đoạn retrieval thành một đánh giá có trích dẫn, rồi chốt mức khi trích dẫn khớp nguyên văn | `recommendations`, `case_violations` |
 | 7 | Soạn nháp và đẩy ticket | Sub-agent đọc `ProposalHandoff` của feature 6. Đủ căn cứ thì soạn nháp và đẩy ticket. Chưa đủ thì giữ đề xuất | `case_drafts`, `recommendations` |
 | 8 | Pháp chế duyệt | Chỉ hồ sơ feature 7 đã đẩy sang `PENDING_LEGAL`. Người duyệt, agent không tự duyệt | `reviews` |
 | 9 | Ban hành quyết định và lưu tiền lệ | Vụ sau tra được vụ trước đã xử thế nào | `disciplinary_decisions` |
@@ -439,13 +439,13 @@ sequenceDiagram
 
 ## 6. Đề xuất chế tài, quy trình, mức rủi ro
 
-Sub-agent này nhận `CaseHandoff` của feature 5. Đầu vào retrieval là `passages` đã lọc theo `incident_date`. Agent đối chiếu đoạn nội quy khớp với hành vi của hồ sơ và trần mức đọc từ luật, nghị định hướng dẫn trong cùng lượt. Mức chốt phải được nội quy nêu và còn nằm trong trần đó. Các nguồn không được cùng chọn mức.
+Sub-agent này nhận `CaseHandoff` của feature 5. Đầu vào retrieval là `passages` đã lọc theo `incident_date`. Agent không tra thêm văn bản. Mô hình tổng hợp đọc fact đã khóa và các đoạn đó, rồi trả một đánh giá có cấu trúc. Python chỉ giữ mức khi câu trích nằm nguyên văn trong đoạn được nêu, đoạn nội quy có tên mức đó, và có đoạn luật hoặc nghị định hướng dẫn đi kèm. Fact không có trong hồ sơ không được suy ra. Nhiều mức cùng được chứng minh thì chưa chọn.
 
 Chuẩn là `AppliedStandard` trên câu trả lời và trên `ProposalHandoff`:
 
 | Trường | Ý nghĩa |
 |---|---|
-| `sanction_type` | Đúng một mức còn trong trần, hoặc trống khi chưa còn đúng một mức |
+| `sanction_type` | Đúng một mức đã được trích dẫn đủ, hoặc trống khi đánh giá chưa chốt |
 | `process_steps` | Một quy trình: biên bản, giải trình, thời hiệu, người ký |
 | `risk_level` | `LOW`, `MEDIUM`, `HIGH`, hoặc `CRITICAL` |
 | `aligned` | `true` chỉ khi đã chốt một mức công ty |
@@ -453,12 +453,12 @@ Chuẩn là `AppliedStandard` trên câu trả lời và trên `ProposalHandoff`
 
 | Nguồn trong retrieval | Lớp | Vai trò trong chuẩn |
 |---|---|---|
-| Luật, nghị định hướng dẫn như Nghị định 145 | `legal_basis` | Trần các mức được dùng. Sa thải chỉ còn trong trần khi chính đoạn đã lấy nêu điều kiện và fact khóa đáp ứng điều kiện đó |
-| Nội quy còn hiệu lực | `internal_rule` | Mức công ty, lấy từ đoạn khớp hành vi của hồ sơ |
+| Luật, nghị định hướng dẫn như Nghị định 145 | `legal_basis` | Căn cứ pháp lý. Điều kiện trong đoạn phải khớp fact. Fact thiếu thì điều kiện là `UNKNOWN` |
+| Nội quy còn hiệu lực | `internal_rule` | Mức công ty, chỉ khi đoạn được trích có đúng tên mức và đúng hành vi |
 | Tiền lệ | `precedent` | Đối chiếu. Không nâng mức |
 | Nghị định xử phạt, gồm Nghị định 283 | `inspection_risk` | Cảnh báo. Không vào `sanction_type` |
 
-Con số ngày và điều kiện sa thải nằm trong đoạn retrieval, không gắn sẵn trong code. Nội quy nêu một mức cao hơn trần thì mức đó bị bỏ. Nếu nội quy cũng nêu một mức nhẹ hơn và mức đó còn trong trần, agent chốt mức nhẹ hơn đó. Nếu còn nhiều mức cùng hợp lệ, `sanction_type` để trống và feature 7 giữ hồ sơ. Khi còn đúng một mức, feature 7 đẩy ticket, hồ sơ sang `PENDING_LEGAL` để pháp chế xem ở feature 8. Chuẩn không bao giờ nhận `TERMINATION`. Agent không lấy mức trung bình và không lấy mức nặng hơn khi văn bản còn để ngỏ.
+Không có mô hình, hoặc trích dẫn không khớp nguyên văn, thì `sanction_type` để trống và rủi ro `HIGH`. Trạng thái `NEED_MORE_FACTS` cũng để trống mức. `MULTIPLE_SUPPORTED` để trống mức, rủi ro `MEDIUM`, feature 7 giữ hồ sơ. Khi còn đúng một mức đã được chứng minh, feature 7 đẩy ticket, hồ sơ sang `PENDING_LEGAL` để pháp chế xem ở feature 8. Chuẩn không bao giờ nhận `TERMINATION`. Agent không chọn mức nặng hơn khi văn bản còn để ngỏ.
 
 Kết quả ghi vào `recommendations`: nhận định, `sanction_type`, `process_steps`, `risk_level`. Mỗi citation giữ `quote`, điều, khoản, điểm và `chunk_id`.
 
@@ -474,11 +474,11 @@ sequenceDiagram
     Note over AG: Nhận CaseHandoff từ feature 5
     AG->>AG: Tách passages thành luật, nghị định hướng dẫn, nội quy, tiền lệ, nghị định xử phạt
     AG->>AG: Gộp thành AppliedStandard, một mức và một quy trình
-    alt Chưa còn đúng một mức trong trần
+    alt Đánh giá chưa chốt một mức
         AG->>AG: sanction_type trống, aligned false, feature 7 giữ hồ sơ
-    else Nội quy khớp hành vi còn đúng một mức trong trần
+    else Một mức được trích nguyên văn từ nội quy và từ luật hoặc nghị định
         AG->>AG: Chốt mức đó, quy trình bốn bước
-        Note right of AG: Feature 7 đẩy ticket sang PENDING_LEGAL. Sa thải chỉ khi điều kiện trong đoạn luật đã lấy khớp fact. Không trả TERMINATION
+        Note right of AG: Feature 7 đẩy ticket sang PENDING_LEGAL. Không trả TERMINATION
     end
     AG->>DB: INSERT recommendations status DRAFT, rationale, sanction_type, process_steps, risk_level, agent_run_id
     loop Từng đoạn đã dùng trong câu trả lời

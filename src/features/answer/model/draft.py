@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from datetime import date
 
+from src.features.answer.model.assessment import Assessment
 from src.features.answer.model.decide import DecisionInput, SanctionDecision, decide
 from src.features.answer.model.layers import LayeredBasis
 from src.features.answer.schema.render import RenderInput, render
@@ -31,8 +32,8 @@ class AnswerInput:
     description: str = ""
 
 
-def draft_answer(data: AnswerInput) -> AnswerDraft:
-    """Decide the level, then write the message HR will read."""
+def draft_answer(data: AnswerInput, assessment: Assessment | None = None) -> AnswerDraft:
+    """Decide the level from a guarded assessment, then write the message HR will read."""
     decision = decide(
         DecisionInput(
             family=data.family,
@@ -41,7 +42,8 @@ def draft_answer(data: AnswerInput) -> AnswerDraft:
             retrieval=data.retrieval,
             description=data.description,
             fact_lines=tuple(data.fact_lines),
-        )
+        ),
+        assessment,
     )
     prose = render(
         RenderInput(

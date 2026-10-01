@@ -50,8 +50,8 @@ def fallback_decision() -> ClarifyDecision:
 
 async def plan_turn(state: dict) -> PlannerResult:
     """Read one narrative. Timeout, invalid JSON, and schema errors fall back after one retry."""
-    model_name = settings.XAI_MODEL
-    if not settings.XAI_API_KEY:
+    model_name = settings.MODEL_NAME
+    if not settings.OPENAI_API_KEY:
         return PlannerResult(fallback_decision(), True, "missing_api_key", 0, model_name)
     messages = _messages(state)
     started = time.perf_counter()
@@ -96,9 +96,8 @@ async def _complete(messages: list[dict[str, str]], attempt: int) -> ClarifyDeci
             }
         )
     model = ChatOpenAI(
-        model=settings.XAI_MODEL,
-        api_key=settings.XAI_API_KEY,
-        base_url=settings.XAI_BASE_URL,
+        model=settings.MODEL_NAME,
+        api_key=settings.OPENAI_API_KEY,
         temperature=0,
         timeout=30,
         max_retries=0,
