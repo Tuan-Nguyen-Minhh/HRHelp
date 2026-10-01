@@ -33,6 +33,29 @@ class CitationView(BaseModel):
     score: float | None
 
 
+class LayerEffect(BaseModel):
+    """What one retrieved layer is allowed to do to the company sanction."""
+
+    model_config = ConfigDict(frozen=True)
+
+    layer: str
+    effect: str
+    note: str
+
+
+class AppliedStandard(BaseModel):
+    """The one sanction and process feature 6 returns after the sources are reconciled."""
+
+    model_config = ConfigDict(frozen=True)
+
+    sanction_type: str | None
+    process_steps: list[ProcessStep]
+    risk_level: str | None
+    aligned: bool
+    rule: str
+    layers: list[LayerEffect]
+
+
 class AnswerView(BaseModel):
     """The proposal HR reads. Sanction is null when the grounds are not enough."""
 
@@ -50,6 +73,7 @@ class AnswerView(BaseModel):
     internal_rule: list[CitationView]
     precedent: list[CitationView]
     inspection_risk: list[CitationView]
+    standard: AppliedStandard
 
 
 SANCTION_LABELS = {

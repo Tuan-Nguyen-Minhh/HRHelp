@@ -4,6 +4,7 @@ from uuid import UUID
 
 from src.common.text import clip_quote
 from src.features.answer.model.layers import BasisLayer, layer_of
+from src.features.answer.model.standard import applied_standard
 from src.features.answer.model.store import CitationRow
 from src.features.answer.schema import AnswerView, CitationView, ProcessStep
 from src.features.cite.model.passage import Passage
@@ -15,6 +16,7 @@ def to_answer_view(recommendation: Recommendation, citations: list[CitationView]
     grouped: dict[BasisLayer, list[CitationView]] = {layer: [] for layer in BasisLayer}
     for item in citations:
         grouped[item.layer].append(item)
+    steps = _steps(recommendation.process_steps)
     return AnswerView(
         recommendation_id=recommendation.id,
         case_id=recommendation.case_id,
@@ -22,7 +24,7 @@ def to_answer_view(recommendation: Recommendation, citations: list[CitationView]
         agent_run_id=recommendation.agent_run_id,
         rationale=recommendation.rationale,
         sanction_type=recommendation.sanction_type,
-        process_steps=_steps(recommendation.process_steps),
+        process_steps=steps,
         risk_level=recommendation.risk_level,
         missing_internal_rule=not grouped[BasisLayer.INTERNAL_RULE],
         message=recommendation.recommendation,
@@ -30,6 +32,7 @@ def to_answer_view(recommendation: Recommendation, citations: list[CitationView]
         internal_rule=grouped[BasisLayer.INTERNAL_RULE],
         precedent=grouped[BasisLayer.PRECEDENT],
         inspection_risk=grouped[BasisLayer.INSPECTION_RISK],
+        standard=applied_standard(recommendation.sanction_type, recommendation.risk_level, steps),
     )
 
 

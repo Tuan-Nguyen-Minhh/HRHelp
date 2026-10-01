@@ -9,8 +9,12 @@ from src.agents.case_graph import build_case_graph
 from src.agents.handoff import CaseHandoff
 from src.agents.runs import finish_run, mark_run_failed, start_run
 from src.common.access import require_case, require_mutable_case
+from src.common.clock import utc_now
 from src.common.errors import AppError
 from src.features.answer.model.answers import PublishWork, load, publish, withdraw
+from src.features.answer.model.dispatch import DispatchResult, build_dispatch_agent
+from src.features.answer.model.proposal import close_proposal
+from src.features.answer.model.release import DispatchError, save_submission
 from src.features.answer.schema import AnswerView
 from src.features.cite.model.search import search_policies
 from src.features.clarify.model.assess import ClarifyPlan, FactConflict, StoredFact, build_question
@@ -126,9 +130,9 @@ async def _clarify(
         note = _cited_text(handoff)
         assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff"}))
         finish_run(run, assistant.id)
-        answer, recommend_run_id = await _recommend(session, case, conversation, handoff, assistant.id)
+        answer, run_id, text = await _recommend(session, case, conversation, handoff, assistant.id)
         await session.commit()
-        return _turn(case, conversation.id, plan, answer.message, answer, handoff, recommend_run_id)
+        return _turn(case, conversation.id, plan, text, answer, handoff, run_id)
     if plan.locked:
         answer = await load(session, case)
         text = _LOCKED if answer is not None else _NEED_PUBLISH
@@ -202,8 +206,8 @@ async def _cite(session: AsyncSession, case: Case, conversation: Conversation, p
     note = _cited_text(message)
     assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff"}))
     finish_run(run, assistant.id)
-    answer, recommend_run_id = await _recommend(session, case, conversation, message, assistant.id)
-    return _turn(case, conversation.id, plan, answer.message, answer, message, recommend_run_id)
+    answer, run_id, text = await _recommend(session, case, conversation, message, assistant.id)
+    return _turn(case, conversation.id, plan, text, answer, message, run_id)
 
 
 async def _recommend(
@@ -212,15 +216,65 @@ async def _recommend(
     conversation: Conversation,
     message: CaseHandoff,
     source_id: UUID,
-) -> tuple[AnswerView, UUID]:
-    """Feature 6 reads only the handoff. It does not see planner state or graph edges."""
+) -> tuple[AnswerView, UUID, str]:
+    """Feature 6 reads only the handoff, then feature 7 reads only the proposal."""
     recommend_run = await start_run(session, conversation.id, source_id, "hr-help-recommendation")
     answer = await publish(session, PublishWork(case=case, handoff=message, run_id=recommend_run.id))
     proposal = await add_message(
         session, NewMessage(conversation.id, "ASSISTANT", answer.message, {"kind": "recommendation"})
     )
     finish_run(recommend_run, proposal.id)
-    return answer, recommend_run.id
+    answer, run_id, text = await _dispatch(session, case, conversation, message, answer, proposal.id)
+    return answer, run_id or recommend_run.id, text
+
+
+async def _dispatch(
+    session: AsyncSession,
+    case: Case,
+    conversation: Conversation,
+    message: CaseHandoff,
+    answer: AnswerView,
+    source_id: UUID,
+) -> tuple[AnswerView, UUID | None, str]:
+    """Run dispatch once on a fresh draft. A failure leaves that draft in place."""
+    if case.status != "ANALYZED":
+        return answer, None, answer.message
+    proposal = close_proposal(message, answer)
+    run = await start_run(session, conversation.id, source_id, "hr-help-dispatch")
+    try:
+        state = await build_dispatch_agent().ainvoke({"proposal": proposal})
+    except TypeError as exc:
+        _fail_open_run(run, str(exc))
+        logger.exception("dispatch rejected the proposal message")
+        return answer, run.id, answer.message
+    result = state.get("result")
+    if not isinstance(result, DispatchResult):
+        _fail_open_run(run, "Dispatch graph không trả kết quả.")
+        return answer, run.id, answer.message
+    logger.info("dispatch disposition=%s hold_code=%s", result.disposition, result.hold_code or "")
+    if result.disposition == "SUBMIT":
+        try:
+            await save_submission(session, case, proposal, result)
+        except DispatchError as exc:
+            _fail_open_run(run, str(exc))
+            return answer, run.id, answer.message
+        kind = "dispatch_submit"
+        metadata = {"kind": kind}
+    else:
+        kind = "dispatch_hold"
+        metadata = {"kind": kind, "hold_code": result.hold_code}
+    note = await add_message(session, NewMessage(conversation.id, "ASSISTANT", result.reason, metadata))
+    finish_run(run, note.id)
+    if case.status != answer.case_status:
+        answer = answer.model_copy(update={"case_status": case.status})
+    return answer, run.id, result.reason
+
+
+def _fail_open_run(run: AgentRun, error: str) -> None:
+    """Mark a run that is still in this transaction. The caller commits."""
+    run.status = "FAILED"
+    run.error = error[:2000]
+    run.completed_at = utc_now()
 
 
 async def _planned(

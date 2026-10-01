@@ -11,12 +11,12 @@ Thành phần dùng chung trong các sơ đồ:
 
 | Thành phần | Vai trò trong luồng |
 |---|---|
-| HR / Quản lý | Mở hồ sơ, chat, xác nhận fact, chọn nháp, gửi duyệt |
-| Pháp chế | Đọc hồ sơ được cấp quyền `REVIEW`, duyệt hoặc từ chối |
+| HR / Quản lý | Mở hồ sơ, chat, xác nhận fact, đọc đề xuất và lý do giữ lại |
+| Pháp chế | Đọc ticket đã đẩy, trên hồ sơ được cấp quyền `REVIEW`, duyệt hoặc từ chối |
 | Người ký | Ban hành quyết định. Là người dùng thật, không phải agent |
 | Web | Giao diện |
-| FastAPI | Kiểm tra quyền, gọi agent, ghi database |
-| LangGraph | Trích fact, hỏi lại, tra cứu, viết đề xuất và nháp |
+| FastAPI | Kiểm tra quyền, gọi từng sub-agent, ghi database |
+| LangGraph | Trích fact, hỏi lại, tra cứu, viết đề xuất, rồi giữ hồ sơ hoặc đẩy ticket |
 | PostgreSQL | Hồ sơ, fact, hội thoại, đề xuất, nháp, review, quyết định |
 | pgvector | Chunk văn bản và embedding tiền lệ |
 
@@ -42,9 +42,9 @@ Ba vai trò trong schema là `HR`, `MANAGER`, `LEGAL`. Mức chế tài là khi�
 | 3 | Chat làm rõ tình tiết | Luật không áp được nếu thiếu loại hợp đồng, số ngày nghỉ, đã lập biên bản chưa, đã yêu cầu giải trình chưa | `conversations`, `messages`, `case_facts`, `agent_runs` |
 | 4 | Kho văn bản theo ngày hiệu lực | Căn cứ là bản đang có hiệu lực vào `incident_date`, không phải bản đang mở hôm nay | `policies`, `policy_versions`, `documents`, `document_chunks` |
 | 5 | Đối chiếu và trích dẫn | Đề xuất không có điều, khoản, điểm thì HR không dùng được | `tool_calls`, `agent_retrievals` |
-| 6 | Đề xuất chế tài, quy trình, mức rủi ro | Đây là đầu ra cốt lõi của PRD | `recommendations`, `case_violations` |
-| 7 | Soạn nháp | Biên bản, yêu cầu giải trình, quyết định, ticket. HR chọn có soạn hay chỉ lưu lời tư vấn | `case_drafts` |
-| 8 | Pháp chế duyệt | Người kết luận vẫn là người. Agent không tự ban hành | `reviews` |
+| 6 | Đề xuất chế tài, quy trình, mức rủi ro | Sub-agent đối chiếu nội quy khớp hành vi với trần đọc từ luật và nghị định đã retrieval, rồi chốt một mức | `recommendations`, `case_violations` |
+| 7 | Soạn nháp và đẩy ticket | Sub-agent đọc `ProposalHandoff` của feature 6. Đủ căn cứ thì soạn nháp và đẩy ticket. Chưa đủ thì giữ đề xuất | `case_drafts`, `recommendations` |
+| 8 | Pháp chế duyệt | Chỉ hồ sơ feature 7 đã đẩy sang `PENDING_LEGAL`. Người duyệt, agent không tự duyệt | `reviews` |
 | 9 | Ban hành quyết định và lưu tiền lệ | Vụ sau tra được vụ trước đã xử thế nào | `disciplinary_decisions` |
 | 10 | Tái phạm cùng nhân viên | Mức kỷ luật phụ thuộc việc đã bị xử trước đó | `cases.employee_code`, `case_violations` |
 | 11 | Phân tầng căn cứ | Nghị định 283 là xử phạt của cơ quan nhà nước, không phải mức kỷ luật công ty được quyền áp | `policies.policy_type` |
@@ -53,13 +53,13 @@ Ba vai trò trong schema là `HR`, `MANAGER`, `LEGAL`. Mức chế tài là khi�
 
 Nên làm feature 1–9 cho bản dùng được. Feature 10–12 làm cùng lúc nếu còn sức, vì schema đã chờ sẵn. Dashboard đi muộn để sau.
 
-Ranh giới human-in-the-loop giữ nguyên theo PRD: agent phân tích, cảnh báo và soạn nháp. Pháp chế phê duyệt. Người có thẩm quyền ban hành quyết định và chịu trách nhiệm.
+Ranh giới human-in-the-loop giữ nguyên theo PRD: agent phân tích, cảnh báo, soạn nháp và đẩy ticket khi message của feature 6 đủ căn cứ. Pháp chế phê duyệt. Người có thẩm quyền ban hành quyết định và chịu trách nhiệm.
 
 ## Luồng xương sống của một vụ
 
 `cases.status` chỉ nhận các giá trị `OPEN`, `NEED_INFO`, `ANALYZED`, `PENDING_LEGAL`, `APPROVED`, `REJECTED`, `DECIDED`, `CLOSED`.
 
-Nếu HR chỉ muốn hỏi cho biết và không tạo ticket, hội thoại vẫn lưu, hồ sơ dừng ở `ANALYZED`. Không đẩy sang pháp chế.
+Feature 6 đóng `ProposalHandoff` sau khi ghi đề xuất. Feature 7 đọc message đó. Chưa đủ căn cứ thì hồ sơ dừng ở `ANALYZED`, recommendation giữ `DRAFT`, không có ticket. Đủ căn cứ thì sub-agent đẩy ticket và hồ sơ sang `PENDING_LEGAL`.
 
 ```mermaid
 sequenceDiagram
@@ -84,14 +84,13 @@ sequenceDiagram
         AG->>DB: UPDATE cases status ANALYZED
         AG-->>HR: Đề xuất mức chế tài, quy trình, rủi ro
     end
-    alt HR chỉ muốn tư vấn, không tạo ticket
-        HR->>API: Đóng hội thoại
-        API->>DB: UPDATE conversations status CLOSED
-        Note over HR,DB: Hồ sơ dừng ở ANALYZED
-    else HR gửi pháp chế
-        HR->>API: Gửi recommendation và draft
-        API->>DB: status PENDING_REVIEW và case PENDING_LEGAL
-        LC->>API: Đọc fact, trích dẫn, nháp
+    Note over API,AG: Feature 6 đóng ProposalHandoff. Feature 7 đọc message đó
+    alt Đề xuất chưa đủ để chuyển pháp chế
+        AG->>DB: Giữ recommendations DRAFT và cases ANALYZED
+        AG-->>HR: Lý do giữ lại, không có ticket
+    else Đủ căn cứ
+        AG->>DB: INSERT case_drafts TICKET, status PENDING_REVIEW, case PENDING_LEGAL
+        LC->>API: Đọc đề xuất, trích dẫn và ticket
         alt Từ chối
             LC->>API: REJECT kèm comment
             API->>DB: INSERT reviews, case REJECTED
@@ -101,7 +100,8 @@ sequenceDiagram
                 API->>DB: status NEED_INFO, quay lại chat
             else HR giữ fact, viết lại đề xuất
                 API->>AG: Sinh recommendation mới
-                AG->>DB: Bản cũ SUPERSEDED, case ANALYZED
+                AG->>DB: Bản REJECTED giữ nguyên, bản mới DRAFT, case ANALYZED
+                Note over API,AG: Feature 6 đóng ProposalHandoff mới. Feature 7 xét lại
             end
         else Duyệt
             LC->>API: APPROVE
@@ -439,7 +439,28 @@ sequenceDiagram
 
 ## 6. Đề xuất chế tài, quy trình, mức rủi ro
 
-Kết quả gồm bốn phần, đúng cột trên `recommendations`: nhận định, mức chế tài, các bước thủ tục (`process_steps`), mức rủi ro `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`. Mỗi câu viện dẫn ghi `quote`, điều, khoản, điểm và `chunk_id`.
+Sub-agent này nhận `CaseHandoff` của feature 5. Đầu vào retrieval là `passages` đã lọc theo `incident_date`. Agent đối chiếu đoạn nội quy khớp với hành vi của hồ sơ và trần mức đọc từ luật, nghị định hướng dẫn trong cùng lượt. Mức chốt phải được nội quy nêu và còn nằm trong trần đó. Các nguồn không được cùng chọn mức.
+
+Chuẩn là `AppliedStandard` trên câu trả lời và trên `ProposalHandoff`:
+
+| Trường | Ý nghĩa |
+|---|---|
+| `sanction_type` | Đúng một mức còn trong trần, hoặc trống khi chưa còn đúng một mức |
+| `process_steps` | Một quy trình: biên bản, giải trình, thời hiệu, người ký |
+| `risk_level` | `LOW`, `MEDIUM`, `HIGH`, hoặc `CRITICAL` |
+| `aligned` | `true` chỉ khi đã chốt một mức công ty |
+| `layers` | Mỗi lớp một vai trò: `basis`, `level` hoặc `open`, `compare`, `excluded` |
+
+| Nguồn trong retrieval | Lớp | Vai trò trong chuẩn |
+|---|---|---|
+| Luật, nghị định hướng dẫn như Nghị định 145 | `legal_basis` | Trần các mức được dùng. Sa thải chỉ còn trong trần khi chính đoạn đã lấy nêu điều kiện và fact khóa đáp ứng điều kiện đó |
+| Nội quy còn hiệu lực | `internal_rule` | Mức công ty, lấy từ đoạn khớp hành vi của hồ sơ |
+| Tiền lệ | `precedent` | Đối chiếu. Không nâng mức |
+| Nghị định xử phạt, gồm Nghị định 283 | `inspection_risk` | Cảnh báo. Không vào `sanction_type` |
+
+Con số ngày và điều kiện sa thải nằm trong đoạn retrieval, không gắn sẵn trong code. Nội quy nêu một mức cao hơn trần thì mức đó bị bỏ. Nếu nội quy cũng nêu một mức nhẹ hơn và mức đó còn trong trần, agent chốt mức nhẹ hơn đó. Nếu còn nhiều mức cùng hợp lệ, `sanction_type` để trống và feature 7 giữ hồ sơ. Khi còn đúng một mức, feature 7 đẩy ticket, hồ sơ sang `PENDING_LEGAL` để pháp chế xem ở feature 8. Chuẩn không bao giờ nhận `TERMINATION`. Agent không lấy mức trung bình và không lấy mức nặng hơn khi văn bản còn để ngỏ.
+
+Kết quả ghi vào `recommendations`: nhận định, `sanction_type`, `process_steps`, `risk_level`. Mỗi citation giữ `quote`, điều, khoản, điểm và `chunk_id`.
 
 ```mermaid
 sequenceDiagram
@@ -447,75 +468,127 @@ sequenceDiagram
     actor HR as HR
     participant UI as Web
     participant API as FastAPI
-    participant AG as LangGraph
+    participant AG as Recommend graph
     participant DB as PostgreSQL
 
-    AG->>AG: Đọc fact confirmed, chunk đã lọc, tiền lệ, số lần tái phạm
-    alt Thiếu nội quy hoặc thiếu fact
-        AG->>AG: Không chốt sanction_type, risk_level HIGH hoặc CRITICAL
-    else Đủ căn cứ
-        AG->>AG: Chọn một mức trong sáu sanction_type
-        Note right of AG: Tách DISMISSAL và TERMINATION, không trộn sa thải với chấm dứt hợp đồng
-        AG->>AG: Sinh process_steps gồm biên bản, giải trình, thời hiệu, người ký
+    Note over AG: Nhận CaseHandoff từ feature 5
+    AG->>AG: Tách passages thành luật, nghị định hướng dẫn, nội quy, tiền lệ, nghị định xử phạt
+    AG->>AG: Gộp thành AppliedStandard, một mức và một quy trình
+    alt Chưa còn đúng một mức trong trần
+        AG->>AG: sanction_type trống, aligned false, feature 7 giữ hồ sơ
+    else Nội quy khớp hành vi còn đúng một mức trong trần
+        AG->>AG: Chốt mức đó, quy trình bốn bước
+        Note right of AG: Feature 7 đẩy ticket sang PENDING_LEGAL. Sa thải chỉ khi điều kiện trong đoạn luật đã lấy khớp fact. Không trả TERMINATION
     end
     AG->>DB: INSERT recommendations status DRAFT, rationale, sanction_type, process_steps, risk_level, agent_run_id
     loop Từng đoạn đã dùng trong câu trả lời
         AG->>DB: INSERT recommendation_citations quote, article, clause, point, chunk_id, score
     end
     AG->>DB: UPDATE cases status ANALYZED
-    AG->>DB: INSERT messages role ASSISTANT, nội dung đề xuất
-    API-->>UI: Đề xuất kèm citation đã phân tầng
+    AG->>DB: INSERT messages role ASSISTANT, nội dung đề xuất, metadata.kind = recommendation
+    AG->>AG: Đóng ProposalHandoff từ đề xuất vừa ghi
+    API-->>UI: ProposalHandoff và đề xuất đã phân tầng
     UI-->>HR: Hiện mức, quy trình, rủi ro, trích dẫn
-    alt HR chỉ muốn lưu tư vấn
-        HR->>UI: Đóng, không tạo ticket
-        UI->>API: POST /conversations/id/close
-        API->>DB: UPDATE conversations status CLOSED
-        Note over HR,DB: Case giữ ANALYZED
-    else HR muốn chuyển thành hồ sơ xử lý
-        HR->>UI: Tạo ticket và các nháp
-        UI->>API: Chuyển sang feature soạn nháp
-    end
+    Note over AG,HR: Case vẫn ANALYZED, recommendation vẫn DRAFT. Feature 7 đọc message này
 ```
 
-## 7. Soạn nháp
+Feature 6 dừng tại `ProposalHandoff`. Message này là đầu vào duy nhất của feature 7. Feature 6 không tạo `case_drafts`, không ghi `reviews`, và không đổi hồ sơ sang `PENDING_LEGAL`.
 
-Bốn loại nháp đã có trong schema: `MINUTES` (biên bản), `EXPLANATION_REQUEST` (yêu cầu giải trình), `DECISION` (quyết định), `TICKET` (phiếu chuyển pháp chế). Nháp quyết định chỉ là bản thảo. Ban hành thật nằm ở feature 9.
+## 7. Soạn nháp và đẩy ticket
+
+Sub-agent dispatch đứng sau feature 6. Case graph dừng ở `CaseHandoff`. Recommend graph dừng ở đề xuất đã ghi. Người gọi đóng `ProposalHandoff` rồi gọi dispatch graph. Dispatch graph không phải node của hai graph kia.
+
+Luồng xác nhận fact gọi dispatch một lần, ngay sau khi feature 6 ghi recommendation, trong cùng request. Chat chỉ chạy tới đây khi case graph trả `CaseHandoff`. `agent_runs.model` của lượt này là `hr-help-dispatch`.
+
+Đầu vào duy nhất là `state['proposal']` kiểu `ProposalHandoff`. Sai kiểu thì graph ném `TypeError`. Lượt đó đánh `agent_runs` thành `FAILED`, hồ sơ giữ `ANALYZED`, recommendation giữ `DRAFT`. Graph không mở session, không đọc `messages`, không đọc `case_facts`, không tra `document_chunks`, không gọi model. Cột token để trống.
+
+Feature 6 đã có các cột đề xuất và bốn lớp trích dẫn. `ProposalHandoff` đóng gói đúng các trường đó, cộng phần định danh mà feature 6 đã nhận từ `CaseHandoff`:
+
+| Trường | Nội dung |
+|---|---|
+| `recommendation_id`, `case_id`, `agent_run_id` | Dòng `recommendations` vừa ghi, trạng thái vẫn `DRAFT` |
+| `incident_date`, `employee_name` | Ngày vụ và tên trên hồ sơ đã khóa |
+| `family` | `UNAUTHORIZED_ABSENCE`, `LATE`, hoặc `GENERAL` |
+| `facts`, `fact_lines` | Chỉ fact đã confirmed |
+| `rationale`, `sanction_type`, `process_steps`, `risk_level` | Cột trên `recommendations`. `sanction_type` để trống khi feature 6 chưa chốt mức |
+| `missing_internal_rule` | `true` khi không có lớp nội quy |
+| `message` | Cột `recommendations.recommendation`, câu HR đọc |
+| `legal_basis`, `internal_rule`, `precedent`, `inspection_risk` | Citation đã phân tầng. Mỗi đoạn có `citation_id`, `chunk_id`, `policy_type`, `policy_code`, `policy_name`, `quote`, `article`, `clause`, `point`, `score` |
+
+`process_steps` gồm bốn bước `MINUTES`, `EXPLANATION_REQUEST`, `TIME_LIMIT`, `SIGNER`. Mỗi bước có `code`, `label`, `done`.
+
+FastAPI chỉ gọi graph khi hồ sơ đang `ANALYZED` và recommendation trên message đang `DRAFT`. Một `recommendation_id` chỉ dispatch một lần. Lần sau thấy dòng đó không còn `DRAFT` thì không gọi graph.
+
+Node `gate` đọc message và trả một trong hai hướng. `hold_code` lấy điều kiện đầu tiên khớp:
+
+| Thứ tự | Điều kiện trên message | `hold_code` |
+|---|---|---|
+| 1 | `sanction_type` là `TERMINATION` | `TERMINATION` |
+| 2 | `sanction_type` trống, hoặc không thuộc `WARNING`, `REPRIMAND`, `WAGE_POSTPONEMENT`, `DEMOTION`, `DISMISSAL` | `OPEN_SANCTION` |
+| 3 | `risk_level` là `HIGH` hoặc `CRITICAL` | `RISK_HIGH` |
+| 4 | `missing_internal_rule` là `true` | `MISSING_INTERNAL_RULE` |
+| 5 | `MINUTES` hoặc `EXPLANATION_REQUEST` có `done = false` | `PROCEDURE_OPEN` |
+
+Khớp một dòng thì `disposition = HOLD`. Không khớp dòng nào thì `disposition = SUBMIT`. Node `draft` chỉ chạy ở nhánh `SUBMIT`. Node này chép `sanction_type` từ message vào nháp, không chọn lại mức, không lấy mức từ `precedent` hay `inspection_risk`.
+
+Nhánh giữ lại không ghi `case_drafts`, không ghi `reviews`, không đổi `recommendations.status`, không đổi `cases.status`. FastAPI ghi một tin `ASSISTANT` với `metadata.kind = dispatch_hold` và `metadata.hold_code`. Câu HR đọc là `rationale` trên message. Hồ sơ vẫn `ANALYZED`.
+
+Nhánh đẩy ticket soạn đúng bốn nháp, theo thứ tự `MINUTES`, `EXPLANATION_REQUEST`, `DECISION`, `TICKET`. `title` cắt còn tối đa 255 ký tự. `employee_name` trống thì tiêu đề không gắn tên.
+
+- `MINUTES`: biên bản từ `fact_lines` và các bước đã `done`. Không bịa giờ họp hay người lập biên bản khi fact không có.
+- `EXPLANATION_REQUEST`: ghi nhận đã yêu cầu giải trình. Không bịa hạn trả lời khi fact không có.
+- `DECISION`: mức và nhận định, trích `legal_basis` và `internal_rule`. Nội dung ghi rõ đây là bản thảo, chưa có `decision_code`, chưa có người ký. `inspection_risk` nằm ở khối cảnh báo. `precedent` chỉ để đối chiếu.
+- `TICKET`: phiếu chuyển pháp chế. Gồm nhân viên, ngày vụ, family, fact đã khóa, mức, nhận định, rủi ro, bốn bước thủ tục, và từng citation kèm điều, khoản, điểm, `chunk_id`.
+
+FastAPI ghi trong cùng transaction. `created_by` là `cases.created_by`, không phải user pháp chế và không phải agent. Bốn dòng `case_drafts` để `status = PENDING_REVIEW`, cùng `recommendation_id`. Recommendation chuyển `PENDING_REVIEW`. Hồ sơ chuyển `PENDING_LEGAL`. Tin `ASSISTANT` có `metadata.kind = dispatch_submit`. Thiếu một loại nháp, hoặc trùng loại, thì rollback, `agent_runs` thành `FAILED`, hồ sơ giữ `ANALYZED`, recommendation giữ `DRAFT`.
+
+Sub-agent không cấp `case_access`. Pháp chế chỉ thấy ticket sau khi người tạo hồ sơ đã cấp `REVIEW` ở feature 1. Ticket đã đẩy mà chưa có dòng quyền thì hồ sơ vẫn `PENDING_LEGAL`, hàng chờ của pháp chế trống.
+
+Nháp `DECISION` chỉ là bản thảo cho feature 9. Dispatch graph không ghi `disciplinary_decisions`, không ghi `reviews`, không đặt `APPROVED`, `DECIDED` hay `CLOSED`.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor HR as HR
-    participant UI as Web
     participant API as FastAPI
-    participant AG as LangGraph
+    participant DG as Dispatch graph
+    participant GT as gate
+    participant DR as draft
     participant DB as PostgreSQL
+    actor HR as HR
 
-    HR->>UI: Chọn loại nháp MINUTES, EXPLANATION_REQUEST, DECISION hoặc TICKET
-    UI->>API: POST /cases/id/drafts
-    API->>DB: Đọc case_facts confirmed và recommendation_citations
-    API->>AG: Điền nháp từ fact đã khóa và điều khoản đã trích
-    AG-->>API: title và content
-    API->>DB: INSERT case_drafts status DRAFT, draft_type, recommendation_id, created_by
-    API-->>UI: Bản nháp
-    UI-->>HR: Mở editor
-
-    HR->>UI: Sửa nội dung
-    UI->>API: PATCH /drafts/id
-    API->>DB: UPDATE case_drafts.content, status vẫn là DRAFT
-    API-->>UI: Đã lưu
-
-    HR->>UI: Gửi pháp chế
-    UI->>API: POST /cases/id/submit-review
-    API->>DB: UPDATE case_drafts status PENDING_REVIEW
-    API->>DB: UPDATE recommendations status PENDING_REVIEW
-    API->>DB: UPDATE cases status PENDING_LEGAL
-    API-->>UI: Đã vào hàng chờ pháp chế
-    UI-->>HR: Hồ sơ chuyển PENDING_LEGAL
+    Note over API,DG: Feature 6 vừa đóng ProposalHandoff, case ANALYZED, recommendation DRAFT
+    API->>DB: INSERT agent_runs RUNNING, model hr-help-dispatch
+    API->>DG: ainvoke proposal = ProposalHandoff
+    alt Message sai kiểu
+        DG-->>API: TypeError
+        API->>DB: UPDATE agent_runs FAILED
+        Note over API,DB: Case giữ ANALYZED, recommendation giữ DRAFT
+    else gate trả HOLD
+        DG->>GT: Đọc proposal
+        GT-->>API: disposition HOLD, hold_code
+        API->>DB: INSERT messages ASSISTANT, metadata.kind = dispatch_hold
+        API->>DB: UPDATE agent_runs SUCCEEDED
+        API-->>HR: Lý do giữ lại, hồ sơ vẫn ANALYZED
+    else gate trả SUBMIT
+        DG->>GT: Đọc proposal
+        GT->>DR: sanction_type đã khóa
+        DR-->>API: Bốn nháp MINUTES, EXPLANATION_REQUEST, DECISION, TICKET
+        API->>DB: INSERT case_drafts PENDING_REVIEW, created_by là người tạo hồ sơ
+        API->>DB: UPDATE recommendations PENDING_REVIEW
+        API->>DB: UPDATE cases PENDING_LEGAL
+        API->>DB: INSERT messages ASSISTANT, metadata.kind = dispatch_submit
+        API->>DB: UPDATE agent_runs SUCCEEDED
+        API-->>HR: Ticket đã vào hàng chờ pháp chế
+    end
 ```
 
 ## 8. Pháp chế duyệt
 
-Một review gắn được cả đề xuất lẫn nháp. Quyết định chỉ có `APPROVE` hoặc `REJECT`, kèm comment. Từ chối không xóa đề xuất cũ. Đề xuất cũ chuyển `SUPERSEDED` khi agent sinh bản mới, để còn dấu vết vì sao bản trước bị loại.
+Feature 8 là người, không phải graph. Hàng chờ chỉ chứa hồ sơ feature 7 đã đẩy: `cases.status = PENDING_LEGAL` và có `case_drafts` loại `TICKET` trạng thái `PENDING_REVIEW`. User mở hàng chờ phải có role `LEGAL` và một dòng `case_access.access_level = REVIEW` trên hồ sơ đó. Sub-agent không tự duyệt và không tự từ chối.
+
+Gói xem xét lấy từ ticket, recommendation `PENDING_REVIEW`, và `recommendation_citations` đã phân tầng. Gói không gồm fact chưa confirmed và không gồm hội thoại. `inspection_risk` hiện ở khối cảnh báo. `precedent` hiện ở khối đối chiếu. Mức trên gói là `sanction_type` của recommendation, đã khóa từ lúc đẩy ticket.
+
+`POST /cases/id/reviews` nhận `APPROVE` hoặc `REJECT`, và `comment`. Cột `reviews.comment` cho phép trống. `draft_id` của dòng review trỏ vào nháp `TICKET`. Bốn nháp cùng `recommendation_id` đổi status cùng lúc. Trong lúc hồ sơ còn `PENDING_LEGAL`, sửa fact trả `409`.
 
 ```mermaid
 sequenceDiagram
@@ -524,16 +597,15 @@ sequenceDiagram
     actor HR as HR
     participant UI as Web
     participant API as FastAPI
-    participant AG as LangGraph
     participant DB as PostgreSQL
 
     LC->>UI: Mở hàng chờ
     UI->>API: GET /reviews/queue
-    API->>DB: SELECT cases status PENDING_LEGAL mà user có access_level REVIEW
+    API->>DB: SELECT cases PENDING_LEGAL, có TICKET PENDING_REVIEW, user có access_level REVIEW
     API-->>UI: Danh sách hồ sơ
     LC->>UI: Mở một hồ sơ
     UI->>API: GET /cases/id/review-pack
-    API->>DB: Đọc fact confirmed, recommendation, citation, draft
+    API->>DB: Đọc TICKET, recommendation PENDING_REVIEW, citation đã phân tầng
     API-->>UI: Gói để xem xét
     LC->>UI: Chọn APPROVE hoặc REJECT, nhập comment
     UI->>API: POST /cases/id/reviews
@@ -541,34 +613,38 @@ sequenceDiagram
     alt Không đủ quyền
         API-->>UI: 403
     else decision APPROVE
-        API->>DB: INSERT reviews decision APPROVE, reviewer_id, recommendation_id, draft_id, comment
-        API->>DB: UPDATE recommendations status APPROVED
-        API->>DB: UPDATE case_drafts status APPROVED
-        API->>DB: UPDATE cases status APPROVED
+        API->>DB: INSERT reviews APPROVE, reviewer_id, recommendation_id, draft_id của TICKET, comment
+        API->>DB: UPDATE recommendations APPROVED
+        API->>DB: UPDATE bốn case_drafts của recommendation này thành APPROVED
+        API->>DB: UPDATE cases APPROVED
         API-->>UI: Đã duyệt
-        UI-->>HR: Hồ sơ sẵn sàng để ký
+        UI-->>HR: Hồ sơ sẵn sàng để người ký ban hành ở feature 9
     else decision REJECT
-        API->>DB: INSERT reviews decision REJECT, comment
-        API->>DB: UPDATE recommendations status REJECTED
-        API->>DB: UPDATE case_drafts status REJECTED
-        API->>DB: UPDATE cases status REJECTED
+        API->>DB: INSERT reviews REJECT, comment
+        API->>DB: UPDATE recommendations REJECTED
+        API->>DB: UPDATE bốn case_drafts của recommendation này thành REJECTED
+        API->>DB: UPDATE cases REJECTED
         API-->>HR: Comment của pháp chế
+        Note over LC,DB: Dòng REJECTED và reviews giữ nguyên. Không xóa
         alt HR sửa tình tiết
             HR->>UI: Sửa fact và chat tiếp
             UI->>API: POST messages
-            API->>DB: UPDATE cases status NEED_INFO
-            Note over HR,DB: Quay lại feature chat làm rõ
+            API->>DB: UPDATE cases NEED_INFO
+            Note over HR,DB: Recommendation REJECTED giữ nguyên. Quay lại làm rõ, rồi feature 5 và 6
         else HR giữ fact, yêu cầu viết lại
             HR->>UI: Sinh lại đề xuất
             UI->>API: POST /cases/id/recommendations/regenerate
-            API->>AG: Giữ fact confirmed, thêm comment từ chối
-            AG->>DB: UPDATE recommendation cũ status SUPERSEDED
-            AG->>DB: INSERT recommendation mới status DRAFT
-            API->>DB: UPDATE cases status ANALYZED
-            API-->>HR: Bản đề xuất mới, gửi duyệt lại
+            API->>API: Feature 6 đọc CaseHandoff hiện có
+            API->>DB: INSERT recommendation mới DRAFT, case ANALYZED
+            Note over API,DB: Bản REJECTED giữ nguyên. Feature 6 đóng ProposalHandoff mới
+            API->>API: Feature 7 xét message mới, giữ lại hoặc đẩy ticket
         end
     end
 ```
+
+Từ chối không xóa đề xuất và không xóa ticket. Dòng `reviews` là dấu vết quyết định và comment. Feature 6 khi ghi bản mới chỉ chuyển các dòng đang `DRAFT` sang `SUPERSEDED`. Dòng `REJECTED` giữ status đó. Bản mới có `recommendation_id` khác. Feature 7 chỉ nhận `ProposalHandoff` của bản mới: chưa đủ căn cứ thì giữ ở `ANALYZED`, đủ căn cứ thì đẩy ticket mới. Comment từ chối nằm trên `reviews` để người đọc. Feature 6 vẫn chỉ đọc `CaseHandoff`, nên comment không đổi mức kỷ luật.
+
+`APPROVE` không ghi `disciplinary_decisions`. Người ký ban hành từ nháp `DECISION` đã `APPROVED` ở feature 9.
 
 ## 9. Ban hành và tiền lệ
 
@@ -645,7 +721,7 @@ sequenceDiagram
 
 ## 11. Phân tầng căn cứ trong câu trả lời
 
-Mỗi citation mang `policy_type` ra giao diện thành ba nhóm:
+Feature 6 đã gộp các nguồn thành một mức. Mục này chỉ xếp citation ra giao diện thành ba nhóm:
 
 - Luật và nghị định hướng dẫn kỷ luật lao động: căn cứ để công ty xử lý.
 - Nội quy nội bộ đang hiệu lực đúng ngày: mức cụ thể công ty được phép dùng.
@@ -742,8 +818,8 @@ sequenceDiagram
 1. Đăng nhập, mở hồ sơ, chat lưu `messages` và `case_facts`.
 2. Nạp Bộ luật Lao động và Nghị định 145, cắt theo điều khoản, lọc theo `incident_date`.
 3. Node đề xuất kèm citation, chưa cần nháp.
-4. Nháp biên bản và yêu cầu giải trình, hàng chờ pháp chế, duyệt hoặc từ chối.
+4. Sub-agent feature 7 đọc `ProposalHandoff`, giữ lại hoặc đẩy ticket, rồi pháp chế duyệt hoặc từ chối.
 5. Ban hành quyết định và bật tiền lệ.
 6. Thêm nội quy công ty, tái phạm, và tách Nghị định 283 sang lớp cảnh báo.
 
-Bản đó đủ cho Demo Day. Agent phân tích, cảnh báo, soạn nháp. Người phê duyệt và người ký quyết định chịu trách nhiệm.
+Bản đó đủ cho Demo Day. Agent phân tích, cảnh báo, soạn nháp, và chỉ đẩy ticket khi đề xuất đủ căn cứ. Người phê duyệt và người ký quyết định chịu trách nhiệm.
