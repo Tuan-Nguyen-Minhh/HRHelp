@@ -7,12 +7,22 @@ import pytest
 
 from src.agents.case_graph import build_case_graph
 from src.agents.handoff import CaseHandoff, CitedPassage
+from src.core.config import settings
 from src.features.answer.model import answers
 from src.features.answer.model.agent import build_recommend_agent
+from src.features.answer.model.assessment import (
+    Assessment,
+    CaseSummary,
+    DownstreamHandoff,
+    EvidenceRef,
+    RiskAssessment,
+    SanctionAssessment,
+)
 from src.features.answer.model.decide import DecisionInput, decide
 from src.features.answer.model.draft import AnswerInput, draft_answer
 from src.features.answer.model.layers import LayeredBasis, split_passages
 from src.features.answer.model.standard import applied_standard
+from src.features.answer.model.synthesis import guard, synthesize
 from src.features.answer.schema.render import HEADINGS
 from src.features.cite.model.passage import Passage
 from src.features.cite.model.query import SearchQuery
@@ -58,35 +68,44 @@ _ART_125 = (
 _ABSENCE = "nghỉ không phép tự ý bỏ việc"
 
 
-def _decide(layered: LayeredBasis, facts: dict[str, str] | None = None, description: str = ""):
-    return decide(DecisionInput(family=ABSENCE, facts=facts or _READY, layered=layered, description=description))
+def _decide(
+    layered: LayeredBasis,
+    facts: dict[str, str] | None = None,
+    description: str = "",
+    assessment: Assessment | None = None,
+):
+    return decide(
+        DecisionInput(family=ABSENCE, facts=facts or _READY, layered=layered, description=description),
+        assessment,
+    )
 
 
-def test_dismissal_ceiling_is_the_condition_written_in_the_retrieved_law():
+def _supported(level: str, law: Passage, rule: Passage, quote_law: str | None = None, quote_rule: str | None = None):
+    raw = Assessment(
+        case_summary=CaseSummary(violation="nghỉ không phép", facts=dict(_READY)),
+        sanction_assessment=SanctionAssessment(
+            status="SUPPORTED",
+            recommended_sanction=level,
+            reason="Đoạn đã lấy nêu mức này.",
+            evidence=[
+                EvidenceRef(chunk_id=str(law.chunk_id), quote=quote_law or law.content),
+                EvidenceRef(chunk_id=str(rule.chunk_id), quote=quote_rule or rule.content),
+            ],
+        ),
+        risk_assessment=RiskAssessment(level="LOW", reasons=["Đủ trích dẫn."]),
+        downstream_handoff=DownstreamHandoff(can_recommend=True),
+    )
+    return guard(raw, [law, rule])
+
+
+def test_python_does_not_infer_a_window_or_a_level_from_the_passage_text():
     layered = _layered(
         _passage("LAW", "BLLD", "Bộ luật Lao động", _ART_125),
         _passage("INTERNAL_RULE", "NQ", "Nội quy", "Người lao động tự ý bỏ việc không phép thì bị sa thải."),
     )
-    assert _decide(layered, description=_ABSENCE).sanction_type == "DISMISSAL"
-    assert _decide(layered, {**_READY, "absence_days": "4 ngày trong 30 ngày"}, _ABSENCE).sanction_type is None
+    assert _decide(layered, description=_ABSENCE).sanction_type is None
     assert _decide(layered, {**_READY, "absence_days": "5 ngày"}, _ABSENCE).sanction_type is None
-    assert _decide(layered, {**_READY, "absence_days": "20 ngày trong 365 ngày"}, _ABSENCE).sanction_type == "DISMISSAL"
-
-
-def test_a_different_retrieved_threshold_replaces_any_fixed_day_count():
-    law = (
-        "Hình thức xử lý kỷ luật sa thải được áp dụng trong trường hợp sau đây:\n"
-        "Người lao động tự ý bỏ việc 03 ngày cộng dồn trong thời hạn 10 ngày."
-    )
-    layered = _layered(
-        _passage("LAW", "BLLD", "Bộ luật Lao động", law),
-        _passage("INTERNAL_RULE", "NQ", "Nội quy", "Tự ý bỏ việc không phép thì bị sa thải."),
-    )
-    description = "tự ý bỏ việc không phép"
-    met = _decide(layered, {**_READY, "absence_days": "3 ngày trong 10 ngày"}, description)
-    missed = _decide(layered, {**_READY, "absence_days": "3 ngày trong 30 ngày"}, description)
-    assert met.sanction_type == "DISMISSAL"
-    assert missed.sanction_type is None
+    assert _decide(layered, {**_READY, "absence_days": "5 ngày trong 30 ngày"}, _ABSENCE).sanction_type is None
 
 
 def test_no_corpus_does_not_lock_a_sanction():
@@ -142,11 +161,16 @@ def test_incomplete_procedure_blocks_dismissal():
 
 
 def test_dismissal_is_not_termination():
-    layered = _layered(
-        _passage("LAW", "BLLD-2019", "Bộ luật Lao động", _ART_125),
-        _passage("INTERNAL_RULE", "NQ", "Nội quy", "Người lao động tự ý bỏ việc không phép thì bị sa thải."),
+    law = _passage("LAW", "BLLD-2019", "Bộ luật Lao động", _ART_125)
+    rule = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Người lao động tự ý bỏ việc không phép thì bị sa thải.")
+    layered = _layered(law, rule)
+    assessment = _supported(
+        "DISMISSAL",
+        law,
+        rule,
+        quote_law="Người lao động tự ý bỏ việc 05 ngày cộng dồn trong thời hạn 30 ngày",
     )
-    decision = _decide(layered, description=_ABSENCE)
+    decision = _decide(layered, description=_ABSENCE, assessment=assessment)
     assert decision.sanction_type == "DISMISSAL"
     assert "TERMINATION" in decision.rationale
     prose = draft_answer(
@@ -159,7 +183,8 @@ def test_dismissal_is_not_termination():
             layered=layered,
             precedent_note="Không có đoạn tiền lệ trong lượt đối chiếu này.",
             description=_ABSENCE,
-        )
+        ),
+        assessment,
     ).prose
     assert "DISMISSAL" in prose
     assert "Không đề xuất chấm dứt hợp đồng (TERMINATION)." in prose
@@ -208,51 +233,114 @@ def test_conflicting_sources_collapse_to_one_open_standard():
     assert standard.sanction_type != "TERMINATION"
 
 
-def test_a_single_company_level_can_be_warning():
-    layered = _layered(
-        _passage("LAW", "BLLD-2019", "Bộ luật Lao động", _ART_124),
-        _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì khiển trách."),
-    )
-    facts = {**_READY, "absence_days": "1 ngày trong 30 ngày"}
-    assert _decide(layered, facts, "đi muộn lần đầu").sanction_type == "WARNING"
-    assert _decide(layered, facts, _ABSENCE).sanction_type is None
+def test_a_grounded_quote_can_lock_warning_and_an_invented_quote_cannot():
+    law = _passage("LAW", "BLLD-2019", "Bộ luật Lao động", _ART_124)
+    rule = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì khiển trách.")
+    layered = _layered(law, rule)
+    grounded = _supported("WARNING", law, rule, quote_law="1. Khiển trách.")
+    invented = _supported("WARNING", law, rule, quote_rule="Đi muộn thì sa thải.")
+    assert grounded.downstream_handoff.can_recommend is True
+    assert _decide(layered, assessment=grounded).sanction_type == "WARNING"
+    assert invented.downstream_handoff.can_recommend is False
+    assert _decide(layered, assessment=invented).sanction_type is None
 
 
-def test_a_harsher_rule_drops_to_the_level_the_retrieved_ceiling_still_allows():
-    rule = (
-        "Nghỉ không phép tự ý bỏ việc dưới 5 ngày thì khiển trách. "
-        "Tự ý bỏ việc không phép từ 05 ngày cộng dồn trong thời hạn 30 ngày thì sa thải."
+def test_multiple_supported_levels_are_not_reduced_to_one():
+    law = _passage("LAW", "BLLD", "Bộ luật Lao động", _ART_124)
+    rule = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì khiển trách hoặc cách chức.")
+    raw = Assessment(
+        case_summary=CaseSummary(violation="đi muộn", facts={}),
+        sanction_assessment=SanctionAssessment(
+            status="MULTIPLE_SUPPORTED",
+            recommended_sanction="DEMOTION",
+            reason="Nội quy nêu hai mức.",
+            evidence=[
+                EvidenceRef(chunk_id=str(law.chunk_id), quote="1. Khiển trách."),
+                EvidenceRef(chunk_id=str(rule.chunk_id), quote=rule.content),
+            ],
+        ),
+        risk_assessment=RiskAssessment(level="MEDIUM", reasons=["Hai mức."]),
     )
-    layered = _layered(
-        _passage("LAW", "BLLD", "Bộ luật Lao động", f"{_ART_124}\n{_ART_125}"),
-        _passage("INTERNAL_RULE", "NQ", "Nội quy", rule),
-    )
-    facts = {**_READY, "absence_days": "1 ngày trong 30 ngày"}
-    decision = _decide(layered, facts, _ABSENCE)
-    assert decision.sanction_type == "WARNING"
-
-
-def test_two_lawful_levels_stay_open_for_feature_7_to_hold():
-    layered = _layered(
-        _passage("LAW", "BLLD", "Bộ luật Lao động", _ART_124),
-        _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì khiển trách hoặc cách chức."),
-    )
-    decision = _decide(layered, description="đi muộn lần đầu")
+    accepted = guard(raw, [law, rule])
+    decision = _decide(_layered(law, rule), assessment=accepted)
+    assert accepted.sanction_assessment.recommended_sanction is None
     assert decision.sanction_type is None
     assert decision.risk_level == "MEDIUM"
 
 
-def test_a_guiding_decree_sets_the_ceiling_and_a_penalty_decree_does_not():
+def test_an_administrative_penalty_cannot_ground_a_company_sanction():
     penalty = _passage("DECREE", "283/2026/ND-CP", "Nghị định xử phạt", "Phạt tiền và sa thải.")
     precedent = _passage("PRECEDENT", "QD-1", "Vụ cũ", "Vụ trước đã sa thải.")
-    decree = _passage("DECREE", "145/2020/ND-CP", "Nghị định 145", "Đi muộn lần đầu thì chỉ được khiển trách.")
-    harsh = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì cách chức.")
-    matched = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì khiển trách.")
-    blocked = _decide(_layered(decree, harsh, penalty, precedent), description="đi muộn lần đầu")
-    kept = _decide(_layered(decree, matched, penalty, precedent), description="đi muộn lần đầu")
-    assert blocked.sanction_type is None
-    assert "trần" in blocked.rationale
-    assert kept.sanction_type == "WARNING"
+    rule = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì khiển trách.")
+    raw = Assessment(
+        case_summary=CaseSummary(violation="đi muộn", facts={}),
+        sanction_assessment=SanctionAssessment(
+            status="SUPPORTED",
+            recommended_sanction="DISMISSAL",
+            reason="Nghị định xử phạt nói sa thải.",
+            evidence=[
+                EvidenceRef(chunk_id=str(penalty.chunk_id), quote="Phạt tiền và sa thải."),
+                EvidenceRef(chunk_id=str(precedent.chunk_id), quote="Vụ trước đã sa thải."),
+                EvidenceRef(chunk_id=str(rule.chunk_id), quote=rule.content),
+            ],
+        ),
+        risk_assessment=RiskAssessment(level="LOW", reasons=["Sai nguồn."]),
+        downstream_handoff=DownstreamHandoff(can_recommend=True),
+    )
+    accepted = guard(raw, [penalty, precedent, rule])
+    assert accepted.downstream_handoff.can_recommend is False
+    assert _decide(_layered(penalty, precedent, rule), assessment=accepted).sanction_type is None
+
+
+def test_need_more_facts_clears_a_filled_sanction():
+    law = _passage("LAW", "BLLD", "Bộ luật Lao động", _ART_125)
+    rule = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Người lao động tự ý bỏ việc không phép thì bị sa thải.")
+    raw = Assessment(
+        case_summary=CaseSummary(violation="nghỉ không phép", facts={"absence_days": "5 ngày"}),
+        sanction_assessment=SanctionAssessment(
+            status="NEED_MORE_FACTS",
+            recommended_sanction="DISMISSAL",
+            reason="Fact chỉ có 5 ngày, đoạn luật yêu cầu mốc 30 ngày.",
+            evidence=[
+                EvidenceRef(chunk_id=str(law.chunk_id), quote="05 ngày cộng dồn trong thời hạn 30 ngày"),
+                EvidenceRef(chunk_id=str(rule.chunk_id), quote=rule.content),
+            ],
+        ),
+        risk_assessment=RiskAssessment(level="LOW", reasons=["Thiếu mốc."]),
+        downstream_handoff=DownstreamHandoff(can_recommend=True),
+    )
+    accepted = guard(raw, [law, rule])
+    facts = {**_READY, "absence_days": "5 ngày"}
+    decision = _decide(_layered(law, rule), facts, assessment=accepted)
+    assert accepted.sanction_assessment.recommended_sanction is None
+    assert accepted.sanction_assessment.status == "NEED_MORE_FACTS"
+    assert decision.sanction_type is None
+    assert decision.risk_level == "HIGH"
+
+
+@pytest.mark.asyncio
+async def test_missing_synthesis_key_does_not_call_the_model(monkeypatch):
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", "")
+
+    async def boom(*_args, **_kwargs):
+        raise AssertionError("synthesis model was called")
+
+    monkeypatch.setattr("src.features.answer.model.synthesis._complete", boom)
+    law = _passage("LAW", "BLLD", "Bộ luật Lao động", _ART_125)
+    rule = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Tự ý bỏ việc không phép thì bị sa thải.")
+    message = CaseHandoff(
+        incident_date=date(2026, 3, 1),
+        employee_name="An",
+        description="nghỉ 5 ngày không phép",
+        family=ABSENCE,
+        facts={**_READY, "absence_days": "5 ngày"},
+        passages=[_cited(law), _cited(rule)],
+        missing_internal_rule=False,
+        agent_run_id=uuid4(),
+    )
+    result = await synthesize(message, _layered(law, rule))
+    assert result.sanction_assessment.recommended_sanction is None
+    assert result.downstream_handoff.can_recommend is False
 
 
 @pytest.mark.asyncio

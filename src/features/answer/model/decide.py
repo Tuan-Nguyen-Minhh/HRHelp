@@ -1,15 +1,14 @@
-"""Choose a sanction only from locked facts and the passages retrieved for this case.
+"""Choose a sanction only from locked facts and a guarded synthesis assessment.
 
 Sa thải (DISMISSAL) and chấm dứt hợp đồng (TERMINATION) are different grounds.
-This module never returns TERMINATION. The level itself is read from the
-retrieved internal rule and kept only when the retrieved law and guiding
-decree still name that form.
+This module never returns TERMINATION. It does not read a level out of the
+passage text. The synthesis assessment is the only source of a level.
 """
 
 from dataclasses import dataclass
 
+from src.features.answer.model.assessment import Assessment
 from src.features.answer.model.layers import LayeredBasis
-from src.features.answer.model.reconcile import reconcile
 from src.features.answer.schema import ProcessStep
 from src.features.clarify.model.extract import is_yes
 
@@ -37,17 +36,29 @@ class DecisionInput:
     fact_lines: tuple[str, ...] = ()
 
 
-def decide(data: DecisionInput) -> SanctionDecision:
-    """Return one level inside the retrieved ceiling, or leave the level open."""
+def decide(data: DecisionInput, assessment: Assessment | None = None) -> SanctionDecision:
+    """Return the guarded assessment level, or leave the level open."""
     steps = process_steps(data.facts)
     missing_rule = data.layered.missing_internal_rule
     opened = _blocked(data, steps, missing_rule)
     if opened is not None:
         return opened
-    found = reconcile(data.layered.legal_basis, data.layered.internal_rule, _case_text(data))
-    if found.sanction_type is None:
-        return _open(steps, found.risk_level, found.rationale, missing_rule)
-    return _locked(steps, found.sanction_type, "MEDIUM", found.rationale, missing_rule)
+    if assessment is None or not assessment.downstream_handoff.can_recommend:
+        reason = assessment.sanction_assessment.reason if assessment is not None else _NO_SYNTHESIS
+        multiple = assessment is not None and assessment.sanction_assessment.status == "MULTIPLE_SUPPORTED"
+        return _open(steps, "MEDIUM" if multiple else "HIGH", reason, missing_rule)
+    level = assessment.sanction_assessment.recommended_sanction
+    if not level or level == "TERMINATION":
+        return _open(steps, "HIGH", _NO_SYNTHESIS, missing_rule)
+    reason = assessment.sanction_assessment.reason
+    if level == "DISMISSAL" and "TERMINATION" not in reason:
+        reason = f"{reason} Không đề xuất chấm dứt hợp đồng (TERMINATION)."
+    return _locked(steps, level, assessment.risk_assessment.level, reason, missing_rule)
+
+
+def blocked(data: DecisionInput) -> SanctionDecision | None:
+    """A case-fact gate that runs before the synthesis model is called."""
+    return _blocked(data, process_steps(data.facts), data.layered.missing_internal_rule)
 
 
 def process_steps(facts: dict[str, str]) -> list[ProcessStep]:
@@ -62,11 +73,6 @@ def process_steps(facts: dict[str, str]) -> list[ProcessStep]:
         ProcessStep(code="TIME_LIMIT", label="Kiểm tra thời hiệu xử lý kỷ luật", done=False),
         ProcessStep(code="SIGNER", label="Người có thẩm quyền ban hành quyết định", done=False),
     ]
-
-
-def _case_text(data: DecisionInput) -> str:
-    parts = [data.description, *data.fact_lines, *data.facts.values()]
-    return " ".join(part for part in parts if part)
 
 
 def _blocked(data: DecisionInput, steps: list[ProcessStep], missing_rule: bool) -> SanctionDecision | None:
@@ -116,3 +122,4 @@ _NO_RULE = (
 )
 _NO_LAW = "Chưa có căn cứ luật còn hiệu lực trong các đoạn đã lấy. Chưa chốt mức kỷ luật chỉ từ nội quy hoặc tiền lệ."
 _PAGE_INDEX = "Chỉ tìm được đầu điều từ mục lục. Chưa đủ nội dung điều khoản để chốt mức kỷ luật."
+_NO_SYNTHESIS = "Chưa có bản tổng hợp bám đoạn đã retrieval. Chưa chốt mức."
