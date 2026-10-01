@@ -196,6 +196,22 @@ class TestStep2Preprocessing(unittest.TestCase):
         start, end = detect_boundaries(lines)
         self.assertEqual(end, len(lines))
 
+    def test_metadata_extraction_noi_quy(self):
+        # P-029 FIX 2026-10-01 (NQCT): tai lieu noi bo phai giu dung
+        # document_form NOI BO (khong roi ve default GOC) va loai NOI QUY.
+        text = (
+            "# NỘI QUY LAO ĐỘNG\n"
+            "Số: NQLD-HRCORP-2026\n"
+            "Hình thức: VĂN BẢN NỘI BỘ\n"
+            "Loại văn bản: NỘI QUY\n\n"
+            "## Chương I. QUY ĐỊNH CHUNG\n"
+        )
+        meta = extract_metadata(text, "noi_quy_mau_cong_ty.md")
+        self.assertEqual(meta["document_number"], "NQLD-HRCORP-2026")
+        self.assertEqual(meta["document_form"], "VĂN BẢN NỘI BỘ")
+        self.assertEqual(meta["document_type"], "NỘI QUY")
+        self.assertIn("NỘI QUY LAO ĐỘNG", meta["document_title"])
+
 
 if __name__ == "__main__":
     unittest.main()

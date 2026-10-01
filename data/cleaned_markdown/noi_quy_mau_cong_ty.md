@@ -1,0 +1,180 @@
+# NỘI QUY LAO ĐỘNG
+
+- **Số hiệu:** NQLD-HRCORP-2026
+- **Hình thức:** VĂN BẢN NỘI BỘ
+- **Loại văn bản:** NỘI QUY
+
+---
+
+## Chương I. QUY ĐỊNH CHUNG
+
+
+#### Điều 1. Phạm vi điều chỉnh và đối tượng áp dụng
+
+1. Nội quy lao động này quy định các chuẩn mực về kỷ luật lao động, thời giờ làm việc, thời giờ nghỉ ngơi, trật tự nơi làm việc, an toàn vệ sinh lao động, bảo vệ bí mật công ty, quy trình và thẩm quyền xử lý kỷ luật lao động.
+
+2. Áp dụng đối với toàn thể người lao động làm việc theo Hợp đồng lao động, hợp đồng thử việc hoặc thỏa thuận lao động tại Công ty.
+
+
+#### Điều 2. Nguyên tắc chấp hành kỷ luật lao động
+
+1. Người lao động có nghĩa vụ tuân thủ các cam kết trong hợp đồng lao động, nội quy lao động và các quy chế nội bộ đã được công bố công khai.
+
+2. Mọi hành vi vi phạm kỷ luật đều phải được phát hiện kịp thời, xác minh khách quan và xử lý đúng quy định của pháp luật và nội quy này.
+
+
+
+## Chương II. THỜI GIỜ LÀM VIỆC VÀ THỜI GIỜ NGHỈ NGƠI
+
+
+#### Điều 3. Thời giờ làm việc và chấm công
+
+1. Thời giờ làm việc bình thường không quá 08 giờ/ngày và không quá 48 giờ/tuần theo quy định của Bộ luật Lao động. Công ty áp dụng thời giờ làm việc tiêu chuẩn 08 giờ/ngày và 40 giờ/tuần (từ Thứ Hai đến Thứ Sáu, nghỉ Thứ Bảy và Chủ Nhật).
+a) Ca làm việc buổi sáng: từ 08 giờ 30 phút đến 12 giờ 00 phút.
+b) Ca làm việc buổi chiều: từ 13 giờ 30 phút đến 18 giờ 00 phút.
+
+2. Người lao động có trách nhiệm chấm công điểm danh khi bắt đầu và kết thúc ca làm việc qua hệ thống chấm công điện tử của Công ty. Nghiêm cấm mọi hành vi chấm công hộ hoặc làm sai lệch dữ liệu chấm công.
+
+
+#### Điều 4. Quy định về xin nghỉ phép và thông báo vắng mặt
+
+1. Người lao động khi nghỉ việc (nghỉ phép năm, nghỉ việc riêng, nghỉ không hưởng lương) phải gửi phiếu yêu cầu xin nghỉ trên hệ thống quản trị nhân sự và được cấp quản lý trực tiếp phê duyệt trước ít nhất:
+a) 01 ngày làm việc đối với trường hợp nghỉ từ 01 đến 02 ngày.
+b) 03 ngày làm việc đối với trường hợp nghỉ từ 03 ngày trở lên.
+
+2. Trường hợp đột xuất (ốm đau bất ngờ, tai nạn, lý do bất khả kháng), người lao động hoặc người thân phải thông báo trực tiếp qua điện thoại/email cho quản lý trực tiếp hoặc bộ phận Nhân sự trong vòng 04 giờ kể từ khi bắt đầu ca làm việc, đồng thời bổ sung đầy đủ giấy tờ chứng minh hợp lệ (giấy ra viện, xác nhận của cơ sở y tế có thẩm quyền) trong ngày làm việc đầu tiên đi làm trở lại.
+
+3. Mọi trường hợp vắng mặt không xin phép hoặc không được quản lý phê duyệt hoặc không có lý do chính đáng được coi là tự ý bỏ việc.
+
+
+
+## Chương III. TRẬT TỰ, AN TOÀN NƠI LÀM VIỆC VÀ BẢO VỆ TÀI SẢN
+
+
+#### Điều 5. Trật tự tại nơi làm việc
+
+1. Người lao động phải giữ thái độ văn minh, tôn trọng đồng nghiệp và khách hàng; tuân thủ sự phân công, điều động hợp pháp của người quản lý.
+
+2. Nghiêm cấm hành vi mang vũ khí, chất cháy nổ, rượu bia, chất kích thích hoặc sử dụng rượu bia, chất ma túy trong khuôn viên nơi làm việc.
+
+
+#### Điều 6. Bảo vệ tài sản và bí mật kinh doanh, bí mật công nghệ
+
+1. Người lao động có trách nhiệm giữ gìn, bảo quản máy móc, thiết bị, tài liệu được giao quản lý; không tự ý mang tài sản của Công ty ra khỏi trụ sở khi chưa có văn bản đồng ý của người có thẩm quyền.
+
+2. Nghiêm cấm sao chép, trích xuất, phát tán mã nguồn, dữ liệu khách hàng, thông tin tài chính hoặc bí mật kinh doanh của Công ty cho bên thứ ba khi không có nhiệm vụ.
+
+
+
+## Chương IV. BỔ SUNG QUY ĐỊNH BẮT BUỘC KHÁC THEO LUẬT
+
+
+#### Điều 7. An toàn, vệ sinh lao động tại nơi làm việc
+
+1. Người lao động phải tuân thủ nghiêm ngặt các quy định, quy trình, biện pháp bảo đảm an toàn, vệ sinh lao động tại nơi làm việc.
+
+2. Phải sử dụng và bảo quản các phương tiện bảo vệ cá nhân đã được trang cấp; các thiết bị an toàn vệ sinh lao động tại nơi làm việc.
+
+
+#### Điều 8. Phòng, chống quấy rối tình dục tại nơi làm việc
+
+1. Nghiêm cấm mọi hành vi quấy rối tình dục dưới bất kỳ hình thức nào tại nơi làm việc theo quy định tại Điều 84 Nghị định 145/2020/NĐ-CP.
+
+2. Trình tự, thủ tục khiếu nại, tố cáo và giải quyết khiếu nại, tố cáo về quấy rối tình dục tại nơi làm việc được thực hiện theo quy định của pháp luật và quy chế nội bộ bảo mật của Công ty.
+
+
+#### Điều 9. Chuyển người lao động làm công việc khác so với hợp đồng lao động
+
+1. Khi gặp khó khăn đột xuất do thiên tai, hỏa hoạn, dịch bệnh nguy hiểm, áp dụng biện pháp ngăn ngừa, khắc phục tai nạn lao động, bệnh nghề nghiệp, sự cố điện, nước hoặc do nhu cầu sản xuất, kinh doanh, Công ty có quyền tạm thời chuyển người lao động làm công việc khác so với hợp đồng lao động nhưng không được quá 60 ngày làm việc cộng dồn trong 01 năm.
+
+2. Quy trình và chế độ tiền lương khi chuyển người lao động làm công việc khác tuân thủ nghiêm ngặt quy định tại Điều 29 Bộ luật Lao động.
+
+
+
+## Chương V. CÁC HÀNH VI VI PHẠM VÀ HÌNH THỨC XỬ LÝ KỶ LUẬT
+
+
+#### Điều 10. Các hình thức xử lý kỷ luật lao động
+
+1. Khiển trách.
+
+2. Kéo dài thời hạn nâng lương không quá 06 tháng.
+
+3. Cách chức.
+
+4. Sa thải.
+
+Tuyệt đối không áp dụng hình thức phạt tiền, trừ lương thay cho việc xử lý kỷ luật lao động.
+
+
+#### Điều 11. Áp dụng hình thức Khiển trách
+
+Hình thức kỷ luật khiển trách được áp dụng bằng văn bản đối với người lao động phạm lỗi lần đầu thuộc các trường hợp sau:
+
+1. Đi làm muộn hoặc về sớm từ 15 phút trở lên quá 03 lần trong 01 tháng làm việc mà không có lý do chính đáng.
+
+2. Tự ý rời bỏ vị trí làm việc trong ca làm việc quá 60 phút mà không có sự đồng ý của quản lý trực tiếp.
+
+3. Không hoàn thành nhiệm vụ được giao do lỗi chủ quan nhưng chưa gây thiệt hại vật chất hoặc thiệt hại dưới 05 triệu đồng.
+
+4. Tự ý bỏ việc 01 ngày làm việc.
+
+
+#### Điều 12. Áp dụng hình thức Kéo dài thời hạn nâng lương hoặc Cách chức
+
+1. Kéo dài thời hạn nâng lương không quá 06 tháng áp dụng đối với người lao động có một trong các hành vi:
+a) Đã bị khiển trách bằng văn bản mà tái phạm trong thời hạn 03 tháng kể từ ngày bị khiển trách.
+b) Tự ý bỏ việc từ 02 đến 04 ngày làm việc cộng dồn trong thời hạn 30 ngày.
+c) Làm hư hỏng tài sản, công cụ, thiết bị của Công ty do sơ suất với giá trị thiệt hại từ 05 triệu đồng đến dưới 10 tháng lương tối thiểu vùng.
+
+2. Hình thức Cách chức áp dụng đối với người lao động đang giữ chức vụ quản lý vi phạm quy định tại khoản 1 Điều này hoặc có hành vi lạm quyền, vi phạm nghiêm trọng quy trình quản trị nội bộ.
+
+
+#### Điều 13. Áp dụng hình thức Sa thải
+
+Hình thức kỷ luật sa thải được áp dụng đối với người lao động có một trong các hành vi vi phạm nghiêm trọng sau đây:
+
+1. Người lao động có hành vi trộm cắp, tham ô, đánh bạc, cố ý gây thương tích, sử dụng ma tuý tại nơi làm việc.
+
+2. Người lao động có hành vi tiết lộ bí mật kinh doanh, bí mật công nghệ, xâm phạm quyền sở hữu trí tuệ của Công ty, có hành vi gây thiệt hại nghiêm trọng hoặc đe dọa gây thiệt hại đặc biệt nghiêm trọng về tài sản, lợi ích của Công ty hoặc quấy rối tình dục tại nơi làm việc quy định tại Điều 8 Nội quy này.
+
+3. Người lao động bị xử lý kỷ luật kéo dài thời hạn nâng lương hoặc cách chức mà tái phạm trong thời gian chưa xóa kỷ luật.
+
+4. Người lao động tự ý bỏ việc 05 ngày cộng dồn trong thời hạn 30 ngày hoặc 20 ngày cộng dồn trong thời hạn 365 ngày tính từ ngày đầu tiên tự ý bỏ việc mà không có lý do chính đáng. Trường hợp được coi là có lý do chính đáng bao gồm thiên tai, hỏa hoạn, bản thân, thân nhân bị ốm có xác nhận của cơ sở khám bệnh, chữa bệnh có thẩm quyền.
+
+
+
+## Chương VI. TRÌNH TỰ, THỦ TỤC, THẨM QUYỀN XỬ LÝ VÀ TRÁCH NHIỆM VẬT CHẤT
+
+
+#### Điều 14. Trình tự lập biên bản và yêu cầu giải trình
+
+1. Khi phát hiện người lao động có hành vi vi phạm kỷ luật, người quản lý trực tiếp hoặc bộ phận Nhân sự phải tiến hành lập Biên bản vi phạm tại thời điểm xảy ra sự việc hoặc ngay khi phát hiện hành vi.
+
+2. Biên bản vi phạm phải ghi rõ thời gian, địa điểm, tóm tắt diễn biến, hành vi vi phạm, các chứng cứ thu thập được và có chữ ký của người lập biên bản, người làm chứng (nếu có) và người có hành vi vi phạm. Nếu từ chối ký, biên bản phải ghi rõ lý do từ chối.
+
+
+#### Điều 15. Trình tự tổ chức cuộc họp xử lý kỷ luật lao động
+
+1. Ít nhất 05 ngày làm việc trước ngày mở cuộc họp xử lý kỷ luật, Công ty phải gửi thông báo bằng văn bản về thời gian, địa điểm, nội dung vi phạm đến người lao động vi phạm và Ban chấp hành Công đoàn cơ sở tại Công ty.
+
+2. Cuộc họp chỉ được tiến hành khi có mặt các thành phần bắt buộc, trừ trường hợp vắng mặt không có lý do chính đáng hoặc vắng mặt sau 02 lần thông báo hợp lệ. Nội dung cuộc họp phải được ghi thành Biên bản.
+
+
+#### Điều 16. Thẩm quyền ban hành quyết định kỷ luật lao động
+
+Người có thẩm quyền ra quyết định xử lý kỷ luật lao động là Người đại diện theo pháp luật của Công ty hoặc người được Người đại diện theo pháp luật ủy quyền hợp pháp bằng văn bản.
+
+
+#### Điều 17. Trách nhiệm vật chất và bồi thường thiệt hại
+
+1. Người lao động làm hư hỏng dụng cụ, thiết bị hoặc có hành vi khác gây thiệt hại tài sản của Công ty thì phải bồi thường theo quy định của pháp luật. Nếu gây thiệt hại không nghiêm trọng do sơ suất với giá trị không quá 10 tháng lương tối thiểu vùng, người lao động phải bồi thường nhiều nhất là 03 tháng tiền lương và bị khấu trừ hằng tháng vào lương.
+
+2. Người lao động làm mất dụng cụ, thiết bị, tài sản của Công ty hoặc tiêu hao vật tư quá định mức cho phép thì phải bồi thường thiệt hại một phần hoặc toàn bộ theo thời giá thị trường.
+
+
+#### Điều 18. Thời hiệu xử lý kỷ luật và xóa kỷ luật
+
+1. Thời hiệu xử lý kỷ luật lao động là 06 tháng kể từ ngày xảy ra hành vi vi phạm; trường hợp hành vi vi phạm liên quan trực tiếp đến tài chính, tài sản, tiết lộ bí mật công nghệ, bí mật kinh doanh thì thời hiệu xử lý kỷ luật lao động là 12 tháng.
+
+2. Người lao động bị khiển trách sau 03 tháng hoặc bị xử lý kỷ luật kéo dài thời hạn nâng lương sau 06 tháng hoặc bị xử lý kỷ luật cách chức sau 03 năm kể từ ngày bị xử lý, nếu không tiếp tục vi phạm kỷ luật lao động thì đương nhiên được xóa kỷ luật.

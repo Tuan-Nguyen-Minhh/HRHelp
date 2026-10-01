@@ -89,6 +89,14 @@ LEGAL_DOCS: list[dict[str, Any]] = [
         "effective_from": date(2026, 9, 10),
         "effective_to": None,  # Current
     },
+    {
+        "legal_document_id": "NQLD-HRCORP-2026",
+        "code": "NQCT",
+        "name": "Nội quy lao động HRCorp",
+        "policy_type": "INTERNAL_RULE",
+        "effective_from": date(2026, 1, 1),
+        "effective_to": None,
+    },
 ]
 
 BATCH_SIZE = 200
@@ -323,8 +331,8 @@ def verify(db: Session) -> bool:
             Policy.code.in_([d["code"] for d in LEGAL_DOCS])
         )
     )
-    logger.info(f"  verify: {n_policies}/3 policies")
-    if n_policies != 3:
+    logger.info(f"  verify: {n_policies}/4 policies")
+    if n_policies != 4:
         ok = False
 
     # 2. Check total chunks in document_chunks

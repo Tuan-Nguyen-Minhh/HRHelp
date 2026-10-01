@@ -85,8 +85,8 @@ logger = logging.getLogger("embed_legal")
 CHUNK_DIR = PROJECT_ROOT / "data" / "chunk"
 CHECKPOINT_PATH = CHUNK_DIR / "embed_progress.json"
 
-EXPECTED_TOTAL_CHUNKS = 1289
-EXPECTED_ALEMBIC_HEAD = "0003_legal_embeddings"
+EXPECTED_TOTAL_CHUNKS = 1307
+EXPECTED_ALEMBIC_HEAD = "0004_document_chunks_tsv"
 
 #: Texts per Mistral request. 32 is the plan's value: 41 requests instead of
 #: 1289, which is the difference between ~41 s and ~22 min of wall clock.

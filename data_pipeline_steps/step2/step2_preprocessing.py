@@ -69,8 +69,21 @@ def extract_metadata(text: str, filename: str) -> Dict[str, Any]:
             metadata["document_number"] = alt_match.group(1)
 
     # 2. Hình thức văn bản (document_form)
+    # P-029 FIX 2026-10-01 (NQCT): giu 'VAN BAN NOI BO' thay vi roi ve default GOC.
+    # CHI doc dong nhan 'Hinh thuc:' (hoac header 15 dong dau), KHONG quet ca
+    # body: tu 'noi bo' xuat hien trong than nghi dinh (VD 'quy che noi bo')
+    # se gay nhan nham ND145/ND283 thanh van ban noi bo.
     if "VBHN" in filename or "VĂN BẢN HỢP NHẤT" in text.upper():
         metadata["document_form"] = "VĂN BẢN HỢP NHẤT"
+    else:
+        m_form = re.search(r"^Hình thức:\s*(.+?)\s*$", text,
+                           re.MULTILINE | re.IGNORECASE)
+        if m_form:
+            form_val = re.sub(r"[\*\_#]", "", m_form.group(1)).strip().upper()
+            if "NỘI BỘ" in form_val:
+                metadata["document_form"] = "VĂN BẢN NỘI BỘ"
+            elif "HỢP NHẤT" in form_val:
+                metadata["document_form"] = "VĂN BẢN HỢP NHẤT"
 
     # 3. Loại văn bản (document_type)
     doc_types = [
@@ -81,6 +94,7 @@ def extract_metadata(text: str, filename: str) -> Dict[str, Any]:
         "THÔNG TƯ",
         "CHỈ THỊ",
         "NGHỊ QUYẾT",
+        "NỘI QUY",
     ]
     lines = text.splitlines()
     type_line_idx = -1
@@ -94,6 +108,18 @@ def extract_metadata(text: str, filename: str) -> Dict[str, Any]:
                 break
         if metadata["document_type"]:
             break
+
+    # P-029 FIX 2026-10-01 (NQCT): fallback dong nhan de 'Loai van ban: NOI QUY'
+    # neu H1 khong mo dau bang loai (tranh an may nho H1 'NOI QUY LAO DONG').
+    if not metadata["document_type"]:
+        m_labeled = re.search(r"^Loại văn bản:\s*(.+?)\s*$", text,
+                              re.MULTILINE | re.IGNORECASE)
+        if m_labeled:
+            labeled_val = re.sub(r"[\*\_#]", "", m_labeled.group(1)).strip().upper()
+            for dt in doc_types:
+                if labeled_val == dt or labeled_val.startswith(dt + " "):
+                    metadata["document_type"] = dt
+                    break
 
     # 4. Tên văn bản (document_title) với Stop Condition
     if type_line_idx != -1:

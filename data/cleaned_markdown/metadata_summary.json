@@ -91,5 +91,36 @@
       "warnings": []
     },
     "output_file": "C:\\Users\\tuan\\Desktop\\P-029\\data\\cleaned_markdown\\nghi-dinh-145-2020-huong-dan-thi-hanh-dieu-kien-lao-dong-va-quan-he-lao-dong.md"
+  },
+  "noi_quy_mau_cong_ty.md": {
+    "metadata": {
+      "filename": "noi_quy_mau_cong_ty.md",
+      "document_number": "NQLD-HRCORP-2026",
+      "document_form": "VĂN BẢN NỘI BỘ",
+      "document_type": "NỘI QUY",
+      "document_title": "NỘI QUY LAO ĐỘNG"
+    },
+    "validation": {
+      "structure_counts": {
+        "chuong": {
+          "raw": 6,
+          "final": 6
+        },
+        "muc": {
+          "raw": 0,
+          "final": 0
+        },
+        "phan": {
+          "raw": 0,
+          "final": 0
+        }
+      },
+      "status": "SUCCESS",
+      "total_parsed_articles": 18,
+      "max_article_number": 18,
+      "missing_article_numbers": [],
+      "warnings": []
+    },
+    "output_file": "C:\\Users\\tuan\\Desktop\\P-029\\data\\cleaned_markdown\\noi_quy_mau_cong_ty.md"
   }
 }

@@ -35,6 +35,11 @@ DOC_ID_MAP = {
         "document_form": "VAN_BAN_GOC", "doc_code": "ND145_2020",
         "max_article": 115,
     },
+    "noi_quy_mau_cong_ty": {
+        "document_id": "NQLD-HRCORP-2026", "document_type": "NOI_QUY",
+        "document_form": "VAN_BAN_NOI_BO", "doc_code": "NQCT",
+        "max_article": 18,
+    },
 }
 
 CHAP_RE = re.compile(r"^##\s+Chương\s+([IVXLCDM]+)\b[\.:]?\s*(.*)$", re.IGNORECASE)
