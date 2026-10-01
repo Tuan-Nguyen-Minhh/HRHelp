@@ -9,9 +9,10 @@ from src.agents.case_graph import build_case_graph
 from src.agents.handoff import CaseHandoff, CitedPassage
 from src.features.answer.model import answers
 from src.features.answer.model.agent import build_recommend_agent
-from src.features.answer.model.decide import DecisionInput, absence_meets_dismissal, decide
+from src.features.answer.model.decide import DecisionInput, decide
 from src.features.answer.model.draft import AnswerInput, draft_answer
 from src.features.answer.model.layers import LayeredBasis, split_passages
+from src.features.answer.model.standard import applied_standard
 from src.features.answer.schema.render import HEADINGS
 from src.features.cite.model.passage import Passage
 from src.features.cite.model.query import SearchQuery
@@ -47,15 +48,45 @@ def _layered(*passages: Passage) -> LayeredBasis:
     return split_passages(list(passages))
 
 
-def _decide(layered: LayeredBasis, facts: dict[str, str] | None = None):
-    return decide(DecisionInput(family=ABSENCE, facts=facts or _READY, layered=layered))
+_ART_124 = "1. Khiển trách.\n2. Kéo dài thời hạn nâng lương không quá 06 tháng.\n3. Cách chức.\n4. Sa thải."
+_ART_125 = (
+    "Hình thức xử lý kỷ luật sa thải được người sử dụng lao động áp dụng trong trường hợp sau đây:\n"
+    "4. Người lao động tự ý bỏ việc 05 ngày cộng dồn trong thời hạn 30 ngày "
+    "hoặc 20 ngày cộng dồn trong thời hạn 365 ngày tính từ ngày đầu tiên tự ý bỏ việc "
+    "mà không có lý do chính đáng."
+)
+_ABSENCE = "nghỉ không phép tự ý bỏ việc"
 
 
-def test_window_must_be_stated_before_dismissal_is_considered():
-    assert absence_meets_dismissal("5 ngày trong 30 ngày") is True
-    assert absence_meets_dismissal("20 ngày trong 365 ngày") is True
-    assert absence_meets_dismissal("5 ngày") is False
-    assert absence_meets_dismissal("4 ngày trong 30 ngày") is False
+def _decide(layered: LayeredBasis, facts: dict[str, str] | None = None, description: str = ""):
+    return decide(DecisionInput(family=ABSENCE, facts=facts or _READY, layered=layered, description=description))
+
+
+def test_dismissal_ceiling_is_the_condition_written_in_the_retrieved_law():
+    layered = _layered(
+        _passage("LAW", "BLLD", "Bộ luật Lao động", _ART_125),
+        _passage("INTERNAL_RULE", "NQ", "Nội quy", "Người lao động tự ý bỏ việc không phép thì bị sa thải."),
+    )
+    assert _decide(layered, description=_ABSENCE).sanction_type == "DISMISSAL"
+    assert _decide(layered, {**_READY, "absence_days": "4 ngày trong 30 ngày"}, _ABSENCE).sanction_type is None
+    assert _decide(layered, {**_READY, "absence_days": "5 ngày"}, _ABSENCE).sanction_type is None
+    assert _decide(layered, {**_READY, "absence_days": "20 ngày trong 365 ngày"}, _ABSENCE).sanction_type == "DISMISSAL"
+
+
+def test_a_different_retrieved_threshold_replaces_any_fixed_day_count():
+    law = (
+        "Hình thức xử lý kỷ luật sa thải được áp dụng trong trường hợp sau đây:\n"
+        "Người lao động tự ý bỏ việc 03 ngày cộng dồn trong thời hạn 10 ngày."
+    )
+    layered = _layered(
+        _passage("LAW", "BLLD", "Bộ luật Lao động", law),
+        _passage("INTERNAL_RULE", "NQ", "Nội quy", "Tự ý bỏ việc không phép thì bị sa thải."),
+    )
+    description = "tự ý bỏ việc không phép"
+    met = _decide(layered, {**_READY, "absence_days": "3 ngày trong 10 ngày"}, description)
+    missed = _decide(layered, {**_READY, "absence_days": "3 ngày trong 30 ngày"}, description)
+    assert met.sanction_type == "DISMISSAL"
+    assert missed.sanction_type is None
 
 
 def test_no_corpus_does_not_lock_a_sanction():
@@ -112,10 +143,10 @@ def test_incomplete_procedure_blocks_dismissal():
 
 def test_dismissal_is_not_termination():
     layered = _layered(
-        _passage("LAW", "BLLD-2019", "Bộ luật Lao động", "Sa thải người lao động."),
+        _passage("LAW", "BLLD-2019", "Bộ luật Lao động", _ART_125),
         _passage("INTERNAL_RULE", "NQ", "Nội quy", "Người lao động tự ý bỏ việc không phép thì bị sa thải."),
     )
-    decision = _decide(layered)
+    decision = _decide(layered, description=_ABSENCE)
     assert decision.sanction_type == "DISMISSAL"
     assert "TERMINATION" in decision.rationale
     prose = draft_answer(
@@ -127,6 +158,7 @@ def test_dismissal_is_not_termination():
             incident_date=date(2026, 3, 1),
             layered=layered,
             precedent_note="Không có đoạn tiền lệ trong lượt đối chiếu này.",
+            description=_ABSENCE,
         )
     ).prose
     assert "DISMISSAL" in prose
@@ -145,14 +177,82 @@ def test_termination_wording_in_an_internal_rule_is_not_selected():
     assert decision.sanction_type is None
 
 
-def test_a_single_company_level_can_be_warning():
+def test_conflicting_sources_collapse_to_one_open_standard():
     layered = _layered(
-        _passage("LAW", "BLLD-2019", "Bộ luật Lao động", "Hình thức kỷ luật."),
-        _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì khiển trách."),
+        _passage("LAW", "BLLD-2019", "Bộ luật Lao động", "Có thể khiển trách hoặc cảnh cáo."),
+        _passage("INTERNAL_RULE", "NQ", "Nội quy", "Vi phạm thì khiển trách hoặc cảnh cáo."),
+        _passage("DECREE", "283/2026/ND-CP", "Nghị định xử phạt", "Phạt tiền và sa thải."),
+        _passage("PRECEDENT", "QD-1", "Vụ cũ", "Vụ trước đã sa thải."),
     )
     facts = {**_READY, "absence_days": "1 ngày trong 30 ngày"}
     decision = _decide(layered, facts)
+    standard = applied_standard(decision.sanction_type, decision.risk_level, decision.process_steps)
+    prose = draft_answer(
+        AnswerInput(
+            family=ABSENCE,
+            facts=facts,
+            fact_lines=["Loại hợp đồng: xác định thời hạn"],
+            employee_name="An",
+            incident_date=date(2026, 3, 1),
+            layered=layered,
+            precedent_note="Có 1 đoạn tiền lệ. Tiền lệ chỉ để đối chiếu, không tự nâng mức kỷ luật.",
+        )
+    ).prose
+    assert decision.sanction_type is None
+    assert standard.aligned is False
+    assert standard.sanction_type is None
+    assert len(standard.process_steps) == 4
+    assert [item.effect for item in standard.layers] == ["basis", "open", "compare", "excluded"]
+    assert "Chuẩn áp dụng" in prose
+    assert "Nghị định xử phạt không vào mức kỷ luật." in prose
+    assert standard.sanction_type != "TERMINATION"
+
+
+def test_a_single_company_level_can_be_warning():
+    layered = _layered(
+        _passage("LAW", "BLLD-2019", "Bộ luật Lao động", _ART_124),
+        _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì khiển trách."),
+    )
+    facts = {**_READY, "absence_days": "1 ngày trong 30 ngày"}
+    assert _decide(layered, facts, "đi muộn lần đầu").sanction_type == "WARNING"
+    assert _decide(layered, facts, _ABSENCE).sanction_type is None
+
+
+def test_a_harsher_rule_drops_to_the_level_the_retrieved_ceiling_still_allows():
+    rule = (
+        "Nghỉ không phép tự ý bỏ việc dưới 5 ngày thì khiển trách. "
+        "Tự ý bỏ việc không phép từ 05 ngày cộng dồn trong thời hạn 30 ngày thì sa thải."
+    )
+    layered = _layered(
+        _passage("LAW", "BLLD", "Bộ luật Lao động", f"{_ART_124}\n{_ART_125}"),
+        _passage("INTERNAL_RULE", "NQ", "Nội quy", rule),
+    )
+    facts = {**_READY, "absence_days": "1 ngày trong 30 ngày"}
+    decision = _decide(layered, facts, _ABSENCE)
     assert decision.sanction_type == "WARNING"
+
+
+def test_two_lawful_levels_stay_open_for_feature_7_to_hold():
+    layered = _layered(
+        _passage("LAW", "BLLD", "Bộ luật Lao động", _ART_124),
+        _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì khiển trách hoặc cách chức."),
+    )
+    decision = _decide(layered, description="đi muộn lần đầu")
+    assert decision.sanction_type is None
+    assert decision.risk_level == "MEDIUM"
+
+
+def test_a_guiding_decree_sets_the_ceiling_and_a_penalty_decree_does_not():
+    penalty = _passage("DECREE", "283/2026/ND-CP", "Nghị định xử phạt", "Phạt tiền và sa thải.")
+    precedent = _passage("PRECEDENT", "QD-1", "Vụ cũ", "Vụ trước đã sa thải.")
+    decree = _passage("DECREE", "145/2020/ND-CP", "Nghị định 145", "Đi muộn lần đầu thì chỉ được khiển trách.")
+    harsh = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì cách chức.")
+    matched = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì khiển trách.")
+    blocked = _decide(_layered(decree, harsh, penalty, precedent), description="đi muộn lần đầu")
+    kept = _decide(_layered(decree, matched, penalty, precedent), description="đi muộn lần đầu")
+    assert blocked.sanction_type is None
+    assert "trần" in blocked.rationale
+    assert kept.sanction_type == "WARNING"
 
 
 @pytest.mark.asyncio

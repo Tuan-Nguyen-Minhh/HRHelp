@@ -6,10 +6,12 @@ from datetime import date
 from src.common.text import clip_quote
 from src.features.answer.model.decide import SanctionDecision
 from src.features.answer.model.layers import LayeredBasis
+from src.features.answer.model.standard import applied_standard
 from src.features.answer.schema import SANCTION_LABELS
 from src.features.cite.model.passage import Passage
 
 HEADINGS = (
+    "Chuẩn áp dụng",
     "Nhận định",
     "Mức chế tài",
     "Quy trình",
@@ -39,14 +41,15 @@ class RenderInput:
 def render(data: RenderInput) -> str:
     """Return the chat message HR reads."""
     sections = [
-        _section(HEADINGS[0], _finding(data)),
-        _section(HEADINGS[1], _sanction(data.decision)),
-        _section(HEADINGS[2], _process(data.decision)),
-        _section(HEADINGS[3], f"{data.decision.risk_level} — {data.decision.rationale}"),
-        _section(HEADINGS[4], _quotes(data.layered.legal_basis, _EMPTY_LEGAL)),
-        _section(HEADINGS[5], _quotes(data.layered.internal_rule, _EMPTY_INTERNAL)),
-        _section(HEADINGS[6], _precedent(data)),
-        _section(HEADINGS[7], _inspection(data.layered.inspection_risk)),
+        _section(HEADINGS[0], _applied(data.decision)),
+        _section(HEADINGS[1], _finding(data)),
+        _section(HEADINGS[2], _sanction(data.decision)),
+        _section(HEADINGS[3], _process(data.decision)),
+        _section(HEADINGS[4], f"{data.decision.risk_level} — {data.decision.rationale}"),
+        _section(HEADINGS[5], _quotes(data.layered.legal_basis, _EMPTY_LEGAL)),
+        _section(HEADINGS[6], _quotes(data.layered.internal_rule, _EMPTY_INTERNAL)),
+        _section(HEADINGS[7], _precedent(data)),
+        _section(HEADINGS[8], _inspection(data.layered.inspection_risk)),
     ]
     return "\n\n".join(sections)
 
@@ -62,6 +65,14 @@ def _finding(data: RenderInput) -> str:
     lines.extend(data.fact_lines)
     lines.append(data.decision.rationale)
     return "\n".join(lines)
+
+
+def _applied(decision: SanctionDecision) -> str:
+    standard = applied_standard(decision.sanction_type, decision.risk_level, decision.process_steps)
+    level = SANCTION_LABELS[standard.sanction_type] if standard.aligned and standard.sanction_type else "Chưa chốt."
+    steps = "; ".join(step.label for step in standard.process_steps)
+    notes = "\n".join(f"- {item.note}" for item in standard.layers)
+    return f"{standard.rule}\nMức: {level}\nQuy trình: {steps}\n{notes}"
 
 
 def _sanction(decision: SanctionDecision) -> str:

@@ -1,7 +1,10 @@
-"""Feature 6 graph: turn a confirmed case handoff into a draft proposal.
+"""Feature 6 graph: reconcile feature 5's passages into one sanction standard.
 
-The case sub-agent ends at ``CaseHandoff``. The confirm flow invokes this graph
-separately and persists its answer in the same request.
+The case sub-agent ends at ``CaseHandoff``. This graph reads that retrieval,
+splits law, guiding decrees, internal rules, precedents, and penalty decrees,
+then returns one sanction and one process. The level is the internal rule that
+matches the case and still sits inside the ceiling read from the retrieved law
+and guiding decree. Those sources do not each pick a level.
 """
 
 from typing import TypedDict
@@ -46,7 +49,7 @@ def precedent_node(state: dict) -> dict:
 
 
 def recommend_node(state: dict) -> dict:
-    """Layer the cited passages, then draft sanction, process, and risk."""
+    """Synthesize the retrieved layers into one sanction, process, and risk."""
     message = _message(state)
     layered = split_passages([_passage(item) for item in message.passages])
     draft = draft_answer(
@@ -59,6 +62,7 @@ def recommend_node(state: dict) -> dict:
             layered=layered,
             precedent_note=state.get("precedent_note", ""),
             retrieval=message.retrieval,
+            description=message.description,
         )
     )
     return {"layered": layered, "draft": draft}

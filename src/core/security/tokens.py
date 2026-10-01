@@ -1,12 +1,14 @@
-"""Issue and refresh the session token."""
+"""Issue and refresh the session token, and open a new account."""
 
 from typing import Any
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.common.errors import AppError
 from src.core.security.auth_handler import AuthHandler
 from src.core.security.rbac import DEFAULT_ROLE_PERMISSIONS, RoleEnum
 from src.models.permission_roles import PermissionRole
@@ -56,20 +58,50 @@ def _token_data(user: User) -> dict[str, Any]:
 
 async def authenticate(session: AsyncSession, email: str, password: str) -> dict[str, Any] | None:
     """Return a token pair, or None when the email, password, or account is rejected."""
-    user = await session.scalar(select(User).where(User.email == email))
+    user = await _user_by_email(session, email)
     if user is None or not user.is_active:
         return None
     if not AuthHandler.verify_password(password, user.password_hash):
         return None
+    return _issued(user, await load_roles_and_permissions(session, user))
+
+
+async def register_account(
+    session: AsyncSession,
+    email: str,
+    password: str,
+    full_name: str | None,
+    role: str,
+) -> dict[str, Any]:
+    """Insert an active user, link ``user_roles`` when the role row exists, and sign in."""
+    folded = email.strip().casefold()
+    if await _user_by_email(session, folded) is not None:
+        raise AppError(409, "Email đã được đăng ký.")
+    user = User(
+        email=folded,
+        password_hash=AuthHandler.get_password_hash(password),
+        full_name=full_name,
+        role=role,
+        is_active=True,
+    )
+    session.add(user)
+    try:
+        await session.flush()
+        role_row = await session.scalar(select(Role).where(Role.name == role))
+        if role_row is not None:
+            session.add(UserRole(user_id=user.id, role_id=role_row.id))
+            await session.flush()
+        await session.commit()
+    except IntegrityError as exc:
+        await session.rollback()
+        if "email" not in str(getattr(exc, "orig", exc)).lower():
+            raise
+        raise AppError(409, "Email đã được đăng ký.") from None
     claims = await load_roles_and_permissions(session, user)
-    data = _token_data(user)
-    return {
-        "access_token": AuthHandler.create_access_token(data, claims["roles"], claims["permissions"]),
-        "refresh_token": AuthHandler.create_refresh_token(data),
-        "token_type": "bearer",
-        "user_id": user.id,
-        "roles": claims["roles"],
-    }
+    expected = claims_for_role(role)
+    if not claims["permissions"] and expected["permissions"]:
+        claims = expected
+    return _issued(user, claims)
 
 
 async def refresh_access(session: AsyncSession, refresh_token: str) -> dict[str, Any]:
@@ -87,12 +119,24 @@ async def refresh_access(session: AsyncSession, refresh_token: str) -> dict[str,
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Không tìm thấy người dùng hoặc tài khoản đã khóa.",
         )
-    claims = await load_roles_and_permissions(session, user)
+    return _issued(user, await load_roles_and_permissions(session, user), refresh_token)
+
+
+def _issued(user: User, claims: dict[str, list[str]], refresh_token: str | None = None) -> dict[str, Any]:
+    """Build the login payload. A passed refresh token is kept instead of rotated."""
     data = _token_data(user)
     return {
         "access_token": AuthHandler.create_access_token(data, claims["roles"], claims["permissions"]),
-        "refresh_token": refresh_token,
+        "refresh_token": refresh_token or AuthHandler.create_refresh_token(data),
         "token_type": "bearer",
         "user_id": user.id,
         "roles": claims["roles"],
     }
+
+
+async def _user_by_email(session: AsyncSession, email: str) -> User | None:
+    """Match the address without regard to case. Registration stores the folded form."""
+    folded = email.strip().casefold()
+    if not folded:
+        return None
+    return await session.scalar(select(User).where(func.lower(User.email) == folded))
