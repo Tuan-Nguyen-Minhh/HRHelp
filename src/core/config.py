@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     APP_PORT: int = Field(default=8000, ge=1, le=65535)
     APP_HOST: str = "0.0.0.0"
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
-    CORS_ORIGINS: str = "http://localhost:3000"
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
     API_V1_STR: str = "/api/v1"
 
     # -------------------------

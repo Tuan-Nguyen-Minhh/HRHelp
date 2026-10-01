@@ -1,5 +1,11 @@
 # AI20K Agent Template
 
+## HR Help frontend
+
+The current HR Help web UI is in [frontend/](frontend/README.md). Run the FastAPI backend on port 8000, then serve the frontend with `python3 -m http.server 3000 --directory frontend` and open `http://localhost:3000`.
+
+The web UI covers registration, login, opening a case, chat, fact confirmation, and the cited recommendation. Legal review and final decision screens need backend endpoints that are not implemented yet.
+
 Template chính thức cho học viên VinUni AI20K Build Phase: cấu trúc dự án, code
 mẫu và hướng dẫn kỹ thuật để xây dựng một AI Agent hoàn chỉnh — từ kiến trúc,
 code, test cho đến deploy và nộp bài Demo Day.

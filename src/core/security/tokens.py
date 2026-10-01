@@ -29,6 +29,8 @@ def claims_for_role(role: str) -> dict[str, list[str]]:
 
 async def load_roles_and_permissions(session: AsyncSession, user: User) -> dict[str, list[str]]:
     """Read the user's roles and the permissions those roles hold."""
+    if not await _rbac_tables_available(session):
+        return claims_for_role(user.role)
     role_names = list(
         (
             await session.scalars(
@@ -87,10 +89,11 @@ async def register_account(
     session.add(user)
     try:
         await session.flush()
-        role_row = await session.scalar(select(Role).where(Role.name == role))
-        if role_row is not None:
-            session.add(UserRole(user_id=user.id, role_id=role_row.id))
-            await session.flush()
+        if await _rbac_tables_available(session):
+            role_row = await session.scalar(select(Role).where(Role.name == role))
+            if role_row is not None:
+                session.add(UserRole(user_id=user.id, role_id=role_row.id))
+                await session.flush()
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()
@@ -140,3 +143,12 @@ async def _user_by_email(session: AsyncSession, email: str) -> User | None:
     if not folded:
         return None
     return await session.scalar(select(User).where(func.lower(User.email) == folded))
+
+
+async def _rbac_tables_available(session: AsyncSession) -> bool:
+    """Allow the legacy HR schema to authenticate until its RBAC migration runs."""
+    names = ("roles", "permissions", "user_roles", "permission_roles")
+    for name in names:
+        if await session.scalar(select(func.to_regclass(f"public.{name}"))) is None:
+            return False
+    return True
