@@ -1,11 +1,27 @@
 """Chat and fact-confirmation contracts."""
 
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.agents.handoff import CaseHandoff
 from src.features.answer.schema import AnswerView
+
+
+class MessageView(BaseModel):
+    """One stored chat row."""
+
+    id: UUID
+    role: str
+    content: str
+    created_at: datetime
+
+
+class MessageListResponse(BaseModel):
+    case_id: UUID
+    conversation_id: UUID | None
+    messages: list[MessageView]
 
 
 class SendMessageRequest(BaseModel):
@@ -39,6 +55,7 @@ class FactView(BaseModel):
     label: str
     fact_value: str | None
     confirmed: bool
+    confidence: float | None = None
 
 
 class TurnResponse(BaseModel):

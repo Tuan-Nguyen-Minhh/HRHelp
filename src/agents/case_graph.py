@@ -1,9 +1,9 @@
 """Case sub-agent: open a case, clarify facts, then retrieve.
 
 Feature 6, the sanction agent, is not a node here. Feature 7, the dispatch
-agent, is not a node here either. When facts are confirmed this graph stops
-at ``CaseHandoff``. The caller passes that message to the sanction agent, then
-passes the stored proposal to dispatch.
+agent, is not a node here either. When the required facts have values and the
+case has an incident date, this graph stops at ``CaseHandoff``. The caller
+passes that message to the sanction agent, then passes the proposal to dispatch.
 
     open → end
     clarify: extract → ask → end

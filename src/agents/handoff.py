@@ -42,6 +42,8 @@ class CaseHandoff(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    case_id: UUID | None = None
+    employee_code: str | None = None
     incident_date: date
     employee_name: str | None = None
     description: str = ""

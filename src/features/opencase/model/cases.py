@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.agents.case_graph import build_case_graph
 from src.common.access import require_case, require_case_role
+from src.common.audit import write_audit
 from src.common.errors import AppError
 from src.features.cite.model.search import search_policies
 from src.features.opencase.model.store import (
@@ -50,6 +51,16 @@ async def open_case(session: AsyncSession, actor: User, payload: OpenCaseRequest
                 "incident_date": payload.incident_date,
             }
         )
+        await write_audit(
+            session,
+            case_id=state["case_id"],
+            actor_id=actor.id,
+            actor_role=actor.role,
+            action="CASE_CREATED",
+            entity_type="cases",
+            entity_id=state["case_id"],
+            after={"status": "OPEN", "case_code": payload.case_code, "family": payload.family},
+        )
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()
@@ -80,6 +91,7 @@ def _new_case(payload: OpenCaseRequest) -> NewCase:
         employee_name=payload.employee_name,
         description=payload.description,
         incident_date=payload.incident_date,
+        family=payload.family,
     )
 
 
@@ -93,4 +105,5 @@ def _view(case: Case, conversation_id: UUID | None) -> CaseView:
         description=case.description,
         incident_date=case.incident_date,
         status=case.status,
+        family=case.family,
     )

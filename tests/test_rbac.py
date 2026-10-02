@@ -45,8 +45,28 @@ def test_hr_role_map_includes_case_actions_and_legal_does_not():
     hr = claims_for_role("HR")
     assert "case:open" in hr["permissions"]
     assert "case:confirm" in hr["permissions"]
-    assert claims_for_role("LEGAL") == {"roles": ["LEGAL"], "permissions": []}
-    assert claims_for_role("ADMIN")["permissions"] == []
+    legal = claims_for_role("LEGAL")
+    assert legal["roles"] == ["LEGAL"]
+    assert "legal:review" in legal["permissions"]
+    assert "answer:read" in legal["permissions"]
+    assert "case:open" not in legal["permissions"]
+    assert "case:chat" not in legal["permissions"]
+    assert "decision:issue" not in legal["permissions"]
+    manager = claims_for_role("MANAGER")
+    assert "decision:issue" in manager["permissions"]
+    assert "user:manage" in manager["permissions"]
+    assert "legal:review" not in manager["permissions"]
+    assert "user:manage" not in hr["permissions"]
+    assert "user:manage" not in legal["permissions"]
+    signer = claims_for_role("SIGNER")
+    assert signer["roles"] == ["SIGNER"]
+    assert "decision:issue" in signer["permissions"]
+    assert "precedent:write" in signer["permissions"]
+    assert "case:open" not in signer["permissions"]
+    admin = claims_for_role("ADMIN")
+    assert "audit:read" in admin["permissions"]
+    assert "document:manage" in admin["permissions"]
+    assert "legal:review" in admin["permissions"]
 
 
 @pytest.mark.asyncio

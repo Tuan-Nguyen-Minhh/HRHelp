@@ -1,11 +1,22 @@
-# HR Help frontend
+# Trợ lý chính sách nhân sự
 
-This is a dependency free frontend for the currently implemented FastAPI flow.
+Frontend React cho luồng hồ sơ kỷ luật. Màn hình gọi API hiện có và chỉ hiển thị những gì backend đã lưu.
 
-1. Run the database and API as described in the repository setup. The API listens on `http://localhost:8000`.
-2. From this directory run `python3 -m http.server 3000`.
-3. Open `http://localhost:3000`.
+## Chạy
 
-The frontend uses `/api/v1` on `http://localhost:8000` by default. To target a different API, set `window.HR_HELP_API_BASE` to its origin before `app.js` loads. The API must allow that frontend origin in `CORS_ORIGINS`.
+1. API ở `http://127.0.0.1:8000` (`make run` từ thư mục gốc).
+2. Trong thư mục này: `npm install` rồi `npm run dev`.
+3. Mở `http://localhost:5173`.
 
-Registration, login, case creation, chat, fact confirmation, and reading an answer are wired to the API. The backend does not yet expose a case list, message history, draft reader, legal review, or issued decision endpoint, so those actions are not presented as available. A case can be reopened by its ID during the browser session or by pasting its URL after signing in.
+Ở chế độ dev, Vite chuyển `/api` sang cổng 8000. Bản build dùng `http://localhost:8000`, trừ khi đặt `VITE_API_BASE`.
+
+`VITE_AGENT_EVENTS_URL` là địa chỉ SSE tùy chọn. API hiện không phát sự kiện agent, nên thanh trạng thái cập nhật theo từng request.
+
+## Những gì màn hình làm
+
+- Đăng nhập, đăng ký, tạo hồ sơ, hội thoại, đọc tình tiết và báo cáo.
+- Đẩy phiếu khi `ticket.disposition` là `PREVIEW`.
+- Tách luật, nghị định hướng dẫn, nội quy, tiền lệ và xử phạt hành chính theo lớp của báo cáo.
+- Không chốt mức kỷ luật, không xếp mức, không tự tính bước đi của hồ sơ ngoài `case.status` và `ticket.disposition`.
+
+API chưa có danh sách hồ sơ, lịch sử tin nhắn, hay thao tác duyệt của pháp chế. Hội thoại giữ trong phiên trình duyệt. Khi hồ sơ đã vào hàng chờ, trang pháp chế chỉ đọc hồ sơ và để các nút duyệt ở trạng thái tắt.

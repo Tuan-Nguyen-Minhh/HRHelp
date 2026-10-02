@@ -9,16 +9,18 @@ from src.agents.case_graph import build_case_graph
 from src.agents.handoff import CaseHandoff
 from src.agents.runs import finish_run, mark_run_failed, start_run
 from src.common.access import require_case, require_mutable_case
+from src.common.audit import write_audit
 from src.common.clock import utc_now
 from src.common.errors import AppError
-from src.features.answer.model.answers import PublishWork, load, publish, withdraw
-from src.features.answer.model.dispatch import DispatchResult, build_dispatch_agent
+from src.common.notify import notify
+from src.features.answer.model.answers import PublishWork, attach_packet, load, publish, withdraw
+from src.features.answer.model.dispatch import DispatchResult, build_dispatch_agent, ready_to_dispatch
 from src.features.answer.model.proposal import close_proposal
-from src.features.answer.model.release import DispatchError, save_submission
+from src.features.answer.model.send import ask_to_send, with_preview
 from src.features.answer.schema import AnswerView
 from src.features.cite.model.search import search_policies
 from src.features.clarify.model.assess import ClarifyPlan, FactConflict, StoredFact, build_question
-from src.features.clarify.model.catalog import required_specs
+from src.features.clarify.model.catalog import OPTIONAL_FACT_KEYS, required_specs
 from src.features.clarify.model.store import (
     FactWrite,
     NewMessage,
@@ -40,6 +42,7 @@ from src.features.opencase.model.cases import active_conversation
 from src.models.agent_runs import AgentRun
 from src.models.cases import Case
 from src.models.conversations import Conversation
+from src.models.recommendations import Recommendation
 from src.models.users import User
 
 logger = logging.getLogger(__name__)
@@ -49,7 +52,7 @@ _LOCKED = (
     "Tình tiết bắt buộc đã được khóa. Câu trả lời đã lưu vẫn giữ. "
     "Muốn sửa một fact, hãy gửi giá trị mới qua xác nhận tình tiết."
 )
-_NEED_PUBLISH = "Tình tiết đã khóa nhưng chưa có câu trả lời. Hãy xác nhận lại để chạy đối chiếu."
+_NEED_PUBLISH = "Đã đủ tình tiết nhưng hồ sơ chưa có ngày xảy ra việc nên chưa đối chiếu được."
 
 
 async def handle_message(
@@ -174,7 +177,9 @@ async def _unchanged(session: AsyncSession, case: Case, conversation: Conversati
         return _turn(case, conversation.id, plan, question, None, None, None)
     existing = await load(session, case)
     if existing is not None:
-        return _turn(case, conversation.id, plan, _LOCKED, existing, None, existing.agent_run_id)
+        current = await session.get(Recommendation, existing.recommendation_id)
+        if current is not None and current.status == "DRAFT":
+            return _turn(case, conversation.id, plan, _LOCKED, existing, None, existing.agent_run_id)
     return await _cite(session, case, conversation, plan)
 
 
@@ -187,7 +192,7 @@ async def _cite(session: AsyncSession, case: Case, conversation: Conversation, p
     system = await add_message(
         session, NewMessage(conversation.id, "SYSTEM", _confirmed_text(facts), {"kind": "facts_confirmed"})
     )
-    run = await start_run(session, conversation.id, system.id, _PIPELINE)
+    run = await start_run(session, conversation.id, system.id, "hr-help-retrieval")
     graph = build_case_graph(lambda query: search_policies(session, query))
     state = await graph.ainvoke(
         {
@@ -197,7 +202,9 @@ async def _cite(session: AsyncSession, case: Case, conversation: Conversation, p
             "description": case.description or "",
             "incident_date": case.incident_date,
             "employee_name": case.employee_name,
+            "employee_code": case.employee_code,
             "agent_run_id": run.id,
+            "case_id": case.id,
         }
     )
     message = state.get("handoff")
@@ -237,37 +244,61 @@ async def _dispatch(
     source_id: UUID,
 ) -> tuple[AnswerView, UUID | None, str]:
     """Run dispatch once on a fresh draft. A failure leaves that draft in place."""
-    if case.status != "ANALYZED":
-        return answer, None, answer.message
-    proposal = close_proposal(message, answer)
+    current = await session.get(Recommendation, answer.recommendation_id)
+    if not ready_to_dispatch(case.status, None if current is None else current.status):
+        return await _packed(session, case, answer), None, answer.message
+    proposal = close_proposal(message, answer, employee_code=case.employee_code)
     run = await start_run(session, conversation.id, source_id, "hr-help-dispatch")
     try:
         state = await build_dispatch_agent().ainvoke({"proposal": proposal})
     except TypeError as exc:
         _fail_open_run(run, str(exc))
         logger.exception("dispatch rejected the proposal message")
-        return answer, run.id, answer.message
+        return await _packed(session, case, answer), run.id, answer.message
     result = state.get("result")
     if not isinstance(result, DispatchResult):
         _fail_open_run(run, "Dispatch graph không trả kết quả.")
-        return answer, run.id, answer.message
+        return await _packed(session, case, answer), run.id, answer.message
     logger.info("dispatch disposition=%s hold_code=%s", result.disposition, result.hold_code or "")
     if result.disposition == "SUBMIT":
-        try:
-            await save_submission(session, case, proposal, result)
-        except DispatchError as exc:
-            _fail_open_run(run, str(exc))
-            return answer, run.id, answer.message
-        kind = "dispatch_submit"
-        metadata = {"kind": kind}
-    else:
-        kind = "dispatch_hold"
-        metadata = {"kind": kind, "hold_code": result.hold_code}
+        text = ask_to_send()
+        note = await add_message(
+            session,
+            NewMessage(conversation.id, "ASSISTANT", text, {"kind": "dispatch_preview"}),
+        )
+        finish_run(run, note.id)
+        await write_audit(
+            session,
+            case_id=case.id,
+            actor_id=case.created_by,
+            actor_role=None,
+            action="DISPATCH_PREVIEW_CREATED",
+            entity_type="recommendations",
+            entity_id=answer.recommendation_id,
+            after={"disposition": "SUBMIT"},
+        )
+        await notify(
+            session,
+            user_id=case.created_by,
+            event="ASSESSMENT_READY",
+            title="Báo cáo đã sẵn sàng",
+            body=f"Hồ sơ {case.case_code} đã có phiếu xem trước.",
+            case_id=case.id,
+        )
+        return await _packed(session, case, answer), run.id, text
+    kind = "dispatch_hold"
+    metadata = {"kind": kind, "hold_code": result.hold_code}
     note = await add_message(session, NewMessage(conversation.id, "ASSISTANT", result.reason, metadata))
     finish_run(run, note.id)
+    return await _packed(session, case, answer), run.id, result.reason
+
+
+async def _packed(session: AsyncSession, case: Case, answer: AnswerView) -> AnswerView:
+    """Return the stored answer, plus the unsaved ticket when HR may still send it."""
     if case.status != answer.case_status:
         answer = answer.model_copy(update={"case_status": case.status})
-    return answer, run.id, result.reason
+    packed = await attach_packet(session, answer)
+    return await with_preview(session, case, packed)
 
 
 def _fail_open_run(run: AgentRun, error: str) -> None:
@@ -314,7 +345,9 @@ async def _plan(
             "semantic": semantic,
             "incident_date": case.incident_date,
             "employee_name": case.employee_name,
+            "employee_code": case.employee_code,
             "agent_run_id": run_id,
+            "case_id": case.id,
         }
     )
     message = state.get("handoff")
@@ -386,9 +419,34 @@ def _cited_text(message: CaseHandoff) -> str:
 
 
 async def _reopen(session: AsyncSession, case: Case) -> None:
-    if case.status == "ANALYZED":
+    before = case.status
+    if before == "ANALYZED":
         await withdraw(session, case.id)
+    if before == "NEED_INFO":
+        return
+    from src.common.workflow import assert_transition
+
+    assert_transition(before, "NEED_INFO")
     case.status = "NEED_INFO"
+    await write_audit(
+        session,
+        case_id=case.id,
+        actor_id=case.created_by,
+        actor_role=None,
+        action="FACT_CHANGED",
+        entity_type="cases",
+        entity_id=case.id,
+        before={"status": before},
+        after={"status": "NEED_INFO"},
+    )
+    await notify(
+        session,
+        user_id=case.created_by,
+        event="CASE_NEEDS_INFO",
+        title="Hồ sơ cần thêm tình tiết",
+        body=f"Hồ sơ {case.case_code} cần bổ sung tình tiết.",
+        case_id=case.id,
+    )
 
 
 async def _persist_extracted(
@@ -402,9 +460,9 @@ async def _persist_extracted(
     for key, item in merged.items():
         current = stored.get(key)
         if item.confirmed:
-            if actor_id is None or current is None:
+            if actor_id is None:
                 continue
-            if current.value != item.value or not current.confirmed:
+            if current is None or current.value != item.value or not current.confirmed:
                 await write_fact(session, FactWrite(case_id, key, item.value, True, actor_id, source_id))
             continue
         if current is not None and (current.confirmed or current.value == item.value):
@@ -440,6 +498,16 @@ async def _apply(
             raise AppError(422, f"Tình tiết {item.fact_key} chưa có giá trị.")
         actor = actor_id if item.confirmed else None
         await write_fact(session, FactWrite(case_id, item.fact_key, value, item.confirmed, actor))
+        await write_audit(
+            session,
+            case_id=case_id,
+            actor_id=actor_id,
+            actor_role=None,
+            action="FACT_CONFIRMED" if item.confirmed else "FACT_CHANGED",
+            entity_type="case_facts",
+            entity_id=case_id,
+            after={"fact_key": item.fact_key, "confirmed": item.confirmed},
+        )
 
 
 def _changed(stored: dict[str, StoredFact], projected: dict[str, StoredFact], items: list[FactConfirmItem]) -> bool:
@@ -464,14 +532,19 @@ def _value(item: FactConfirmItem, stored: dict[str, StoredFact], projected: dict
 
 
 def _check_keys(family: str, items: list[FactConfirmItem]) -> None:
-    allowed = {spec.key for spec in required_specs(family)}
+    allowed = {spec.key for spec in required_specs(family)} | set(OPTIONAL_FACT_KEYS)
     for item in items:
         if item.fact_key not in allowed:
-            raise AppError(422, "Tình tiết không thuộc bộ fact của vụ này.")
+            raise AppError(422, "Tình tiết không thuộc bộ fact của vụ này.", code="FACT_NOT_ALLOWED")
 
 
 def _locked_facts(plan: ClarifyPlan) -> dict[str, str]:
-    return {spec.key: plan.merged[spec.key].value for spec in required_specs(plan.family)}
+    facts = {spec.key: plan.merged[spec.key].value for spec in required_specs(plan.family)}
+    for key in OPTIONAL_FACT_KEYS:
+        item = plan.merged.get(key)
+        if item is not None and item.confirmed and item.value:
+            facts[key] = item.value
+    return facts
 
 
 def _confirmed_text(facts: dict[str, str]) -> str:

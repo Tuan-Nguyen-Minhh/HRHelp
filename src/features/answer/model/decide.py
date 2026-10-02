@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from src.features.answer.model.assessment import Assessment
 from src.features.answer.model.layers import LayeredBasis
-from src.features.answer.schema import ProcessStep
+from src.features.answer.schema import SANCTION_LABELS, ProcessStep
 from src.features.clarify.model.extract import is_yes
 
 
@@ -42,7 +42,7 @@ def decide(data: DecisionInput, assessment: Assessment | None = None) -> Sanctio
     missing_rule = data.layered.missing_internal_rule
     opened = _blocked(data, steps, missing_rule)
     if opened is not None:
-        return opened
+        return _mention_report_level(opened, assessment)
     if assessment is None or not assessment.downstream_handoff.can_recommend:
         reason = assessment.sanction_assessment.reason if assessment is not None else _NO_SYNTHESIS
         multiple = assessment is not None and assessment.sanction_assessment.status == "MULTIPLE_SUPPORTED"
@@ -57,8 +57,20 @@ def decide(data: DecisionInput, assessment: Assessment | None = None) -> Sanctio
 
 
 def blocked(data: DecisionInput) -> SanctionDecision | None:
-    """A case-fact gate that runs before the synthesis model is called."""
+    """Return the open lock when this case must not store a company level."""
     return _blocked(data, process_steps(data.facts), data.layered.missing_internal_rule)
+
+
+def should_synthesize(data: DecisionInput) -> bool:
+    """Ask the model when a law, guiding decree, or internal rule was retrieved.
+
+    A page-index hit, an empty corpus, or only an administrative-penalty passage
+    stays in Python. Missing minutes, a missing companion source, or probation
+    does not skip the report: those limits stay in the lock, not in the reading.
+    """
+    if data.retrieval == "page_index":
+        return False
+    return bool(data.layered.legal_basis or data.layered.internal_rule)
 
 
 def process_steps(facts: dict[str, str]) -> list[ProcessStep]:
@@ -101,6 +113,25 @@ def _locked(steps: list[ProcessStep], level: str, risk: str, reason: str, missin
     return SanctionDecision(level, risk, reason, steps, missing_rule)
 
 
+def _mention_report_level(opened: SanctionDecision, assessment: Assessment | None) -> SanctionDecision:
+    """Keep a reported company level visible without locking it for issue."""
+    if assessment is None or opened.rationale == _PROBATION:
+        return opened
+    level = assessment.sanction_assessment.recommended_sanction
+    if not level or level == "TERMINATION" or level not in SANCTION_LABELS:
+        return opened
+    extra = f"Mức trong biên bản: {SANCTION_LABELS[level]}. Mức này chưa được khóa để ban hành."
+    if extra in opened.rationale:
+        return opened
+    return SanctionDecision(
+        None,
+        opened.risk_level,
+        f"{opened.rationale} {extra}",
+        opened.process_steps,
+        opened.missing_internal_rule,
+    )
+
+
 def _no_applicable_layer(layered: LayeredBasis) -> bool:
     return not layered.legal_basis and not layered.internal_rule and not layered.precedent
 
@@ -116,10 +147,16 @@ def _procedure_ready(facts: dict[str, str]) -> bool:
 _EMPTY = "Kho văn bản không có đoạn nào còn hiệu lực vào ngày xảy ra việc. Chưa đủ căn cứ để chốt mức."
 _INSPECTION = "Chỉ thấy nghị định xử phạt hành chính. Đó là cảnh báo thanh tra, không phải mức kỷ luật để công ty chọn."
 _PROBATION = "Hợp đồng đang trong thời gian thử việc. Không đề xuất sa thải hay chấm dứt hợp đồng từ fact này."
-_PROCEDURE = "Chưa lập biên bản hoặc chưa gửi yêu cầu giải trình. Chưa chốt mức khi thủ tục còn thiếu."
-_NO_RULE = (
-    "Đã có căn cứ luật nhưng chưa có nội quy nội bộ còn hiệu lực vào ngày xảy ra việc. Chưa chốt mức công ty được dùng."
+_PROCEDURE = (
+    "Biên bản vẫn đánh giá mức khi điều kiện của điều khoản đã đủ. "
+    "Chưa lập biên bản hoặc chưa gửi yêu cầu giải trình, nên chưa khóa mức để ban hành."
 )
-_NO_LAW = "Chưa có căn cứ luật còn hiệu lực trong các đoạn đã lấy. Chưa chốt mức kỷ luật chỉ từ nội quy hoặc tiền lệ."
-_PAGE_INDEX = "Chỉ tìm được đầu điều từ mục lục. Chưa đủ nội dung điều khoản để chốt mức kỷ luật."
-_NO_SYNTHESIS = "Chưa có bản tổng hợp bám đoạn đã retrieval. Chưa chốt mức."
+_NO_RULE = (
+    "Đã có đoạn luật hoặc nghị định. Chưa có nội quy còn hiệu lực vào ngày xảy ra việc, nên chưa khóa mức công ty."
+)
+_NO_LAW = (
+    "Biên bản ghi mức theo nội quy khi điều khoản khớp. "
+    "Chưa retrieval được luật hoặc nghị định hướng dẫn cho cùng hành vi, nên chưa khóa mức để ban hành."
+)
+_PAGE_INDEX = "Chỉ tìm được đầu điều từ mục lục. Chưa đủ nội dung điều khoản để xác định mức kỷ luật."
+_NO_SYNTHESIS = "Chưa có bản tổng hợp bám đoạn đã retrieval. Mức xử lý đề xuất: chưa xác định."

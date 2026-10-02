@@ -96,8 +96,7 @@ async def _complete(messages: list[dict[str, str]], attempt: int) -> ClarifyDeci
             }
         )
     model = ChatOpenAI(
-        model=settings.MODEL_NAME,
-        api_key=settings.OPENAI_API_KEY,
+        **settings.openai_chat_kwargs(),
         temperature=0,
         timeout=30,
         max_retries=0,

@@ -67,6 +67,10 @@ _GENERAL = (
 
 _SPECS = {ABSENCE: _ABSENCE, LATE: _LATE, GENERAL: _GENERAL}
 
+# Observed from prior decisions. It is not required to lock a case, and it stays
+# out of the assessment until HR confirms it.
+OPTIONAL_FACT_KEYS = frozenset({"prior_sanction_count"})
+
 
 def detect_family(text: str) -> str:
     """Pick the fact set from the narrative. Absence wins over lateness."""
@@ -76,6 +80,25 @@ def detect_family(text: str) -> str:
     if any(marker in folded for marker in _LATE_MARKERS):
         return LATE
     return GENERAL
+
+
+def resolved_family(description: str, stored: str | None) -> str:
+    """Use the narrative when it names a family. Otherwise keep the stored family."""
+    detected = detect_family(description or "")
+    if detected != GENERAL:
+        return detected
+    if stored in _SPECS:
+        return stored
+    return GENERAL
+
+
+def fact_label(key: str) -> str:
+    """Vietnamese label for a catalog fact. An unknown key is returned as stored."""
+    for specs in _SPECS.values():
+        for spec in specs:
+            if spec.key == key:
+                return spec.label
+    return key
 
 
 def required_specs(family: str) -> tuple[FactSpec, ...]:
@@ -88,6 +111,7 @@ def catalog_keys() -> set[str]:
     keys: set[str] = set()
     for specs in _SPECS.values():
         keys.update(spec.key for spec in specs)
+    keys.update(OPTIONAL_FACT_KEYS)
     return keys
 
 
@@ -98,4 +122,7 @@ def fact_lines(family: str, facts: dict[str, str]) -> list[str]:
         value = facts.get(spec.key)
         if value:
             lines.append(f"{spec.label}: {value}")
+    prior = facts.get("prior_sanction_count")
+    if prior:
+        lines.append(f"Số lần đã bị xử lý trước: {prior}")
     return lines

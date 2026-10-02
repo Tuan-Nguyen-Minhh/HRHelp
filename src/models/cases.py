@@ -16,6 +16,7 @@ class Case(TimestampMixin, Base):
     description = Column(Text, nullable=True)
     incident_date = Column(Date, nullable=True)
     status = Column(String(50), nullable=False, default="OPEN", server_default=text("'OPEN'"))
+    family = Column(String(50), nullable=True)
 
     __table_args__ = (
         CheckConstraint(
@@ -25,5 +26,9 @@ class Case(TimestampMixin, Base):
         Index("idx_cases_created_by", "created_by"),
         Index("idx_cases_status", "status"),
         Index("idx_cases_incident_date", "incident_date"),
+        CheckConstraint(
+            "family IS NULL OR family IN ('UNAUTHORIZED_ABSENCE', 'LATE', 'GENERAL')",
+            name="ck_cases_family",
+        ),
         Index("idx_cases_employee_code", "employee_code"),
     )

@@ -10,7 +10,7 @@ class CaseAccess(Base):
     __table_args__ = (
         UniqueConstraint("case_id", "user_id", name="uq_case_access_case_user"),
         CheckConstraint(
-            "access_level IN ('VIEW', 'REVIEW')",
+            "access_level IN ('VIEW', 'REVIEW', 'EDIT')",
             name="ck_case_access_access_level",
         ),
         Index("idx_case_access_user_id", "user_id"),

@@ -106,10 +106,31 @@ class Conflict(BaseModel):
 
 
 class DownstreamHandoff(BaseModel):
+    """Machine-readable part of the case report. It never creates a legal ticket."""
+
     can_recommend: bool = False
     can_finalize: bool = False
     needs_clarification: bool = False
     needs_legal_review: bool = False
+    assessment_status: str = ""
+    recommended_sanction: str | None = None
+    risk_level: str = ""
+    legal_basis_found: bool = False
+    internal_rule_found: bool = False
+    procedure_status: str = "UNKNOWN"
+    needs_more_facts: bool = False
+    missing_facts: list[str] = Field(default_factory=list)
+    hr_decision_required: bool = True
+    can_create_legal_ticket: bool = False
+    evidence_ids: list[str] = Field(default_factory=list)
+    next_allowed_actions: list[str] = Field(
+        default_factory=lambda: [
+            "CONTINUE",
+            "REQUEST_MORE_INFORMATION",
+            "SEND_TO_LEGAL",
+            "REJECT_ASSESSMENT",
+        ]
+    )
 
 
 class Assessment(BaseModel):
@@ -123,4 +144,11 @@ class Assessment(BaseModel):
     risk_assessment: RiskAssessment
     evidence_gaps: list[EvidenceGap] = Field(default_factory=list)
     conflicts: list[Conflict] = Field(default_factory=list)
+    report: str = Field(
+        default="",
+        description=(
+            "PART A. Biên bản đánh giá vụ việc bằng tiếng Việt, bắt đầu bằng "
+            "'BIÊN BẢN ĐÁNH GIÁ VỤ VIỆC' và đủ mục I đến XI. Đây không phải quyết định kỷ luật."
+        ),
+    )
     downstream_handoff: DownstreamHandoff = Field(default_factory=DownstreamHandoff)

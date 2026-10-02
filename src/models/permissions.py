@@ -10,7 +10,12 @@ class Permission(TimestampMixin, Base):
 
     __table_args__ = (
         CheckConstraint(
-            "name IN ('case:open', 'case:read', 'case:chat', 'case:confirm', 'answer:read')",
+            "name IN ("
+            "'case:open', 'case:read', 'case:chat', 'case:confirm', 'answer:read', "
+            "'case:update', 'case:access', 'legal:review', 'decision:issue', 'decision:read', "
+            "'case:close', 'case:reopen', 'dashboard:read', 'audit:read', 'document:manage', "
+            "'notification:read', 'precedent:write', 'user:manage'"
+            ")",
             name="ck_permissions_name",
         ),
     )

@@ -46,5 +46,5 @@ async def get_current_active_user(
 ) -> dict[str, Any]:
     """Reject a token that was issued for a locked account."""
     if not current_user.get("is_active"):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tài khoản đã khóa.")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Tài khoản đã khóa.")
     return current_user

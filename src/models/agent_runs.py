@@ -1,5 +1,5 @@
 from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Index, Integer, String, Text, text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 from src.db.base import Base
 
@@ -33,3 +33,7 @@ class AgentRun(Base):
     started_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     completed_at = Column(DateTime, nullable=True)
     error = Column(Text, nullable=True)
+    agent_name = Column(String(100), nullable=True)
+    graph_name = Column(String(100), nullable=True)
+    total_tokens = Column(Integer, nullable=True)
+    run_metadata = Column("metadata", JSONB, nullable=True)

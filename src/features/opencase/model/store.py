@@ -21,6 +21,7 @@ class NewCase:
     employee_name: str
     description: str
     incident_date: date
+    family: str | None = None
 
 
 async def find_by_code(session: AsyncSession, case_code: str) -> Case | None:
@@ -39,6 +40,7 @@ async def insert_case(session: AsyncSession, actor_id: UUID, draft: NewCase) -> 
         employee_name=draft.employee_name,
         description=draft.description,
         incident_date=draft.incident_date,
+        family=draft.family,
         status="OPEN",
     )
     session.add(case)

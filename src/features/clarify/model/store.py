@@ -32,6 +32,7 @@ class FactWrite:
     confirmed: bool
     actor_id: UUID | None
     source_message_id: UUID | None = None
+    confidence: float | None = None
 
 
 async def add_message(session: AsyncSession, draft: NewMessage) -> Message:
@@ -59,6 +60,12 @@ async def list_user_text(session: AsyncSession, conversation_id: UUID) -> str:
     return "\n".join(rows)
 
 
+async def list_messages(session: AsyncSession, conversation_id: UUID) -> list[Message]:
+    """Return the conversation in the order it was written."""
+    stmt = select(Message).where(Message.conversation_id == conversation_id).order_by(Message.created_at.asc())
+    return list((await session.execute(stmt)).scalars().all())
+
+
 async def list_fact_rows(session: AsyncSession, case_id: UUID) -> list[CaseFact]:
     """Return every fact stored on the case."""
     stmt = select(CaseFact).where(CaseFact.case_id == case_id)
@@ -77,6 +84,8 @@ async def write_fact(session: AsyncSession, draft: FactWrite) -> CaseFact:
     row.confirmed = draft.confirmed
     row.confirmed_by = draft.actor_id if draft.confirmed else None
     row.confirmed_at = utc_now() if draft.confirmed else None
+    if draft.confidence is not None:
+        row.confidence = draft.confidence
     await session.flush()
     return row
 

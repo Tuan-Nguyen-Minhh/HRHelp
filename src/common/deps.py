@@ -15,9 +15,13 @@ from src.models.users import User
 
 
 async def get_session() -> AsyncIterator[AsyncSession]:
-    """Yield one session. The feature service commits or rolls it back."""
+    """Yield one session. The feature service commits. A raised error rolls back."""
     async with SessionLocal() as session:
-        yield session
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
 
 
 async def get_actor(
@@ -34,6 +38,6 @@ async def get_actor(
     except ValueError:
         raise AppError(401, "Không tìm thấy người dùng hoặc tài khoản đã khóa.") from None
     user = await session.get(User, user_id)
-    if user is None or not user.is_active:
+    if user is None or not user.is_active or user.deleted_at is not None:
         raise AppError(401, "Không tìm thấy người dùng hoặc tài khoản đã khóa.")
     return user

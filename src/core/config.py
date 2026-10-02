@@ -9,7 +9,6 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
-
     model_config = SettingsConfigDict(
         env_file=str(ROOT_DIR / ".env"),
         env_file_encoding="utf-8",
@@ -35,6 +34,8 @@ class Settings(BaseSettings):
     # extractor and leaves the sanction level unset.
     OPENAI_API_KEY: str = ""
     MODEL_NAME: str = "gpt-4o-mini"
+    # Empty uses api.openai.com. An OpenRouter key (sk-or-) uses that host when this stays empty.
+    OPENAI_BASE_URL: str = ""
     LLM_TEMPERATURE: float = Field(default=0.7, ge=0.0, le=2.0)
     # Unused by the case agents. Left so an old env file still loads.
     XAI_API_KEY: str = ""
@@ -70,30 +71,31 @@ class Settings(BaseSettings):
     # variable names and are read from alembic/env.py, src/db/session.py,
     # src/services/vector_store.py and the scripts/ helpers. Renaming them
     # would break those call sites.
+    def openai_chat_kwargs(self) -> dict[str, str]:
+        """Model and host for ChatOpenAI. An OpenRouter key is not sent to api.openai.com."""
+        model = self.MODEL_NAME.strip() or "gpt-4o-mini"
+        base = self.OPENAI_BASE_URL.strip()
+        if not base and self.OPENAI_API_KEY.startswith("sk-or-"):
+            base = "https://openrouter.ai/api/v1"
+        if "openrouter.ai" in base and "/" not in model:
+            model = f"openai/{model}"
+        kwargs = {"model": model, "api_key": self.OPENAI_API_KEY}
+        if base:
+            kwargs["base_url"] = base
+        return kwargs
+
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:  # noqa: N802
-        return (
-            f"postgresql+asyncpg://"
-            f"{self.DB_USER}:{self.DB_PASSWORD}"
-            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-        )
+        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     @property
     def SYNC_DATABASE_URI(self) -> str:  # noqa: N802
-        return (
-            f"postgresql+psycopg2://"
-            f"{self.DB_USER}:{self.DB_PASSWORD}"
-            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-        )
+        return f"postgresql+psycopg2://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     @property
     def VECTOR_DATABASE_URI(self) -> str:  # noqa: N802
         # langchain-postgres requires the psycopg 3 driver name.
-        return (
-            f"postgresql+psycopg://"
-            f"{self.DB_USER}:{self.DB_PASSWORD}"
-            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-        )
+        return f"postgresql+psycopg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     # -------------------------
     # JWT

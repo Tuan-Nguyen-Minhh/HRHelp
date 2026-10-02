@@ -3,12 +3,23 @@
 from uuid import UUID
 
 from src.common.text import clip_quote
+from src.features.answer.model.dispatch import hold_fields, hold_reason
 from src.features.answer.model.layers import BasisLayer, layer_of
 from src.features.answer.model.standard import applied_standard
 from src.features.answer.model.store import CitationRow
-from src.features.answer.schema import AnswerView, CitationView, ProcessStep
+from src.features.answer.schema import AnswerView, CitationView, DraftView, ProcessStep, TicketRequest
 from src.features.cite.model.passage import Passage
+from src.models.case_drafts import CaseDraft
 from src.models.recommendations import Recommendation
+
+_SUBMITTED = (
+    "Đã tạo biên bản, yêu cầu giải trình, dự thảo quyết định và phiếu chuyển pháp chế. Phiếu đang chờ pháp chế xem."
+)
+_QUEUED = "Hồ sơ đang ở hàng chờ pháp chế."
+_AT_MANAGER = "Hồ sơ đang chờ quản lý duyệt lần cuối."
+_ISSUED = "Quản lý đã duyệt lần cuối."
+_NOT_SENT = "Phiếu chuyển pháp chế chưa được tạo."
+_PREVIEW = "Báo cáo đã xong. Xem phiếu bên dưới trước khi đẩy cho pháp chế."
 
 
 def to_answer_view(recommendation: Recommendation, citations: list[CitationView], case_status: str) -> AnswerView:
@@ -34,6 +45,41 @@ def to_answer_view(recommendation: Recommendation, citations: list[CitationView]
         inspection_risk=grouped[BasisLayer.INSPECTION_RISK],
         standard=applied_standard(recommendation.sanction_type, recommendation.risk_level, steps),
     )
+
+
+def draft_view(row: CaseDraft) -> DraftView:
+    """Copy one stored draft into the answer payload."""
+    return DraftView(
+        draft_id=row.id,
+        draft_type=row.draft_type,
+        title=row.title,
+        content=row.content,
+        status=row.status,
+    )
+
+
+def with_packet(view: AnswerView, drafts: list[DraftView]) -> AnswerView:
+    """Attach the current drafts and the ticket request. The sanction stays as stored."""
+    return view.model_copy(update={"drafts": list(drafts), "ticket": _ticket(view, drafts)})
+
+
+def _ticket(view: AnswerView, drafts: list[DraftView]) -> TicketRequest:
+    ticket = next((item for item in drafts if item.draft_type == "TICKET" and item.status == "PENDING_REVIEW"), None)
+    if view.case_status == "PENDING_LEGAL" and ticket is not None:
+        return TicketRequest(disposition="SUBMIT", hold_code=None, reason=_SUBMITTED, queue="PENDING_LEGAL")
+    code = hold_fields(view.sanction_type, view.risk_level, view.missing_internal_rule, view.process_steps)
+    if code is not None:
+        return TicketRequest(disposition="HOLD", hold_code=code, reason=hold_reason(code), queue="HELD")
+    preview = next((item for item in drafts if item.draft_type == "TICKET" and item.status == "PREVIEW"), None)
+    if view.case_status == "ANALYZED" and preview is not None:
+        return TicketRequest(disposition="PREVIEW", hold_code=None, reason=_PREVIEW, queue="READY")
+    if view.case_status == "PENDING_LEGAL":
+        return TicketRequest(disposition="SUBMIT", hold_code=None, reason=_QUEUED, queue="PENDING_LEGAL")
+    if view.case_status == "APPROVED":
+        return TicketRequest(disposition="SUBMIT", hold_code=None, reason=_AT_MANAGER, queue="APPROVED")
+    if view.case_status in {"DECIDED", "CLOSED"}:
+        return TicketRequest(disposition="NOT_SENT", hold_code=None, reason=_ISSUED, queue=view.case_status)
+    return TicketRequest(disposition="NOT_SENT", hold_code=None, reason=_NOT_SENT, queue="NOT_SENT")
 
 
 def view_from_row(row: CitationRow) -> CitationView:

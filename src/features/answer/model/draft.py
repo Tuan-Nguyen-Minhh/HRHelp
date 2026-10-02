@@ -45,7 +45,8 @@ def draft_answer(data: AnswerInput, assessment: Assessment | None = None) -> Ans
         ),
         assessment,
     )
-    prose = render(
+    report = assessment.report.strip() if assessment is not None else ""
+    prose = report or render(
         RenderInput(
             employee_name=data.employee_name,
             incident_date=data.incident_date,

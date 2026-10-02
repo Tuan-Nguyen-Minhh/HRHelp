@@ -15,6 +15,12 @@ class Document(Base):
         Index("idx_documents_policy_version_id", "policy_version_id"),
         Index("idx_documents_ingest_status", "ingest_status"),
         Index("idx_documents_content_hash", "content_hash"),
+        Index(
+            "uq_documents_content_hash",
+            "content_hash",
+            unique=True,
+            postgresql_where=text("content_hash IS NOT NULL"),
+        ),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
@@ -30,4 +36,5 @@ class Document(Base):
     content_hash = Column(String(64), nullable=True)
     page_count = Column(Integer, nullable=True)
     ingest_status = Column(String(50), nullable=False, default="UPLOADED", server_default=text("'UPLOADED'"))
+    deleted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))

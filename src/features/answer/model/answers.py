@@ -16,11 +16,12 @@ from src.features.answer.model.store import (
     insert_citations,
     insert_recommendation,
     latest_recommendation,
+    list_case_drafts,
     list_citation_rows,
     supersede_drafts,
 )
 from src.features.answer.schema import AnswerView
-from src.features.answer.schema.present import to_answer_view, view_from_passage, view_from_row
+from src.features.answer.schema.present import draft_view, to_answer_view, view_from_passage, view_from_row, with_packet
 from src.features.cite.model.passage import Passage
 from src.models.cases import Case
 from src.models.recommendations import Recommendation
@@ -50,13 +51,30 @@ async def publish(session: AsyncSession, work: PublishWork) -> AnswerView:
     return to_answer_view(recommendation, views, work.case.status)
 
 
-async def load(session: AsyncSession, case: Case) -> AnswerView | None:
-    """Return the current answer, or None when the case does not have one yet."""
+async def load_stored(session: AsyncSession, case: Case) -> AnswerView | None:
+    """Return the stored answer. A ready proposal has no legal drafts yet."""
     recommendation = await latest_recommendation(session, case.id)
     if recommendation is None:
         return None
     rows = await list_citation_rows(session, recommendation.id)
-    return to_answer_view(recommendation, [view_from_row(row) for row in rows], case.status)
+    view = to_answer_view(recommendation, [view_from_row(row) for row in rows], case.status)
+    return await attach_packet(session, view)
+
+
+async def load(session: AsyncSession, case: Case) -> AnswerView | None:
+    """Return the current answer, including the unsaved ticket preview."""
+    view = await load_stored(session, case)
+    if view is None:
+        return None
+    from src.features.answer.model.send import with_preview
+
+    return await with_preview(session, case, view)
+
+
+async def attach_packet(session: AsyncSession, view: AnswerView) -> AnswerView:
+    """Add the recommendation's drafts and the ticket request. The level is unchanged."""
+    rows = await list_case_drafts(session, view.recommendation_id)
+    return with_packet(view, [draft_view(row) for row in rows])
 
 
 async def withdraw(session: AsyncSession, case_id: UUID) -> None:
