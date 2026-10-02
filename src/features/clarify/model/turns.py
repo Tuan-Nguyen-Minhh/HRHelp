@@ -13,7 +13,7 @@ from src.common.audit import write_audit
 from src.common.clock import utc_now
 from src.common.errors import AppError
 from src.common.notify import notify
-from src.features.answer.model.answers import PublishWork, attach_packet, load, publish, withdraw
+from src.features.answer.model.answers import attach_packet, load, withdraw
 from src.features.answer.model.dispatch import DispatchResult, build_dispatch_agent, ready_to_dispatch
 from src.features.answer.model.proposal import close_proposal
 from src.features.answer.model.send import ask_to_send, with_preview
@@ -21,6 +21,7 @@ from src.features.answer.schema import AnswerView
 from src.features.cite.model.search import search_policies
 from src.features.clarify.model.assess import ClarifyPlan, FactConflict, StoredFact, build_question
 from src.features.clarify.model.catalog import OPTIONAL_FACT_KEYS, required_specs
+from src.features.clarify.model.multi_agent import run_dispatch_gate, run_downstream_agents, run_recommendation_agent
 from src.features.clarify.model.store import (
     FactWrite,
     NewMessage,
@@ -133,9 +134,17 @@ async def _clarify(
         note = _cited_text(handoff)
         assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff"}))
         finish_run(run, assistant.id)
-        answer, run_id, text = await _recommend(session, case, conversation, handoff, assistant.id)
+        downstream = await run_downstream_agents(session, case, conversation, handoff, assistant.id)
         await session.commit()
-        return _turn(case, conversation.id, plan, text, answer, handoff, run_id)
+        return _turn(
+            case,
+            conversation.id,
+            plan,
+            downstream.assistant_text,
+            downstream.answer,
+            handoff,
+            downstream.agent_run_id,
+        )
     if plan.locked:
         answer = await load(session, case)
         text = _LOCKED if answer is not None else _NEED_PUBLISH
@@ -213,8 +222,16 @@ async def _cite(session: AsyncSession, case: Case, conversation: Conversation, p
     note = _cited_text(message)
     assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff"}))
     finish_run(run, assistant.id)
-    answer, run_id, text = await _recommend(session, case, conversation, message, assistant.id)
-    return _turn(case, conversation.id, plan, text, answer, message, run_id)
+    downstream = await run_downstream_agents(session, case, conversation, message, assistant.id)
+    return _turn(
+        case,
+        conversation.id,
+        plan,
+        downstream.assistant_text,
+        downstream.answer,
+        message,
+        downstream.agent_run_id,
+    )
 
 
 async def _recommend(
@@ -224,15 +241,12 @@ async def _recommend(
     message: CaseHandoff,
     source_id: UUID,
 ) -> tuple[AnswerView, UUID, str]:
-    """Feature 6 reads only the handoff, then feature 7 reads only the proposal."""
-    recommend_run = await start_run(session, conversation.id, source_id, "hr-help-recommendation")
-    answer = await publish(session, PublishWork(case=case, handoff=message, run_id=recommend_run.id))
-    proposal = await add_message(
-        session, NewMessage(conversation.id, "ASSISTANT", answer.message, {"kind": "recommendation"})
-    )
-    finish_run(recommend_run, proposal.id)
-    answer, run_id, text = await _dispatch(session, case, conversation, message, answer, proposal.id)
-    return answer, run_id or recommend_run.id, text
+    """Compatibility wrapper for the downstream recommendation workflow."""
+    recommendation = await run_recommendation_agent(session, case, conversation, message, source_id)
+    dispatched = await run_dispatch_gate(session, case, conversation, message, recommendation.answer, recommendation.message_id)
+    if dispatched is not None:
+        return dispatched.answer, dispatched.agent_run_id, dispatched.assistant_text
+    return recommendation.answer, recommendation.run_id, recommendation.answer.message
 
 
 async def _dispatch(
@@ -243,7 +257,7 @@ async def _dispatch(
     answer: AnswerView,
     source_id: UUID,
 ) -> tuple[AnswerView, UUID | None, str]:
-    """Run dispatch once on a fresh draft. A failure leaves that draft in place."""
+    """Legacy test hook for dispatch. Runtime code uses ``multi_agent``."""
     current = await session.get(Recommendation, answer.recommendation_id)
     if not ready_to_dispatch(case.status, None if current is None else current.status):
         return await _packed(session, case, answer), None, answer.message
@@ -294,7 +308,7 @@ async def _dispatch(
 
 
 async def _packed(session: AsyncSession, case: Case, answer: AnswerView) -> AnswerView:
-    """Return the stored answer, plus the unsaved ticket when HR may still send it."""
+    """Legacy test hook for attaching ticket previews."""
     if case.status != answer.case_status:
         answer = answer.model_copy(update={"case_status": case.status})
     packed = await attach_packet(session, answer)

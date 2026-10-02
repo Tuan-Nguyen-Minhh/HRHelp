@@ -10,14 +10,14 @@ import { RetrievalPanel } from "@/features/evidence/RetrievalPanel";
 export function CasePage() {
   return (
     <div className="space-y-4">
-      <div className="grid items-start gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
-        <div className="order-2 space-y-4 lg:order-1">
+      <div className="grid items-start gap-4 xl:grid-cols-[440px_minmax(0,1fr)]">
+        <div className="order-2 space-y-4 xl:order-1">
           <CaseOverview />
           <FactPanel />
           <MissingFactCard />
           <RecidivismPanel />
         </div>
-        <div className="order-1 lg:order-2">
+        <div className="order-1 xl:sticky xl:top-20 xl:order-2">
           <ConversationPanel />
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { SendHorizontal } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -24,7 +25,7 @@ export function MessageInput() {
 
   if (!open) {
     return (
-      <p className="border-t border-neutral-200 px-4 py-3 text-sm text-neutral-600">
+      <p className="border-t border-[#d8e9ee] bg-white px-4 py-3 text-sm text-[#4d7380]">
         Hồ sơ đang ở trạng thái {workspace.caseView.status} nên không nhận thêm tình tiết.
       </p>
     );
@@ -32,7 +33,7 @@ export function MessageInput() {
 
   return (
     <form
-      className="border-t border-neutral-200 p-3"
+      className="border-t border-[#d8e9ee] bg-white p-3 md:p-4"
       onSubmit={form.handleSubmit(async (values) => {
         try {
           await workspace.send(values.content);
@@ -50,7 +51,7 @@ export function MessageInput() {
         rows={3}
         placeholder="Nhập tình tiết hoặc câu trả lời…"
         disabled={workspace.sending}
-        className="w-full resize-none rounded-md border border-neutral-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 disabled:bg-neutral-100"
+        className="w-full resize-none rounded-2xl border border-[#cfe5ec] bg-[#f8fbfd] px-4 py-3 text-sm leading-6 text-[#073642] shadow-inner shadow-slate-200/40 placeholder:text-[#7b96a0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009ec1]/30 disabled:bg-neutral-100"
         {...field}
         ref={(node) => {
           field.ref(node);
@@ -71,7 +72,7 @@ export function MessageInput() {
         }}
       />
       <div className="mt-2 flex items-center justify-between gap-2">
-        <p className="text-xs text-neutral-500">{form.formState.errors.content?.message || "Enter để gửi. Shift+Enter để xuống dòng."}</p>
+        <p className="text-xs text-[#607d88]">{form.formState.errors.content?.message || "Enter để gửi. Shift+Enter để xuống dòng."}</p>
         <div className="flex gap-2">
           {workspace.failedDraft ? (
             <Button
@@ -83,7 +84,8 @@ export function MessageInput() {
               Gửi lại
             </Button>
           ) : null}
-          <Button type="submit" size="sm" disabled={workspace.sending}>
+          <Button className="gap-2" type="submit" size="sm" disabled={workspace.sending}>
+            <SendHorizontal className="h-4 w-4" aria-hidden="true" />
             {workspace.sending ? "Đang gửi…" : "Gửi"}
           </Button>
         </div>

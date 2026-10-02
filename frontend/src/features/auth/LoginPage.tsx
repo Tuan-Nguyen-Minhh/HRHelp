@@ -1,8 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowRight,
+  Activity,
   Bot,
+  BrainCircuit,
   CheckCircle2,
+  ClipboardCheck,
   FileCheck2,
   Gavel,
   Layers3,
@@ -10,8 +13,9 @@ import {
   MessageSquareText,
   ShieldCheck,
   Sparkles,
+  Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -66,6 +70,19 @@ const capabilities = [
 ];
 
 const workflow = ["Tạo hồ sơ", "Bổ sung chứng cứ", "AI phân tích", "Pháp chế rà soát", "Ban hành quyết định"];
+const workflowLoop = [...workflow, ...workflow];
+
+const liveMessages = [
+  { role: "Agent pháp chế", text: "Tôi thấy hồ sơ còn thiếu loại hợp đồng và hình thức báo vắng.", tone: "assistant" },
+  { role: "HR", text: "Nhân viên hợp đồng xác định thời hạn, đã báo qua tin nhắn.", tone: "user" },
+  { role: "Agent pháp chế", text: "Đã ghi nhận. Cần thêm biên bản họp và yêu cầu giải trình để giảm rủi ro.", tone: "assistant" },
+];
+
+const liveChecks = [
+  { label: "Đọc tình tiết", value: "12 mục", icon: ClipboardCheck },
+  { label: "So khớp quy định", value: "8 căn cứ", icon: BrainCircuit },
+  { label: "Cảnh báo rủi ro", value: "3 điểm", icon: Activity },
+];
 
 export function LoginPage() {
   const { login, register: registerAccount } = useAuth();
@@ -82,8 +99,8 @@ export function LoginPage() {
     <main id="main" className="min-h-screen bg-[#f3f8fb] text-[#0b2230]">
       <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-4 md:px-8">
         <a className="flex items-center gap-3" href="#top" aria-label="HR Help">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#073642] text-sm font-bold text-white shadow-lg shadow-cyan-900/20">
-            HR
+          <span className="flex h-16 w-16 items-center justify-center">
+            <img className="h-full w-full object-contain drop-shadow-md" src="/legal-scales-books-bg.png" alt="" aria-hidden="true" />
           </span>
           <span>
             <span className="block text-sm font-bold leading-tight">HR Help</span>
@@ -101,17 +118,17 @@ export function LoginPage() {
         </a>
       </header>
 
-      <section id="top" className="mx-auto grid w-full max-w-7xl gap-8 px-5 pb-10 pt-4 md:px-8 lg:grid-cols-[minmax(0,1.03fr)_minmax(360px,0.97fr)] lg:items-center lg:pb-16">
+      <section id="top" className="relative mx-auto grid w-full max-w-7xl gap-8 px-5 pb-10 pt-4 md:px-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(440px,1.05fr)] lg:items-center lg:pb-16">
         <div className="space-y-7">
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#008db1] shadow-sm">
+          <div className="animate-slide-up inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#008db1] shadow-sm">
             <Sparkles className="h-4 w-4" aria-hidden="true" />
             Giải pháp AI thế hệ mới cho HR
           </div>
           <div>
-            <h1 className="max-w-3xl text-4xl font-bold leading-[1.08] text-[#062b36] md:text-6xl">
+            <h1 className="animate-slide-up max-w-3xl text-4xl font-bold leading-[1.08] text-[#062b36] md:text-6xl">
               Xử lý kỷ luật lao động nhanh hơn, chặt chẽ hơn với AI
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-[#4a6975] md:text-lg">
+            <p className="animate-slide-up mt-5 max-w-2xl text-base leading-7 text-[#4a6975] md:text-lg">
               HR Help giúp đội nhân sự gom tình tiết, đọc căn cứ, truy vết chứng cứ và chuyển hồ sơ qua pháp chế, quản lý, người ký trong một luồng rõ ràng.
             </p>
           </div>
@@ -134,45 +151,108 @@ export function LoginPage() {
           </dl>
         </div>
 
-        <div className="relative">
-          <div className="overflow-hidden rounded-[2rem] border border-white bg-[#073642] shadow-2xl shadow-cyan-950/20">
-            <div className="bg-[linear-gradient(135deg,#073642_0%,#0a6374_52%,#0aa6c7_100%)] p-5 text-white md:p-7">
-              <div className="flex items-center justify-between gap-4">
+        <div className="relative min-h-[560px]">
+          <div className="absolute inset-x-6 top-8 h-72 rounded-[2.5rem] bg-[#dff6fb]" />
+          <div className="relative overflow-hidden rounded-[2rem] border border-white bg-[#071d29] p-4 shadow-2xl shadow-cyan-950/20 md:p-5">
+            <div className="hero-grid absolute inset-0 opacity-45" />
+            <div className="relative grid gap-4 lg:grid-cols-[0.88fr_1.12fr]">
+              <div className="flex min-h-[510px] flex-col justify-between overflow-hidden rounded-[1.5rem] bg-[linear-gradient(180deg,#0b3c4c_0%,#062432_100%)] p-5 text-white">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100">Trung tâm hồ sơ</p>
-                  <h2 className="mt-2 text-2xl font-bold">Hồ sơ KL-2026-014</h2>
-                </div>
-                <span className="rounded-full bg-white/[0.15] px-3 py-1 text-xs font-semibold backdrop-blur">Đang phân tích</span>
-              </div>
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                {["Tình tiết", "Căn cứ", "Rủi ro"].map((label, index) => (
-                  <div key={label} className="rounded-2xl bg-white/[0.12] p-3 backdrop-blur">
-                    <p className="text-xs text-cyan-100">{label}</p>
-                    <p className="mt-2 text-2xl font-bold">{[12, 8, 3][index]}</p>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">Live agent</p>
+                      <h2 className="mt-2 text-2xl font-bold">Agent pháp chế</h2>
+                    </div>
+                    <span className="animate-pulse-soft rounded-full bg-emerald-300/15 px-3 py-1 text-xs font-semibold text-emerald-100 ring-1 ring-emerald-200/20">
+                      Online
+                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
-            <div className="bg-white p-5 md:p-6">
-              <div className="flex items-start gap-3 rounded-2xl border border-[#d8edf2] bg-[#f6fbfd] p-4">
-                <Bot className="mt-1 h-5 w-5 text-[#009ec1]" aria-hidden="true" />
-                <div>
-                  <p className="font-semibold text-[#073642]">AI đề xuất mức xử lý</p>
-                  <p className="mt-1 text-sm leading-6 text-[#587681]">
-                    Thiếu xác nhận đã mời người lao động tham dự họp. Cần bổ sung biên bản trước khi chuyển pháp chế.
+                  <p className="mt-4 text-sm leading-6 text-cyan-50/80">
+                    Theo dõi tình tiết, đối chiếu căn cứ và nhắc HR bổ sung thông tin còn thiếu trước khi chuyển duyệt.
                   </p>
                 </div>
-              </div>
-              <div className="mt-4 space-y-3">
-                {workflow.slice(0, 4).map((item, index) => (
-                  <div key={item} className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e7f7fb] text-xs font-bold text-[#008aaa]">{index + 1}</span>
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#e8f1f4]">
-                      <div className="h-full rounded-full bg-[#009ec1]" style={{ width: `${index < 2 ? 100 : index === 2 ? 74 : 32}%` }} />
-                    </div>
-                    <span className="w-28 text-xs font-medium text-[#536f7a]">{item}</span>
+
+                <div className="relative mt-8 flex flex-1 items-end justify-center">
+                  <div className="absolute left-0 top-6 animate-float-soft rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-xs text-cyan-50 backdrop-blur">
+                    Rủi ro quy trình: Trung bình
                   </div>
-                ))}
+                  <div className="absolute bottom-20 right-0 animate-float-soft-delay rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-xs text-cyan-50 backdrop-blur">
+                    4 bước kiểm soát
+                  </div>
+                  <img
+                    className="relative z-10 h-[300px] w-auto drop-shadow-2xl"
+                    src="/legal-agent-avatar.png"
+                    alt="Agent pháp chế HR Help"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="rounded-[1.5rem] border border-white/70 bg-white/95 p-4 shadow-xl shadow-cyan-950/10">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#009ec1]">Trung tâm hồ sơ</p>
+                      <h3 className="mt-1 text-xl font-bold text-[#073642]">KL-2026-014</h3>
+                    </div>
+                    <div className="flex items-center gap-2 rounded-full bg-[#e8f8fb] px-3 py-1.5 text-xs font-semibold text-[#007c9d]">
+                      <Zap className="h-3.5 w-3.5" aria-hidden="true" />
+                      Đang phân tích
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    {liveChecks.map((item) => (
+                      <div key={item.label} className="rounded-2xl border border-[#d8e9ee] bg-[#f7fbfd] p-3">
+                        <item.icon className="h-5 w-5 text-[#009ec1]" aria-hidden="true" />
+                        <p className="mt-3 text-lg font-bold text-[#073642]">{item.value}</p>
+                        <p className="text-xs text-[#5a7782]">{item.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-[1.5rem] border border-white/70 bg-white/95 p-4 shadow-xl shadow-cyan-950/10">
+                  <div className="mb-4 flex items-center justify-between">
+                    <p className="font-bold text-[#073642]">Cuộc hội thoại mẫu</p>
+                    <Bot className="h-5 w-5 text-[#009ec1]" aria-hidden="true" />
+                  </div>
+                  <div className="space-y-3">
+                    {liveMessages.map((message, index) => (
+                      <div
+                        key={message.text}
+                        className={`animate-chat-in max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm ${
+                          message.tone === "user"
+                            ? "ml-auto rounded-br-md bg-[#009ec1] text-white"
+                            : "rounded-bl-md border border-[#d8e9ee] bg-[#f7fbfd] text-[#294d5a]"
+                        }`}
+                        style={{ animationDelay: `${index * 180}ms` }}
+                      >
+                        <p className="mb-1 text-[11px] font-semibold opacity-75">{message.role}</p>
+                        {message.text}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-[1.5rem] border border-white/70 bg-white/95 p-4 shadow-xl shadow-cyan-950/10">
+                  <div className="mb-3 flex items-center justify-between text-xs font-semibold text-[#536f7a]">
+                    <span>Luồng xử lý</span>
+                    <span>74%</span>
+                  </div>
+                  <div className="space-y-3">
+                    {workflow.slice(0, 4).map((item, index) => (
+                      <div key={item} className="flex items-center gap-3">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e7f7fb] text-xs font-bold text-[#008aaa]">
+                          {index + 1}
+                        </span>
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#e8f1f4]">
+                          <div className="animate-progress h-full rounded-full bg-[#009ec1]" style={{ width: `${index < 2 ? 100 : index === 2 ? 74 : 32}%` }} />
+                        </div>
+                        <span className="w-28 text-xs font-medium text-[#536f7a]">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -180,39 +260,45 @@ export function LoginPage() {
       </section>
 
       <section id="about" className="border-y border-[#dcecf1] bg-white">
-        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-14 md:px-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
+        <Reveal variant="down" className="mx-auto grid max-w-7xl gap-8 px-5 py-14 md:px-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#009ec1]">Về chúng tôi</p>
             <h2 className="mt-3 text-3xl font-bold text-[#073642]">Giúp doanh nghiệp xử lý hồ sơ nhạy cảm có căn cứ hơn</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <InfoBlock title="AI hỗ trợ, người quyết định" text="Mọi đề xuất đều giữ vai trò tham khảo, còn quyền duyệt và ký vẫn nằm ở đúng người phụ trách." />
-            <InfoBlock title="Thực chiến theo quy trình HR" text="Luồng làm việc bám hồ sơ thật: sự kiện, chứng cứ, đánh giá rủi ro, rà soát và ban hành." />
+            <Reveal variant="left" delay={100}>
+              <InfoBlock title="AI hỗ trợ, người quyết định" text="Mọi đề xuất đều giữ vai trò tham khảo, còn quyền duyệt và ký vẫn nằm ở đúng người phụ trách." />
+            </Reveal>
+            <Reveal variant="right" delay={180}>
+              <InfoBlock title="Thực chiến theo quy trình HR" text="Luồng làm việc bám hồ sơ thật: sự kiện, chứng cứ, đánh giá rủi ro, rà soát và ban hành." />
+            </Reveal>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <section id="services" className="mx-auto max-w-7xl px-5 py-14 md:px-8">
-        <div className="max-w-2xl">
+        <Reveal variant="up" className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#009ec1]">Năng lực</p>
           <h2 className="mt-3 text-3xl font-bold text-[#073642]">Một hệ sinh thái cho hồ sơ kỷ luật lao động</h2>
           <p className="mt-3 text-sm leading-6 text-[#5a7782]">Lấy cảm hứng từ cách trang mẫu nhấn mạnh tự động hóa, nhưng tinh chỉnh cho nghiệp vụ pháp lý nội bộ và trải nghiệm dùng hằng ngày.</p>
-        </div>
+        </Reveal>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {capabilities.map((item) => (
-            <article key={item.title} className="rounded-2xl border border-[#d8e9ee] bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-900/10">
-              <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${item.tone}`}>
-                <item.icon className="h-6 w-6" aria-hidden="true" />
-              </div>
-              <h3 className="mt-4 text-lg font-bold text-[#073642]">{item.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-[#5a7782]">{item.text}</p>
-            </article>
+          {capabilities.map((item, index) => (
+            <Reveal key={item.title} variant={index % 2 === 0 ? "left" : "right"} delay={index * 120}>
+              <article className="h-full rounded-2xl border border-[#d8e9ee] bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-900/10">
+                <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${item.tone}`}>
+                  <item.icon className="h-6 w-6" aria-hidden="true" />
+                </div>
+                <h3 className="mt-4 text-lg font-bold text-[#073642]">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-[#5a7782]">{item.text}</p>
+              </article>
+            </Reveal>
           ))}
         </div>
       </section>
 
       <section id="workflow" className="bg-[#062b36] text-white">
-        <div className="mx-auto max-w-7xl px-5 py-14 md:px-8">
+        <Reveal variant="down" className="mx-auto max-w-7xl px-5 py-14 md:px-8">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">Quy trình</p>
@@ -220,30 +306,48 @@ export function LoginPage() {
             </div>
             <p className="max-w-xl text-sm leading-6 text-cyan-50/80">Mỗi bước có người chịu trách nhiệm, trạng thái rõ ràng và nhật ký để kiểm tra lại khi cần.</p>
           </div>
-          <div className="mt-8 grid gap-3 md:grid-cols-5">
-            {workflow.map((item, index) => (
-              <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.08] p-4">
-                <p className="text-sm font-bold text-cyan-200">0{index + 1}</p>
-                <p className="mt-3 font-semibold">{item}</p>
-              </div>
-            ))}
+          <div className="workflow-marquee mt-8 overflow-hidden">
+            <div className="workflow-track flex w-max gap-4">
+              {workflowLoop.map((item, index) => {
+                const step = (index % workflow.length) + 1;
+                return (
+                  <div
+                    key={`${item}-${index}`}
+                    className="h-32 w-[260px] shrink-0 rounded-2xl border border-white/10 bg-white/[0.08] p-5 shadow-lg shadow-cyan-950/10"
+                    aria-hidden={index >= workflow.length}
+                  >
+                    <p className="text-sm font-bold text-cyan-200">0{step}</p>
+                    <p className="mt-5 text-lg font-semibold">{item}</p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <section id="contact" className="mx-auto grid max-w-7xl gap-8 px-5 py-14 md:px-8 lg:grid-cols-[0.9fr_1.1fr]">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#009ec1]">Liên hệ</p>
-          <h2 className="mt-3 text-3xl font-bold text-[#073642]">Cần triển khai cho đội HR?</h2>
-          <p className="mt-3 text-sm leading-6 text-[#5a7782]">Đăng nhập nếu bạn đã có tài khoản, hoặc tạo tài khoản thử nghiệm để bắt đầu kiểm tra luồng hồ sơ.</p>
-          <div className="mt-6 space-y-3 text-sm text-[#4f6f7b]">
-            <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#009ec1]" aria-hidden="true" /> Dữ liệu hồ sơ được phân quyền theo vai trò.</p>
-            <p className="flex items-center gap-2"><LockKeyhole className="h-4 w-4 text-[#009ec1]" aria-hidden="true" /> Có nhật ký thao tác cho quản trị.</p>
-            <p className="flex items-center gap-2"><Gavel className="h-4 w-4 text-[#009ec1]" aria-hidden="true" /> Tách riêng pháp chế, quản lý và người ký.</p>
+        <Reveal variant="left" className="relative min-h-[420px] overflow-hidden rounded-[2rem] px-4 py-8 sm:px-8">
+          <img
+            className="pointer-events-none absolute bottom-0 left-1/2 h-[min(72vw,520px)] min-h-[330px] w-auto max-w-none -translate-x-[58%] object-contain opacity-[0.5] saturate-110 contrast-125"
+            src="/legal-scales-books-bg.png"
+            alt=""
+            aria-hidden="true"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(243,248,251,0.2)_0%,rgba(243,248,251,0.66)_48%,rgba(243,248,251,0.94)_82%),linear-gradient(180deg,rgba(243,248,251,0.86)_0%,rgba(243,248,251,0.52)_48%,rgba(243,248,251,0.86)_100%)]" />
+          <div className="relative z-10 max-w-2xl">
+            <p className="whitespace-nowrap text-xs font-semibold uppercase tracking-[0.12em] text-[#009ec1]">Liên hệ</p>
+            <h2 className="mt-3 text-3xl font-bold text-[#073642]">Cần triển khai cho đội HR?</h2>
+            <p className="mt-3 text-sm leading-6 text-[#5a7782]">Đăng nhập nếu bạn đã có tài khoản, hoặc tạo tài khoản thử nghiệm để bắt đầu kiểm tra luồng hồ sơ.</p>
+            <div className="mt-6 space-y-3 text-sm text-[#4f6f7b]">
+              <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#009ec1]" aria-hidden="true" /> Dữ liệu hồ sơ được phân quyền theo vai trò.</p>
+              <p className="flex items-center gap-2"><LockKeyhole className="h-4 w-4 text-[#009ec1]" aria-hidden="true" /> Có nhật ký thao tác cho quản trị.</p>
+              <p className="flex items-center gap-2"><Gavel className="h-4 w-4 text-[#009ec1]" aria-hidden="true" /> Tách riêng pháp chế, quản lý và người ký.</p>
+            </div>
           </div>
-        </div>
+        </Reveal>
 
-        <div id="auth" className="w-full rounded-3xl border border-[#d5e8ed] bg-white p-5 shadow-xl shadow-cyan-950/10 md:p-7">
+        <Reveal id="auth" variant="right" delay={120} className="w-full rounded-3xl border border-[#d5e8ed] bg-white p-5 shadow-xl shadow-cyan-950/10 md:p-7">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold tracking-[0.16em] text-[#009EC1]">KHÔNG GIAN HỒ SƠ</p>
@@ -343,7 +447,7 @@ export function LoginPage() {
               {mode === "login" ? "Tạo tài khoản" : "Đăng nhập"}
             </button>
           </p>
-        </div>
+        </Reveal>
       </section>
 
       <footer className="border-t border-[#dcecf1] bg-white px-5 py-6 text-sm text-[#5a7782] md:px-8">
@@ -353,6 +457,54 @@ export function LoginPage() {
         </div>
       </footer>
     </main>
+  );
+}
+
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+  id,
+  variant = "up",
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+  id?: string;
+  variant?: "down" | "left" | "right" | "up";
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    if (!("IntersectionObserver" in window)) {
+      setVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "0px 0px -12% 0px", threshold: 0.14 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      id={id}
+      ref={ref}
+      className={`scroll-reveal reveal-${variant} ${visible ? "is-visible" : ""} ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
   );
 }
 

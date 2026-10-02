@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Bell, FileSearch, Gavel, LayoutDashboard, LogOut, Scale, ScrollText } from "lucide-react";
+import { Bell, Bot, FileSearch, Gavel, LayoutDashboard, LogOut, Scale, ScrollText, ShieldCheck } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 
 import { useAuth, useMe } from "@/app/providers";
@@ -34,34 +34,45 @@ export function AppShell() {
   const unread = (notes.data?.notifications ?? []).filter((item) => !item.read_at).length;
 
   return (
-    <div className="min-h-screen bg-slate-50 lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
+    <div className="min-h-screen bg-[#f4f8fb] lg:grid lg:grid-cols-[272px_minmax(0,1fr)]">
       <a className="skip-link" href="#main">
         Đến nội dung chính
       </a>
-      <aside className="bg-gradient-dark text-white lg:min-h-screen">
-        <div className="px-5 py-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 bg-gradient-to-br from-brand-500 to-indigo-500 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-brand-sm">
-              HR
+      <aside className="sticky top-0 z-30 border-b border-white/10 bg-gradient-dark text-white shadow-xl shadow-slate-950/10 lg:h-screen lg:border-b-0 lg:border-r lg:overflow-y-auto">
+        <div className="px-5 py-5 lg:py-6">
+          <div className="mb-2 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center">
+              <img className="h-full w-full object-contain drop-shadow-md" src="/legal-scales-books-bg.png" alt="" aria-hidden="true" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-semibold tracking-[0.18em] text-brand-300">HR HELP</p>
-              <p className="text-lg font-display font-bold leading-tight text-white">Kỷ luật lao động</p>
+              <p className="truncate text-lg font-display font-bold leading-tight text-white">Kỷ luật lao động</p>
             </div>
           </div>
-          <p className="mt-1 text-xs text-slate-400">AI đề xuất. Người quyết định.</p>
+          <p className="mt-1 text-xs leading-5 text-slate-300">AI đề xuất. Người quyết định.</p>
         </div>
-        <hr className="border-white/10 mx-5 mb-5" />
-        <nav className="flex gap-2 overflow-x-auto px-4 pb-3 lg:block lg:space-y-1 lg:pb-6" aria-label="Điều hướng">
+        <div className="mx-5 mb-4 hidden rounded-2xl border border-white/10 bg-white/[0.07] p-4 lg:block">
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-400/15 text-cyan-200">
+              <Bot className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-white">Trợ lý hồ sơ</p>
+              <p className="mt-1 text-xs leading-5 text-slate-300">Dẫn dắt từng bước, giữ ngữ cảnh và nhắc phần còn thiếu.</p>
+            </div>
+          </div>
+        </div>
+        <hr className="mx-5 mb-4 border-white/10" />
+        <nav className="flex gap-2 overflow-x-auto px-4 pb-3 lg:block lg:space-y-1 lg:pb-5" aria-label="Điều hướng">
           {items.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  "flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                  "flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 lg:w-full",
                   isActive 
-                    ? "bg-brand-600/20 text-white border-l-2 border-brand-400" 
+                    ? "bg-white/[0.12] text-white shadow-sm ring-1 ring-white/10 lg:bg-brand-600/20 lg:border-l-2 lg:border-brand-400" 
                     : "text-slate-300 hover:bg-white/5 hover:text-white",
                 )
               }
@@ -71,9 +82,16 @@ export function AppShell() {
             </NavLink>
           ))}
         </nav>
+        <div className="mx-5 mb-5 hidden rounded-2xl border border-emerald-300/15 bg-emerald-300/10 p-4 text-xs leading-5 text-emerald-50 lg:block">
+          <div className="mb-2 flex items-center gap-2 font-semibold text-emerald-100">
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            Luồng an toàn
+          </div>
+          AI chỉ gợi ý, các bước duyệt và ký vẫn tách rõ theo vai trò.
+        </div>
       </aside>
       <div className="min-w-0">
-        <header className="flex items-center justify-between gap-3 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-6 py-3.5">
+        <header className="z-20 flex items-center justify-between gap-3 border-b border-slate-200/70 bg-white/85 px-4 py-3.5 backdrop-blur-md lg:sticky lg:top-0 lg:px-6">
           <div className="min-w-0">
             <p className="truncate text-sm font-bold text-dark-900">{me.data?.full_name || me.data?.email || "Phiên làm việc"}</p>
             <p className="text-xs text-slate-500">{ROLE_LABEL[role] ?? role}</p>
@@ -103,7 +121,7 @@ export function AppShell() {
             </Button>
           </div>
         </header>
-        <main id="main" className="px-6 py-6">
+        <main id="main" className="px-4 py-5 lg:px-6 lg:py-6">
           <Outlet />
         </main>
       </div>

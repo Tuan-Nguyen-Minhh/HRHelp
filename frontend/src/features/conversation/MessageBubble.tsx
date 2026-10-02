@@ -10,9 +10,9 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
     <div className={cn("flex", mine ? "justify-end" : "justify-start")}>
       <article
         className={cn(
-          "max-w-[85%] rounded-lg px-3 py-2 text-sm",
-          mine && "bg-[#009EC1] text-white",
-          message.role === "assistant" && "border border-[#d5e8ed] bg-white text-[#073642]",
+          "max-w-[88%] rounded-2xl px-4 py-3 text-sm shadow-sm md:max-w-[78%]",
+          mine && "rounded-br-md bg-[#009EC1] text-white shadow-cyan-900/10",
+          message.role === "assistant" && "rounded-bl-md border border-[#d5e8ed] bg-white text-[#073642]",
           message.role === "system" && "border border-[#9fd0db] bg-[#e7f6f9] text-[#073642]",
         )}
       >
