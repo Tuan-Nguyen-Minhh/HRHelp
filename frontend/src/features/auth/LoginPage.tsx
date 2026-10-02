@@ -108,10 +108,10 @@ export function LoginPage() {
           </span>
         </a>
         <nav className="hidden items-center gap-6 text-sm font-medium text-[#496a77] md:flex" aria-label="Trang giới thiệu">
-          <a className="hover:text-[#007c9d]" href="#about">Về giải pháp</a>
-          <a className="hover:text-[#007c9d]" href="#services">Năng lực</a>
-          <a className="hover:text-[#007c9d]" href="#workflow">Quy trình</a>
-          <a className="hover:text-[#007c9d]" href="#contact">Liên hệ</a>
+          <a className="landing-nav-link" href="#about">Về giải pháp</a>
+          <a className="landing-nav-link" href="#services">Năng lực</a>
+          <a className="landing-nav-link" href="#workflow">Quy trình</a>
+          <a className="landing-nav-link" href="#contact">Liên hệ</a>
         </nav>
         <a className="rounded-full bg-[#073642] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0b4c5d]" href="#auth">
           Vào hệ thống
@@ -450,11 +450,29 @@ export function LoginPage() {
         </Reveal>
       </section>
 
-      <footer className="border-t border-[#dcecf1] bg-white px-5 py-6 text-sm text-[#5a7782] md:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-2 sm:flex-row">
-          <p className="font-semibold text-[#073642]">HR Help</p>
-          <p>AI đề xuất. Người quyết định.</p>
-        </div>
+      <footer className="overflow-hidden bg-[#062b36] px-5 py-8 text-sm text-cyan-50 md:px-8">
+        <Reveal variant="up" className="relative mx-auto max-w-7xl">
+          <div className="hero-grid absolute inset-0 opacity-25" />
+          <div className="relative grid gap-5 md:grid-cols-3 md:items-stretch">
+          <div className="footer-card flex flex-col items-center justify-center rounded-2xl border border-transparent bg-transparent px-4 py-4 text-center">
+            <img className="h-14 w-14 object-contain drop-shadow-md" src="/legal-scales-books-bg.png" alt="" aria-hidden="true" />
+            <div>
+              <p className="text-base font-bold text-white">HR Help</p>
+              <p className="mt-1 text-xs leading-5 text-cyan-50/75">AI kỷ luật lao động cho quy trình nhân sự có kiểm soát.</p>
+            </div>
+          </div>
+          <div className="footer-card flex flex-col items-center justify-center rounded-2xl border border-transparent bg-transparent px-4 py-4 text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-200">Chủ quản</p>
+            <p className="mt-1 font-bold text-white">Tập đoàn Vingroup</p>
+            <p className="mt-1 text-xs text-cyan-50/75">Định hướng vận hành và quản trị nghiệp vụ.</p>
+          </div>
+          <div className="footer-card flex flex-col items-center justify-center rounded-2xl border border-transparent bg-transparent px-4 py-4 text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-200">Phát triển dự án</p>
+            <p className="mt-1 font-bold text-white">The First Row</p>
+            <p className="mt-1 text-xs text-cyan-50/75">AI đề xuất. Người quyết định.</p>
+          </div>
+          </div>
+        </Reveal>
       </footer>
     </main>
   );
