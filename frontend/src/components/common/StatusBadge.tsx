@@ -16,9 +16,15 @@ export function StatusBadge({ status }: { status: string }) {
   const Icon = icons[tone];
   return (
     <Badge tone={tone}>
+      {status === "running" && (
+        <span className="relative flex h-2 w-2 -mr-0.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-current"></span>
+        </span>
+      )}
       <Icon className="h-3.5 w-3.5" aria-hidden="true" />
       <span>{statusLabel(status)}</span>
-      <span className="font-normal text-current/80">{status}</span>
+      <span className="font-normal text-xs opacity-60">{status}</span>
     </Badge>
   );
 }

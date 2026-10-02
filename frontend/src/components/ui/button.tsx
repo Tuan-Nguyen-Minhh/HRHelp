@@ -5,15 +5,15 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009EC1] disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-[#009EC1] text-white hover:bg-[#0087A6]",
-        secondary: "border border-[#d5e8ed] bg-white text-[#073642] hover:bg-[#f4fafb]",
-        outline: "border border-neutral-300 bg-white hover:bg-neutral-50",
-        ghost: "hover:bg-neutral-100",
-        destructive: "bg-red-700 text-white hover:bg-red-800",
+        default: "bg-brand-600 text-white hover:bg-brand-500 hover:shadow-brand-md hover:-translate-y-0.5",
+        secondary: "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-brand-300",
+        outline: "border border-slate-200 bg-white/80 text-slate-700 hover:bg-brand-50 hover:text-brand-700 hover:border-brand-200",
+        ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+        destructive: "bg-red-600 text-white hover:bg-red-700 hover:shadow-md",
       },
       size: {
         default: "h-9 px-3",

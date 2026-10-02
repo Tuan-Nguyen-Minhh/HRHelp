@@ -34,25 +34,35 @@ export function AppShell() {
   const unread = (notes.data?.notifications ?? []).filter((item) => !item.read_at).length;
 
   return (
-    <div className="min-h-screen bg-[#f4fafb] lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
+    <div className="min-h-screen bg-slate-50 lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
       <a className="skip-link" href="#main">
         Đến nội dung chính
       </a>
-      <aside className="border-b border-[#062c36] bg-[#073642] text-white lg:min-h-screen lg:border-b-0">
-        <div className="px-4 py-5">
-          <p className="text-xs font-semibold tracking-[0.18em] text-[#7fd3e6]">HR HELP</p>
-          <p className="mt-1 text-lg font-semibold leading-tight">Kỷ luật lao động</p>
-          <p className="mt-1 text-xs text-[#b7dbe3]">AI đề xuất. Người quyết định.</p>
+      <aside className="bg-gradient-dark text-white lg:min-h-screen">
+        <div className="px-5 py-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-9 h-9 bg-gradient-to-br from-brand-500 to-indigo-500 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-brand-sm">
+              HR
+            </div>
+            <div>
+              <p className="text-xs font-semibold tracking-[0.18em] text-brand-300">HR HELP</p>
+              <p className="text-lg font-display font-bold leading-tight text-white">Kỷ luật lao động</p>
+            </div>
+          </div>
+          <p className="mt-1 text-xs text-slate-400">AI đề xuất. Người quyết định.</p>
         </div>
-        <nav className="flex gap-1 overflow-x-auto px-2 pb-3 lg:block lg:space-y-1 lg:px-3 lg:pb-6" aria-label="Điều hướng">
+        <hr className="border-white/10 mx-5 mb-5" />
+        <nav className="flex gap-2 overflow-x-auto px-4 pb-3 lg:block lg:space-y-1 lg:pb-6" aria-label="Điều hướng">
           {items.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#d7eef3]",
-                  isActive ? "bg-[#009EC1] text-white" : "hover:bg-white/10",
+                  "flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                  isActive 
+                    ? "bg-brand-600/20 text-white border-l-2 border-brand-400" 
+                    : "text-slate-300 hover:bg-white/5 hover:text-white",
                 )
               }
             >
@@ -63,25 +73,37 @@ export function AppShell() {
         </nav>
       </aside>
       <div className="min-w-0">
-        <header className="flex items-center justify-between gap-3 border-b border-[#d5e8ed] bg-white px-4 py-3">
+        <header className="flex items-center justify-between gap-3 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-6 py-3.5">
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-[#073642]">{me.data?.full_name || me.data?.email || "Phiên làm việc"}</p>
-            <p className="text-xs text-[#4d7380]">{ROLE_LABEL[role] ?? role}</p>
+            <p className="truncate text-sm font-bold text-dark-900">{me.data?.full_name || me.data?.email || "Phiên làm việc"}</p>
+            <p className="text-xs text-slate-500">{ROLE_LABEL[role] ?? role}</p>
           </div>
-          <Link
-            className="relative inline-flex h-9 items-center gap-2 rounded-full border border-[#d5e8ed] px-3 text-sm text-[#073642] hover:bg-[#f4fafb]"
-            to="/notifications"
-          >
-            <Bell className="h-4 w-4" aria-hidden="true" />
-            <span className="sr-only">Thông báo</span>
-            {unread > 0 ? <span className="font-semibold text-[#009EC1]">{unread}</span> : <span className="text-[#4d7380]">0</span>}
-          </Link>
-          <Button variant="ghost" size="sm" onClick={() => void logout()}>
-            <LogOut className="h-4 w-4" aria-hidden="true" />
-            Đăng xuất
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link
+              className="relative inline-flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm text-dark-900 hover:bg-brand-50 hover:border-brand-200 transition-all"
+              to="/notifications"
+            >
+              <Bell className="h-4 w-4" aria-hidden="true" />
+              <span className="sr-only">Thông báo</span>
+              {unread > 0 ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
+                  </span>
+                  <span className="font-semibold text-brand-600">{unread}</span>
+                </div>
+              ) : (
+                <span className="text-slate-500">0</span>
+              )}
+            </Link>
+            <Button variant="ghost" size="sm" onClick={() => void logout()}>
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              Đăng xuất
+            </Button>
+          </div>
         </header>
-        <main id="main" className="px-4 py-5">
+        <main id="main" className="px-6 py-6">
           <Outlet />
         </main>
       </div>
