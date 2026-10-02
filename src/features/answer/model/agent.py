@@ -11,7 +11,7 @@ from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from src.agents.handoff import CaseHandoff, CitedPassage
-from src.features.answer.model.decide import DecisionInput, blocked
+from src.features.answer.model.decide import DecisionInput, should_synthesize
 from src.features.answer.model.draft import AnswerDraft, AnswerInput, draft_answer
 from src.features.answer.model.layers import LayeredBasis, split_passages
 from src.features.answer.model.synthesis import synthesize
@@ -60,7 +60,7 @@ async def recommend_node(state: dict) -> dict:
         description=message.description,
         fact_lines=tuple(message.fact_lines),
     )
-    assessment = None if blocked(data) is not None else await synthesize(message, layered)
+    assessment = await synthesize(message, layered) if should_synthesize(data) else None
     draft = draft_answer(
         AnswerInput(
             family=message.family,

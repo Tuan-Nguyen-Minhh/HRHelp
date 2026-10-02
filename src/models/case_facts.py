@@ -3,6 +3,7 @@ from sqlalchemy import (
     CheckConstraint,
     Column,
     DateTime,
+    Float,
     ForeignKey,
     String,
     Text,
@@ -35,3 +36,4 @@ class CaseFact(TimestampMixin, Base):
     confirmed = Column(Boolean, nullable=False, default=False, server_default=text("FALSE"))
     confirmed_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     confirmed_at = Column(DateTime, nullable=True)
+    confidence = Column(Float, nullable=True)

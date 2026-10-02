@@ -52,12 +52,13 @@ def assess(text: str, stored: dict[str, StoredFact]) -> ClarifyPlan:
 
 
 def build_question(family: str, missing: list[str], merged: dict[str, StoredFact]) -> str:
-    """Ask for the first missing fact, or list the values still waiting for confirmation."""
+    """Ask once for every fact that is still empty."""
     specs = required_specs(family)
     if missing:
-        spec = next(item for item in specs if item.key == missing[0])
-        tail = f" Còn {len(missing) - 1} mục sẽ hỏi sau." if len(missing) > 1 else ""
-        return spec.question + tail
+        wanted = set(missing)
+        lines = [f"- {spec.question}" for spec in specs if spec.key in wanted]
+        listed = "\n".join(lines)
+        return "Để đối chiếu quy định và lập đề xuất, hãy trả lời đủ các mục sau trong một tin nhắn:\n" + listed
     lines = [f"- {spec.label}: {merged[spec.key].value}" for spec in specs if _pending(merged, spec.key)]
     listed = "\n".join(lines)
     return (

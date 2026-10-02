@@ -10,7 +10,7 @@ class Role(TimestampMixin, Base):
 
     __table_args__ = (
         CheckConstraint(
-            "name IN ('HR', 'MANAGER', 'LEGAL')",
+            "name IN ('HR', 'MANAGER', 'LEGAL', 'SIGNER', 'ADMIN')",
             name="ck_roles_name",
         ),
     )

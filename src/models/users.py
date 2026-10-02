@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, CheckConstraint, Column, String, text
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, String, text
 from sqlalchemy.dialects.postgresql import UUID
 
 from src.db.base import Base
@@ -10,7 +10,7 @@ class User(TimestampMixin, Base):
 
     __table_args__ = (
         CheckConstraint(
-            "role IN ('HR', 'MANAGER', 'LEGAL')",
+            "role IN ('HR', 'MANAGER', 'LEGAL', 'SIGNER', 'ADMIN')",
             name="ck_users_role",
         ),
     )
@@ -21,3 +21,4 @@ class User(TimestampMixin, Base):
     full_name = Column(String(255), nullable=True)
     role = Column(String(50), nullable=False, default="HR", server_default=text("'HR'"))
     is_active = Column(Boolean, nullable=False, default=True, server_default=text("TRUE"))
+    deleted_at = Column(DateTime, nullable=True)

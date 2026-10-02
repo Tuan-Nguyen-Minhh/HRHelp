@@ -24,6 +24,7 @@ class ProposalHandoff(BaseModel):
     agent_run_id: UUID
     incident_date: date
     employee_name: str | None = None
+    employee_code: str | None = None
     family: str
     facts: dict[str, str]
     fact_lines: list[str] = Field(default_factory=list)
@@ -38,16 +39,24 @@ class ProposalHandoff(BaseModel):
     precedent: list[CitationView] = Field(default_factory=list)
     inspection_risk: list[CitationView] = Field(default_factory=list)
     standard: AppliedStandard | None = None
+    legal_code: str | None = None
 
 
-def close_proposal(message: CaseHandoff, answer: AnswerView) -> ProposalHandoff:
+def close_proposal(
+    message: CaseHandoff,
+    answer: AnswerView,
+    *,
+    employee_code: str | None = None,
+    legal_code: str | None = None,
+) -> ProposalHandoff:
     """Pack the stored draft and the identity fields feature 6 already held."""
     return ProposalHandoff(
         recommendation_id=answer.recommendation_id,
-        case_id=answer.case_id,
+        case_id=message.case_id or answer.case_id,
         agent_run_id=answer.agent_run_id or message.agent_run_id,
         incident_date=message.incident_date,
         employee_name=message.employee_name,
+        employee_code=employee_code,
         family=message.family,
         facts=dict(message.facts),
         fact_lines=list(message.fact_lines),
@@ -62,4 +71,5 @@ def close_proposal(message: CaseHandoff, answer: AnswerView) -> ProposalHandoff:
         precedent=list(answer.precedent),
         inspection_risk=list(answer.inspection_risk),
         standard=answer.standard,
+        legal_code=legal_code,
     )

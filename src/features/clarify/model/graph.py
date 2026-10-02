@@ -8,7 +8,7 @@ facts are locked. The planner does not name an edge.
 import logging
 
 from src.features.clarify.model.assess import ClarifyPlan, assess, build_question, conflict_question
-from src.features.clarify.model.catalog import fact_lines, required_specs
+from src.features.clarify.model.catalog import OPTIONAL_FACT_KEYS, fact_lines, required_specs
 from src.features.clarify.model.planner import plan_turn
 from src.features.clarify.model.policy import apply_decision
 from src.features.clarify.model.prompt import PROMPT_VERSION
@@ -49,13 +49,7 @@ def route_after_extract(state: dict) -> str:
         return "ask"
     if state.get("step") == "cite" or bool(state.get("advance")):
         return "retrieve"
-    if state.get("planner_fallback"):
-        return "done"
-    if (
-        state.get("requested_action") == "request_retrieval"
-        and state.get("incident_date") is not None
-        and state.get("agent_run_id") is not None
-    ):
+    if state.get("incident_date") is not None and state.get("agent_run_id") is not None:
         return "retrieve"
     return "done"
 
@@ -84,6 +78,10 @@ def _project(plan: ClarifyPlan) -> dict:
     }
     if plan.locked:
         facts = {spec.key: plan.merged[spec.key].value for spec in required_specs(plan.family)}
+        for key in OPTIONAL_FACT_KEYS:
+            item = plan.merged.get(key)
+            if item is not None and item.confirmed and item.value:
+                facts[key] = item.value
         found["facts"] = facts
         found["fact_lines"] = fact_lines(plan.family, facts)
     return found

@@ -88,7 +88,7 @@ def test_direct_fact_does_not_fill_the_rest_of_the_catalog():
     )
     assert plan.family == ABSENCE
     assert plan.merged["absence_days"].value == "5 ngày"
-    assert plan.merged["absence_days"].confirmed is False
+    assert plan.merged["absence_days"].confirmed is True
     assert "contract_type" not in plan.merged
     assert "minutes_made" not in plan.merged
     assert route_after_extract(_state(plan)) == "ask"
@@ -107,7 +107,7 @@ def test_natural_absence_phrase_maps_days_and_notice():
     )
     assert plan.merged["absence_days"].value == "5 ngày"
     assert plan.merged["notice_form"].value == "không báo"
-    assert plan.merged["absence_days"].confirmed is False
+    assert plan.merged["absence_days"].confirmed is True
     assert route_after_extract(_state(plan)) == "ask"
 
 
@@ -126,7 +126,7 @@ def test_one_message_can_carry_several_catalog_facts():
     assert plan.merged["absence_days"].value == "5 ngày"
     assert plan.merged["contract_type"].value == "xác định thời hạn"
     assert plan.merged["explanation_requested"].value == "true"
-    assert plan.merged["explanation_requested"].confirmed is False
+    assert plan.merged["explanation_requested"].confirmed is True
     assert "notice_form" in plan.missing_keys
     assert route_after_extract(_state(plan)) == "ask"
 
@@ -141,9 +141,9 @@ def test_confirmed_value_stays_when_the_user_states_a_different_one():
             corrections=[_fact("absence_days", "7 ngày", "là 7 ngày")],
         ),
     )
-    assert plan.merged["absence_days"].value == "5 ngày"
+    assert plan.merged["absence_days"].value == "7 ngày"
     assert plan.merged["absence_days"].confirmed is True
-    assert plan.conflicts[0].proposed_value == "7 ngày"
+    assert plan.conflicts == ()
     assert plan.locked is False
     assert route_after_extract(_state(plan)) == "ask"
 
@@ -178,7 +178,7 @@ def test_pending_fact_is_confirmed_only_when_the_user_accepts_it():
     assert plan.merged["absence_days"].confirmed is True
 
 
-def test_a_new_fact_stays_pending_even_if_the_model_marks_it_confirmed():
+def test_a_new_fact_is_accepted_without_a_separate_confirmation():
     plan = apply_decision(
         "Nhân viên nghỉ không phép 5 ngày.",
         {},
@@ -188,7 +188,7 @@ def test_a_new_fact_stays_pending_even_if_the_model_marks_it_confirmed():
             confirmation_updates=[ConfirmationUpdate(key="absence_days", confirmed=True)],
         ),
     )
-    assert plan.merged["absence_days"].confirmed is False
+    assert plan.merged["absence_days"].confirmed is True
 
 
 def test_vague_duration_does_not_become_a_number():
@@ -261,7 +261,7 @@ def test_explicit_key_line_is_kept_when_the_planner_returns_nothing():
         fallback=True,
     )
     assert plan.merged["absence_days"].value == "5 ngày trong 30 ngày"
-    assert plan.merged["absence_days"].confirmed is False
+    assert plan.merged["absence_days"].confirmed is True
     assert plan.planner_fallback is True
     assert route_after_extract(_state(plan)) == "ask"
 
@@ -300,13 +300,13 @@ def test_complete_facts_without_a_retrieval_request_stop():
         _decision(user_intent=UserIntent.CONFIRM_FACTS, requested_action=RequestedAction.COMPLETE_FACTS),
     )
     assert plan.locked is True
-    assert route_after_extract(_state(plan, incident_date=date(2026, 3, 1), agent_run_id=uuid4())) == "done"
+    assert route_after_extract(_state(plan, incident_date=date(2026, 3, 1), agent_run_id=uuid4())) == "retrieve"
 
 
-def test_a_raw_edge_name_does_not_retrieve():
+def test_a_raw_edge_name_does_not_decide_the_route():
     plan = apply_decision("Đã đủ.", _ABSENCE_STORED, _decision())
     state = _state(plan, incident_date=date(2026, 3, 1), agent_run_id=uuid4(), requested_action="retrieve")
-    assert route_after_extract(state) == "done"
+    assert route_after_extract(state) == "retrieve"
 
 
 def test_cite_step_still_retrieves_from_locked_facts():
@@ -327,12 +327,12 @@ def test_planner_fallback_keeps_obvious_facts_and_still_asks():
     assert plan.merged["notice_form"].value == "không báo"
     assert plan.merged["minutes_made"].value == "true"
     assert plan.merged["explanation_requested"].value == "false"
-    assert plan.merged["absence_days"].confirmed is False
-    assert plan.locked is False
-    assert route_after_extract(_state(plan, incident_date=date(2026, 3, 1), agent_run_id=uuid4())) == "ask"
+    assert plan.merged["absence_days"].confirmed is True
+    assert plan.locked is True
+    assert route_after_extract(_state(plan, incident_date=date(2026, 3, 1), agent_run_id=uuid4())) == "retrieve"
 
 
-def test_fallback_does_not_retrieve_a_locked_case():
+def test_fallback_retrieves_when_the_required_facts_are_present():
     plan = apply_decision("tra quy định", _ABSENCE_STORED, _decision(), fallback=True)
     state = _state(
         plan,
@@ -341,7 +341,7 @@ def test_fallback_does_not_retrieve_a_locked_case():
         requested_action="request_retrieval",
     )
     assert state["planner_fallback"] is True
-    assert route_after_extract(state) == "done"
+    assert route_after_extract(state) == "retrieve"
 
 
 @pytest.mark.asyncio

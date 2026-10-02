@@ -34,7 +34,10 @@ async def search_policies(session: AsyncSession, query: SearchQuery) -> list[Pas
     await save_retrievals(
         session,
         query.agent_run_id,
-        [RetrievalHit(passage.chunk_id, passage.score) for passage in ranked],
+        [
+            RetrievalHit(passage.chunk_id, passage.score, passage.origin or "hybrid")
+            for passage in ranked
+        ],
     )
     return ranked
 

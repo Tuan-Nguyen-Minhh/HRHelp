@@ -93,6 +93,7 @@ def apply_decision(
         accepted.append(item.key)
     if allow_confirm:
         _confirm_stored(merged, stored, conflicts, confirmed_keys)
+    _accept_present(family, merged, conflicts)
     missing = _missing(family, merged)
     locked = not missing and _all_confirmed(family, merged) and not conflicts
     return ClarifyPlan(
@@ -161,25 +162,24 @@ def _explicit_reads(text: str) -> list[_Read]:
 def _place(
     merged: dict[str, StoredFact],
     conflicts: list[FactConflict],
-    stored: dict[str, StoredFact],
+    _stored: dict[str, StoredFact],
     item: _Read,
-    accept_replacement: bool,
+    _accept_replacement: bool,
 ) -> None:
-    current = stored.get(item.key)
-    if current is not None and current.confirmed and current.value != item.value:
-        if accept_replacement:
-            merged[item.key] = StoredFact(item.value, True)
-            conflicts[:] = [conflict for conflict in conflicts if conflict.key != item.key]
-            return
-        if any(conflict.key == item.key for conflict in conflicts):
-            return
-        conflicts.append(FactConflict(item.key, current.value, item.value, item.evidence))
-        merged[item.key] = current
-        return
-    if current is not None and current.confirmed:
-        merged[item.key] = current
-        return
-    merged[item.key] = StoredFact(item.value, False)
+    merged[item.key] = StoredFact(item.value, True)
+    conflicts[:] = [conflict for conflict in conflicts if conflict.key != item.key]
+
+
+def _accept_present(family: str, merged: dict[str, StoredFact], conflicts: list[FactConflict]) -> None:
+    """A filled fact is the working value. The chat does not wait for a separate confirmation."""
+    blocked = {conflict.key for conflict in conflicts}
+    for spec in required_specs(family):
+        if spec.key in blocked:
+            continue
+        item = merged.get(spec.key)
+        if item is None or not item.value.strip() or item.confirmed:
+            continue
+        merged[spec.key] = StoredFact(item.value, True)
 
 
 def _confirm_stored(

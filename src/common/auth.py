@@ -1,17 +1,19 @@
-"""Login, registration, and refresh. The token is what later routes authorize against."""
+"""Login, registration, refresh, logout, and the current user."""
 
 import re
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.common.deps import get_session
+from src.common.deps import get_actor, get_session
+from src.core.security.dependencies import get_current_active_user
 from src.core.security.rbac import RoleEnum
-from src.core.security.tokens import authenticate, refresh_access, register_account
+from src.core.security.tokens import authenticate, refresh_access, register_account, revoke_refresh
+from src.models.users import User
 
 router = APIRouter(prefix="/auth", tags=["Đăng nhập"])
 
@@ -28,6 +30,22 @@ class TokenResponse(BaseModel):
 
 class RefreshToken(BaseModel):
     refresh_token: str
+
+
+class LogoutRequest(BaseModel):
+    refresh_token: str | None = None
+
+
+class MeResponse(BaseModel):
+    """The signed-in user. The password hash is never included."""
+
+    user_id: UUID
+    email: str
+    full_name: str | None
+    role: str
+    is_active: bool
+    roles: list[str]
+    permissions: list[str]
 
 
 class RegisterRequest(BaseModel):
@@ -71,7 +89,8 @@ class RegisterRequest(BaseModel):
         if value is None or value == "":
             return RoleEnum.HR
         text = str(value).strip().upper()
-        if text not in {item.value for item in RoleEnum}:
+        public = {RoleEnum.HR.value, RoleEnum.MANAGER.value, RoleEnum.LEGAL.value}
+        if text not in public:
             raise ValueError("Vai trò phải là HR, MANAGER hoặc LEGAL.")
         return text
 
@@ -109,3 +128,31 @@ async def refresh(
 ) -> TokenResponse:
     """Cấp access token mới theo role và permission đang lưu."""
     return TokenResponse(**await refresh_access(session, body.refresh_token))
+
+
+@router.post("/logout", status_code=204)
+async def logout(
+    actor: Annotated[User, Depends(get_actor)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    body: Annotated[LogoutRequest | None, Body()] = None,
+) -> None:
+    """Retire a refresh token. The access token remains valid until it expires."""
+    if body is not None and body.refresh_token:
+        await revoke_refresh(session, actor.id, body.refresh_token)
+
+
+@router.get("/me", response_model=MeResponse)
+async def me(
+    actor: Annotated[User, Depends(get_actor)],
+    current: Annotated[dict[str, Any], Depends(get_current_active_user)],
+) -> MeResponse:
+    """Who the access token belongs to."""
+    return MeResponse(
+        user_id=actor.id,
+        email=actor.email,
+        full_name=actor.full_name,
+        role=actor.role,
+        is_active=bool(actor.is_active),
+        roles=list(current.get("roles") or []),
+        permissions=list(current.get("permissions") or []),
+    )

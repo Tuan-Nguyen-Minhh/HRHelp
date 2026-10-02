@@ -2,8 +2,8 @@
 
 - **Mã dự án:** P-029
 - **Sản phẩm:** HR Help
-- **Ngày:** 26/09/2026
-- **Trạng thái:** Bản brainstorm bám PRD, Project Brief và schema hiện có
+- **Ngày:** 01/10/2026
+- **Trạng thái:** Luồng người đã gắn trên kiến trúc `src/` hiện có. HR lập biên bản rồi gửi pháp chế hoặc chuyển thẳng quản lý. Pháp chế duyệt hoặc yêu cầu xử lý lại. Quản lý duyệt lần cuối. Không đổi cây `backend/app/`
 
 Tài liệu này mô tả các feature cần có để biến khung template thành một ứng dụng xử lý kỷ luật lao động dùng được. Mỗi feature có một sequence diagram chi tiết.
 
@@ -11,12 +11,12 @@ Thành phần dùng chung trong các sơ đồ:
 
 | Thành phần | Vai trò trong luồng |
 |---|---|
-| HR / Quản lý | Mở hồ sơ, chat, xác nhận fact, đọc đề xuất và lý do giữ lại |
-| Pháp chế | Đọc ticket đã đẩy, trên hồ sơ được cấp quyền `REVIEW`, duyệt hoặc từ chối |
-| Người ký | Ban hành quyết định. Là người dùng thật, không phải agent |
-| Web | Giao diện |
+| HR | Mở hồ sơ, chat, lập biên bản. Gửi phiếu `POST /cases/{id}/ticket` hoặc xử lý luôn `POST /cases/{id}/escalate` |
+| Pháp chế | Hàng chờ mọi hồ sơ `PENDING_LEGAL` theo vai trò. Duyệt thì sang quản lý. Từ chối thì yêu cầu HR xử lý lại, bắt buộc có ghi chú |
+| Quản lý | Hàng chờ `GET /manager/queue`. Duyệt lần cuối bằng `POST /cases/{id}/decisions`. Tạo, sửa, xóa tài khoản HR và pháp chế qua `/manager/users` |
+| Web | Ứng dụng Vite React trong `frontend/` |
 | FastAPI | Kiểm tra quyền, gọi từng sub-agent, ghi database |
-| LangGraph | Trích fact, hỏi lại, tra cứu, viết đề xuất, rồi giữ hồ sơ hoặc đẩy ticket |
+| LangGraph | Case graph, recommend graph, dispatch graph. Mỗi graph một lần gọi |
 | PostgreSQL | Hồ sơ, fact, hội thoại, đề xuất, nháp, review, quyết định |
 | pgvector | Chunk văn bản và embedding tiền lệ |
 
@@ -24,12 +24,12 @@ Thành phần dùng chung trong các sơ đồ:
 
 | Lớp | Đã có | Chưa có |
 |---|---|---|
-| Sản phẩm | PRD: HR nhập tình huống, agent hỏi thêm, đối chiếu luật và nội quy, đề xuất quy trình, pháp chế duyệt, người ban hành quyết định | Giao diện, đăng nhập, màn hình hồ sơ |
-| Agent | LangGraph 2 node `analyze` → `respond`, một API `POST /chat` | Làm rõ tình tiết, RAG, trích dẫn, đề xuất, nháp văn bản |
-| Dữ liệu | 20 bảng: user, hồ sơ, fact, hội thoại, chính sách theo phiên bản, chunk, đề xuất, trích dẫn, nháp, review, quyết định, tiền lệ | API và service ghi vào các bảng này |
-| Kho luật | `scripts/seed_hr_from_legal.py` đổ Bộ luật Lao động, Nghị định 145/2020 và Nghị định 283/2026 vào `policies` → `policy_versions` → `documents` → `document_chunks` (1289 chunk, embedding 1024 chiều, `search_tsv`) | Nội quy công ty. Feature 5 không đọc bốn bảng `legal_*` |
+| Sản phẩm | Đăng nhập, mở hồ sơ, chat, đối chiếu, đề xuất, đẩy phiếu, duyệt, ban hành, tiền lệ, đóng hồ sơ, dashboard, xuất JSON/Markdown, giao diện `frontend/` | PDF. Access token vẫn sống đến khi hết hạn |
+| Agent | Case graph, recommend graph, dispatch graph. Tên ledger: `hr-help-rules`, `hr-help-retrieval`, `hr-help-assessment`, `hr-help-dispatch`. `POST /api/v1/chat` vẫn là graph mẫu, không thuộc luồng hồ sơ | Graph duyệt hoặc graph ký. Người quyết định, agent không duyệt |
+| Dữ liệu | Hồ sơ, fact, hội thoại, đề xuất, trích dẫn, nháp, `reviews`, `disciplinary_decisions`, `audit_logs`, `notifications`, `idempotency_keys`, `revoked_tokens`. Migration `0007_manager_notice` | Không xóa lịch sử duyệt, quyết định, hay audit |
+| Kho luật | `scripts/seed_hr_from_legal.py` đổ `BLLD_2019`, `ND145_2020`, `ND283_2026` và nội quy `NQCT` vào `policies` → `policy_versions` → `documents` → `document_chunks` (1307 chunk, embedding 1024 chiều, `search_tsv`) | Feature 5 không đọc bốn bảng `legal_*` |
 
-Ba vai trò trong schema là `HR`, `MANAGER`, `LEGAL`. Mức chế tài là khiển trách (`WARNING`), cảnh cáo (`REPRIMAND`), kéo dài nâng lương (`WAGE_POSTPONEMENT`), cách chức (`DEMOTION`), sa thải (`DISMISSAL`) và chấm dứt hợp đồng (`TERMINATION`). Sa thải và chấm dứt hợp đồng là hai căn cứ khác nhau. Agent phải tách chúng.
+Năm vai trò là `HR`, `MANAGER`, `LEGAL`, `SIGNER`, `ADMIN`. Mức kỷ luật công ty là khiển trách (`WARNING`), cảnh cáo (`REPRIMAND`), kéo dài nâng lương (`WAGE_POSTPONEMENT`), cách chức (`DEMOTION`) và sa thải (`DISMISSAL`). `TERMINATION` còn trong ràng buộc SQL cũ nhưng dịch vụ ban hành không ghi mức đó. Sa thải và chấm dứt hợp đồng là hai căn cứ khác nhau. Agent không tự chọn mức nặng hơn, và không hard-code ngưỡng ngày.
 
 ## Feature nên có
 
@@ -59,67 +59,61 @@ Ranh giới human-in-the-loop giữ nguyên theo PRD: agent phân tích, cảnh 
 
 `cases.status` chỉ nhận các giá trị `OPEN`, `NEED_INFO`, `ANALYZED`, `PENDING_LEGAL`, `APPROVED`, `REJECTED`, `DECIDED`, `CLOSED`.
 
-Feature 6 đóng `ProposalHandoff` sau khi ghi đề xuất. Feature 7 đọc message đó. Chưa đủ căn cứ thì hồ sơ dừng ở `ANALYZED`, recommendation giữ `DRAFT`, không có ticket. Đủ căn cứ thì sub-agent đẩy ticket và hồ sơ sang `PENDING_LEGAL`.
+Mở hồ sơ không gọi agent. Chat là cửa vào. Một lượt chat đủ tình tiết và có `incident_date` đi hết case graph → recommend graph → dispatch graph. Feature 6 chỉ đọc `CaseHandoff`. Feature 7 chỉ đọc `ProposalHandoff`. Chưa đủ căn cứ thì hồ sơ ở `ANALYZED`, recommendation giữ `DRAFT`, không có `case_drafts`. Đủ căn cứ thì cùng request trả bản xem trước của bốn nháp, `ticket.disposition = PREVIEW`, và hỏi HR có đẩy cho pháp chế không. Bốn nháp chỉ được ghi, recommendation sang `PENDING_REVIEW` và hồ sơ sang `PENDING_LEGAL` khi HR gửi `POST /api/v1/cases/{id}/ticket` kèm mã pháp chế. HR không gửi thì hồ sơ ở lại `ANALYZED`. Feature 8 chưa có route duyệt, nên chuỗi agent dừng tại hàng chờ đó.
+
+`POST /api/v1/cases/{id}/facts/confirm` là lối sửa tình tiết. Chat không đợi lối này. Khi fact đã khóa, lối confirm cũng gọi feature 5, 6 và 7. Nhánh `SUBMIT` của cả hai lối đều dừng ở bản xem trước và dùng cùng cửa `POST /ticket`. Pháp chế duyệt hoặc từ chối phiếu đó. Hồ sơ `REJECTED` được HR mở lại. Người ký chỉ ban hành khi hồ sơ `APPROVED`. Đóng hồ sơ chỉ đi từ `DECIDED` khi đã có quyết định.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor HR as HR hoặc Quản lý
-    actor LC as Pháp chế
-    actor SG as Người ký
     participant API as FastAPI
-    participant AG as LangGraph
+    participant CG as Case graph
+    participant RG as Recommend graph
+    participant DG as Dispatch graph
     participant DB as PostgreSQL
 
-    HR->>API: Tạo hồ sơ, mô tả tình huống, ngày xảy ra
-    API->>DB: INSERT cases, status OPEN
-    API->>AG: Phân tích tin nhắn đầu tiên
+    HR->>API: POST /api/v1/cases, Bearer
+    API->>CG: ainvoke step = open
+    CG->>DB: INSERT cases OPEN, conversations ACTIVE
+    API-->>HR: 201. Chưa có fact, chưa có agent_runs
+
+    HR->>API: POST /api/v1/cases/id/messages
+    API->>DB: INSERT messages USER, agent_runs hr-help-rules
+    API->>CG: ainvoke step = clarify, semantic
+    CG->>CG: Planner, rồi Python ghi fact confirmed
     alt Còn thiếu tình tiết bắt buộc
-        AG->>DB: UPSERT case_facts, status NEED_INFO
-        AG-->>HR: Hỏi đúng câu còn thiếu
-        HR->>API: Trả lời bổ sung
-        API->>AG: Trích fact và hỏi tiếp
-    else Fact đã được HR xác nhận
-        AG->>DB: INSERT recommendation DRAFT và citation
-        AG->>DB: UPDATE cases status ANALYZED
-        AG-->>HR: Đề xuất mức chế tài, quy trình, rủi ro
-    end
-    Note over API,AG: Feature 6 đóng ProposalHandoff. Feature 7 đọc message đó
-    alt Đề xuất chưa đủ để chuyển pháp chế
-        AG->>DB: Giữ recommendations DRAFT và cases ANALYZED
-        AG-->>HR: Lý do giữ lại, không có ticket
-    else Đủ căn cứ
-        AG->>DB: INSERT case_drafts TICKET, status PENDING_REVIEW, case PENDING_LEGAL
-        LC->>API: Đọc đề xuất, trích dẫn và ticket
-        alt Từ chối
-            LC->>API: REJECT kèm comment
-            API->>DB: INSERT reviews, case REJECTED
-            API-->>HR: Lý do từ chối
-            alt HR sửa tình tiết
-                HR->>API: Cập nhật fact
-                API->>DB: status NEED_INFO, quay lại chat
-            else HR giữ fact, viết lại đề xuất
-                API->>AG: Sinh recommendation mới
-                AG->>DB: Bản REJECTED giữ nguyên, bản mới DRAFT, case ANALYZED
-                Note over API,AG: Feature 6 đóng ProposalHandoff mới. Feature 7 xét lại
-            end
-        else Duyệt
-            LC->>API: APPROVE
-            API->>DB: INSERT reviews, case APPROVED
-            SG->>API: Ký quyết định
-            API->>DB: INSERT disciplinary_decisions, case DECIDED
-            opt Đánh dấu tiền lệ
-                SG->>API: precedent_summary
-                API->>DB: is_precedent true và embedding
-            end
-            API->>DB: UPDATE cases status CLOSED
+        CG-->>API: Một câu hỏi liệt kê mọi mục thiếu
+        API->>DB: UPSERT case_facts confirmed true, cases NEED_INFO
+        API-->>HR: Câu hỏi, chưa có CaseHandoff
+    else Đủ fact nhưng hồ sơ chưa có incident_date
+        API-->>HR: Chưa đối chiếu được
+    else Đủ fact và có incident_date
+        CG->>DB: Đọc document_chunks còn hiệu lực vào ngày vụ
+        CG-->>API: CaseHandoff
+        API->>RG: Feature 6 chỉ đọc CaseHandoff
+        RG->>DB: INSERT recommendations DRAFT, cases ANALYZED
+        RG-->>API: ProposalHandoff
+        API->>DG: Feature 7 chỉ đọc ProposalHandoff
+        alt HOLD
+            DG-->>API: hold_code
+            API->>DB: Giữ DRAFT và ANALYZED. Không ghi case_drafts
+            API-->>HR: Báo cáo và lý do chưa đẩy phiếu
+        else SUBMIT
+            DG-->>API: Bốn nháp để xem, chưa ghi
+            API->>DB: Giữ DRAFT và ANALYZED. Tin ASSISTANT metadata.kind = dispatch_preview
+            API-->>HR: Báo cáo, phiếu xem trước, câu hỏi có đẩy không
+            HR->>API: POST /api/v1/cases/id/ticket, legal_code
+            API->>DB: case_drafts PENDING_REVIEW, recommendation PENDING_REVIEW, cases PENDING_LEGAL
+            API-->>HR: Phiếu đang ở hàng chờ
         end
     end
+    Note over API,DB: PENDING_LEGAL không nhận thêm tin nhắn. Duyệt nằm ở POST /cases/id/reviews
 ```
 
 ## 1. Đăng nhập và quyền trên hồ sơ
 
-`HR` và `MANAGER` mở hồ sơ và chat. `LEGAL` không soạn quyết định thay HR. Pháp chế chỉ vào vụ khi được cấp quyền `REVIEW`. Người tạo hồ sơ luôn thấy vụ của mình qua `cases.created_by`. Người khác cần một dòng trong `case_access` với mức `VIEW` hoặc `REVIEW`.
+`HR` mở hồ sơ, lập biên bản, rồi gửi phiếu hoặc chuyển thẳng quản lý. `LEGAL` duyệt phiếu hoặc yêu cầu xử lý lại, không sửa fact. Trang pháp chế thấy mọi hồ sơ `PENDING_LEGAL`. `MANAGER` duyệt lần cuối mức đã lưu. `SIGNER` vẫn ban hành trên hàng quyết định, không sửa đề xuất. `ADMIN` quản trị người dùng, văn bản và số liệu, nhưng không duyệt phiếu và không ký thay. Người tạo hồ sơ có đủ quyền trên vụ của mình. `LEGAL` và `SIGNER` không được cấp `EDIT`.
 
 ```mermaid
 sequenceDiagram
@@ -172,7 +166,7 @@ sequenceDiagram
 
 Mọi tư vấn gắn một vụ, một nhân viên và một ngày xảy ra. `incident_date` ghi trên `cases` là mốc feature 5 dùng để chọn `policy_versions` còn hiệu lực. Kho chữ luật hiện có là `BLLD_2019` (`LAW`, từ 2021-01-01), `ND145_2020` (`DECREE`, 2021-02-01 đến 2026-09-09) và `ND283_2026` (`DECREE`, từ 2026-09-10), nằm trên `policies` → `policy_versions` → `documents` → `document_chunks`. Bước mở hồ sơ chỉ ghi `cases` và `conversations`.
 
-`POST /api/v1/cases` chạy node `open` của case graph rồi dừng. Chưa có tin nhắn, chưa có `agent_runs`, chưa rút fact. Client gửi header `X-User-Id`. User phải đang active, role `HR` hoặc `MANAGER`.
+`POST /api/v1/cases` chạy node `open` của case graph rồi dừng. Chưa có tin nhắn, chưa có `agent_runs`, chưa rút fact. Client gửi `Authorization: Bearer` sau `POST /api/v1/auth/login`. Quyền là `case:open`. `users.role` phải là `HR` hoặc `MANAGER`. Token hỏng hoặc user không active thì 401. Role khác thì 403.
 
 ```mermaid
 sequenceDiagram
@@ -182,12 +176,12 @@ sequenceDiagram
     participant CG as Case graph
     participant DB as PostgreSQL
 
-    HR->>API: POST /api/v1/cases, header X-User-Id
+    HR->>API: POST /api/v1/cases, Authorization Bearer
     Note right of API: body gồm case_code, employee_code, employee_name, description, incident_date
-    API->>DB: SELECT users theo X-User-Id
-    alt Không có user hoặc is_active false
+    API->>DB: SELECT users theo user_id trong access token
+    alt Token hỏng, không có user, hoặc is_active false
         API-->>HR: 401
-    else Role không phải HR hoặc MANAGER
+    else Không có quyền case:open, hoặc role không phải HR hay MANAGER
         API-->>HR: 403
     else Được mở hồ sơ
         API->>CG: ainvoke step = open
@@ -204,9 +198,9 @@ sequenceDiagram
         end
     end
 
-    HR->>API: GET /api/v1/cases/id, header X-User-Id
+    HR->>API: GET /api/v1/cases/id, Authorization Bearer
     API->>DB: SELECT cases và conversations ACTIVE
-    alt Không phải người tạo
+    alt Không có quyền case:read, hoặc không phải người tạo
         API-->>HR: 403
     else Hồ sơ không có
         API-->>HR: 404
@@ -217,9 +211,13 @@ sequenceDiagram
 
 ## 3. Chat làm rõ tình tiết
 
-`POST /api/v1/cases/{id}/messages` chỉ chạy `step = clarify`. Graph đi `extract`, rồi `ask` hoặc dừng. Lượt chat này không vào retrieval và không đề xuất mức.
+`POST /api/v1/cases/{id}/messages` chạy `step = clarify` với `semantic = true`. Client gửi `Authorization: Bearer`. Quyền là `case:chat`. `users.role` là `HR` hoặc `MANAGER`, và user là `cases.created_by`.
 
-`case_facts` là phiếu tình tiết hiện tại của hồ sơ, một dòng cho mỗi `fact_key`. Fact đã `confirmed` không bị câu sau đè. Fact chưa xác nhận thì được thay bằng giá trị mới rút từ `cases.description` và các tin `USER`. Chat ghi `confirmed = false` cùng `source_message_id`. HR xác nhận ở `POST /api/v1/cases/{id}/facts/confirm` thì dòng đó thành `confirmed = true`, có `confirmed_by` và `confirmed_at`.
+Extract gọi planner `gpt-4o-mini` qua `OPENAI_API_KEY`. Python bỏ key lạ, giá trị mơ hồ và độ tin cậy dưới 0.5, rồi ghi fact hợp lệ với `confirmed = true` và `confirmed_by` là người gửi. Câu sau nêu giá trị khác thì thay giá trị đang lưu. Thiếu khóa hoặc planner lỗi sau một lần thử thì dùng bộ đọc regex. Dòng `key: value` vẫn được Python đọc. `agent_runs.model` của lượt chat là `hr-help-rules`.
+
+Thiếu mục bắt buộc thì một câu hỏi liệt kê hết các mục đó, hồ sơ sang `NEED_INFO`, chưa có `CaseHandoff`. Đủ mục nhưng chưa có `incident_date` thì trả lời là chưa đối chiếu được, không retrieve. Đủ mục và có `incident_date` thì cùng graph đi `retrieve` → `handoff`. FastAPI đưa `CaseHandoff` sang feature 6 rồi feature 7 trong cùng request. Không có lần gọi `step = cite` riêng trên lối chat.
+
+`POST /api/v1/cases/{id}/facts/confirm` là lối sửa tình tiết, không phải cổng bắt buộc của chat. Nhánh này dùng `assess` regex, không gọi planner. Fact vẫn thiếu thì hỏi lại và không mở `agent_runs` mới. Fact đã khóa và đã có đề xuất thì trả đề xuất đang lưu. Fact đã khóa mà chưa có đề xuất, hoặc vừa sửa thành đủ, thì chạy `step = cite` rồi feature 6 và 7.
 
 Bộ fact bắt buộc theo loại vụ:
 
@@ -243,32 +241,29 @@ sequenceDiagram
     participant ASK as ask
     participant DB as PostgreSQL
 
-    HR->>API: POST /api/v1/cases/id/messages, X-User-Id
+    HR->>API: POST /api/v1/cases/id/messages, Authorization Bearer
     API->>DB: SELECT users, cases, conversations ACTIVE
     alt Không được sửa hồ sơ
         API-->>HR: 401, 403, 404 hoặc 409
     else Được chat
         API->>DB: INSERT messages role USER
         API->>DB: INSERT agent_runs RUNNING, model hr-help-rules
-        API->>CG: ainvoke step = clarify
-        Note over CG,DB: extract và ask chỉ đọc cases, messages, case_facts
+        API->>CG: ainvoke step = clarify, semantic
+        Note over CG,DB: Planner đọc narrative. Python quyết định fact nào được ghi
         CG->>EX: description + tin USER + case_facts đã lưu
-        EX->>EX: Gộp fact, dòng confirmed giữ nguyên
-        alt Còn thiếu ô hoặc chưa confirmed
-            EX->>ASK: Một câu hỏi hoặc danh sách chờ xác nhận
+        EX->>EX: Fact hợp lệ thành confirmed. Giá trị mới thay giá trị cũ
+        alt Còn thiếu tình tiết
+            EX->>ASK: Một câu hỏi liệt kê mọi mục còn thiếu
             ASK-->>API: dừng
-            API->>DB: UPSERT case_facts confirmed false
+            API->>DB: UPSERT case_facts confirmed true
             API->>DB: cases status NEED_INFO
             API->>DB: INSERT messages ASSISTANT, agent_runs SUCCEEDED
-            API-->>HR: Câu hỏi, chưa có CaseHandoff
-        else Fact bắt buộc đã khóa
-            EX-->>API: dừng, không vào retrieve
-            API->>DB: INSERT messages ASSISTANT, agent_runs SUCCEEDED
-            alt Đã có câu trả lời lưu sẵn
-                API-->>HR: Fact đã khóa, câu trả lời đang giữ
-            else Chưa có câu trả lời
-                API-->>HR: Xác nhận lại để đối chiếu
-            end
+            API-->>HR: Một câu hỏi, chưa có CaseHandoff
+        else Đủ fact nhưng chưa có incident_date
+            API-->>HR: Chưa đối chiếu được. Không retrieve
+        else Fact bắt buộc đã đủ và có ngày vụ
+            EX->>CG: retrieve rồi handoff
+            Note over API,CG: Cùng request chạy feature 5, 6 và 7. Không gọi step cite riêng
         end
     end
 
@@ -281,15 +276,15 @@ sequenceDiagram
     else Payload không đổi, fact đã khóa, đã có câu trả lời
         API-->>HR: Câu trả lời đang lưu
     else Payload không đổi, fact đã khóa, chưa có câu trả lời
-        Note over API,CG: Cùng request chuyển sang feature 5
-    else HR sửa hoặc xác nhận
+        Note over API,CG: step = cite, rồi feature 6 và 7
+    else HR sửa giá trị
         API->>DB: UPDATE case_facts confirmed, confirmed_by, confirmed_at
-        API->>CG: ainvoke step = clarify lần nữa
+        API->>CG: assess lại, không gọi planner
         alt Vẫn thiếu fact bắt buộc
             API->>DB: cases NEED_INFO, messages ASSISTANT
-            API-->>HR: Câu hỏi tiếp
+            API-->>HR: Câu hỏi tiếp. Không mở agent_runs mới
         else Mọi fact đã khóa
-            Note over API,CG: Cùng request chuyển sang feature 5
+            Note over API,CG: step = cite, rồi feature 6 và 7
         end
     end
 ```
@@ -308,16 +303,18 @@ sequenceDiagram
     participant DB as PostgreSQL
 
     API->>CG: step = clarify
-    Note over CG,DB: Chỉ extract, rồi ask hoặc dừng
+    Note over CG,DB: extract, rồi ask, dừng, hoặc retrieve
     CG->>EX: text và stored facts
-    alt Còn thiếu fact hoặc chưa confirmed
-        EX->>ASK: missing_keys
+    alt Còn thiếu fact hoặc còn conflict
+        EX->>ASK: mọi missing_keys trong một câu
         ASK-->>CG: question
         CG-->>API: dừng
-        API->>DB: case_facts confirmed false, messages ASSISTANT
-    else facts_locked
-        EX-->>CG: facts và fact_lines
-        CG-->>API: dừng
+        API->>DB: case_facts confirmed true, messages ASSISTANT
+    else facts_locked và có incident_date và agent_run_id
+        EX->>CG: retrieve rồi handoff
+        CG-->>API: CaseHandoff, rồi feature 6 và feature 7
+    else facts_locked nhưng chưa có incident_date
+        CG-->>API: dừng, chưa đối chiếu
     end
 ```
 
@@ -325,7 +322,7 @@ sequenceDiagram
 
 Ba văn bản luật đã nằm trên chuỗi HR: `scripts/seed_hr_from_legal.py` ghi `policies`, `policy_versions`, `documents` (`EMBEDDED`) và `document_chunks` (embedding `mistral-embed` 1024 chiều, `search_tsv`). Sơ đồ dưới đây là API tải file về sau, cho nội quy và văn bản mới. Mỗi chính sách (`LAW`, `DECREE`, `CIRCULAR`, `INTERNAL_RULE`, `PRECEDENT`) có nhiều phiên bản. Hai phiên bản của cùng một chính sách không được chồng ngày hiệu lực. Ràng buộc này đã nằm trong `policy_versions`.
 
-Nội quy công ty chưa có trong kho. Không có nội quy thì agent chỉ trích luật, chưa trả lời được mức công ty được phép dùng.
+Nội quy công ty (mã NQCT, hiệu lực từ 2026-01-01) đã nằm trong kho. Hồ sơ có ngày xảy ra từ ngày đó trở đi mới đối chiếu được nội quy này.
 
 ```mermaid
 sequenceDiagram
@@ -370,17 +367,23 @@ sequenceDiagram
 
 ## 5. Đối chiếu và trích dẫn
 
-Nhánh này chạy trong cùng request `POST /api/v1/cases/{id}/facts/confirm` sau khi mọi fact bắt buộc đã `confirmed` và hồ sơ có `incident_date`. Case graph nhận `step = cite`, đi `extract` → `retrieve` → `handoff`, rồi dừng ở `CaseHandoff`. Feature 6 đọc message đó khi được gắn.
+Có hai cửa vào, cùng một node `retrieve` và cùng một `CaseHandoff`.
+
+Chat đủ fact và có `incident_date` thì case graph đang ở `step = clarify` tự đi `retrieve` → `handoff`. Không có lần `ainvoke` thứ hai với `step = cite`. `agent_run_id` của lượt chat được đưa vào `SearchQuery`.
+
+`POST /api/v1/cases/{id}/facts/confirm` khi fact đã khóa và hồ sơ có `incident_date` thì mở `agent_runs` mới, model `hr-help-rules`, ghi một tin `SYSTEM` các fact đã khóa, rồi `ainvoke` với `step = cite`: `extract` → `retrieve` → `handoff`. Hồ sơ chưa có `incident_date` thì 422.
+
+Cả hai cửa dừng case graph ở `CaseHandoff`. FastAPI đưa message đó sang feature 6 trong cùng request. Response HTTP cho HR được trả sau feature 7. Nhánh `SUBMIT` của response đó là bản xem trước, chưa ghi phiếu.
 
 `retrieve` dựng `SearchQuery` từ `cases.description` và `fact_lines`, rồi gọi retrieval graph. Cả ba nhánh và bước mục lục dùng một cửa đọc:
 
 `policies.is_active` → `policy_versions` trạng thái `ACTIVE`, `effective_from` ≤ `incident_date` và `effective_to` tính cả ngày đó (`NULL` nghĩa là còn mở) → `documents.ingest_status` là `CHUNKED` hoặc `EMBEDDED` → `document_chunks`.
 
-Ngày vụ 2026-03-01 gặp `BLLD_2019` và `ND145_2020`. Ngày vụ từ 2026-09-10 gặp `BLLD_2019` và `ND283_2026`. Script `scripts/seed_hr_from_legal.py` ghi `documents.ingest_status = EMBEDDED`. Mỗi chunk có `content`, `article`, `clause`, `point`, `section` (`ARTICLE`, `CLAUSE` hoặc `POINT`), `section_title` là breadcrumb dạng `TEXT`, và `metadata` giữ `article_title` cùng `legal_chunk_id`. `embedding` là `mistral-embed` 1024 chiều. `search_tsv` là `tsvector` sinh sẵn từ `section_title` và `content`, config `simple`, index GIN, migration `0004_document_chunks_tsv`.
+Ngày vụ 2026-03-01 gặp `BLLD_2019`, `ND145_2020` và nội quy `NQCT`. Ngày vụ từ 2026-09-10 gặp `BLLD_2019`, `ND283_2026` và `NQCT`. Ngày vụ trước 2026-01-01 không gặp `NQCT`. Script `scripts/seed_hr_from_legal.py` ghi `documents.ingest_status = EMBEDDED`. Mỗi chunk có `content`, `article`, `clause`, `point`, `section` (`ARTICLE`, `CLAUSE` hoặc `POINT`), `section_title` là breadcrumb dạng `TEXT`, và `metadata` giữ `article_title` cùng `legal_chunk_id`. `embedding` là `mistral-embed` 1024 chiều. `search_tsv` là `tsvector` sinh sẵn từ `section_title` và `content`, config `simple`, index GIN, migration `0004_document_chunks_tsv`.
 
 `similarity` lấy cosine trên `document_chunks.embedding`. Query chưa có vector thì nhánh này embed `SearchQuery.text`. Vector khác 1024 chiều, thiếu `MISTRAL_API_KEY`, hoặc embed lỗi thì nhánh đó rỗng. `bm25` gọi `ts_rank` trên `search_tsv` của mọi chunk còn hiệu lực và giữ tối đa 8 đoạn. `lexical` là `ILIKE` trên `content`, trần 40 dòng, rồi giữ tối đa 8. Một nhánh lỗi thì kênh đó rỗng, hai nhánh kia vẫn được gộp. `rrf` rồi `rerank` giữ tối đa 8 đoạn, `retrieval = hybrid`. Cả ba rỗng thì `page_index` lấy đầu điều theo cụm neo của family, khớp `content`, `section_title` hoặc `metadata.article_title`. Mục lục cũng không khớp thì `passages` rỗng và `retrieval = empty`.
 
-`missing_internal_rule` trên message là `true` khi không đoạn nào có `policy_type = INTERNAL_RULE`. Bản đổ hiện có luật và nghị định, chưa có nội quy, nên cờ này đúng với kho đang nạp.
+`missing_internal_rule` trên message là `true` khi không đoạn nào được giữ có `policy_type = INTERNAL_RULE`. `NQCT` là nội quy trong kho, hiệu lực từ 2026-01-01. Cờ này đúng khi lượt retrieval không giữ được đoạn nội quy, kể cả khi kho có `NQCT` nhưng ngày vụ nằm trước ngày hiệu lực hoặc đoạn đó không vào tám đoạn cuối.
 
 ```mermaid
 sequenceDiagram
@@ -394,7 +397,7 @@ sequenceDiagram
     participant HO as handoff
     participant DB as PostgreSQL
 
-    Note over HR,CG: Tiếp từ feature 3 khi fact đã khóa
+    Note over HR,CG: Cửa facts/confirm. Chat đã retrieve trong step clarify, không vào sơ đồ này
     alt Hồ sơ chưa có incident_date
         API-->>HR: 422
     else Có ngày vụ việc
@@ -433,7 +436,8 @@ sequenceDiagram
         HO-->>API: dừng
         API->>DB: INSERT messages ASSISTANT, metadata.kind = handoff
         API->>DB: UPDATE agent_runs SUCCEEDED, output_message_id
-        API-->>HR: CaseHandoff
+        API->>API: Đưa CaseHandoff sang feature 6
+        Note over API,HR: Response cho HR được trả sau feature 7
     end
 ```
 
@@ -458,7 +462,9 @@ Chuẩn là `AppliedStandard` trên câu trả lời và trên `ProposalHandoff`
 | Tiền lệ | `precedent` | Đối chiếu. Không nâng mức |
 | Nghị định xử phạt, gồm Nghị định 283 | `inspection_risk` | Cảnh báo. Không vào `sanction_type` |
 
-Không có mô hình, hoặc trích dẫn không khớp nguyên văn, thì `sanction_type` để trống và rủi ro `HIGH`. Trạng thái `NEED_MORE_FACTS` cũng để trống mức. `MULTIPLE_SUPPORTED` để trống mức, rủi ro `MEDIUM`, feature 7 giữ hồ sơ. Khi còn đúng một mức đã được chứng minh, feature 7 đẩy ticket, hồ sơ sang `PENDING_LEGAL` để pháp chế xem ở feature 8. Chuẩn không bao giờ nhận `TERMINATION`. Agent không chọn mức nặng hơn khi văn bản còn để ngỏ.
+Graph là `precedent` rồi `recommend`. `recommend` tách `passages` thành bốn lớp. Python chặn model trước khi gọi nếu retrieval chỉ là mục lục, kho trống, hợp đồng thử việc, không có luật áp được, biên bản hoặc yêu cầu giải trình chưa xong, hoặc không có nội quy. Các cửa đó để `sanction_type` trống và rủi ro `HIGH`. Kho trống khi không còn lớp áp được thì rủi ro `CRITICAL`.
+
+Model là `gpt-4o-mini` qua `OPENAI_API_KEY`, temperature 0. Không có khóa, gọi lỗi, hoặc đánh giá `NEED_MORE_FACTS` thì mức trống và rủi ro `HIGH`. `MULTIPLE_SUPPORTED` để trống mức, rủi ro `MEDIUM`. Trích dẫn không phải nguyên văn trong chunk được nêu thì Python bỏ mức. Chuẩn không bao giờ nhận `TERMINATION`. Một mức đã được chứng minh vẫn chưa đủ để đẩy phiếu: feature 7 còn xét rủi ro, nội quy và thủ tục.
 
 Kết quả ghi vào `recommendations`: nhận định, `sanction_type`, `process_steps`, `risk_level`. Mỗi citation giữ `quote`, điều, khoản, điểm và `chunk_id`.
 
@@ -472,33 +478,44 @@ sequenceDiagram
     participant DB as PostgreSQL
 
     Note over AG: Nhận CaseHandoff từ feature 5
-    AG->>AG: Tách passages thành luật, nghị định hướng dẫn, nội quy, tiền lệ, nghị định xử phạt
-    AG->>AG: Gộp thành AppliedStandard, một mức và một quy trình
+    AG->>AG: precedent đếm đoạn tiền lệ, không nâng mức
+    AG->>AG: recommend tách passages rồi gọi model nếu cửa Python cho qua
     alt Đánh giá chưa chốt một mức
-        AG->>AG: sanction_type trống, aligned false, feature 7 giữ hồ sơ
+        AG->>AG: sanction_type trống, aligned false
     else Một mức được trích nguyên văn từ nội quy và từ luật hoặc nghị định
         AG->>AG: Chốt mức đó, quy trình bốn bước
-        Note right of AG: Feature 7 đẩy ticket sang PENDING_LEGAL. Không trả TERMINATION
+        Note right of AG: Không trả TERMINATION. Graph này không đẩy ticket
     end
-    AG->>DB: INSERT recommendations status DRAFT, rationale, sanction_type, process_steps, risk_level, agent_run_id
+    AG->>DB: Siêu thế DRAFT cũ. INSERT recommendations status DRAFT
     loop Từng đoạn đã dùng trong câu trả lời
         AG->>DB: INSERT recommendation_citations quote, article, clause, point, chunk_id, score
     end
     AG->>DB: UPDATE cases status ANALYZED
-    AG->>DB: INSERT messages role ASSISTANT, nội dung đề xuất, metadata.kind = recommendation
-    AG->>AG: Đóng ProposalHandoff từ đề xuất vừa ghi
-    API-->>UI: ProposalHandoff và đề xuất đã phân tầng
-    UI-->>HR: Hiện mức, quy trình, rủi ro, trích dẫn
-    Note over AG,HR: Case vẫn ANALYZED, recommendation vẫn DRAFT. Feature 7 đọc message này
+    API->>DB: INSERT messages role ASSISTANT, nội dung đề xuất, metadata.kind = recommendation
+    API->>API: Đóng ProposalHandoff từ đề xuất vừa ghi và CaseHandoff
+    Note over API,HR: Case vẫn ANALYZED, recommendation vẫn DRAFT. Feature 7 đọc message này
 ```
 
 Feature 6 dừng tại `ProposalHandoff`. Message này là đầu vào duy nhất của feature 7. Feature 6 không tạo `case_drafts`, không ghi `reviews`, và không đổi hồ sơ sang `PENDING_LEGAL`.
+
+Biên bản HR đọc trên màn hình là biểu mẫu có cấu trúc, không phải đoạn Markdown. Module `src/features/assessment/` đọc recommendation, tình tiết và citation đã lưu rồi trả JSON. Nó không gọi model lần hai, không bịa citation, không tự xác nhận và không gửi phiếu. Bộ tình tiết bắt buộc lấy theo mô tả vụ việc: nghỉ không phép thắng đi muộn. Bản nháp đang hỏi sai nhóm thì lần HR mở biên bản được lập lại một lần theo nhóm đó. Thiếu tình tiết bắt buộc thì chưa xác nhận được và phiếu không mở. Khi đã đủ căn cứ, sub-agent dispatch vẫn soạn phiếu xem trước như trước. Nút gửi pháp chế và “HR xử lý luôn” bật sau khi HR xác nhận biên bản, kể cả khi `ticket.disposition` là `HOLD` vì mức chưa khóa hoặc rủi ro còn cao. Chat không tự gửi. Mức `TERMINATION` vẫn không mở nút. Chưa xác nhận biên bản thì phiếu `HOLD` giữ nút đóng.
+
+Mỗi lần lập, sửa hoặc xác nhận thêm một dòng `assessment_versions`. Bản cũ chuyển `SUPERSEDED` nếu đang là nháp. Xác nhận không ghi đè nội dung bản trước. Migration `0009_assessment_form`.
+
+```text
+GET    /api/v1/cases/{id}/assessment
+POST   /api/v1/cases/{id}/assessment/generate
+PATCH  /api/v1/cases/{id}/assessment
+POST   /api/v1/cases/{id}/assessment/save
+POST   /api/v1/cases/{id}/assessment/confirm
+POST   /api/v1/cases/{id}/assessment/reanalyze
+```
 
 ## 7. Soạn nháp và đẩy ticket
 
 Sub-agent dispatch đứng sau feature 6. Case graph dừng ở `CaseHandoff`. Recommend graph dừng ở đề xuất đã ghi. Người gọi đóng `ProposalHandoff` rồi gọi dispatch graph. Dispatch graph không phải node của hai graph kia.
 
-Luồng xác nhận fact gọi dispatch một lần, ngay sau khi feature 6 ghi recommendation, trong cùng request. Chat chỉ chạy tới đây khi case graph trả `CaseHandoff`. `agent_runs.model` của lượt này là `hr-help-dispatch`.
+Cả chat và `facts/confirm` gọi dispatch ngay sau khi feature 6 ghi recommendation, trong cùng request. Chat chỉ tới đây khi case graph trả `CaseHandoff`. Hồ sơ không còn `ANALYZED` thì không gọi graph. `agent_runs.model` của lượt này là `hr-help-dispatch`. Nhánh `HOLD` kết thúc trong request đó. Nhánh `SUBMIT` chưa ghi nháp. `POST /api/v1/cases/{id}/ticket` gọi graph lần nữa, với cùng đề xuất cộng `legal_code`, rồi mới ghi.
 
 Đầu vào duy nhất là `state['proposal']` kiểu `ProposalHandoff`. Sai kiểu thì graph ném `TypeError`. Lượt đó đánh `agent_runs` thành `FAILED`, hồ sơ giữ `ANALYZED`, recommendation giữ `DRAFT`. Graph không mở session, không đọc `messages`, không đọc `case_facts`, không tra `document_chunks`, không gọi model. Cột token để trống.
 
@@ -514,10 +531,11 @@ Feature 6 đã có các cột đề xuất và bốn lớp trích dẫn. `Propos
 | `missing_internal_rule` | `true` khi không có lớp nội quy |
 | `message` | Cột `recommendations.recommendation`, câu HR đọc |
 | `legal_basis`, `internal_rule`, `precedent`, `inspection_risk` | Citation đã phân tầng. Mỗi đoạn có `citation_id`, `chunk_id`, `policy_type`, `policy_code`, `policy_name`, `quote`, `article`, `clause`, `point`, `score` |
+| `legal_code` | Email tài khoản pháp chế đang hoạt động. Bản xem trước để trống. Khác `employee.code` |
 
 `process_steps` gồm bốn bước `MINUTES`, `EXPLANATION_REQUEST`, `TIME_LIMIT`, `SIGNER`. Mỗi bước có `code`, `label`, `done`.
 
-FastAPI chỉ gọi graph khi hồ sơ đang `ANALYZED` và recommendation trên message đang `DRAFT`. Một `recommendation_id` chỉ dispatch một lần. Lần sau thấy dòng đó không còn `DRAFT` thì không gọi graph.
+FastAPI chỉ gọi graph khi hồ sơ đang `ANALYZED` và recommendation đang `DRAFT`. Lượt chat hoặc confirm chạy gate một lần. `POST /ticket` chạy lại graph khi HR đã chọn mã pháp chế và recommendation vẫn là `DRAFT`. Recommendation đã sang `PENDING_REVIEW` thì không gọi graph nữa.
 
 Node `gate` đọc message và trả một trong hai hướng. `hold_code` lấy điều kiện đầu tiên khớp:
 
@@ -531,18 +549,20 @@ Node `gate` đọc message và trả một trong hai hướng. `hold_code` lấy
 
 Khớp một dòng thì `disposition = HOLD`. Không khớp dòng nào thì `disposition = SUBMIT`. Node `draft` chỉ chạy ở nhánh `SUBMIT`. Node này chép `sanction_type` từ message vào nháp, không chọn lại mức, không lấy mức từ `precedent` hay `inspection_risk`.
 
-Nhánh giữ lại không ghi `case_drafts`, không ghi `reviews`, không đổi `recommendations.status`, không đổi `cases.status`. FastAPI ghi một tin `ASSISTANT` với `metadata.kind = dispatch_hold` và `metadata.hold_code`. Câu HR đọc là `rationale` trên message. Hồ sơ vẫn `ANALYZED`.
+Nhánh giữ lại không ghi `case_drafts`, không ghi `reviews`, không đổi `recommendations.status`, không đổi `cases.status`. FastAPI ghi một tin `ASSISTANT` với `metadata.kind = dispatch_hold` và `metadata.hold_code`. Nội dung tin đó là `rationale` khi rationale có chữ, nếu không thì là câu của `hold_code`. Báo cáo trên `GET /answer` đưa `ticket.disposition = HOLD`, `ticket.hold_code` và câu ngắn của mã đó. Hồ sơ vẫn `ANALYZED`.
 
-Nhánh đẩy ticket soạn đúng bốn nháp, theo thứ tự `MINUTES`, `EXPLANATION_REQUEST`, `DECISION`, `TICKET`. `title` cắt còn tối đa 255 ký tự. `employee_name` trống thì tiêu đề không gắn tên.
+Nhánh đẩy ticket soạn đúng bốn nháp trong bộ nhớ, theo thứ tự `MINUTES`, `EXPLANATION_REQUEST`, `DECISION`, `TICKET`. `title` cắt còn tối đa 255 ký tự. `employee_name` trống thì tiêu đề không gắn tên. Lượt chat và `facts/confirm` chưa ghi `case_drafts`. Hồ sơ giữ `ANALYZED`, recommendation giữ `DRAFT`. Tin `ASSISTANT` có `metadata.kind = dispatch_preview` và câu hỏi HR xem phiếu rồi chọn có đẩy hay không. `GET /answer` và lượt chat trả bốn nháp `status = PREVIEW` (chưa có dòng trong `case_drafts`) cùng `ticket.disposition = PREVIEW`, `ticket.queue = READY`. `legal.code` trên phiếu xem trước là `null`.
 
 - `MINUTES`: biên bản từ `fact_lines` và các bước đã `done`. Không bịa giờ họp hay người lập biên bản khi fact không có.
 - `EXPLANATION_REQUEST`: ghi nhận đã yêu cầu giải trình. Không bịa hạn trả lời khi fact không có.
 - `DECISION`: mức và nhận định, trích `legal_basis` và `internal_rule`. Nội dung ghi rõ đây là bản thảo, chưa có `decision_code`, chưa có người ký. `inspection_risk` nằm ở khối cảnh báo. `precedent` chỉ để đối chiếu.
-- `TICKET`: phiếu chuyển pháp chế. Gồm nhân viên, ngày vụ, family, fact đã khóa, mức, nhận định, rủi ro, bốn bước thủ tục, và từng citation kèm điều, khoản, điểm, `chunk_id`.
+- `TICKET`: phiếu chuyển pháp chế. Nội dung là JSON với `employee` (`name`, `code`), `case` (`case_id`, `incident_date`, `family`), `facts`, `legal` (`code`), `violation` (`summary`, `sanction_type`), `risk`, `process_steps`, và `citations` (`policy_type`, `policy_code`, `policy_name`, `quote`, `article`, `clause`, `point`, `chunk_id`).
 
-FastAPI ghi trong cùng transaction. `created_by` là `cases.created_by`, không phải user pháp chế và không phải agent. Bốn dòng `case_drafts` để `status = PENDING_REVIEW`, cùng `recommendation_id`. Recommendation chuyển `PENDING_REVIEW`. Hồ sơ chuyển `PENDING_LEGAL`. Tin `ASSISTANT` có `metadata.kind = dispatch_submit`. Thiếu một loại nháp, hoặc trùng loại, thì rollback, `agent_runs` thành `FAILED`, hồ sơ giữ `ANALYZED`, recommendation giữ `DRAFT`.
+HR đồng ý thì `POST /api/v1/cases/{id}/ticket` với body `legal_code` là email của một tài khoản pháp chế đang hoạt động. `GET /api/v1/legal-officers` liệt kê các email đó. Quyền là `case:chat`. Email trống hoặc không đúng dạng trả 422. Email không thuộc pháp chế trả 404. Hồ sơ không còn `ANALYZED` hoặc recommendation không còn `DRAFT` thì trả 409 và không ghi nháp. Gate `HOLD` cũng trả 409 khi biên bản chưa `CONFIRMED`, hoặc khi mức đã lưu là `TERMINATION`. Biên bản đã `CONFIRMED` thì HR vẫn gửi được: FastAPI soạn bốn nháp từ đề xuất đã lưu, không chọn mức mới, rồi `save_submission`. Khi gate là `SUBMIT`, FastAPI dựng lại `ProposalHandoff` từ recommendation và fact đã confirmed, gắn `legal_code`, gọi dispatch graph, rồi `save_submission`. `created_by` là `cases.created_by`, không phải user pháp chế và không phải agent. Bốn dòng `case_drafts` để `status = PENDING_REVIEW`, cùng `recommendation_id`. Recommendation chuyển `PENDING_REVIEW`. Hồ sơ chuyển `PENDING_LEGAL`. JSON của `TICKET` có `legal.code` bằng mã HR vừa nhập. Tin `ASSISTANT` có `metadata.kind = dispatch_submit`. `GET /answer` khi đó trả `ticket.disposition = SUBMIT`, `ticket.queue = PENDING_LEGAL`. HR không gửi thì hồ sơ ở lại `ANALYZED`.
 
-Sub-agent không cấp `case_access`. Pháp chế chỉ thấy ticket sau khi người tạo hồ sơ đã cấp `REVIEW` ở feature 1. Ticket đã đẩy mà chưa có dòng quyền thì hồ sơ vẫn `PENDING_LEGAL`, hàng chờ của pháp chế trống.
+Thiếu một loại nháp, trùng loại, recommendation không còn `DRAFT`, hoặc hồ sơ không còn `ANALYZED` thì không ghi `case_drafts`. Nếu flush lỗi, savepoint hoàn tác bốn nháp và hai lần đổi status. `agent_runs` thành `FAILED`. Transaction bên ngoài vẫn commit recommendation `DRAFT` và hồ sơ `ANALYZED`. `TypeError` vì message sai kiểu đi cùng đường đó.
+
+Sub-agent không cấp `case_access`. Khi HR gửi phiếu, mọi tài khoản `LEGAL` đang hoạt động nhận thông báo và thấy hồ sơ trên trang pháp chế. Không cần cấp `REVIEW` trước.
 
 Nháp `DECISION` chỉ là bản thảo cho feature 9. Dispatch graph không ghi `disciplinary_decisions`, không ghi `reviews`, không đặt `APPROVED`, `DECIDED` hay `CLOSED`.
 
@@ -572,79 +592,72 @@ sequenceDiagram
     else gate trả SUBMIT
         DG->>GT: Đọc proposal
         GT->>DR: sanction_type đã khóa
-        DR-->>API: Bốn nháp MINUTES, EXPLANATION_REQUEST, DECISION, TICKET
+        DR-->>API: Bốn nháp để xem, chưa ghi database
+        API->>DB: INSERT messages ASSISTANT, metadata.kind = dispatch_preview
+        API->>DB: UPDATE agent_runs SUCCEEDED
+        API-->>HR: Báo cáo và phiếu xem trước. Case vẫn ANALYZED
+        HR->>API: POST /api/v1/cases/id/ticket, legal_code
+        API->>DG: ainvoke proposal kèm legal_code
         API->>DB: INSERT case_drafts PENDING_REVIEW, created_by là người tạo hồ sơ
         API->>DB: UPDATE recommendations PENDING_REVIEW
         API->>DB: UPDATE cases PENDING_LEGAL
         API->>DB: INSERT messages ASSISTANT, metadata.kind = dispatch_submit
-        API->>DB: UPDATE agent_runs SUCCEEDED
         API-->>HR: Ticket đã vào hàng chờ pháp chế
     end
 ```
 
 ## 8. Pháp chế duyệt
 
-Feature 8 là người, không phải graph. Hàng chờ chỉ chứa hồ sơ feature 7 đã đẩy: `cases.status = PENDING_LEGAL` và có `case_drafts` loại `TICKET` trạng thái `PENDING_REVIEW`. User mở hàng chờ phải có role `LEGAL` và một dòng `case_access.access_level = REVIEW` trên hồ sơ đó. Sub-agent không tự duyệt và không tự từ chối.
+Feature 8 là quyết định của người. Không có graph duyệt. Chuỗi agent dừng ở bản xem trước của feature 7. Phiếu chỉ vào hàng chờ khi HR gọi `POST /api/v1/cases/{id}/ticket`.
 
-Gói xem xét lấy từ ticket, recommendation `PENDING_REVIEW`, và `recommendation_citations` đã phân tầng. Gói không gồm fact chưa confirmed và không gồm hội thoại. `inspection_risk` hiện ở khối cảnh báo. `precedent` hiện ở khối đối chiếu. Mức trên gói là `sanction_type` của recommendation, đã khóa từ lúc đẩy ticket.
+Điều kiện đẩy phiếu, trong một transaction: hồ sơ `ANALYZED`, recommendation `DRAFT`, cổng dispatch `SUBMIT`. Cùng lúc ghi bốn `case_drafts`, recommendation sang `PENDING_REVIEW`, hồ sơ sang `PENDING_LEGAL`, một dòng `audit_logs` `LEGAL_TICKET_SUBMITTED`, và thông báo cho mọi tài khoản `LEGAL`. Header `Idempotency-Key` trùng thân request thì trả kết quả cũ. Hai request đồng thời khóa dòng `cases` bằng `FOR UPDATE`.
 
-`POST /cases/id/reviews` nhận `APPROVE` hoặc `REJECT`, và `comment`. Cột `reviews.comment` cho phép trống. `draft_id` của dòng review trỏ vào nháp `TICKET`. Bốn nháp cùng `recommendation_id` đổi status cùng lúc. Trong lúc hồ sơ còn `PENDING_LEGAL`, sửa fact trả `409`.
+HR có thể bỏ qua pháp chế bằng `POST /api/v1/cases/{id}/escalate` khi cổng vẫn `SUBMIT`. Bốn nháp và recommendation sang `APPROVED`, hồ sơ sang `APPROVED`, audit `HR_ESCALATED`, và thông báo `MANAGER_REVIEW_REQUESTED` cho quản lý. Pháp chế không nhận phiếu đó.
+
+Hàng chờ của pháp chế là `GET /api/v1/legal/reviews/queue`. Chỉ role `LEGAL`, và là mọi hồ sơ `PENDING_LEGAL`. `ADMIN` có permission `legal:review` trên token nhưng service từ chối vì role không phải `LEGAL`.
+
+`GET /api/v1/cases/{id}/review-pack` đọc báo cáo và nháp đã lưu. Không chạy lại agent.
+
+`POST /api/v1/cases/{id}/reviews` nhận đúng:
+
+```json
+{ "decision": "APPROVE", "comment": "..." }
+```
+
+hoặc `REJECT`. `REJECT` bắt buộc có `comment`. Field thừa, kể cả `sanction_type`, bị từ chối. `reviews.decision` lưu `APPROVE` hoặc `REJECT`, đúng check constraint hiện có. Cùng transaction:
+
+- `APPROVE`: recommendation, bốn nháp và hồ sơ sang `APPROVED`. Audit `LEGAL_APPROVED`.
+- `REJECT`: recommendation, bốn nháp và hồ sơ sang `REJECTED`. Audit `LEGAL_REJECTED`.
+
+API này không sửa `sanction_type`, `case_facts`, hay citation. Hồ sơ `PENDING_LEGAL`, `APPROVED`, `DECIDED`, `CLOSED` không nhận thêm tình tiết. Chat và confirm trả 409 `CASE_NOT_EDITABLE`.
+
+`POST /api/v1/cases/{id}/reopen` dành cho HR hoặc quản lý có `EDIT`. `REJECTED` chuyển sang `NEED_INFO` hoặc `ANALYZED`. Dòng `reviews` giữ nguyên. Khi đích là `ANALYZED`, recommendation `REJECTED` thành `SUPERSEDED` và một bản sao `DRAFT` được tạo cùng trích dẫn, để HR gửi phiếu hoặc chuyển quản lý mà không cần đánh giá lại.
 
 ```mermaid
 sequenceDiagram
     autonumber
+    actor HR as HR hoặc Quản lý
     actor LC as Pháp chế
-    actor HR as HR
-    participant UI as Web
     participant API as FastAPI
     participant DB as PostgreSQL
 
-    LC->>UI: Mở hàng chờ
-    UI->>API: GET /reviews/queue
-    API->>DB: SELECT cases PENDING_LEGAL, có TICKET PENDING_REVIEW, user có access_level REVIEW
-    API-->>UI: Danh sách hồ sơ
-    LC->>UI: Mở một hồ sơ
-    UI->>API: GET /cases/id/review-pack
-    API->>DB: Đọc TICKET, recommendation PENDING_REVIEW, citation đã phân tầng
-    API-->>UI: Gói để xem xét
-    LC->>UI: Chọn APPROVE hoặc REJECT, nhập comment
-    UI->>API: POST /cases/id/reviews
-    API->>DB: Kiểm tra role LEGAL và case_access REVIEW
-    alt Không đủ quyền
-        API-->>UI: 403
-    else decision APPROVE
-        API->>DB: INSERT reviews APPROVE, reviewer_id, recommendation_id, draft_id của TICKET, comment
-        API->>DB: UPDATE recommendations APPROVED
-        API->>DB: UPDATE bốn case_drafts của recommendation này thành APPROVED
-        API->>DB: UPDATE cases APPROVED
-        API-->>UI: Đã duyệt
-        UI-->>HR: Hồ sơ sẵn sàng để người ký ban hành ở feature 9
-    else decision REJECT
-        API->>DB: INSERT reviews REJECT, comment
-        API->>DB: UPDATE recommendations REJECTED
-        API->>DB: UPDATE bốn case_drafts của recommendation này thành REJECTED
-        API->>DB: UPDATE cases REJECTED
-        API-->>HR: Comment của pháp chế
-        Note over LC,DB: Dòng REJECTED và reviews giữ nguyên. Không xóa
-        alt HR sửa tình tiết
-            HR->>UI: Sửa fact và chat tiếp
-            UI->>API: POST messages
-            API->>DB: UPDATE cases NEED_INFO
-            Note over HR,DB: Recommendation REJECTED giữ nguyên. Quay lại làm rõ, rồi feature 5 và 6
-        else HR giữ fact, yêu cầu viết lại
-            HR->>UI: Sinh lại đề xuất
-            UI->>API: POST /cases/id/recommendations/regenerate
-            API->>API: Feature 6 đọc CaseHandoff hiện có
-            API->>DB: INSERT recommendation mới DRAFT, case ANALYZED
-            Note over API,DB: Bản REJECTED giữ nguyên. Feature 6 đóng ProposalHandoff mới
-            API->>API: Feature 7 xét message mới, giữ lại hoặc đẩy ticket
-        end
+    HR->>API: POST /api/v1/cases/id/ticket, legal_code, Idempotency-Key
+    API->>DB: Khóa cases. Ghi bốn nháp, PENDING_REVIEW, PENDING_LEGAL, audit, thông báo
+    API-->>HR: Phiếu đang ở hàng chờ
+    LC->>API: GET /api/v1/legal/reviews/queue
+    API->>DB: Mọi hồ sơ PENDING_LEGAL của role LEGAL
+    LC->>API: GET /api/v1/cases/id/review-pack
+    API->>DB: Đọc recommendation và nháp đã lưu
+    alt APPROVE
+        LC->>API: POST /api/v1/cases/id/reviews
+        API->>DB: reviews APPROVE, recommendation APPROVED, nháp APPROVED, cases APPROVED
+    else REJECT
+        LC->>API: POST /api/v1/cases/id/reviews
+        API->>DB: reviews REJECT, recommendation REJECTED, nháp REJECTED, cases REJECTED
+        HR->>API: POST /api/v1/cases/id/reopen
+        API->>DB: REJECTED sang NEED_INFO hoặc ANALYZED. Giữ reviews cũ
     end
 ```
-
-Từ chối không xóa đề xuất và không xóa ticket. Dòng `reviews` là dấu vết quyết định và comment. Feature 6 khi ghi bản mới chỉ chuyển các dòng đang `DRAFT` sang `SUPERSEDED`. Dòng `REJECTED` giữ status đó. Bản mới có `recommendation_id` khác. Feature 7 chỉ nhận `ProposalHandoff` của bản mới: chưa đủ căn cứ thì giữ ở `ANALYZED`, đủ căn cứ thì đẩy ticket mới. Comment từ chối nằm trên `reviews` để người đọc. Feature 6 vẫn chỉ đọc `CaseHandoff`, nên comment không đổi mức kỷ luật.
-
-`APPROVE` không ghi `disciplinary_decisions`. Người ký ban hành từ nháp `DECISION` đã `APPROVED` ở feature 9.
 
 ## 9. Ban hành và tiền lệ
 
@@ -674,49 +687,44 @@ sequenceDiagram
         API->>DB: UPDATE cases status DECIDED
         API-->>UI: Quyết định đã ban hành
     end
-    alt Không lấy làm tiền lệ
-        SG->>UI: Đóng hồ sơ
-        UI->>API: POST /cases/id/close
-        API->>DB: UPDATE cases status CLOSED
-    else Đánh dấu tiền lệ
+    alt Đánh dấu tiền lệ
         SG->>UI: Nhập precedent_summary
         UI->>API: POST /cases/id/decisions/precedent
         API->>API: Từ chối nếu precedent_summary trống
         API->>VS: Embed precedent_summary, 1024 chiều, mistral-embed
         VS-->>API: embedding
         API->>DB: UPDATE disciplinary_decisions is_precedent true, precedent_summary, embedding
-        API->>DB: UPDATE cases status CLOSED
-        API-->>UI: Tiền lệ sẵn sàng cho vụ sau
+        API-->>UI: Tiền lệ đã lưu. Hồ sơ vẫn DECIDED
     end
+    SG->>UI: Đóng hồ sơ
+    UI->>API: POST /cases/id/close
+    API->>DB: Kiểm tra đã có disciplinary_decisions
+    API->>DB: UPDATE cases status CLOSED, audit CASE_CLOSED
 ```
 
-Vụ sau, feature 5 đọc đúng các dòng `is_precedent = true`.
+Client không gửi `sanction_type`. Server lấy mức từ recommendation `APPROVED`. Mức phải thuộc `WARNING`, `REPRIMAND`, `WAGE_POSTPONEMENT`, `DEMOTION`, `DISMISSAL`. Mỗi hồ sơ một quyết định. `Idempotency-Key` chặn ký hai lần và đánh dấu tiền lệ hai lần. Chỉ quyết định đã ban hành (`DECIDED` hoặc `CLOSED`) mới thành tiền lệ. Nháp, phiếu đang chờ và đề xuất bị từ chối không được embed. Thiếu `MISTRAL_API_KEY` thì trả 503, không bịa vector.
+
+Đóng hồ sơ chỉ đi `DECIDED` → `CLOSED`, và chỉ khi đã có quyết định. `ADMIN` đóng được mọi hồ sơ đã quyết. HR hoặc quản lý cần `EDIT`. Người ký cần ít nhất `VIEW`. Vụ sau, feature 5 đọc đúng các dòng `is_precedent = true`.
 
 ## 10. Tái phạm
 
-Trước khi chốt mức, agent liệt kê các vụ `DECIDED` hoặc `CLOSED` cùng `employee_code`, cùng `violation_type`, còn trong thời hạn tái phạm theo điều khoản đã trích. Kết quả hiện thành một fact, ví dụ `prior_sanction_count`, để HR xác nhận trước khi nó đi vào đề xuất. Không tự nâng mức chỉ vì embedding thấy vụ na ná.
+`POST /api/v1/cases/{id}/recidivism` đếm trên `cases`, `case_violations` và `disciplinary_decisions` theo `employee_code` và loại vi phạm. Không dùng độ tương tự embedding. Kết quả ghi fact `prior_sanction_count` với `confirmed = false`. Fact đã được HR xác nhận thì không bị ghi đè. Chỉ fact đã xác nhận đi vào `CaseHandoff`. Service không tự nâng mức.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor HR as HR
     participant API as FastAPI
-    participant AG as LangGraph
     participant DB as PostgreSQL
 
-    AG->>DB: Đọc employee_code và violation_type_id của hồ sơ hiện tại
-    AG->>DB: SELECT cases DECIDED hoặc CLOSED cùng employee_code
-    AG->>DB: JOIN case_violations và disciplinary_decisions
-    alt Không có vụ cũ cùng loại, hoặc đã hết thời hạn tái phạm
-        AG->>DB: UPSERT case_facts prior_sanction_count giá trị 0, confirmed false
-    else Còn trong thời hạn
-        AG->>DB: UPSERT case_facts prior_sanction_count, liệt kê decision_code và issued_at trong fact_value
-    end
-    AG-->>API: Fact tái phạm chờ HR xác nhận
-    API-->>HR: Danh sách vụ cũ, chưa tự nâng mức
-    HR->>API: Xác nhận hoặc sửa số lần
+    HR->>API: POST /api/v1/cases/id/recidivism
+    API->>DB: SELECT cases DECIDED hoặc CLOSED cùng employee_code
+    API->>DB: JOIN case_violations và disciplinary_decisions
+    API->>DB: INSERT case_facts prior_sanction_count, confirmed false
+    API-->>HR: Số vụ cũ và danh sách quyết định. Chưa vào báo cáo
+    HR->>API: POST /api/v1/cases/id/facts/confirm
     API->>DB: UPDATE case_facts confirmed true, confirmed_by, confirmed_at
-    API->>AG: Đưa prior_sanction_count đã khóa vào node đề xuất
+    Note over API,DB: Chỉ fact đã xác nhận đi vào CaseHandoff
 ```
 
 ## 11. Phân tầng căn cứ trong câu trả lời
@@ -788,7 +796,14 @@ sequenceDiagram
 
 ## 13. Dashboard vận hành
 
-Làm sau khi feature 1–9 chạy. Màn này đếm hồ sơ theo trạng thái, theo mức chế tài, và thời gian từ `OPEN` đến `DECIDED`. Dashboard đi muộn trong ghi chú PRD là một nguồn fact đầu vào (số ngày đi muộn của một nhân viên), chưa phải sản phẩm riêng.
+Đã có bốn route, mọi số liệu lọc theo hồ sơ user được xem. `ADMIN` thấy toàn bộ. HR và quản lý thấy hồ sơ mình tạo hoặc được cấp quyền.
+
+- `GET /api/v1/dashboard/summary` đếm theo trạng thái và họ vụ, tỷ lệ từ chối đề xuất, tỷ lệ duyệt của pháp chế, tỷ lệ agent lỗi, tỷ lệ retrieval rỗng.
+- `GET /api/v1/dashboard/cases` tách theo trạng thái và họ vụ.
+- `GET /api/v1/dashboard/processing-time` lấy mốc từ audit: mở hồ sơ, có đề xuất, đẩy phiếu, duyệt, ban hành.
+- `GET /api/v1/dashboard/sanctions` nhóm `disciplinary_decisions.sanction_type`.
+
+Đi muộn trong ghi chú PRD vẫn là fact đầu vào (`late_days`), không phải màn hình riêng.
 
 ```mermaid
 sequenceDiagram
@@ -813,13 +828,135 @@ sequenceDiagram
     API-->>UI: Fact chờ xác nhận, rồi đi vào luồng đề xuất
 ```
 
-## Thứ tự làm
+## Đã gắn trên kiến trúc hiện tại
 
-1. Đăng nhập, mở hồ sơ, chat lưu `messages` và `case_facts`.
-2. Nạp Bộ luật Lao động và Nghị định 145, cắt theo điều khoản, lọc theo `incident_date`.
-3. Node đề xuất kèm citation, chưa cần nháp.
-4. Sub-agent feature 7 đọc `ProposalHandoff`, giữ lại hoặc đẩy ticket, rồi pháp chế duyệt hoặc từ chối.
-5. Ban hành quyết định và bật tiền lệ.
-6. Thêm nội quy công ty, tái phạm, và tách Nghị định 283 sang lớp cảnh báo.
+Code vẫn là modular monolith dưới `src/`. Mỗi feature giữ `controller` gọi service. Không thêm microservice, không thêm hàng đợi, không tạo cây `backend/app/`.
 
-Bản đó đủ cho Demo Day. Agent phân tích, cảnh báo, soạn nháp, và chỉ đẩy ticket khi đề xuất đủ căn cứ. Người phê duyệt và người ký quyết định chịu trách nhiệm.
+| Việc | Nằm ở |
+|---|---|
+| Đăng nhập, refresh, logout, `/me` | `src/common/auth.py`, `src/core/security/` |
+| Máy trạng thái, khóa dòng | `src/common/workflow.py` |
+| Quyền hồ sơ | `src/common/access.py` |
+| Audit, thông báo, idempotency | `src/common/audit.py`, `notify.py`, `idempotency.py` |
+| Mở, sửa, cấp quyền, mở lại | `src/features/opencase/` |
+| Chat, fact, case graph | `src/features/clarify/` |
+| Retrieval | `src/features/cite/` |
+| Đề xuất và đẩy phiếu | `src/features/answer/` |
+| Biên bản dạng biểu mẫu | `src/features/assessment/` |
+| Duyệt pháp chế | `src/features/legal_review/` |
+| Ký, tiền lệ, đóng | `src/features/decision/` |
+| Tái phạm, dòng thời gian, dashboard, xuất, kho văn bản, thông báo | `src/features/recidivism/`, `timeline/`, `dashboard/`, `export/`, `knowledge/`, `notification/` |
+| Sống và sẵn sàng | `GET /health`, `GET /ready` trong `src/main.py` |
+
+Máy trạng thái:
+
+```text
+OPEN -> NEED_INFO | ANALYZED
+NEED_INFO -> NEED_INFO | ANALYZED
+ANALYZED -> NEED_INFO | PENDING_LEGAL
+PENDING_LEGAL -> APPROVED | REJECTED
+REJECTED -> NEED_INFO | ANALYZED
+APPROVED -> DECIDED
+DECIDED -> CLOSED
+```
+
+Chuyển sai trả 409 `INVALID_CASE_TRANSITION`. Mọi chuyển trạng thái quan trọng ghi `audit_logs`. Không có API sửa hoặc xóa audit.
+
+Lỗi trả cả `detail` cũ và khối `error` gồm `code`, `message`, `details`, `request_id`. Header phản hồi có `X-Request-ID`. Thân thành công của API cũ vẫn phẳng, không bọc `data` / `meta`.
+
+`POST /ticket`, `/reviews`, `/decisions`, `/decisions/precedent` và `/close` nhận `Idempotency-Key`. Cùng người, cùng route, cùng key, cùng nội dung thì trả kết quả đã lưu. Cùng key mà nội dung khác thì 409 `IDEMPOTENCY_CONFLICT`.
+
+### API
+
+```text
+POST   /api/v1/auth/login
+POST   /api/v1/auth/refresh
+POST   /api/v1/auth/logout
+GET    /api/v1/auth/me
+POST   /api/v1/auth/register          chỉ HR, MANAGER, LEGAL
+
+POST   /api/v1/cases
+GET    /api/v1/cases
+GET    /api/v1/cases/{id}
+PATCH  /api/v1/cases/{id}
+POST   /api/v1/cases/{id}/access
+GET    /api/v1/cases/{id}/access
+POST   /api/v1/cases/{id}/messages
+GET    /api/v1/cases/{id}/messages
+GET    /api/v1/cases/{id}/facts
+POST   /api/v1/cases/{id}/facts/confirm
+GET    /api/v1/cases/{id}/answer
+GET    /api/v1/cases/{id}/assessment
+POST   /api/v1/cases/{id}/assessment/generate
+PATCH  /api/v1/cases/{id}/assessment
+POST   /api/v1/cases/{id}/assessment/save
+POST   /api/v1/cases/{id}/assessment/confirm
+POST   /api/v1/cases/{id}/assessment/reanalyze
+GET    /api/v1/cases/{id}/timeline
+POST   /api/v1/cases/{id}/ticket
+POST   /api/v1/cases/{id}/reopen
+POST   /api/v1/cases/{id}/recidivism
+
+GET    /api/v1/legal/reviews/queue
+GET    /api/v1/cases/{id}/review-pack
+POST   /api/v1/cases/{id}/reviews
+
+GET    /api/v1/cases/{id}/decision-preview
+POST   /api/v1/cases/{id}/decisions
+POST   /api/v1/cases/{id}/decisions/precedent
+POST   /api/v1/cases/{id}/close
+
+POST   /api/v1/policies/{id}/versions
+GET    /api/v1/policies/{id}/versions
+GET    /api/v1/documents/{id}
+POST   /api/v1/documents/{id}/retry
+
+GET    /api/v1/notifications
+POST   /api/v1/notifications/{id}/read
+
+GET    /api/v1/dashboard/summary
+GET    /api/v1/dashboard/cases
+GET    /api/v1/dashboard/processing-time
+GET    /api/v1/dashboard/sanctions
+
+GET    /api/v1/cases/{id}/export/assessment
+GET    /api/v1/cases/{id}/export/ticket
+GET    /api/v1/cases/{id}/export/decision
+
+GET    /health
+GET    /ready
+```
+
+Xuất hồ sơ đọc dữ liệu đã lưu, định dạng `json` hoặc `markdown`. Không gọi lại agent.
+
+### Chạy local
+
+```text
+alembic upgrade head
+python -m scripts.seed_demo_users
+make run
+```
+
+`make run` mở API tại `http://127.0.0.1:8000`. Frontend: trong `frontend/` chạy `npm install` rồi `npm run dev`, mở `http://127.0.0.1:5173`. Vite chuyển `/api` sang cổng 8000.
+
+Seed người dùng không đổi mật khẩu tài khoản đã có và không nạp lại kho luật. Tài khoản mới dùng mật khẩu demo `Demo-hr-2026`:
+
+```text
+hr.demo@vinuni.edu.vn       HR
+manager.demo@vinuni.edu.vn  MANAGER
+legal.demo@vinuni.edu.vn    LEGAL
+signer.demo@vinuni.edu.vn   SIGNER
+admin.demo@vinuni.edu.vn    ADMIN
+```
+
+Kho `BLLD_2019`, `ND145_2020`, `ND283_2026`, `NQCT` giữ nguyên.
+
+### Giới hạn đã biết
+
+- Logout chỉ thu hồi refresh token. Access token còn dùng được đến khi hết hạn.
+- Đăng ký công khai không tạo `SIGNER` hay `ADMIN`.
+- Chưa xuất PDF.
+- Hàng chờ pháp chế là mọi hồ sơ `PENDING_LEGAL` của role `LEGAL`. Admin không duyệt và không ký. Quản lý duyệt lần cuối qua `GET /api/v1/manager/queue` rồi `POST /cases/{id}/decisions`. Người ký vẫn ban hành trên `/decisions`. Token cũ không có `decision:issue` cho đến khi quản lý đăng nhập lại.
+- Embed tiền lệ và nạp văn bản cần `MISTRAL_API_KEY`. Embedding lỗi thì văn bản sang `FAILED` và retry chỉ embed chunk chưa có vector.
+- Retrieval vẫn chỉ đọc `policies`, `policy_versions`, `documents`, `document_chunks`.
+- Nghị định xử phạt hành chính, gồm Nghị định 283, là `INSPECTION_RISK`. Nó không ghi `sanction_type`.

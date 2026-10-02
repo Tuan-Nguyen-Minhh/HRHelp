@@ -18,11 +18,11 @@ from src.features.answer.model.assessment import (
     RiskAssessment,
     SanctionAssessment,
 )
-from src.features.answer.model.decide import DecisionInput, decide
+from src.features.answer.model.decide import DecisionInput, decide, should_synthesize
 from src.features.answer.model.draft import AnswerInput, draft_answer
 from src.features.answer.model.layers import LayeredBasis, split_passages
 from src.features.answer.model.standard import applied_standard
-from src.features.answer.model.synthesis import guard, synthesize
+from src.features.answer.model.synthesis import PROMPT_VERSION, SYSTEM_PROMPT, guard, synthesize
 from src.features.answer.schema.render import HEADINGS
 from src.features.cite.model.passage import Passage
 from src.features.cite.model.query import SearchQuery
@@ -318,6 +318,94 @@ def test_need_more_facts_clears_a_filled_sanction():
     assert decision.risk_level == "HIGH"
 
 
+def test_synthesis_prompt_returns_a_level_when_the_passages_state_one():
+    assert PROMPT_VERSION == "evidence-synthesis-v3"
+    assert "status = SUPPORTED" in SYSTEM_PROMPT
+    assert "BIÊN BẢN ĐÁNH GIÁ VỤ VIỆC" in SYSTEM_PROMPT
+    assert "Chưa đủ căn cứ retrieval để xác định mức xử lý." in SYSTEM_PROMPT
+    assert "NEED_MORE_FACTS" in SYSTEM_PROMPT
+    assert "Không chọn hình thức nặng nhất" in SYSTEM_PROMPT
+    assert "TERMINATION" in SYSTEM_PROMPT
+    assert "can_create_legal_ticket = false" in SYSTEM_PROMPT
+    assert "SEND_TO_LEGAL" in SYSTEM_PROMPT
+    assert "UNKNOWN" in SYSTEM_PROMPT
+
+
+def test_internal_rule_level_stays_in_the_report_and_is_not_locked():
+    rule = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Tự ý bỏ việc 01 ngày thì khiển trách.")
+    raw = Assessment(
+        case_summary=CaseSummary(violation="nghỉ không phép", facts={"absence_days": "1 ngày"}),
+        sanction_assessment=SanctionAssessment(
+            status="SUPPORTED",
+            recommended_sanction="WARNING",
+            reason="Nội quy nêu khiển trách cho 01 ngày.",
+            evidence=[EvidenceRef(chunk_id=str(rule.chunk_id), quote=rule.content)],
+        ),
+        risk_assessment=RiskAssessment(level="LOW", reasons=["Theo nội quy."]),
+        report="BIÊN BẢN ĐÁNH GIÁ VỤ VIỆC\n\nMức xử lý đề xuất: khiển trách.",
+        downstream_handoff=DownstreamHandoff(can_recommend=True, can_create_legal_ticket=True),
+    )
+    accepted = guard(raw, [rule])
+    decision = _decide(_layered(rule), {**_READY, "absence_days": "1 ngày"}, assessment=accepted)
+    prose = draft_answer(
+        AnswerInput(
+            family=ABSENCE,
+            facts={**_READY, "absence_days": "1 ngày"},
+            fact_lines=["Số ngày nghỉ không phép: 1 ngày"],
+            employee_name="An",
+            incident_date=date(2026, 3, 1),
+            layered=_layered(rule),
+            precedent_note="Không có đoạn tiền lệ trong lượt đối chiếu này.",
+        ),
+        accepted,
+    ).prose
+    assert accepted.sanction_assessment.recommended_sanction == "WARNING"
+    assert accepted.sanction_assessment.status == "SUPPORTED"
+    assert accepted.risk_assessment.level == "HIGH"
+    assert accepted.downstream_handoff.can_recommend is False
+    assert accepted.downstream_handoff.can_create_legal_ticket is False
+    assert accepted.downstream_handoff.needs_legal_review is True
+    assert accepted.downstream_handoff.hr_decision_required is True
+    assert "REJECT_ASSESSMENT" in accepted.downstream_handoff.next_allowed_actions
+    assert decision.sanction_type is None
+    assert "khiển trách" in decision.rationale
+    assert prose.startswith("BIÊN BẢN ĐÁNH GIÁ VỤ VIỆC")
+
+
+def test_a_law_that_names_one_form_stays_in_the_report_until_an_internal_rule_is_retrieved():
+    law = _passage("LAW", "BLLD", "Bộ luật Lao động", "Đi muộn lần đầu thì khiển trách.")
+    raw = Assessment(
+        case_summary=CaseSummary(violation="đi muộn", facts={"late_days": "1 ngày"}),
+        sanction_assessment=SanctionAssessment(
+            status="SUPPORTED",
+            recommended_sanction="WARNING",
+            reason="Luật nêu khiển trách cho đi muộn lần đầu.",
+            evidence=[EvidenceRef(chunk_id=str(law.chunk_id), quote=law.content)],
+        ),
+        risk_assessment=RiskAssessment(level="LOW", reasons=["Theo luật."]),
+        downstream_handoff=DownstreamHandoff(can_recommend=True, can_create_legal_ticket=True),
+    )
+    accepted = guard(raw, [law])
+    assert accepted.sanction_assessment.recommended_sanction == "WARNING"
+    assert accepted.risk_assessment.level == "HIGH"
+    assert accepted.downstream_handoff.can_recommend is False
+    assert accepted.downstream_handoff.can_create_legal_ticket is False
+    assert accepted.downstream_handoff.legal_basis_found is True
+    assert accepted.downstream_handoff.internal_rule_found is False
+    assert _decide(_layered(law), assessment=accepted).sanction_type is None
+
+
+def test_should_synthesize_reads_law_or_internal_rule_and_skips_page_index():
+    law = _passage("LAW", "BLLD", "Bộ luật Lao động", _ART_124)
+    rule = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì khiển trách.")
+    penalty = _passage("DECREE", "283/2026/ND-CP", "Nghị định xử phạt", "Phạt tiền.")
+    ready = DecisionInput(family=ABSENCE, facts=_READY, layered=_layered(law))
+    assert should_synthesize(ready) is True
+    assert should_synthesize(DecisionInput(family=ABSENCE, facts=_READY, layered=_layered(rule))) is True
+    assert should_synthesize(DecisionInput(family=ABSENCE, facts=_READY, layered=_layered(penalty))) is False
+    assert should_synthesize(DecisionInput(family=ABSENCE, facts=_READY, layered=_layered(law, rule), retrieval="page_index")) is False
+
+
 @pytest.mark.asyncio
 async def test_missing_synthesis_key_does_not_call_the_model(monkeypatch):
     monkeypatch.setattr(settings, "OPENAI_API_KEY", "")
@@ -370,7 +458,13 @@ async def test_cite_step_returns_a_handoff_and_does_not_draft_a_sanction():
 
 
 @pytest.mark.asyncio
-async def test_recommend_agent_reads_only_the_handoff_message():
+async def test_recommend_agent_reads_only_the_handoff_message(monkeypatch):
+    async def offline(message, _layered):
+        from src.features.answer.model.synthesis import unavailable_assessment
+
+        return unavailable_assessment(message.facts, "offline")
+
+    monkeypatch.setattr("src.features.answer.model.agent.synthesize", offline)
     law = _passage("LAW", "BLLD-2019", "Bộ luật Lao động", "Kỷ luật lao động sa thải.")
     penalty = _passage("DECREE", "283_2026_ND-CP", "Nghị định xử phạt", "Phạt tiền.")
     message = CaseHandoff(
@@ -393,6 +487,12 @@ async def test_recommend_agent_reads_only_the_handoff_message():
 
 @pytest.mark.asyncio
 async def test_publish_stores_a_draft_and_citations_from_the_handoff(monkeypatch):
+    async def offline(message, _layered):
+        from src.features.answer.model.synthesis import unavailable_assessment
+
+        return unavailable_assessment(message.facts, "offline")
+
+    monkeypatch.setattr("src.features.answer.model.agent.synthesize", offline)
     law = _passage("LAW", "BLLD-2019", "Bộ luật Lao động", "Kỷ luật lao động sa thải.")
     case = Case(id=uuid4(), incident_date=date(2026, 3, 1), status="NEED_INFO")
     handoff = CaseHandoff(

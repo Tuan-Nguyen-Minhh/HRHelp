@@ -1,8 +1,9 @@
 """API shape of a layered answer."""
 
+import re
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.features.answer.model.layers import BasisLayer
 
@@ -56,8 +57,66 @@ class AppliedStandard(BaseModel):
     layers: list[LayerEffect]
 
 
+class DraftView(BaseModel):
+    """One stored case draft. Feature 7 writes these; the screen only reads them."""
+
+    model_config = ConfigDict(frozen=True)
+
+    draft_id: UUID
+    draft_type: str
+    title: str
+    content: str
+    status: str
+
+
+class TicketRequest(BaseModel):
+    """Whether feature 7 sent the legal ticket, and where feature 8 would read it."""
+
+    model_config = ConfigDict(frozen=True)
+
+    disposition: str
+    hold_code: str | None = None
+    reason: str
+    queue: str
+
+
+_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+class LegalOfficer(BaseModel):
+    """One active pháp chế account HR can address by email."""
+
+    email: str
+    full_name: str | None = None
+
+
+class LegalOfficerList(BaseModel):
+    users: list[LegalOfficer]
+
+
+class SendTicketRequest(BaseModel):
+    """HR confirms the preview and names the legal recipient by email."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    legal_code: str = Field(min_length=3, max_length=255)
+
+    @field_validator("legal_code")
+    @classmethod
+    def fold_email(cls, value: str) -> str:
+        email = value.strip().casefold()
+        if _EMAIL.fullmatch(email) is None:
+            raise ValueError("Email pháp chế không hợp lệ.")
+        return email
+
+
 class AnswerView(BaseModel):
-    """The proposal HR reads. Sanction is null when the grounds are not enough."""
+    """The proposal HR reads. Sanction is null when the grounds are not enough.
+
+    ``drafts`` are the current recommendation's case drafts. ``ticket`` says
+    whether those drafts were submitted to the legal queue. Neither field
+    chooses a new sanction.
+    """
 
     recommendation_id: UUID
     case_id: UUID
@@ -74,6 +133,8 @@ class AnswerView(BaseModel):
     precedent: list[CitationView]
     inspection_risk: list[CitationView]
     standard: AppliedStandard
+    drafts: list[DraftView] = Field(default_factory=list)
+    ticket: TicketRequest | None = None
 
 
 SANCTION_LABELS = {

@@ -69,7 +69,7 @@ def _finding(data: RenderInput) -> str:
 
 def _applied(decision: SanctionDecision) -> str:
     standard = applied_standard(decision.sanction_type, decision.risk_level, decision.process_steps)
-    level = SANCTION_LABELS[standard.sanction_type] if standard.aligned and standard.sanction_type else "Chưa chốt."
+    level = SANCTION_LABELS[standard.sanction_type] if standard.aligned and standard.sanction_type else "Chưa khóa để ban hành."
     steps = "; ".join(step.label for step in standard.process_steps)
     notes = "\n".join(f"- {item.note}" for item in standard.layers)
     return f"{standard.rule}\nMức: {level}\nQuy trình: {steps}\n{notes}"
@@ -77,7 +77,7 @@ def _applied(decision: SanctionDecision) -> str:
 
 def _sanction(decision: SanctionDecision) -> str:
     if decision.sanction_type is None:
-        return "Chưa chốt. Không lấy mức từ nghị định xử phạt hành chính."
+        return decision.rationale or "Kết quả đánh giá nằm trong biên bản để HR xem."
     label = SANCTION_LABELS[decision.sanction_type]
     if decision.sanction_type == "DISMISSAL":
         return f"{label}. Không đề xuất chấm dứt hợp đồng (TERMINATION)."

@@ -38,6 +38,8 @@ def handoff_node(state: dict) -> dict:
     hits = list(state.get("hits") or [])
     passages = [_cited(hit) for hit in hits]
     message = CaseHandoff(
+        case_id=state.get("case_id"),
+        employee_code=state.get("employee_code"),
         incident_date=state["incident_date"],
         employee_name=state.get("employee_name"),
         description=state.get("description") or "",

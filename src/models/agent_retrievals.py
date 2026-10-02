@@ -1,4 +1,15 @@
-from sqlalchemy import CheckConstraint, Column, DateTime, Float, ForeignKey, Index, Integer, UniqueConstraint, text
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.dialects.postgresql import UUID
 
 from src.db.base import Base
@@ -21,4 +32,5 @@ class AgentRetrieval(Base):
     chunk_id = Column(UUID(as_uuid=True), ForeignKey("document_chunks.id", ondelete="CASCADE"), nullable=False)
     score = Column(Float, nullable=True)
     rank = Column(Integer, nullable=False)
+    retrieval_method = Column(String(50), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))

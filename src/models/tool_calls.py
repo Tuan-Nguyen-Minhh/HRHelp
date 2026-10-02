@@ -1,4 +1,4 @@
-from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Index, String, Text, text
+from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Index, Integer, String, Text, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 from src.db.base import Base
@@ -24,3 +24,4 @@ class ToolCall(Base):
     started_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     completed_at = Column(DateTime, nullable=True)
     error = Column(Text, nullable=True)
+    duration_ms = Column(Integer, nullable=True)

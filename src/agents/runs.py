@@ -11,9 +11,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import src.common.orm  # noqa: F401
 from src.common.clock import utc_now
+from src.common.redact import redact
 from src.models.agent_retrievals import AgentRetrieval
 from src.models.agent_runs import AgentRun
 from src.models.tool_calls import ToolCall
+
+_AGENT_NAMES = {
+    "hr-help-rules": ("hr-help-rules", "case_graph"),
+    "hr-help-retrieval": ("hr-help-retrieval", "retrieval_graph"),
+    "hr-help-recommendation": ("hr-help-assessment", "recommend_graph"),
+    "hr-help-dispatch": ("hr-help-dispatch", "dispatch_graph"),
+}
 
 
 @dataclass(frozen=True)
@@ -22,16 +30,20 @@ class RetrievalHit:
 
     chunk_id: UUID
     score: float
+    retrieval_method: str | None = None
 
 
 async def start_run(session: AsyncSession, conversation_id: UUID, message_id: UUID, model: str) -> AgentRun:
     """Open a RUNNING run for this turn. The caller commits."""
+    agent_name, graph_name = _AGENT_NAMES.get(model, (model, None))
     run = AgentRun(
         id=uuid4(),
         conversation_id=conversation_id,
         message_id=message_id,
         status="RUNNING",
         model=model,
+        agent_name=agent_name,
+        graph_name=graph_name,
         started_at=utc_now(),
     )
     session.add(run)
@@ -45,6 +57,8 @@ def finish_run(run: AgentRun, output_message_id: UUID) -> None:
     run.output_message_id = output_message_id
     run.completed_at = utc_now()
     run.error = None
+    if run.prompt_tokens is not None or run.completion_tokens is not None:
+        run.total_tokens = (run.prompt_tokens or 0) + (run.completion_tokens or 0)
 
 
 async def mark_run_failed(session: AsyncSession, run_id: UUID, error: str) -> None:
@@ -66,7 +80,7 @@ async def begin_search(session: AsyncSession, run_id: UUID, payload: dict) -> To
         status="RUNNING",
         started_at=utc_now(),
     )
-    tool.input = payload
+    tool.input = redact(payload)
     session.add(tool)
     await session.flush()
     return tool
@@ -74,9 +88,11 @@ async def begin_search(session: AsyncSession, run_id: UUID, payload: dict) -> To
 
 async def complete_search(session: AsyncSession, tool: ToolCall, payload: dict) -> None:
     """Record the chunks the search returned."""
-    tool.output = payload
+    tool.output = redact(payload)
     tool.status = "SUCCEEDED"
     tool.completed_at = utc_now()
+    if tool.started_at is not None and tool.completed_at is not None:
+        tool.duration_ms = max(0, int((tool.completed_at - tool.started_at).total_seconds() * 1000))
     await session.flush()
 
 
@@ -90,6 +106,7 @@ async def save_retrievals(session: AsyncSession, run_id: UUID, hits: list[Retrie
                 chunk_id=hit.chunk_id,
                 score=hit.score,
                 rank=rank,
+                retrieval_method=hit.retrieval_method,
             )
         )
     await session.flush()

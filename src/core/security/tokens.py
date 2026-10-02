@@ -1,5 +1,6 @@
 """Issue and refresh the session token, and open a new account."""
 
+import hashlib
 from typing import Any
 from uuid import UUID
 
@@ -13,6 +14,7 @@ from src.core.security.auth_handler import AuthHandler
 from src.core.security.rbac import DEFAULT_ROLE_PERMISSIONS, RoleEnum
 from src.models.permission_roles import PermissionRole
 from src.models.permissions import Permission
+from src.models.revoked_tokens import RevokedToken
 from src.models.roles import Role
 from src.models.user_roles import UserRole
 from src.models.users import User
@@ -61,7 +63,7 @@ def _token_data(user: User) -> dict[str, Any]:
 async def authenticate(session: AsyncSession, email: str, password: str) -> dict[str, Any] | None:
     """Return a token pair, or None when the email, password, or account is rejected."""
     user = await _user_by_email(session, email)
-    if user is None or not user.is_active:
+    if user is None or not user.is_active or user.deleted_at is not None:
         return None
     if not AuthHandler.verify_password(password, user.password_hash):
         return None
@@ -116,6 +118,8 @@ async def refresh_access(session: AsyncSession, refresh_token: str) -> dict[str,
         user_id = UUID(str(payload["user_id"]))
     except ValueError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token không hợp lệ.") from None
+    if await _refresh_revoked(session, refresh_token):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token không còn hiệu lực.")
     user = await session.get(User, user_id)
     if user is None or not user.is_active:
         raise HTTPException(
@@ -135,6 +139,26 @@ def _issued(user: User, claims: dict[str, list[str]], refresh_token: str | None 
         "user_id": user.id,
         "roles": claims["roles"],
     }
+
+
+async def revoke_refresh(session: AsyncSession, user_id: UUID, refresh_token: str) -> None:
+    """Store a hash of the refresh token so it cannot mint another access token."""
+    payload = AuthHandler.decode_token(refresh_token)
+    if payload.get("type") != "refresh" or str(payload.get("user_id")) != str(user_id):
+        raise AppError(401, "Token không hợp lệ.", code="AUTH_REQUIRED")
+    digest = hashlib.sha256(refresh_token.encode("utf-8")).hexdigest()
+    existing = await session.scalar(select(RevokedToken).where(RevokedToken.token_hash == digest))
+    if existing is None:
+        session.add(RevokedToken(user_id=user_id, token_hash=digest))
+    await session.commit()
+
+
+async def _refresh_revoked(session: AsyncSession, refresh_token: str) -> bool:
+    if await session.scalar(select(func.to_regclass("public.revoked_tokens"))) is None:
+        return False
+    digest = hashlib.sha256(refresh_token.encode("utf-8")).hexdigest()
+    found = await session.scalar(select(RevokedToken.id).where(RevokedToken.token_hash == digest))
+    return found is not None
 
 
 async def _user_by_email(session: AsyncSession, email: str) -> User | None:

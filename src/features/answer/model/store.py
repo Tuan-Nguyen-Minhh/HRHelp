@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import src.common.orm  # noqa: F401
+from src.models.case_drafts import CaseDraft
 from src.models.case_violations import CaseViolation
 from src.models.recommendation_citations import RecommendationCitation
 from src.models.recommendations import Recommendation
@@ -47,6 +48,17 @@ async def supersede_drafts(session: AsyncSession, case_id: UUID) -> None:
     rows = (await session.execute(stmt)).scalars().all()
     for row in rows:
         row.status = "SUPERSEDED"
+
+
+_DRAFT_ORDER = {"MINUTES": 0, "EXPLANATION_REQUEST": 1, "DECISION": 2, "TICKET": 3}
+
+
+async def list_case_drafts(session: AsyncSession, recommendation_id: UUID) -> list[CaseDraft]:
+    """Return drafts written for this recommendation, in ticket order."""
+    stmt = select(CaseDraft).where(CaseDraft.recommendation_id == recommendation_id)
+    rows = list((await session.execute(stmt)).scalars().all())
+    rows.sort(key=lambda row: _DRAFT_ORDER.get(row.draft_type, 9))
+    return rows
 
 
 async def latest_recommendation(session: AsyncSession, case_id: UUID) -> Recommendation | None:

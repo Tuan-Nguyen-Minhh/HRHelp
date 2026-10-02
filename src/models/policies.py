@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, CheckConstraint, Column, Index, String, Text, text
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, Index, String, Text, text
 from sqlalchemy.dialects.postgresql import UUID
 
 from src.db.base import Base
@@ -22,3 +22,4 @@ class Policy(TimestampMixin, Base):
     description = Column(Text, nullable=True)
     policy_type = Column(String(100), nullable=True)
     is_active = Column(Boolean, nullable=False, default=True, server_default=text("TRUE"))
+    deleted_at = Column(DateTime, nullable=True)
