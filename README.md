@@ -64,7 +64,7 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Mở `.env` và điền `OPENAI_API_KEY`. Riêng `AI_LOG_API_KEY`, mỗi thành viên tự
+Mở `.env` và điền `MISTRAL_API_KEY`. Riêng `AI_LOG_API_KEY`, mỗi thành viên tự
 tạo key riêng tại [dashboard Phoenix](https://phoenix.note.transformerlabs.ai/api-keys)
 rồi thay vào chỗ `<get-your-api-key-from-dashboard-phoenix>` — giá trị trong
 `.env.example` chỉ là placeholder, để nguyên thì log không vào được hệ thống chấm.
@@ -159,7 +159,7 @@ bằng bất kỳ markdown viewer nào.
 |---|---|
 | Agent | LangGraph + LangChain 0.3 |
 | Backend | FastAPI 0.115 + Uvicorn |
-| LLM | OpenAI, mặc định `gpt-4o-mini` (đổi trong `src/core/config.py`) |
+| LLM | Mistral, mặc định `ministral-8b-2512`, fallback `ministral-3b-2512` (đổi `MODEL_NAME` / `FALLBACK_MODEL_NAME` trong `.env`) |
 | Giao diện | Next.js hoặc Streamlit (đội tự chọn, hướng dẫn ở chương 6) |
 | Lint / test | ruff + pytest 8 |
 | DevOps | Docker + GitHub Actions |

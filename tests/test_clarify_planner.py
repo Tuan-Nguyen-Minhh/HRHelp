@@ -346,14 +346,14 @@ def test_fallback_retrieves_when_the_required_facts_are_present():
 
 @pytest.mark.asyncio
 async def test_planner_failure_falls_back_to_ask(monkeypatch):
-    async def boom(_messages, _attempt):
+    async def boom(_messages, _attempt, _model_name):
         raise TimeoutError("slow")
 
-    monkeypatch.setattr(settings, "OPENAI_API_KEY", "test-key")
+    monkeypatch.setattr(settings, "MISTRAL_API_KEY", "test-key")
     monkeypatch.setattr("src.features.clarify.model.planner._complete", boom)
     result = await plan_turn({"text": "Nhân viên tự ý nghỉ.", "stored": {}})
     assert result.fallback is True
-    assert result.reason == "TimeoutError"
+    assert result.reason == "ministral-3b-2512: TimeoutError"
     assert result.decision.requested_action is RequestedAction.NEED_CLARIFICATION
     plan = apply_decision("Nhân viên tự ý nghỉ.", {}, result.decision, fallback=True)
     assert route_after_extract(_state(plan, incident_date=date(2026, 3, 1), agent_run_id=uuid4())) == "ask"
@@ -363,13 +363,13 @@ async def test_planner_failure_falls_back_to_ask(monkeypatch):
 async def test_invalid_decision_is_retried_once(monkeypatch):
     calls = {"n": 0}
 
-    async def flaky(_messages, _attempt):
+    async def flaky(_messages, _attempt, _model_name):
         calls["n"] += 1
         if calls["n"] == 1:
             raise ValueError("schema")
         return _decision(extracted_facts=[_fact("absence_days", "5 ngày", "5 ngày")])
 
-    monkeypatch.setattr(settings, "OPENAI_API_KEY", "test-key")
+    monkeypatch.setattr(settings, "MISTRAL_API_KEY", "test-key")
     monkeypatch.setattr("src.features.clarify.model.planner._complete", flaky)
     result = await plan_turn({"text": "nghỉ 5 ngày", "stored": {}})
     assert calls["n"] == 2
@@ -379,10 +379,10 @@ async def test_invalid_decision_is_retried_once(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_missing_api_key_does_not_call_the_model(monkeypatch):
-    async def boom(_messages, _attempt):
+    async def boom(_messages, _attempt, _model_name):
         raise AssertionError("the model must not be called")
 
-    monkeypatch.setattr(settings, "OPENAI_API_KEY", "")
+    monkeypatch.setattr(settings, "MISTRAL_API_KEY", "")
     monkeypatch.setattr("src.features.clarify.model.planner._complete", boom)
     result = await plan_turn({"text": "nghỉ 5 ngày", "stored": {}})
     assert result.fallback is True

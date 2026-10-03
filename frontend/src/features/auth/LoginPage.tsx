@@ -97,7 +97,8 @@ export function LoginPage() {
 
   return (
     <main id="main" className="min-h-screen bg-[#f3f8fb] text-[#0b2230]">
-      <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-4 md:px-8">
+      <header className="sticky top-0 z-50 border-b border-white/70 bg-[#f3f8fb]/85 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-3 md:px-8">
         <a className="flex items-center gap-3" href="#top" aria-label="HR Help">
           <span className="flex h-16 w-16 items-center justify-center">
             <img className="h-full w-full object-contain drop-shadow-md" src="/legal-scales-books-bg.png" alt="" aria-hidden="true" />
@@ -116,6 +117,7 @@ export function LoginPage() {
         <a className="rounded-full bg-[#073642] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0b4c5d]" href="#auth">
           Vào hệ thống
         </a>
+        </div>
       </header>
 
       <section id="top" className="relative mx-auto grid w-full max-w-7xl gap-8 px-5 pb-10 pt-4 md:px-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(440px,1.05fr)] lg:items-center lg:pb-16">

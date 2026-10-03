@@ -33,6 +33,6 @@ graph LR
 | Frontend | React/Next.js | User interface |
 | Backend | FastAPI | API server |
 | Agent | LangGraph | AI agent orchestration |
-| LLM | OpenAI/Gemini | Language model |
+| LLM | Mistral | Language model |
 | Database | PostgreSQL/SQLite | Data persistence |
 | Vector Store | pgvector | RAG / embeddings |

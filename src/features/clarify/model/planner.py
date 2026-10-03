@@ -4,7 +4,8 @@ import logging
 import time
 from dataclasses import dataclass
 
-from langchain_openai import ChatOpenAI
+import httpx
+from langchain_mistralai import ChatMistralAI
 
 from src.core.config import settings
 from src.features.clarify.model.decision import (
@@ -50,22 +51,24 @@ def fallback_decision() -> ClarifyDecision:
 
 async def plan_turn(state: dict) -> PlannerResult:
     """Read one narrative. Timeout, invalid JSON, and schema errors fall back after one retry."""
-    model_name = settings.MODEL_NAME
-    if not settings.OPENAI_API_KEY:
-        return PlannerResult(fallback_decision(), True, "missing_api_key", 0, model_name)
+    model_names = settings.mistral_chat_models()
+    primary_model = model_names[0]
+    if not settings.MISTRAL_API_KEY:
+        return PlannerResult(fallback_decision(), True, "missing_api_key", 0, primary_model)
     messages = _messages(state)
     started = time.perf_counter()
     last_error = "invalid_decision"
     for attempt in range(MAX_RETRIES + 1):
-        try:
-            decision = await _complete(messages, attempt)
-            elapsed = int((time.perf_counter() - started) * 1000)
-            return PlannerResult(decision, False, None, elapsed, model_name)
-        except Exception as exc:
-            last_error = type(exc).__name__
-            logger.warning("clarify planner attempt %s failed: %s", attempt + 1, last_error)
+        for model_name in model_names:
+            try:
+                decision = await _complete(messages, attempt, model_name)
+                elapsed = int((time.perf_counter() - started) * 1000)
+                return PlannerResult(decision, False, None, elapsed, model_name)
+            except Exception as exc:
+                last_error = f"{model_name}: {_error_name(exc)}"
+                logger.warning("clarify planner attempt %s failed: %s", attempt + 1, last_error)
     elapsed = int((time.perf_counter() - started) * 1000)
-    return PlannerResult(fallback_decision(), True, last_error, elapsed, model_name)
+    return PlannerResult(fallback_decision(), True, last_error, elapsed, primary_model)
 
 
 def _messages(state: dict) -> list[dict[str, str]]:
@@ -86,7 +89,7 @@ def _stored_lines(state: dict) -> list[str]:
     return lines
 
 
-async def _complete(messages: list[dict[str, str]], attempt: int) -> ClarifyDecision:
+async def _complete(messages: list[dict[str, str]], attempt: int, model_name: str) -> ClarifyDecision:
     prompt = list(messages)
     if attempt:
         prompt.append(
@@ -95,16 +98,24 @@ async def _complete(messages: list[dict[str, str]], attempt: int) -> ClarifyDeci
                 "content": "The previous response did not match the schema. Return one valid decision.",
             }
         )
-    model = ChatOpenAI(
-        **settings.openai_chat_kwargs(),
+    model = ChatMistralAI(
+        **settings.mistral_chat_kwargs(model_name),
         temperature=0,
         timeout=30,
-        max_retries=0,
+        max_retries=2,
     )
-    structured = model.with_structured_output(ClarifyDecision, method="json_schema")
+    structured = model.with_structured_output(ClarifyDecision)
     parsed = await structured.ainvoke(prompt)
     if isinstance(parsed, ClarifyDecision):
         return parsed
     if isinstance(parsed, dict):
         return ClarifyDecision.model_validate(parsed)
     raise TypeError("planner returned an unexpected payload")
+
+
+def _error_name(exc: Exception) -> str:
+    if isinstance(exc, httpx.HTTPStatusError):
+        response = exc.response
+        body = response.text.replace("\n", " ")[:500]
+        return f"HTTP {response.status_code}: {body}"
+    return type(exc).__name__

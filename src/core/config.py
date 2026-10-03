@@ -31,11 +31,11 @@ class Settings(BaseSettings):
     # LLM
     # -------------------------
     # Clarify and sanction synthesis. An empty key keeps chat on the rule
-    # extractor and leaves the sanction level unset.
-    OPENAI_API_KEY: str = ""
-    MODEL_NAME: str = "gpt-4o-mini"
-    # Empty uses api.openai.com. An OpenRouter key (sk-or-) uses that host when this stays empty.
-    OPENAI_BASE_URL: str = ""
+    # extractor and leaves the sanction level unset. The same Mistral key is
+    # also used by the legal embedding client below.
+    MODEL_NAME: str = "ministral-8b-2512"
+    FALLBACK_MODEL_NAME: str = "ministral-3b-2512"
+    MISTRAL_BASE_URL: str = ""
     LLM_TEMPERATURE: float = Field(default=0.7, ge=0.0, le=2.0)
     # Unused by the case agents. Left so an old env file still loads.
     XAI_API_KEY: str = ""
@@ -71,18 +71,22 @@ class Settings(BaseSettings):
     # variable names and are read from alembic/env.py, src/db/session.py,
     # src/services/vector_store.py and the scripts/ helpers. Renaming them
     # would break those call sites.
-    def openai_chat_kwargs(self) -> dict[str, str]:
-        """Model and host for ChatOpenAI. An OpenRouter key is not sent to api.openai.com."""
-        model = self.MODEL_NAME.strip() or "gpt-4o-mini"
-        base = self.OPENAI_BASE_URL.strip()
-        if not base and self.OPENAI_API_KEY.startswith("sk-or-"):
-            base = "https://openrouter.ai/api/v1"
-        if "openrouter.ai" in base and "/" not in model:
-            model = f"openai/{model}"
-        kwargs = {"model": model, "api_key": self.OPENAI_API_KEY}
+    def mistral_chat_kwargs(self, model_name: str | None = None) -> dict[str, str]:
+        """Model, key, and optional host for ChatMistralAI."""
+        model = (model_name or self.MODEL_NAME).strip() or "ministral-8b-2512"
+        base = self.MISTRAL_BASE_URL.strip()
+        kwargs = {"model": model, "api_key": self.MISTRAL_API_KEY}
         if base:
             kwargs["base_url"] = base
         return kwargs
+
+    def mistral_chat_models(self) -> tuple[str, ...]:
+        """Primary model first, then an optional fallback without duplicates."""
+        primary = self.MODEL_NAME.strip() or "ministral-8b-2512"
+        fallback = self.FALLBACK_MODEL_NAME.strip()
+        if fallback and fallback != primary:
+            return (primary, fallback)
+        return (primary,)
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:  # noqa: N802

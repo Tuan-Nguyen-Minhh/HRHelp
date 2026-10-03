@@ -77,14 +77,16 @@ def test_a_generic_narrative_keeps_the_stored_family():
     assert resolved_family("", None) == "GENERAL"
 
 
-def test_an_openrouter_key_is_not_sent_to_openai(monkeypatch):
-    monkeypatch.setattr(settings, "OPENAI_API_KEY", "sk-or-test")
-    monkeypatch.setattr(settings, "OPENAI_BASE_URL", "")
-    monkeypatch.setattr(settings, "MODEL_NAME", "gpt-4o-mini")
-    kwargs = settings.openai_chat_kwargs()
-    assert kwargs["base_url"] == "https://openrouter.ai/api/v1"
-    assert kwargs["model"] == "openai/gpt-4o-mini"
-    assert kwargs["api_key"] == "sk-or-test"
+def test_mistral_chat_kwargs_use_the_mistral_key(monkeypatch):
+    monkeypatch.setattr(settings, "MISTRAL_API_KEY", "mistral-test")
+    monkeypatch.setattr(settings, "MISTRAL_BASE_URL", "")
+    monkeypatch.setattr(settings, "MODEL_NAME", "ministral-8b-2512")
+    monkeypatch.setattr(settings, "FALLBACK_MODEL_NAME", "ministral-3b-2512")
+    kwargs = settings.mistral_chat_kwargs("ministral-3b-2512")
+    assert "base_url" not in kwargs
+    assert kwargs["model"] == "ministral-3b-2512"
+    assert kwargs["api_key"] == "mistral-test"
+    assert settings.mistral_chat_models() == ("ministral-8b-2512", "ministral-3b-2512")
 
 
 def test_hr_cannot_send_a_citation_or_a_sanction_code():
