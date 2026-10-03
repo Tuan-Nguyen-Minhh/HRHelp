@@ -1,3 +1,5 @@
+import type { AssessmentForm } from "@/types/assessment";
+
 export type CaseStatus =
   | "OPEN"
   | "NEED_INFO"
@@ -268,6 +270,7 @@ export interface ReviewPack {
   incident_date: string | null;
   description: string | null;
   answer: AnswerView;
+  assessment: AssessmentForm | null;
 }
 
 export interface ReviewView {

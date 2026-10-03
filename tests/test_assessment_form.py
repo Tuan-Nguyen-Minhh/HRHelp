@@ -41,6 +41,27 @@ def test_a_supported_level_stays_a_proposal():
     assert sections.handling_proposal.proposed_actions[0].label == "Cảnh cáo"
 
 
+def test_incident_narrative_is_minutes_bullets_not_the_raw_ai_report():
+    sections, _sources = compose(_source(confirmed=True, sanction="REPRIMAND"))
+
+    narrative = sections.incident_summary.narrative
+    assert narrative.startswith("- Đi muộn nhiều lần.")
+    assert "- Số lần đi muộn: 5." in narrative
+    assert "BIÊN BẢN ĐÁNH GIÁ" not in narrative
+    assert "Chunk_id" not in narrative
+    assert "I. " not in narrative
+
+
+def test_employee_department_and_position_are_read_from_case_description():
+    sections, _sources = compose(_source(confirmed=True, sanction="REPRIMAND", description="Phòng ban: SOFTWARE\nChức danh: DEVELOPER\nVi phạm: Đi muộn 10 ngày.\nNhân viên đi muộn liên tục."))
+
+    assert sections.employee_information.department == "SOFTWARE"
+    assert sections.employee_information.position == "DEVELOPER"
+    assert "Phòng ban" not in sections.incident_summary.narrative
+    assert "Chức danh" not in sections.incident_summary.narrative
+    assert "- Đi muộn 10 ngày." in sections.incident_summary.narrative
+
+
 def test_termination_is_not_offered_as_a_company_level():
     sections, _sources = compose(_source(confirmed=True, sanction="TERMINATION"))
     assert sections.handling_proposal.proposed_actions == []
@@ -98,13 +119,13 @@ def test_hr_cannot_send_a_citation_or_a_sanction_code():
         )
 
 
-def _source(*, confirmed: bool, sanction: str) -> ComposeInput:
+def _source(*, confirmed: bool, sanction: str, description: str = "Đi muộn nhiều lần.") -> ComposeInput:
     return ComposeInput(
         case_code="C-1",
         case_status="ANALYZED",
         family="LATE",
         incident_date=date(2026, 3, 1),
-        description="Đi muộn nhiều lần.",
+        description=description,
         employee_code="E-1",
         employee_name="Nguyễn Văn A",
         facts=(FactInput("late_days", "Số lần đi muộn", "5" if confirmed else None, confirmed, True),),
@@ -123,7 +144,10 @@ def _answer(sanction: str) -> AnswerView:
         process_steps=[],
         risk_level="LOW",
         missing_internal_rule=False,
-        message="BIÊN BẢN ĐÁNH GIÁ VỤ VIỆC",
+        message=(
+            "BIÊN BẢN ĐÁNH GIÁ VỤ VIỆC I. THÔNG TIN VỤ VIỆC - Nhân viên: Nguyễn Văn A. "
+            "II. CĂN CỨ ĐÁNH GIÁ - Chunk_id: 5d8458e0-04af-44fa-970c-157922461604."
+        ),
         legal_basis=[],
         internal_rule=[],
         precedent=[],

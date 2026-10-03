@@ -4,13 +4,12 @@ import { Link, useParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Sheet } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { DraftList } from "@/features/decision/DraftList";
-import { riskLabel, sanctionLabel } from "@/lib/labels";
+import { DocumentSections, EvidenceDetail, sectionLinks } from "@/features/assessment/form/Sections";
 import { clearIdempotency, idempotencyKey } from "@/lib/idempotency";
-import { visibleReportText } from "@/lib/report";
 import { api, errorMessage } from "@/services/api";
-import type { CitationView } from "@/types/api";
+import type { EvidenceCard } from "@/types/assessment";
 
 export function LegalCasePage() {
   const { caseId = "" } = useParams();
@@ -20,6 +19,7 @@ export function LegalCasePage() {
   const [comment, setComment] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const [selected, setSelected] = useState<EvidenceCard | null>(null);
   const submit = useMutation({
     mutationFn: () => api.submitReview(caseId, decision, comment, idempotencyKey(`review:${caseId}`)),
     onSuccess: (view) => {
@@ -44,12 +44,11 @@ export function LegalCasePage() {
     );
   }
 
-  const answer = pack.data.answer;
+  const assessment = pack.data.assessment;
   const locked = pack.data.status !== "PENDING_LEGAL";
-  const visibleMessage = visibleReportText(answer.message);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4">
+    <div className="mx-auto max-w-6xl space-y-4">
       <div>
         <Link className="text-sm text-[#009EC1] underline" to="/legal-review">
           Hàng chờ
@@ -58,42 +57,53 @@ export function LegalCasePage() {
         <p className="text-sm text-[#4d7380]">
           {pack.data.employee_name} · {pack.data.status}. Pháp chế không sửa tình tiết, mức hay trích dẫn.
         </p>
-        {pack.data.description ? <p className="mt-2 whitespace-pre-wrap text-sm text-[#355861]">{pack.data.description}</p> : null}
         {answerRisk(pack.data.answer.risk_level) ? (
           <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
             Cần thận trọng. Rủi ro {pack.data.answer.risk_level}. Rủi ro không tự quyết mức kỷ luật.
           </p>
         ) : null}
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Đề xuất đã lưu</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <p>Mức trên báo cáo: {answer.sanction_type ? sanctionLabel(answer.sanction_type) : "Chưa chốt mức"}</p>
-          <p>Rủi ro: {riskLabel(answer.risk_level)}</p>
-          {visibleMessage ? <p className="whitespace-pre-wrap">{visibleMessage}</p> : null}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Căn cứ</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Layer title="Căn cứ pháp lý" items={answer.legal_basis} />
-          <Layer title="Nội quy" items={answer.internal_rule} />
-          <Layer title="Tiền lệ — không tự quyết mức" items={answer.precedent} />
-          <Layer title="Rủi ro thanh tra — không phải mức kỷ luật người lao động" items={answer.inspection_risk} />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Biên bản và phiếu</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DraftList drafts={answer.drafts ?? []} />
-        </CardContent>
-      </Card>
+
+      {assessment ? (
+        <div className="grid items-start gap-4 lg:grid-cols-[13rem_minmax(0,1fr)]">
+          <nav className="flex gap-2 overflow-x-auto lg:sticky lg:top-4 lg:block lg:space-y-1" aria-label="Mục biên bản">
+            {sectionLinks().map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                className="block shrink-0 rounded-md px-3 py-1.5 text-sm text-[#073642] hover:bg-[#e7f6f9]"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+          <DocumentSections
+            view={assessment}
+            sections={assessment.sections}
+            editing={null}
+            saving={false}
+            onBegin={() => undefined}
+            onCancel={() => undefined}
+            onSave={() => undefined}
+            onCase={() => undefined}
+            onEmployee={() => undefined}
+            onIncident={() => undefined}
+            onFacts={() => undefined}
+            onRationale={() => undefined}
+            onOpen={setSelected}
+          />
+        </div>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Biên bản</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-[#4d7380]">
+            Hồ sơ này chưa có biên bản đã xác nhận. Vui lòng yêu cầu HR lập và xác nhận biên bản trước khi pháp chế duyệt.
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Quyết định của pháp chế</CardTitle>
@@ -126,32 +136,13 @@ export function LegalCasePage() {
           {locked ? <p className="text-xs text-[#4d7380]">Hồ sơ không còn ở hàng chờ nên không nhận thêm kết luận.</p> : null}
         </CardContent>
       </Card>
+      <Sheet open={selected !== null} onOpenChange={(open) => { if (!open) setSelected(null); }} title="Đoạn căn cứ">
+        {selected ? <EvidenceDetail card={selected} /> : null}
+      </Sheet>
     </div>
   );
 }
 
 function answerRisk(level: string | null): boolean {
   return level === "HIGH" || level === "CRITICAL";
-}
-
-function Layer({ title, items }: { title: string; items: CitationView[] }) {
-  return (
-    <section>
-      <h3 className="text-sm font-semibold text-[#073642]">{title}</h3>
-      {items.length === 0 ? <p className="text-sm text-[#4d7380]">Không có đoạn.</p> : null}
-      <ul className="mt-1 space-y-2">
-        {items.map((item) => (
-          <li key={item.citation_id} className="rounded-lg border border-[#d5e8ed] px-3 py-2 text-sm">
-            <p className="font-medium">{item.policy_name || item.policy_code}</p>
-            <p className="text-xs text-[#4d7380]">
-              {[item.article && `Điều ${item.article}`, item.clause && `Khoản ${item.clause}`, item.point && `Điểm ${item.point}`]
-                .filter(Boolean)
-                .join(" · ") || "Không có vị trí điều khoản"}
-            </p>
-            <p className="mt-1 whitespace-pre-wrap">“{item.quote}”</p>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
 }

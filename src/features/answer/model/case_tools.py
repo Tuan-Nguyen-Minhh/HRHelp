@@ -6,14 +6,17 @@ and dispatcher close to the domain code. A future MCP transport can expose
 rules.
 """
 
+import re
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.common.clock import utc_now
-from src.features.answer.schema import AnswerView, CitationView, SANCTION_LABELS
+from src.features.answer.schema import SANCTION_LABELS, AnswerView, CitationView
+from src.features.assessment.schemas import Sections
 from src.models.cases import Case
 
 CaseToolName = Literal[
@@ -23,6 +26,17 @@ CaseToolName = Literal[
 ]
 
 _EXPORT_DIR = Path("/tmp/hr_case_exports")
+_CHUNK_ID_RE = re.compile(r"\s*-?\s*Chunk[_\s-]*id\s*:\s*[\w-]+", re.IGNORECASE)
+_MARKDOWN_RE = re.compile(r"[*_`]+")
+_ROMAN_HEADING_RE = re.compile(r"\b[IVXLCDM]{1,6}\.\s+[A-ZÀ-Ỹ][^.\n]*(?:\.|\s+-)?", re.IGNORECASE)
+_INCIDENT_FACT_KEYS = {
+    "absence_days",
+    "late_days",
+    "notice_form",
+    "violation_time",
+    "violation_place",
+    "violation_description",
+}
 
 
 class CaseToolCall(BaseModel):
@@ -169,31 +183,142 @@ def legal_ticket_document(case: Case, answer: AnswerView | None, *, legal_code: 
     return CaseDocument("PHIẾU CHUYỂN PHÁP CHẾ", tuple(sections))
 
 
-def assessment_document(case: Case, answer: AnswerView | None) -> CaseDocument:
-    if answer is None:
-        return CaseDocument("BÁO CÁO ĐÁNH GIÁ", (("Trạng thái", "Hồ sơ chưa có báo cáo đánh giá."),))
+def assessment_document(
+    case: Case,
+    answer: AnswerView | None,
+    sections: Sections | None = None,
+) -> CaseDocument:
+    return disciplinary_minutes_document(case, answer, sections)
+
+
+def disciplinary_minutes_document(
+    case: Case,
+    answer: AnswerView | None,
+    sections: Sections | None = None,
+) -> CaseDocument:
+    """Create the editable disciplinary minutes form HR reviews before confirming."""
+    employee = sections.employee_information if sections is not None else None
+    incident = sections.incident_summary if sections is not None else None
+    handling = sections.handling_proposal if sections is not None else None
+    case_meta = _case_description_meta(case.description or "")
+    employee_name = _first(
+        None if employee is None else employee.employee_name,
+        case.employee_name,
+        "........................................",
+    )
+    employee_code = _first(
+        None if employee is None else employee.employee_code,
+        case.employee_code,
+        "........................................",
+    )
+    position = _first(None if employee is None else employee.position, case_meta.get("position"), ".....................")
+    department = _first(None if employee is None else employee.department, case_meta.get("department"), ".................................")
+    timeline = _first(None if incident is None else incident.timeline, _event_line(case))
+    raw_narrative = _first(
+        None if incident is None else incident.narrative,
+        None if answer is None else answer.rationale,
+        case.description,
+        "................................................................................",
+    )
+    if _looks_like_assessment_report(raw_narrative) or _looks_like_case_metadata(raw_narrative):
+        raw_narrative = _case_violation_narrative(case, sections)
+    narrative_lines = _minutes_bullets(raw_narrative)
+    employee_statement = _first(
+        None if incident is None else incident.employee_statement,
+        "................................................................................",
+    )
+    result_summary = _assessment_result_summary(sections)
+    proposal = _first(
+        _handling_level(handling),
+        None if sections is not None or handling is None else handling.rationale,
+        None if answer is None or not answer.sanction_type else _sanction(answer),
+        ".......................................................................................",
+    )
+    basis = _assessment_basis(answer, sections)
     return CaseDocument(
-        "BÁO CÁO ĐÁNH GIÁ VỤ VIỆC",
+        "BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT",
         (
-            ("Hồ sơ", _case_line(case)),
-            ("Người lao động", _employee(case)),
-            ("Nội dung báo cáo", answer.message),
-            ("Mức đề xuất", _sanction(answer)),
-            ("Căn cứ", _citations(answer)),
+            (
+                "Thông tin người lao động",
+                "\n".join(
+                    [
+                        f"Ông/Bà: {employee_name}",
+                        f"Mã số nhân viên: {employee_code}",
+                        f"Chức vụ/Chức danh: {position}",
+                        f"Phòng ban/Bộ phận: {department}",
+                        f"Thời gian lập biên bản: {_minutes_date(case.incident_date)}",
+                        "Địa điểm: Phòng họp Công ty ................................................",
+                    ]
+                ),
+            ),
+            (
+                "I. THÀNH PHẦN THAM DỰ",
+                "\n".join(
+                    [
+                        "- Đại diện Ban lãnh đạo: Ông/Bà ........................................; Chức vụ ........................................",
+                        "- Đại diện nhân sự công ty: Ông/Bà ........................................; Phòng ban ........................................",
+                        f"- Người bị lập biên bản: {employee_name}; Chức vụ {position}; Phòng ban {department}",
+                        "- Người làm chứng: Ông/Bà ........................................; Phòng ban ........................................",
+                    ]
+                ),
+            ),
+            (
+                "II. NỘI DUNG",
+                "\n".join(
+                    [
+                        f"- Thời gian, địa điểm xảy ra sự việc vi phạm: {timeline}",
+                        "- Diễn biến sự việc:",
+                        *narrative_lines,
+                        f"- Đối chiếu quy định: {basis}",
+                        "- Thiệt hại của công ty: ................................................................................ ...............................",
+                        f"- Ý kiến của người bị lập biên bản: {employee_statement}",
+                        f"- Kết quả đánh giá: {result_summary}",
+                        f"- Hình thức xử phạt của Ban lãnh đạo: {proposal}",
+                        "- Ý kiến của người làm chứng và đại diện nhân sự công ty: ......................................................",
+                        ".....................................................................................................................................................",
+                        ".....................................................................................................................................................",
+                    ]
+                ),
+            ),
         ),
     )
+
+
+def _assessment_basis(answer: AnswerView | None, sections: Sections | None) -> str:
+    if sections is not None and sections.citations:
+        labels = [item.citation_label or item.title for item in _ordered_basis(sections.citations)[:5]]
+        return "; ".join(label for label in labels if label) or "Chưa có căn cứ."
+    return _citations(answer)
 
 
 def export_word_document(document: CaseDocument, file_name: str | None = None) -> Path:
     """Write one document to .docx and return the local file path."""
     try:
         from docx import Document
+        from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
         from docx.enum.text import WD_ALIGN_PARAGRAPH
+        from docx.oxml import OxmlElement
+        from docx.oxml.ns import qn
+        from docx.shared import Inches, Pt
     except ImportError as exc:  # pragma: no cover - depends on deployment package set.
         raise RuntimeError("python-docx is required to export Word files.") from exc
 
     _EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     path = _EXPORT_DIR / _safe_file_name(file_name or document.title)
+    if document.title == "BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT":
+        _export_disciplinary_minutes(
+            document,
+            path,
+            Document,
+            WD_ALIGN_PARAGRAPH,
+            WD_TABLE_ALIGNMENT,
+            WD_CELL_VERTICAL_ALIGNMENT,
+            OxmlElement,
+            qn,
+            Inches,
+            Pt,
+        )
+        return path
     doc = Document()
     header = doc.add_paragraph("CÔNG TY: ........................................")
     header.alignment = WD_ALIGN_PARAGRAPH.LEFT
@@ -210,6 +335,216 @@ def export_word_document(document: CaseDocument, file_name: str | None = None) -
     return path
 
 
+def _export_disciplinary_minutes(
+    document: CaseDocument,
+    path: Path,
+    document_cls,
+    paragraph_alignment,
+    table_alignment,
+    vertical_alignment,
+    oxml_element,
+    qn_fn,
+    inches,
+    pt,
+) -> None:
+    doc = document_cls()
+    section = doc.sections[0]
+    section.page_width = inches(8.5)
+    section.page_height = inches(11)
+    section.left_margin = inches(1)
+    section.right_margin = inches(1)
+    section.top_margin = inches(1)
+    section.bottom_margin = inches(1)
+    normal = doc.styles["Normal"]
+    normal.font.name = "Times New Roman"
+    normal._element.rPr.rFonts.set(qn_fn("w:eastAsia"), "Times New Roman")
+    normal.font.size = pt(13)
+    normal.paragraph_format.space_after = pt(3)
+    normal.paragraph_format.line_spacing = 1.05
+
+    info = _section_map(document)
+    _add_header_table(doc, table_alignment, vertical_alignment, oxml_element, qn_fn, pt)
+    _add_center(doc, "BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT", paragraph_alignment, pt, size=16, bold=True)
+    _add_paragraph(doc, "Biên bản xem xét xử lý vi phạm kỷ luật lao động đối với:", pt)
+    employee = _lines(info.get("Thông tin người lao động", ""))
+    employee_name = _line_value(employee, "Ông/Bà")
+    employee_code = _line_value(employee, "Mã số nhân viên")
+    position = _line_value(employee, "Chức vụ/Chức danh")
+    department = _line_value(employee, "Phòng ban/Bộ phận")
+    meeting_time = _line_value(employee, "Thời gian lập biên bản")
+    location = _line_value(employee, "Địa điểm")
+    _add_two_column_line(
+        doc,
+        f"Ông/Bà: {employee_name}",
+        f"Mã số nhân viên: {employee_code}",
+        pt,
+        oxml_element,
+        qn_fn,
+        inches,
+    )
+    _add_two_column_line(
+        doc,
+        f"Chức vụ/Chức danh: {position}",
+        f"Phòng ban/Bộ phận: {department}",
+        pt,
+        oxml_element,
+        qn_fn,
+        inches,
+    )
+    _add_paragraph(doc, f"Vào lúc: {meeting_time}", pt)
+    _add_paragraph(doc, f"Tại: {location}", pt)
+    _add_paragraph(doc, "I. THÀNH PHẦN THAM DỰ:", pt, bold=True)
+    _add_paragraph(doc, "- Đại diện Ban lãnh đạo:", pt)
+    _add_two_column_line(
+        doc,
+        "Ông/Bà: ...........................................................",
+        "Chức vụ: ..................................................",
+        pt,
+        oxml_element,
+        qn_fn,
+        inches,
+    )
+    _add_paragraph(doc, "- Đại diện nhân sự công ty:", pt)
+    _add_paragraph(doc, "Ông/Bà: .......................................................................................................................................", pt)
+    _add_two_column_line(
+        doc,
+        "Chức vụ: .........................................................",
+        "Phòng ban: ...............................................",
+        pt,
+        oxml_element,
+        qn_fn,
+        inches,
+    )
+    _add_paragraph(doc, "- Người bị lập biên bản:", pt)
+    _add_paragraph(doc, f"Ông/Bà: {employee_name or '........................................................................................................................................'}", pt)
+    _add_two_column_line(
+        doc,
+        f"Chức vụ: {position}",
+        f"Phòng ban: {department}",
+        pt,
+        oxml_element,
+        qn_fn,
+        inches,
+    )
+    _add_paragraph(doc, "- Người làm chứng:", pt)
+    _add_paragraph(doc, "Ông/Bà: .......................................................................................................................................", pt)
+    _add_two_column_line(
+        doc,
+        "Chức vụ: .........................................................",
+        "Phòng ban: ...............................................",
+        pt,
+        oxml_element,
+        qn_fn,
+        inches,
+    )
+    content = _lines(info.get("II. NỘI DUNG", ""))
+    _add_paragraph(doc, "II. NỘI DUNG:", pt, bold=True)
+    for line in content:
+        _add_paragraph(doc, line, pt)
+    _add_signature_table(doc, table_alignment, vertical_alignment, oxml_element, qn_fn, pt)
+    doc.save(path)
+
+
+def _add_header_table(doc, table_alignment, vertical_alignment, oxml_element, qn_fn, pt) -> None:
+    table = doc.add_table(rows=1, cols=2)
+    table.alignment = table_alignment.CENTER
+    table.autofit = True
+    _clear_borders(table, oxml_element, qn_fn)
+    left, right = table.rows[0].cells
+    left.vertical_alignment = vertical_alignment.TOP
+    right.vertical_alignment = vertical_alignment.TOP
+    _cell_text(left, "CÔNG TY .................\nSố: ...../...../BB-.....", pt, bold_first=True)
+    _cell_text(
+        right,
+        "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\n........., ngày ..... tháng ..... năm ......",
+        pt,
+        bold_first=True,
+        center=True,
+    )
+
+
+def _add_signature_table(doc, table_alignment, vertical_alignment, oxml_element, qn_fn, pt) -> None:
+    table = doc.add_table(rows=2, cols=2)
+    table.alignment = table_alignment.CENTER
+    _clear_borders(table, oxml_element, qn_fn)
+    rows = [
+        ("Đại diện Ban lãnh đạo\n(Ký tên, ghi họ tên và đóng dấu)\n\n\n", "Người bị lập biên bản\n(Ký tên, ghi rõ họ tên)\n\n\n"),
+        ("Đại diện nhân sự công ty\n(Ký tên, ghi rõ họ tên)\n\n\n", "Người làm chứng\n(Ký tên, ghi rõ họ tên)\n\n\n"),
+    ]
+    for row, values in zip(table.rows, rows, strict=True):
+        for cell, value in zip(row.cells, values, strict=True):
+            cell.vertical_alignment = vertical_alignment.TOP
+            _cell_text(cell, value, pt, bold_first=True, center=True)
+
+
+def _add_two_column_line(doc, left: str, right: str, pt, _oxml_element, _qn_fn, inches) -> None:
+    paragraph = doc.add_paragraph()
+    paragraph.paragraph_format.tab_stops.add_tab_stop(inches(3.55))
+    left_run = paragraph.add_run(left)
+    left_run.font.name = "Times New Roman"
+    left_run.font.size = pt(13)
+    left_run.add_tab()
+    right_run = paragraph.add_run(right)
+    right_run.font.name = "Times New Roman"
+    right_run.font.size = pt(13)
+
+
+def _clear_borders(table, oxml_element, qn_fn) -> None:
+    tbl_pr = table._tbl.tblPr
+    borders = tbl_pr.first_child_found_in("w:tblBorders")
+    if borders is None:
+        borders = oxml_element("w:tblBorders")
+        tbl_pr.append(borders)
+    for edge in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        tag = f"w:{edge}"
+        element = borders.find(qn_fn(tag))
+        if element is None:
+            element = oxml_element(tag)
+            borders.append(element)
+        element.set(qn_fn("w:val"), "nil")
+
+
+def _cell_text(cell, text: str, pt, *, bold_first: bool = False, center: bool = False) -> None:
+    cell.text = ""
+    for index, line in enumerate(text.splitlines() or [""]):
+        paragraph = cell.paragraphs[0] if index == 0 else cell.add_paragraph()
+        paragraph.alignment = 1 if center else 0
+        run = paragraph.add_run(line)
+        run.font.name = "Times New Roman"
+        run.font.size = pt(13)
+        run.bold = bool(bold_first and index == 0)
+
+
+def _add_center(doc, text: str, paragraph_alignment, pt, *, size: int = 13, bold: bool = False) -> None:
+    paragraph = _add_paragraph(doc, text, pt, size=size, bold=bold)
+    paragraph.alignment = paragraph_alignment.CENTER
+
+
+def _add_paragraph(doc, text: str, pt, *, size: int = 13, bold: bool = False):
+    paragraph = doc.add_paragraph()
+    run = paragraph.add_run(text)
+    run.font.name = "Times New Roman"
+    run.font.size = pt(size)
+    run.bold = bold
+    return paragraph
+
+
+def _section_map(document: CaseDocument) -> dict[str, str]:
+    return {heading: body for heading, body in document.sections}
+
+
+def _lines(value: str) -> list[str]:
+    return [line for line in value.splitlines() if line.strip()]
+
+
+def _line_value(lines: list[str], label: str) -> str:
+    prefix = f"{label}:"
+    for line in lines:
+        if line.startswith(prefix):
+            return line[len(prefix) :].strip()
+    return "........................................"
+
+
 def _document_for_type(case: Case, answer: AnswerView | None, document_type: str) -> CaseDocument:
     if document_type == "minutes":
         return violation_minutes_document(case, answer)
@@ -223,6 +558,12 @@ def _document_for_type(case: Case, answer: AnswerView | None, document_type: str
 def _event_line(case: Case) -> str:
     date = case.incident_date.isoformat() if case.incident_date else "....../....../......"
     return f"Vào ngày {date}, tại ........................................"
+
+
+def _minutes_date(value: date | None) -> str:
+    if value is None:
+        return "..... giờ ..... phút, ngày ..... tháng ..... năm ....."
+    return f"..... giờ ..... phút, ngày {value.day:02d} tháng {value.month:02d} năm {value.year}"
 
 
 def _case_line(case: Case) -> str:
@@ -274,7 +615,7 @@ def _citations(answer: AnswerView | None) -> str:
     rows = [*answer.legal_basis, *answer.internal_rule, *answer.precedent, *answer.inspection_risk]
     if not rows:
         return "Chưa có căn cứ."
-    return "\n".join(_citation(item) for item in rows[:8])
+    return "\n".join(_citation(item) for item in _ordered_basis(rows)[:8])
 
 
 def _citation(item: CitationView) -> str:
@@ -284,6 +625,132 @@ def _citation(item: CitationView) -> str:
         label = f"{label} - {location}"
     quote = " ".join(item.quote.split())
     return f"- {label}: {quote}"
+
+
+def _ordered_basis(items: list[Any]) -> list[Any]:
+    return [item for _index, item in sorted(enumerate(items), key=lambda row: (_basis_rank(row[1]), row[0]))]
+
+
+def _basis_rank(item: Any) -> int:
+    policy_type = (getattr(item, "policy_type", None) or "").upper()
+    title = " ".join(
+        str(value or "").upper()
+        for value in (
+            getattr(item, "citation_label", None),
+            getattr(item, "title", None),
+            getattr(item, "policy_name", None),
+            getattr(item, "policy_code", None),
+        )
+    )
+    if policy_type == "INTERNAL_RULE" or "NỘI QUY" in title or "NOI QUY" in title or "QUY ĐỊNH" in title:
+        return 0
+    if policy_type in {"DECREE", "CIRCULAR"} or "NGHỊ ĐỊNH" in title or "NGHI DINH" in title:
+        return 1
+    if policy_type == "LAW" or "BỘ LUẬT" in title or "BO LUAT" in title or "LUẬT" in title:
+        return 2
+    return 3
+
+
+def _minutes_bullets(value: str) -> list[str]:
+    clean = _clean_minutes_text(value)
+    if not clean:
+        return ["  - ................................................................................"]
+    lines = [line.strip() for line in clean.splitlines() if line.strip()]
+    if len(lines) == 1:
+        lines = [part.strip() for part in re.split(r"\s+-\s+|(?<=[.!?])\s+(?=[A-ZÀ-Ỹ0-9])", lines[0]) if part.strip()]
+    clean_lines = [line.lstrip("- ").rstrip(".") for line in lines if line.strip()]
+    return [f"  - {line}." for line in clean_lines[:5] if line and not _looks_like_assessment_report(line)]
+
+
+def _clean_minutes_text(value: str) -> str:
+    text = _CHUNK_ID_RE.sub("", value or "")
+    text = _MARKDOWN_RE.sub("", text)
+    text = _ROMAN_HEADING_RE.sub("", text)
+    text = re.sub(r"\b[IVXLCDM]{1,6}\.\s*", "", text)
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
+def _looks_like_assessment_report(value: str) -> bool:
+    upper = value.upper()
+    markers = (
+        "BIÊN BẢN ĐÁNH GIÁ",
+        "BIEN BAN ĐANH GIA",
+        "KẾT QUẢ ĐÁNH GIÁ",
+        "CĂN CỨ ĐÁNH GIÁ",
+        "PHÂN TÍCH ĐIỀU KIỆN",
+        "QUY TRÌNH XỬ LÝ",
+    )
+    return any(marker in upper for marker in markers) or "CHUNK_ID" in upper or "CHUNK ID" in upper
+
+
+def _looks_like_case_metadata(value: str) -> bool:
+    lines = [line.strip().casefold() for line in value.splitlines() if line.strip()]
+    return any(line.startswith(("phòng ban:", "chức danh:", "chức vụ:", "vị trí:", "vi phạm:")) for line in lines)
+
+
+def _case_violation_narrative(case: Case, sections: Sections | None) -> str:
+    rows = []
+    case_meta = _case_description_meta(case.description or "")
+    if case_meta.get("violation"):
+        rows.append(case_meta["violation"])
+    if case_meta.get("body") and not _looks_like_assessment_report(case_meta["body"]):
+        rows.append(case_meta["body"])
+    if case.incident_date:
+        rows.append(f"Ngày xảy ra: {case.incident_date.isoformat()}")
+    if sections is not None:
+        for fact in sections.confirmed_facts:
+            if fact.fact_key in _INCIDENT_FACT_KEYS and fact.value:
+                rows.append(f"{fact.label}: {fact.value}")
+    return "\n".join(rows)
+
+
+def _case_description_meta(description: str) -> dict[str, str]:
+    meta: dict[str, str] = {}
+    body: list[str] = []
+    for line in description.splitlines():
+        text = line.strip()
+        if not text:
+            continue
+        key, sep, value = text.partition(":")
+        normalized = key.strip().casefold()
+        clean_value = value.strip()
+        if sep and normalized == "phòng ban":
+            meta["department"] = clean_value
+        elif sep and normalized in {"chức danh", "chức vụ", "vị trí"}:
+            meta["position"] = clean_value
+        elif sep and normalized == "vi phạm":
+            meta["violation"] = clean_value
+        else:
+            body.append(text)
+    if body:
+        meta["body"] = " ".join(body)
+    return meta
+
+
+def _assessment_result_summary(sections: Sections | None) -> str:
+    if sections is None:
+        return "HR xem xét trên thông tin đã thu thập và căn cứ áp dụng trước khi quyết định hình thức xử lý."
+    return _clean_minutes_text(sections.assessment_result.summary) or (
+        "HR xem xét trên thông tin đã thu thập và căn cứ áp dụng trước khi quyết định hình thức xử lý."
+    )
+
+
+def _handling_level(handling: Any) -> str | None:
+    if handling is None:
+        return None
+    if not handling.proposed_actions:
+        return "Chưa xác định do chưa đủ căn cứ."
+    labels = [item.label for item in handling.proposed_actions if item.label]
+    return "; ".join(labels) if labels else None
+
+
+def _first(*values: str | None) -> str:
+    for value in values:
+        if value is not None and value.strip():
+            return value.strip()
+    return ""
 
 
 def _safe_file_name(value: str) -> str:
