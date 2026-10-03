@@ -1,4 +1,4 @@
-"""B6: embed the 1307 legal chunks into ``legal_chunk_embeddings``.
+"""B6: embed the legal chunks into ``legal_chunk_embeddings``.
 
 Plan: ``data_pipeline_steps/step6_7_plan.md`` section 2 (B6).
 
@@ -7,7 +7,7 @@ What it does, in order:
 1. **Preflight before spending anything.** Refuses to run unless
    ``EMBEDDING_MODEL``/``EMBEDDING_DIMENSIONS`` still match the frozen contract,
    ``MISTRAL_API_KEY`` is present, alembic is at the repository migration head
-   and ``legal_chunks`` holds exactly 1307 rows. A wrong model would write
+   and ``legal_chunks`` holds exactly ``EXPECTED_TOTAL_CHUNKS`` rows. A wrong model would write
    vectors that V4 then reports as garbage, and a wrong row count would mean
    silently embedding the wrong corpus.
 
@@ -21,9 +21,9 @@ What it does, in order:
    ``legal_chunks.text``. A changed text therefore re-embeds exactly one row,
    and a crash costs at most the current batch.
 
-4. **Batches of 32 texts per request.** 1307 chunks / 32 = 41 requests, ~41 s
-   at 1 RPS. Unbatched it would be ~22 minutes for the same tokens — batching
-   is a quota decision, not a nicety.
+4. **Batches of 32 texts per request.** The corpus is a few thousand chunks, so
+   ~44 requests and ~45 s at 1 RPS. Unbatched it would be ~22 minutes for the
+   same tokens — batching is a quota decision, not a nicety.
 
 5. **1 RPS and a per-request audit log** are enforced by
    ``src.services.embeddings_client``, shared with every other caller of the
@@ -57,6 +57,7 @@ from sqlalchemy.orm import Session, sessionmaker
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from scripts import corpus_expectations  # noqa: E402
 from src.core.config import settings  # noqa: E402
 from src.models.legal import (  # noqa: E402
     EMBEDDING_DIM,
@@ -78,14 +79,17 @@ logging.basicConfig(
 logger = logging.getLogger("embed_legal")
 
 # ---------------------------------------------------------------------------
-# Frozen inputs / expectations (plan 1 and 2.2). Hard numbers, never recomputed
-# from whatever the database happens to contain.
+# Expectations (plan 1 and 2.2). Derived from data/chunk/chunks_*.json via
+# scripts/corpus_expectations.py, never from whatever the database happens to
+# contain — recomputing from the DB would make the equality below trivially
+# true. Deriving from the chunk files keeps the guard strict while following a
+# deliberate source change; source_manifest.json pins catch unintended edits.
 # ---------------------------------------------------------------------------
 
 CHUNK_DIR = PROJECT_ROOT / "data" / "chunk"
 CHECKPOINT_PATH = CHUNK_DIR / "embed_progress.json"
 
-EXPECTED_TOTAL_CHUNKS = 1307
+EXPECTED_TOTAL_CHUNKS = corpus_expectations.TOTAL_CHUNKS
 
 
 def alembic_head() -> str:
@@ -98,8 +102,8 @@ def alembic_head() -> str:
     return ScriptDirectory.from_config(config).get_current_head()
 
 
-#: Texts per Mistral request. 32 is the plan's value: 41 requests instead of
-#: 1307, which is the difference between ~41 s and ~22 min of wall clock.
+#: Texts per Mistral request. 32 is the plan's value: it turns the whole corpus
+#: into ~44 requests, the difference between ~45 s and ~22 min of wall clock.
 BATCH_SIZE = 32
 
 #: The 3 step3 chunks over the 1000-token threshold. Embedded anyway (the model

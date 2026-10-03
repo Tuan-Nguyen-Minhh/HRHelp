@@ -7,8 +7,8 @@ _Ngày: 2026-09-27 (B4/B5), bổ sung 2026-09-28 (B6/B7), đổi tên dump `b6b7
 ## 0. Dùng bản nào — đọc trước
 
 - **Máy mới / deploy: chỉ dùng `full_build_phase_p029.dump`.** Đó là snapshot
-  **full** của cả database ở head `0004` — đủ 4 bảng legal
-  (documents 4 / chunks 1307 / references 568 / **embeddings 1307**).
+  **full** của cả database — đủ 4 bảng legal
+  (documents 4 / chunks 1377 / references 599 / **embeddings 1377**).
 - `b4b5_*` là **lịch sử**, giữ lại để biết B4/B5 bàn giao cái gì. Nó **thiếu
   bảng vector** — import bản này rồi chạy `verify_db.py` thì xanh nhưng
   `verify_embeddings.py` đỏ ngay. Đừng dùng để deploy.
@@ -17,7 +17,7 @@ _Ngày: 2026-09-27 (B4/B5), bổ sung 2026-09-28 (B6/B7), đổi tên dump `b6b7
 
 | File | Kích thước | Dùng để |
 |---|---|---|
-| `full_build_phase_p029.dump` | ~5,4 MB | **DÙNG BẢN NÀY để import** — snapshot full, định dạng custom của `pg_dump`, nén |
+| `full_build_phase_p029.dump` | ~11,0 MB | **DÙNG BẢN NÀY để import** — snapshot full ở head `0009`, định dạng custom của `pg_dump`, nén `-Z 9` |
 | `full_build_phase_p029.dump.sha256` | — | Kiểm tra file còn nguyên (toàn bộ `handoff/` đã commit vào git) |
 | `full_build_phase_p029.schema.sql` | 50 KB | **Chỉ phần schema, không có data** — để đọc/diff/review DDL (nhất là `0003`); KHÔNG dùng để import |
 | `b4b5_build_phase_p029.dump` | 290 KB | Lịch sử B4/B5 (thiếu bảng vector) — không dùng để deploy |
@@ -66,12 +66,19 @@ docker exec p-029-db-1 pg_restore -U postgres -d build_phase_p029 --no-owner --n
 | `policies` | 4 | 3 văn bản luật (BLLĐ 2019, NĐ 145/2020, NĐ 283/2026) + Nội quy HRCorp (`INTERNAL_RULE`) |
 | `policy_versions` | 4 | Thời gian hiệu lực từng văn bản (bảo vệ bằng ExcludeConstraint) |
 | `documents` | 4 | Bản ghi tài liệu nguồn (`ingest_status='EMBEDDED'`) |
-| `document_chunks` | 1307 | 1307 chunks đầy đủ text, vector 1024-dim, và search_tsv (GIN) |
+| `document_chunks` | 1377 | 1377 chunks đầy đủ text, vector 1024-dim, và search_tsv (GIN) |
 | `legal_documents` | 4 | 3 văn bản luật + 1 nội quy (`NOI_QUY`/`VAN_BAN_NOI_BO`) + footnote sửa đổi |
-| `legal_chunks` | 1307 | Nội dung đã chia nhỏ (Điều / khoản / điểm), 18 chunk NQCT đánh số tuần tự 1–18 |
-| `legal_chunk_references` | 568 | Đồ thị dẫn chiếu (NQCT: 2 EXPLICIT + 1 EXPLICIT_SELF, 0 BOUNDARY; BOUNDARY toàn corpus = 3) |
-| `legal_chunk_embeddings` | 1307 | Vector `mistral-embed` 1024-dim + tsvector BM25 (B6/B7) |
-| `alembic_version` | 1 | Phiên bản migration đã áp dụng (`0004_document_chunks_tsv`) |
+| `legal_chunks` | 1377 | Nội dung đã chia nhỏ (Điều / khoản / điểm), 88 chunk NQCT đánh số tuần tự 1–82 |
+| `legal_chunk_references` | 599 | Đồ thị dẫn chiếu (NQCT: 21 EXPLICIT + 4 EXPLICIT_SELF + 6 LIST_EXPANSION + 2 DEFAULT_SELF, 0 BOUNDARY; BOUNDARY toàn corpus = 3) |
+| `legal_chunk_embeddings` | 1377 | Vector `mistral-embed` 1024-dim + tsvector BM25 (B6/B7) |
+| `alembic_version` | 1 | Phiên bản migration đã áp dụng (`0009_assessment_form`) |
+
+> **Số trên lấy từ `scripts/corpus_expectations.py`** (tự dẫn từ
+> `data/chunk/chunks_*.json`), không gõ tay. Chạy
+> `python scripts/corpus_expectations.py` để in lại bất cứ lúc nào.
+> `full_build_phase_p029.dump` đã refresh ở head `0009_assessment_form` sau lần
+> mở rộng NQCT (2026-10-03) và đã được `pg_restore` thử vào DB tạm để đối chiếu
+> (4 / 1377 / 599 / 1377 / 1377, 0 embedding NULL) trước khi thay thế.
 
 Chi tiết B4/B5: `data/chunk/CHANGELOG_B4B5.md`. Chi tiết B6/B7:
 `data/chunk/CHANGELOG_B6B7.md`.

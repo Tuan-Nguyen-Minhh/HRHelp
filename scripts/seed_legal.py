@@ -32,6 +32,7 @@ from sqlalchemy.orm import Session, sessionmaker
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from scripts import corpus_expectations  # noqa: E402
 from src.core.config import settings  # noqa: E402
 from src.models.legal import (  # noqa: E402
     DOC_STATUS_ACTIVE,
@@ -124,12 +125,7 @@ EXTERNAL_LAW_ALLOWLIST: set[str] = {
 
 LAW_NUMBER_RE = re.compile(r"^\d{2,3}/20\d{2}/[A-ZĐ0-9-]+$")
 
-CHUNK_FILES = [
-    "chunks_BLLD.json",
-    "chunks_ND145_2020.json",
-    "chunks_ND283_2026.json",
-    "chunks_NQCT.json",
-]
+CHUNK_FILES = corpus_expectations.CHUNK_FILES
 
 BATCH_SIZE = 500
 

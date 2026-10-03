@@ -3,7 +3,7 @@
  "pinned_at": "2026-09-28",
  "model": "mistral-embed",
  "dimensions": 1024,
- "note": "B7 golden set: 10 Vietnamese queries over the 3 legal documents. Coverage is deliberate. All 3 documents (18/VBHN-VPQH, 145/2020/NĐ-CP, 283/2026/NĐ-CP) and all 3 chunk levels (ARTICLE, CLAUSE, POINT) appear as pinned answers. The 6 query topics are the ones the plan prescribes: tuổi nghỉ hưu, mức phạt BHXH, kỷ luật lao động, thời giờ làm việc, hợp đồng lao động, phạm vi NĐ 145. expected_chunk_ids and must_contain_article were pinned AFTER the first retrieval run and a manual read of every top-5, the same procedure as V5-manual in B4/B5. From now on they are law: changing one needs a CHANGELOG_B6B7.md entry saying why.",
+ "note": "Golden set: Vietnamese queries over the corpus. B7 added 10 queries over the 3 legal documents; P-029 (2026-10-03) added Q11-Q15 over the internal regulation (NQLD-HRCORP-2026) after it grew from 18 to 82 Điều. All 4 documents and all 3 chunk levels (ARTICLE, CLAUSE, POINT) appear as pinned answers. B7 topics: tuổi nghỉ hưu, mức phạt BHXH, kỷ luật lao động, thời giờ làm việc, hợp đồng lao động, phạm vi NĐ 145. P-029 topics: quy trình khiếu nại (lần 1 / lần 2), phản ánh khách hàng, bàn giao khi nghỉ việc, thẩm quyền mua sắm theo ngưỡng giá trị. expected_chunk_ids and must_contain_article are pinned AFTER a retrieval run plus a manual read of every top-5. From now on they are law: changing one needs a CHANGELOG entry saying why. Two candidate topics were DELIBERATELY LEFT OUT rather than pinned, because the vector arm cannot retrieve them and a golden entry must be a true invariant: Điều 67 (thanh toán lương khi chấm dứt HĐLĐ) and Điều 80 (đối thoại định kỳ). See data/chunk/CHANGELOG_P029_NQCT_2026-10.md mục 8.1.",
  "queries": [
   {
    "id": "Q01",
@@ -131,6 +131,61 @@
     "ND145_2020:CV:M01:A038:C02:P-a1"
    ],
    "why": "Cấp POINT: điểm a1 khoản 2 Điều 38 NĐ 145 — 'Ít nhất 03 người, nếu người sử dụng lao động sử dụng dưới 50 người lao động'. Query chỉ một điểm cụ thể, không phải cả khoản, để top-5 phải chịu được cấp POINT."
+  },
+  {
+   "id": "Q11",
+   "query": "Nhân viên khiếu nại về quyết định kỷ luật của công ty thì trình trong thời hạn bao lâu?",
+   "expected_document_id": "NQLD-HRCORP-2026",
+   "must_contain_article": 49,
+   "expected_chunk_level": "CLAUSE",
+   "expected_chunk_ids": [
+    "NQCT:CXII:M00:A049:C02"
+   ],
+   "why": "Điều 49 NQCT khoản 2 — khiếu nại lần thứ nhất trong 30 ngày kể từ ngày nhận quyết định xử lý kỷ luật. Khoản này đủ dài để bị tách thành CLAUSE, nên câu hỏi ép top-5 phải chịu được cấp CLAUSE trong văn bản nội bộ (trước đây NQCT chỉ có chunk ARTICLE). Bổ sung coverage cho quy trình khiếu nại — một trong các họ quy trình mới."
+  },
+  {
+   "id": "Q12",
+   "query": "Khiếu nại lần thứ hai trình tới Chủ tịch Hội đồng quản trị trong thời hạn bao lâu?",
+   "expected_document_id": "NQLD-HRCORP-2026",
+   "must_contain_article": 50,
+   "expected_chunk_level": "ARTICLE",
+   "expected_chunk_ids": [
+    "NQCT:CXII:M00:A050"
+   ],
+   "why": "Điều 50 NQCT khoản 1 và 2 — 45 ngày kể từ ngày nhận kết luận lần thứ nhất, trình tới Chủ tịch Hội đồng quản trị. Ghép Q11 (lần 1) và Q12 (lần 2) để kiểm chứng chuỗi quy trình khiếu nại có đủ bậc không. Câu hỏi đã chốt theo kết quả probe (xem CHANGELOG_B6B7.md): bản đầu 'khiếu nại lần thứ hai về kỷ luật lao động' bị vector-arm kéo sang BLLD Điều 131 vì cụm 'kỷ luật lao động' trùng luật; bỏ cụm đó thì cả 3 arm đều trúng."
+  },
+  {
+   "id": "Q13",
+   "query": "Phản ánh của khách hàng mức C nghiêm trọng phải phản hồi trong bao lâu?",
+   "expected_document_id": "NQLD-HRCORP-2026",
+   "must_contain_article": 54,
+   "expected_chunk_level": "ARTICLE",
+   "expected_chunk_ids": [
+    "NQCT:CXIII:M00:A054"
+   ],
+   "why": "Điều 54 NQCT khoản 1 điểm c — phản ánh loại C (an toàn, quyền lợi tài chính, thông tin cá nhân, thất thoát tài sản) phản hồi tối đa 24 giờ và báo cáo ngay cho Trưởng bộ phận và Giám đốc. Họ quy trình dịch vụ/khách hàng, lấy từ mẫu nội quy công ty dịch vụ. Không trùng chủ đề với luật nên cả 3 arm đều trúng."
+  },
+  {
+   "id": "Q14",
+   "query": "Thời hạn bàn giao công việc, tài sản, hồ sơ và dữ liệu khách hàng đang phụ trách khi nghỉ việc?",
+   "expected_document_id": "NQLD-HRCORP-2026",
+   "must_contain_article": 65,
+   "expected_chunk_level": "ARTICLE",
+   "expected_chunk_ids": [
+    "NQCT:CXVI:M00:A065"
+   ],
+   "why": "Điều 65 NQCT khoản 1 — 05 ngày làm việc để bàn giao công việc, tài sản, hồ sơ và dữ liệu khách hàng. Khoản 3 khoan việc đình chỉ thanh toán cho đến khi hoàn thành bàn giao là nhánh quy trình (offboarding) chưa có trong corpus. Đã chốt theo kết quả probe: bản đầu dùng 'nhân viên nghỉ việc' bị vector-arm kéo sang BLLD Điều 31."
+  },
+  {
+   "id": "Q15",
+   "query": "Công ty mua sắm tài sản có giá trị từ 50 triệu đồng trở lên thì ai phê duyệt?",
+   "expected_document_id": "NQLD-HRCORP-2026",
+   "must_contain_article": 61,
+   "expected_chunk_level": "ARTICLE",
+   "expected_chunk_ids": [
+    "NQCT:CXV:M00:A061"
+   ],
+   "why": "Điều 61 NQCT khoản 1 điểm c — phân cấp thẩm quyền theo ngưỡng giá trị (Trưởng bộ phận / Giám đốc / HĐQT trên 500 triệu). Đây là dạng quy trình có ngưỡng số và nhánh quyết định, khác hẳn dạng liệt kê; nhắm vào khả năng reasoning theo điều kiện."
   }
  ]
 }

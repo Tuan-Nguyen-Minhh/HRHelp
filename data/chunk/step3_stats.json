@@ -1,66 +1,14 @@
 [
  {
-  "stem": "2026_131_18_VBHN-VPQH",
-  "document_id": "18/VBHN-VPQH",
-  "tokenizer": "mistral",
-  "max_tokens": 1000,
-  "articles_in_tree": 220,
-  "chunks": 381,
-  "levels": {
-   "ARTICLE": 186,
-   "CLAUSE": 163,
-   "POINT": 32
-  },
-  "chunks_over_token_limit": 0,
-  "chunks_with_anomaly_flags": 20,
-  "tokenizer_fallback_used": false,
-  "tree_anomalies": []
- },
- {
-  "stem": "283_2026_ND-CP_642116",
-  "document_id": "283/2026/NĐ-CP",
-  "tokenizer": "mistral",
-  "max_tokens": 1000,
-  "articles_in_tree": 68,
-  "chunks": 531,
-  "levels": {
-   "ARTICLE": 12,
-   "CLAUSE": 261,
-   "POINT": 258
-  },
-  "chunks_over_token_limit": 2,
-  "chunks_with_anomaly_flags": 2,
-  "tokenizer_fallback_used": false,
-  "tree_anomalies": []
- },
- {
-  "stem": "nghi-dinh-145-2020-huong-dan-thi-hanh-dieu-kien-lao-dong-va-quan-he-lao-dong",
-  "document_id": "145/2020/NĐ-CP",
-  "tokenizer": "mistral",
-  "max_tokens": 1000,
-  "articles_in_tree": 115,
-  "chunks": 377,
-  "levels": {
-   "ARTICLE": 61,
-   "CLAUSE": 201,
-   "POINT": 115
-  },
-  "chunks_over_token_limit": 1,
-  "chunks_with_anomaly_flags": 19,
-  "tokenizer_fallback_used": false,
-  "tree_anomalies": [
-   "CHUONG XI: DUPLICATE_CHAPTER_NUMBER:XI-> XII"
-  ]
- },
- {
   "stem": "noi_quy_mau_cong_ty",
   "document_id": "NQLD-HRCORP-2026",
   "tokenizer": "mistral",
   "max_tokens": 1000,
-  "articles_in_tree": 18,
-  "chunks": 18,
+  "articles_in_tree": 82,
+  "chunks": 88,
   "levels": {
-   "ARTICLE": 18
+   "ARTICLE": 80,
+   "CLAUSE": 8
   },
   "chunks_over_token_limit": 0,
   "chunks_with_anomaly_flags": 0,

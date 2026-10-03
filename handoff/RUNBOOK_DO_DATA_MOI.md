@@ -43,18 +43,25 @@ Nếu `True` là thiếu `mistral-common` → `pip install -r requirements.txt`,
 
 ## 3. Số đúng để đối chiếu
 
-`legal_documents` 4 · `legal_chunks` 1307 (381+377+531+18) · refs 568
-(BOUNDARY 3, UNRESOLVED 0) · embeddings 1307 (0 NULL) ·
-`policies`/`documents` 4 · `document_chunks` 1307.
-Lệch số nào thì dừng, đừng seed tiếp.
+**Không hardcode số ở đây.** Chạy
+`.\.venv\Scripts\python.exe scripts\corpus_expectations.py` để in số đúng
+tính từ `data/chunk/chunks_*.json` — cùng nguồn mà `verify_db.py`,
+`embed_legal.py`, `verify_embeddings.py` dùng để đối chiếu. Lệch số nào thì
+dừng, đừng seed tiếp.
+
+Hiện tại: `legal_documents` 4 · `legal_chunks` 1377
+(381+377+531+88) · refs 599 (BOUNDARY 3, UNRESOLVED 0) ·
+embeddings 1377 (0 NULL) · `policies`/`documents` 4 ·
+`document_chunks` 1377.
 
 ## 4. Thêm văn bản mới
 
 1. Thả file vào `data/markdown/` (Điều đánh số tuần tự theo thứ tự đọc).
-2. Thêm entry vào 4 chỗ: `DOC_ID_MAP` (`hierarchy_parser.py`), `DOCUMENTS` +
-   `CHUNK_FILES` (`seed_legal.py`), `LEGAL_DOCS` (`seed_hr_from_legal.py`),
-   `EXPECTED_*` + `CHUNK_FILES`/`TREE_FILES` (`verify_db.py`); sửa
-   `EXPECTED_TOTAL_CHUNKS` (`embed_legal.py`).
+2. Thêm entry vào 3 chỗ: `DOC_ID_MAP` (`hierarchy_parser.py`),
+   `DOCUMENTS` (`seed_legal.py`), `LEGAL_DOCS` (`seed_hr_from_legal.py`).
+   *Không* sửa `CHUNK_FILES`/`TREE_FILES`/`EXPECTED_*`: các danh sách đó đã
+   tự dẫn từ `data/chunk/chunks_*.json` qua `scripts/corpus_expectations.py`,
+   nên thêm văn bản không làm hỏng số kỳ vọng nữa.
 3. Đổi `chunk_id` (đánh số lại Điều) thì DELETE dòng cũ trước khi seed:
    `DELETE FROM legal_chunk_embeddings WHERE chunk_id LIKE '<PREFIX>%';
     DELETE FROM legal_chunks WHERE document_id='<id mới>';`

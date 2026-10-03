@@ -9,17 +9,46 @@
 from __future__ import annotations
 
 import json
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 
 STEP3_DIR = Path(__file__).resolve().parent
 WORKSPACE_ROOT = STEP3_DIR.parent.parent
 OUT_DIR = WORKSPACE_ROOT / "data" / "chunk"
-CODES = ["BLLD", "ND283_2026", "ND145_2020"]
-EXPECTED_ARTICLES = {"BLLD": 220, "ND283_2026": 68, "ND145_2020": 115}
 KNOWN_LONG_ALLOW = {
     "Luật Người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng",
 }
+
+
+def discover_codes() -> list[str]:
+    """Tu kiem tra data/chunk thay vi hardcode.
+
+    P-029 (NQCT): danh sach cu hardcode trong file nay bo soat NQCT — van ban
+    noi bo duoc seed vao DB nhung khong bao gio duoc validate. Tu lay danh sach
+    `chunks_*.json` giup moi van ban (ke ca them sau nay) deu co bao cao.
+    """
+    return sorted(p.stem.removeprefix("chunks_")
+                  for p in OUT_DIR.glob("chunks_*.json"))
+
+
+def expected_articles(code: str) -> int:
+    """So Dieu kiem tra phu = cay step3 (document_tree), KHONG phai chunks.
+
+    Lay tu `document_tree_*.json` de check van con dung y nghia: 'moi Dieu
+    parser tim thay trong markdown deu phai sinh ra it nhat 1 chunk'. Neu lay
+    tu chinh chunks_NQCT.json thi check bien thanh tautology (luon PASS) va
+    khong bat duoc truong hop parser bo rot Dieu.
+    """
+    tree_path = OUT_DIR / f"document_tree_{code}.json"
+    tree = json.loads(tree_path.read_text(encoding="utf-8"))
+    numbers: set[int] = set()
+    for ch in tree["chapters"]:
+        for art in ch["articles"]:
+            numbers.add(art["number"])
+        for sec in ch["sections"]:
+            for art in sec["articles"]:
+                numbers.add(art["number"])
+    return max(numbers) if numbers else 0
 
 
 def load(code: str):
@@ -40,9 +69,11 @@ def main() -> None:
     ap.add_argument("--max-tokens", type=int, default=1000)
     args = ap.parse_args()
     limit = args.max_tokens
+    codes = discover_codes()
+    exp_articles = {code: expected_articles(code) for code in codes}
     rep: list[str] = ["# Validation Report — Bước 3 Semantic Chunking", ""]
-    rep.append("_Regenerate 2026-09-27 (P-029 fix): target_doc greedy + quoted external + "
-               "footnote/heading/stuck-clause. So lieu tach rieng per-doc._")
+    rep.append("_Regenerate tự động: `validate_step3` liệt kê mọi `data/chunk/"
+                "chunks_*.json`; số Điều kỳ vọng lấy từ `document_tree_*.json`_")
     rep.append("")
     all_ids: set[str] = set()
     dupes: list[str] = []
@@ -51,14 +82,14 @@ def main() -> None:
     low_review: list[dict] = []
     anomaly_counter = Counter()
     anomaly_samples: dict[str, list[str]] = {}
-    per_doc_anomaly: dict[str, Counter] = {c: Counter() for c in CODES}
-    per_doc_refs: dict[str, Counter] = {c: Counter() for c in CODES}
-    per_doc_conf: dict[str, Counter] = {c: Counter() for c in CODES}
+    per_doc_anomaly: dict[str, Counter] = {c: Counter() for c in codes}
+    per_doc_refs: dict[str, Counter] = {c: Counter() for c in codes}
+    per_doc_conf: dict[str, Counter] = {c: Counter() for c in codes}
     invalid_targets: list[dict] = []
     empty_chunks: list[str] = []
     quoted_counts: dict[str, int] = {}
 
-    for code in CODES:
+    for code in codes:
         chunks = load(code)
         quoted_counts[code] = sum(
             1 for c in chunks if c["metadata"].get("is_quoted_external_text"))
@@ -83,7 +114,7 @@ def main() -> None:
                     low_review.append({"chunk": c["chunk_id"],
                                        "text": c["text"][:160], **r})
         arts = {c["metadata"]["article_number"] for c in chunks}
-        exp = EXPECTED_ARTICLES[code]
+        exp = exp_articles[code]
         missing = sorted(set(range(1, exp + 1)) - arts)
         over = [c["chunk_id"] for c in chunks
                 if c["metadata"]["token_count"] > limit]

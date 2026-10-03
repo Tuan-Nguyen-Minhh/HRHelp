@@ -27,7 +27,7 @@ Thành phần dùng chung trong các sơ đồ:
 | Sản phẩm | Đăng nhập, mở hồ sơ, chat, đối chiếu, đề xuất, đẩy phiếu, duyệt, ban hành, tiền lệ, đóng hồ sơ, dashboard, xuất JSON/Markdown, giao diện `frontend/` | PDF. Access token vẫn sống đến khi hết hạn |
 | Agent | Case graph, recommend graph, dispatch graph. Tên ledger: `hr-help-rules`, `hr-help-retrieval`, `hr-help-assessment`, `hr-help-dispatch`. `POST /api/v1/chat` vẫn là graph mẫu, không thuộc luồng hồ sơ | Graph duyệt hoặc graph ký. Người quyết định, agent không duyệt |
 | Dữ liệu | Hồ sơ, fact, hội thoại, đề xuất, trích dẫn, nháp, `reviews`, `disciplinary_decisions`, `audit_logs`, `notifications`, `idempotency_keys`, `revoked_tokens`. Migration `0007_manager_notice` | Không xóa lịch sử duyệt, quyết định, hay audit |
-| Kho luật | `scripts/seed_hr_from_legal.py` đổ `BLLD_2019`, `ND145_2020`, `ND283_2026` và nội quy `NQCT` vào `policies` → `policy_versions` → `documents` → `document_chunks` (1307 chunk, embedding 1024 chiều, `search_tsv`) | Feature 5 không đọc bốn bảng `legal_*` |
+| Kho luật | `scripts/seed_hr_from_legal.py` đổ `BLLD_2019`, `ND145_2020`, `ND283_2026` và nội quy `NQCT` vào `policies` → `policy_versions` → `documents` → `document_chunks` (1377 chunk, embedding 1024 chiều, `search_tsv`) | Feature 5 không đọc bốn bảng `legal_*` |
 
 Năm vai trò là `HR`, `MANAGER`, `LEGAL`, `SIGNER`, `ADMIN`. Mức kỷ luật công ty là khiển trách (`WARNING`), cảnh cáo (`REPRIMAND`), kéo dài nâng lương (`WAGE_POSTPONEMENT`), cách chức (`DEMOTION`) và sa thải (`DISMISSAL`). `TERMINATION` còn trong ràng buộc SQL cũ nhưng dịch vụ ban hành không ghi mức đó. Sa thải và chấm dứt hợp đồng là hai căn cứ khác nhau. Agent không tự chọn mức nặng hơn, và không hard-code ngưỡng ngày.
 
