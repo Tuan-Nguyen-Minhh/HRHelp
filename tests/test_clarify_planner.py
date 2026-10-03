@@ -383,6 +383,7 @@ async def test_missing_api_key_does_not_call_the_model(monkeypatch):
         raise AssertionError("the model must not be called")
 
     monkeypatch.setattr(settings, "OPENAI_API_KEY", "")
+    monkeypatch.setattr(settings, "MISTRAL_API_KEY", "")
     monkeypatch.setattr("src.features.clarify.model.planner._complete", boom)
     result = await plan_turn({"text": "nghỉ 5 ngày", "stored": {}})
     assert result.fallback is True

@@ -37,6 +37,16 @@ class Settings(BaseSettings):
     # Empty uses api.openai.com. An OpenRouter key (sk-or-) uses that host when this stays empty.
     OPENAI_BASE_URL: str = ""
     LLM_TEMPERATURE: float = Field(default=0.7, ge=0.0, le=2.0)
+    # -------------------------
+    # Chat fallback chain (planner + synthesis share it via src/services/chat.py):
+    # valid OpenAI key -> MISTRAL_CHAT_MODEL -> MISTRAL_CHAT_FALLBACK_MODEL.
+    # Placeholder keys are skipped, so a local .env with only MISTRAL_API_KEY
+    # runs purely on Mistral free tier. ministral-8b-2512 (625k TPM / 3.13 RPS)
+    # is the primary; ministral-3b-2512 (1.3M TPM / 12.5 RPS) is the fallback.
+    # -------------------------
+    MISTRAL_CHAT_MODEL: str = "ministral-8b-2512"
+    MISTRAL_CHAT_FALLBACK_MODEL: str = "ministral-3b-2512"
+    MISTRAL_BASE_URL: str = "https://api.mistral.ai/v1"
     # Unused by the case agents. Left so an old env file still loads.
     XAI_API_KEY: str = ""
     XAI_MODEL: str = "grok-4.7"
@@ -83,6 +93,44 @@ class Settings(BaseSettings):
         if base:
             kwargs["base_url"] = base
         return kwargs
+
+    def openai_key_valid(self) -> bool:
+        """A placeholder or empty key is not a candidate."""
+        key = self.OPENAI_API_KEY.strip()
+        return key.startswith("sk-") and "your-key" not in key and len(key) >= 20
+
+    def mistral_key_valid(self) -> bool:
+        """An empty or placeholder key leaves chat on the rule fallback."""
+        key = self.MISTRAL_API_KEY.strip()
+        return bool(key) and "your-mistral" not in key and len(key) >= 20
+
+    def chat_candidates(self) -> list[dict[str, str]]:
+        """Ordered LLM candidates. Skipped keys never produce a candidate."""
+        out: list[dict[str, str]] = []
+        if self.openai_key_valid():
+            out.append({"label": "openai", **self.openai_chat_kwargs()})
+        if self.mistral_key_valid():
+            base = self.MISTRAL_BASE_URL.strip() or "https://api.mistral.ai/v1"
+            primary = self.MISTRAL_CHAT_MODEL.strip() or "ministral-8b-2512"
+            out.append(
+                {
+                    "label": f"mistral:{primary}",
+                    "model": primary,
+                    "api_key": self.MISTRAL_API_KEY,
+                    "base_url": base,
+                }
+            )
+            fallback = self.MISTRAL_CHAT_FALLBACK_MODEL.strip()
+            if fallback and fallback != primary:
+                out.append(
+                    {
+                        "label": f"mistral:{fallback}",
+                        "model": fallback,
+                        "api_key": self.MISTRAL_API_KEY,
+                        "base_url": base,
+                    }
+                )
+        return out
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:  # noqa: N802

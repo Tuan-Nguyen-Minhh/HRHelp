@@ -4,8 +4,6 @@ import logging
 import time
 from dataclasses import dataclass
 
-from langchain_openai import ChatOpenAI
-
 from src.core.config import settings
 from src.features.clarify.model.decision import (
     CaseFamily,
@@ -50,8 +48,8 @@ def fallback_decision() -> ClarifyDecision:
 
 async def plan_turn(state: dict) -> PlannerResult:
     """Read one narrative. Timeout, invalid JSON, and schema errors fall back after one retry."""
-    model_name = settings.MODEL_NAME
-    if not settings.OPENAI_API_KEY:
+    model_name = _primary_label()
+    if not settings.chat_candidates():
         return PlannerResult(fallback_decision(), True, "missing_api_key", 0, model_name)
     messages = _messages(state)
     started = time.perf_counter()
@@ -66,6 +64,13 @@ async def plan_turn(state: dict) -> PlannerResult:
             logger.warning("clarify planner attempt %s failed: %s", attempt + 1, last_error)
     elapsed = int((time.perf_counter() - started) * 1000)
     return PlannerResult(fallback_decision(), True, last_error, elapsed, model_name)
+
+
+def _primary_label() -> str:
+    candidates = settings.chat_candidates()
+    if candidates:
+        return str(candidates[0]["model"])
+    return settings.MODEL_NAME
 
 
 def _messages(state: dict) -> list[dict[str, str]]:
@@ -87,24 +92,14 @@ def _stored_lines(state: dict) -> list[str]:
 
 
 async def _complete(messages: list[dict[str, str]], attempt: int) -> ClarifyDecision:
-    prompt = list(messages)
-    if attempt:
-        prompt.append(
-            {
-                "role": "user",
-                "content": "The previous response did not match the schema. Return one valid decision.",
-            }
-        )
-    model = ChatOpenAI(
-        **settings.openai_chat_kwargs(),
+    from src.services.chat import acomplete_structured
+
+    return await acomplete_structured(
+        messages,
+        ClarifyDecision,
+        retry_prompt="The previous response did not match the schema. Return one valid decision."
+        if attempt
+        else None,
         temperature=0,
         timeout=30,
-        max_retries=0,
     )
-    structured = model.with_structured_output(ClarifyDecision, method="json_schema")
-    parsed = await structured.ainvoke(prompt)
-    if isinstance(parsed, ClarifyDecision):
-        return parsed
-    if isinstance(parsed, dict):
-        return ClarifyDecision.model_validate(parsed)
-    raise TypeError("planner returned an unexpected payload")
