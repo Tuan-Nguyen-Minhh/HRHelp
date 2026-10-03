@@ -7,16 +7,16 @@ API — none of them is written to pass. Where a check needs the Mistral API it
 says so, and it reuses one embedding per query across all three arms so the
 verification itself does not burn the team quota.
 
-  V1      migration + schema: head == 0003, table exists, ``embedding`` really
+  V1      migration + schema: database revisions match the repository head, table exists, ``embedding`` really
           is VECTOR(1024) per ``format_type`` (never per the Python model),
           search_tsv is a GENERATED STORED tsvector, HNSW + GIN exist with the
           frozen parameters, FK cascades, HR columns untouched at 1024
-  V2      complete + correct + fresh: 1289 rows exactly, 0 NULL embeddings,
+  V2      complete + correct + fresh: 1307 rows exactly, 0 NULL embeddings,
           every dimensions/vector_dims/model correct, and 100% content_sha256
           equal to the sha256 of the CURRENT legal_chunks.text
-  V3      idempotent + quota arithmetic: second run skips 1289 and issues zero
+  V3      idempotent + quota arithmetic: second run skips 1307 and issues zero
           API calls (proved from the audit log, not from the script's stdout),
-          md5 of all 1289 vectors unchanged; one edited text re-embeds exactly
+          md5 of all 1307 vectors unchanged; one edited text re-embeds exactly
           one row and the new sha matches
   V4      vector golden: every expected_chunk_id inside vector-only top-5; all
           norms finite; 5 re-embedded sample chunks at cosine >= 0.999
@@ -25,8 +25,8 @@ verification itself does not burn the team quota.
   V6      metrics floor: hybrid Hit@5 >= 0.8 and MRR >= 0.6, and hybrid not
           behind either single arm by more than 0.1 on either metric
   V7      quota + resume: corpus tokens <= 1M, every logged request gap >= 1.0s,
-          and a process killed mid-run resumes to 1289 rows with no duplicates
-  V8      source untouched + no regression: the 6 frozen JSON files match
+          and a process killed mid-run resumes to 1307 rows with no duplicates
+  V8      source untouched + no regression: the 8 frozen JSON files match
           source_manifest.json, verify_db.py still 70/70, mutation_test.py
           still 18/18
 
@@ -87,15 +87,16 @@ SOURCE_FILES = [
     "chunks_BLLD.json",
     "chunks_ND145_2020.json",
     "chunks_ND283_2026.json",
+    "chunks_NQCT.json",
     "document_tree_BLLD.json",
     "document_tree_ND145_2020.json",
     "document_tree_ND283_2026.json",
+    "document_tree_NQCT.json",
 ]
 
 # Frozen expectations (plan 1 / 2). Hard numbers, never recomputed from the DB.
-EXPECTED_ALEMBIC_HEAD = "0003_legal_embeddings"
-EXPECTED_ROWS = 1289
-EXPECTED_CHUNKS = 1289
+EXPECTED_ROWS = 1307
+EXPECTED_CHUNKS = 1307
 EXPECTED_MODEL = EMBEDDING_MODEL_NAME
 EXPECTED_DIM = EMBEDDING_DIM
 
@@ -197,11 +198,11 @@ def verify_v1(db: Session) -> None:
         return
 
     head = alembic_head()
-    current = db.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
+    current = list(db.scalars(sa.text("SELECT version_num FROM alembic_version")))
     record(
         "V1.alembic_current_eq_head",
-        head is not None and current == head == EXPECTED_ALEMBIC_HEAD,
-        f"current={current} head={head} expected={EXPECTED_ALEMBIC_HEAD}",
+        head is not None and current == [head],
+        f"current={current} head={head}",
     )
 
     exists = db.execute(
@@ -444,7 +445,7 @@ def verify_v3(db: Session) -> None:
         if (stored_sha or "").strip() != sha256_text(text):
             stale += 1
     record(
-        "V3.skipped_equals_1289",
+        "V3.skipped_equals_1307",
         stale == 0 and total_rows(db) == EXPECTED_ROWS,
         f"chunks with a stale hash after the rerun={stale} (so skipped="
         f"{EXPECTED_ROWS - stale}), rows={total_rows(db)}",
@@ -453,7 +454,7 @@ def verify_v3(db: Session) -> None:
     after_fp = vector_fingerprint(db)
     after_log = log_line_count()
     # Zero new API calls, proved by the audit log — not by trusting the
-    # "skipped (fresh): 1289" line the script printed about itself.
+    # "skipped (fresh): 1307" line the script printed about itself.
     record(
         "V3.zero_new_api_requests",
         after_log == before_log,
@@ -877,7 +878,7 @@ def verify_v7(db: Session) -> None:
 
     # The resumed rows must be FRESH, not merely present. content_sha256 is
     # recomputed in Python from the current legal_chunks.text for exactly the
-    # rows the crash test destroyed — the same way V2 does it for all 1289.
+    # rows the crash test destroyed — the same way V2 does it for all 1307.
     resumed_stale = [
         cid
         for cid, stored_sha, text in db.execute(
@@ -995,12 +996,23 @@ def main() -> int:
     try:
         verify_v1(db)
         verify_v2(db)
+        if any(not passed for _, passed, _ in results):
+            logger.error("Prerequisite checks failed. Run alembic upgrade head, seed_legal.py, "
+                         "and embed_legal.py successfully before full verification.")
+            return 1
         verify_v3(db)
+        if any(not passed for _, passed, _ in results):
+            logger.error("Embedding rerun checks failed; skipping API and mutation checks.")
+            return 1
         measured = measure_arms(cases, top_k)
         verify_v4(db, measured, top_k)
         verify_v5(measured, top_k)
         verify_v6(measured)
         verify_v7(db)
+    except Exception as exc:
+        logger.error("Verification stopped: %s", exc)
+        logger.error("For a Mistral 401, correct MISTRAL_API_KEY in .env or the shell environment.")
+        return 1
     finally:
         db.close()
 
