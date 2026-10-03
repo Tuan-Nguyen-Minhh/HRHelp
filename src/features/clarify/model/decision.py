@@ -34,6 +34,12 @@ class RequestedAction(StrEnum):
     NEED_CLARIFICATION = "need_clarification"
     COMPLETE_FACTS = "complete_facts"
     REQUEST_RETRIEVAL = "request_retrieval"
+    ANSWER_POLICY_QUESTION = "answer_policy_question"
+    DRAFT_MINUTES = "draft_minutes"
+    CREATE_TICKET_PREVIEW = "create_ticket_preview"
+    SHOW_ASSESSMENT = "show_assessment"
+    SEND_TO_LEGAL = "send_to_legal"
+    UNSUPPORTED = "unsupported"
 
 
 class ExtractedFact(BaseModel):

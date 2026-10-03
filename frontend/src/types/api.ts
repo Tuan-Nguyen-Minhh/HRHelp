@@ -313,7 +313,15 @@ export interface RecidivismView {
 export interface ExportPayload {
   format: string;
   kind: string;
-  content: unknown;
+  content:
+    | string
+    | {
+        path?: string;
+        file_name?: string;
+        content_type?: string;
+        preview?: string;
+      }
+    | Record<string, unknown>;
 }
 
 export interface TurnResponse {

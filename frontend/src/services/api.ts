@@ -316,8 +316,8 @@ export const api = {
     const response = await http.post<RecidivismView>(`/cases/${caseId}/recidivism`);
     return response.data;
   },
-  async exportCase(caseId: string, kind: "assessment" | "ticket" | "decision"): Promise<ExportPayload> {
-    const response = await http.get<ExportPayload>(`/cases/${caseId}/export/${kind}`, { params: { format: "markdown" } });
+  async exportCase(caseId: string, kind: "assessment" | "ticket" | "decision", format: "markdown" | "docx" = "markdown"): Promise<ExportPayload> {
+    const response = await http.get<ExportPayload>(`/cases/${caseId}/export/${kind}`, { params: { format } });
     return response.data;
   },
 };

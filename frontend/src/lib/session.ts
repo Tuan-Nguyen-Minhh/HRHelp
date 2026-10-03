@@ -1,4 +1,5 @@
 import type { CaseHandoff, ChatMessage, TokenResponse } from "@/types/api";
+import { isRawHandoffMessage } from "@/lib/report";
 
 const AUTH_KEY = "hr_auth";
 const CASE_KEY = "hr_case_id";
@@ -45,11 +46,12 @@ function handoffKey(caseId: string): string {
 
 export function loadMessages(caseId: string): ChatMessage[] {
   const value = readJson<ChatMessage[]>(messageKey(caseId));
-  return Array.isArray(value) ? value : [];
+  return Array.isArray(value) ? value.filter((item) => !isRawHandoffMessage(item.text)) : [];
 }
 
 export function saveMessages(caseId: string, messages: ChatMessage[]): void {
-  sessionStorage.setItem(messageKey(caseId), JSON.stringify(messages.slice(-200)));
+  const visible = messages.filter((item) => !isRawHandoffMessage(item.text));
+  sessionStorage.setItem(messageKey(caseId), JSON.stringify(visible.slice(-200)));
 }
 
 export function loadHandoff(caseId: string): CaseHandoff | null {

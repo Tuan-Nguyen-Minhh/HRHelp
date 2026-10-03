@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { useWorkspace } from "@/features/case-management/CaseWorkspace";
+import { isRawHandoffMessage } from "@/lib/report";
 import { api, errorMessage } from "@/services/api";
 
 export function TimelinePanel() {
@@ -8,7 +9,7 @@ export function TimelinePanel() {
   const query = useQuery({ queryKey: ["timeline", caseId], queryFn: () => api.timeline(caseId) });
   if (query.isLoading) return <p className="text-sm text-[#4d7380]">Đang ghép dòng thời gian…</p>;
   if (query.isError) return <p className="text-sm text-red-800">{errorMessage(query.error)}</p>;
-  const events = query.data?.events ?? [];
+  const events = (query.data?.events ?? []).filter((event) => !isRawHandoffMessage(event.label));
   if (events.length === 0) return <p className="text-sm text-[#4d7380]">Chưa có sự kiện đã lưu.</p>;
   return (
     <ol className="space-y-3">

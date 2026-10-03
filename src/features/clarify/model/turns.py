@@ -54,6 +54,7 @@ _LOCKED = (
     "Muốn sửa một fact, hãy gửi giá trị mới qua xác nhận tình tiết."
 )
 _NEED_PUBLISH = "Đã đủ tình tiết nhưng hồ sơ chưa có ngày xảy ra việc nên chưa đối chiếu được."
+_DIRECT_ACTIONS = {"answer_policy_question", "unsupported"}
 
 
 async def handle_message(
@@ -145,7 +146,13 @@ async def _clarify(
             handoff,
             downstream.agent_run_id,
         )
-    if plan.locked:
+    if plan.requested_action == "show_assessment":
+        answer = await load(session, case)
+        text = answer.message if answer is not None else "Hồ sơ chưa có báo cáo đánh giá để hiển thị."
+    elif plan.requested_action in _DIRECT_ACTIONS and plan.question:
+        answer = None
+        text = plan.question
+    elif plan.locked:
         answer = await load(session, case)
         text = _LOCKED if answer is not None else _NEED_PUBLISH
     else:

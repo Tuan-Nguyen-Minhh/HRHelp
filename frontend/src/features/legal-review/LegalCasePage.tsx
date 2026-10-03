@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DraftList } from "@/features/decision/DraftList";
 import { riskLabel, sanctionLabel } from "@/lib/labels";
 import { clearIdempotency, idempotencyKey } from "@/lib/idempotency";
+import { visibleReportText } from "@/lib/report";
 import { api, errorMessage } from "@/services/api";
 import type { CitationView } from "@/types/api";
 
@@ -45,6 +46,7 @@ export function LegalCasePage() {
 
   const answer = pack.data.answer;
   const locked = pack.data.status !== "PENDING_LEGAL";
+  const visibleMessage = visibleReportText(answer.message);
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
@@ -70,7 +72,7 @@ export function LegalCasePage() {
         <CardContent className="space-y-2 text-sm">
           <p>Mức trên báo cáo: {answer.sanction_type ? sanctionLabel(answer.sanction_type) : "Chưa chốt mức"}</p>
           <p>Rủi ro: {riskLabel(answer.risk_level)}</p>
-          <p className="whitespace-pre-wrap">{answer.message}</p>
+          {visibleMessage ? <p className="whitespace-pre-wrap">{visibleMessage}</p> : null}
         </CardContent>
       </Card>
       <Card>

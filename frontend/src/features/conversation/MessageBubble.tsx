@@ -1,11 +1,13 @@
 import { formatTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { readableAssistantText } from "@/lib/report";
 import type { ChatMessage } from "@/types/api";
 
 const ROLE_LABEL = { user: "Nhân sự", assistant: "Trợ lý", system: "Trạng thái" };
 
 export function MessageBubble({ message }: { message: ChatMessage }) {
   const mine = message.role === "user";
+  const text = message.role === "assistant" ? readableAssistantText(message.text) : message.text;
   return (
     <div className={cn("flex", mine ? "justify-end" : "justify-start")}>
       <article
@@ -20,7 +22,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
           <span>{ROLE_LABEL[message.role]}</span>
           <time dateTime={message.at}>{formatTime(message.at)}</time>
         </header>
-        <p className="whitespace-pre-wrap leading-6">{message.text}</p>
+        <p className="whitespace-pre-wrap leading-6">{text}</p>
       </article>
     </div>
   );
