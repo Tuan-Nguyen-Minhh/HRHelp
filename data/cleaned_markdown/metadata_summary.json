@@ -96,15 +96,15 @@
     "metadata": {
       "filename": "noi_quy_mau_cong_ty.md",
       "document_number": "NQLD-HRCORP-2026",
-      "document_form": "VĂN BẢN NỘI BỘ",
+      "document_form": "VĀN BẢN NỘI BỘ",
       "document_type": "NỘI QUY",
       "document_title": "NỘI QUY LAO ĐỘNG"
     },
     "validation": {
       "structure_counts": {
         "chuong": {
-          "raw": 6,
-          "final": 6
+          "raw": 21,
+          "final": 21
         },
         "muc": {
           "raw": 0,
@@ -116,8 +116,8 @@
         }
       },
       "status": "SUCCESS",
-      "total_parsed_articles": 18,
-      "max_article_number": 18,
+      "total_parsed_articles": 82,
+      "max_article_number": 82,
       "missing_article_numbers": [],
       "warnings": []
     },

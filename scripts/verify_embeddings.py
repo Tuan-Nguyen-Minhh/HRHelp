@@ -11,12 +11,12 @@ verification itself does not burn the team quota.
           is VECTOR(1024) per ``format_type`` (never per the Python model),
           search_tsv is a GENERATED STORED tsvector, HNSW + GIN exist with the
           frozen parameters, FK cascades, HR columns untouched at 1024
-  V2      complete + correct + fresh: 1307 rows exactly, 0 NULL embeddings,
+  V2      complete + correct + fresh: EXPECTED_ROWS rows exactly, 0 NULL embeddings,
           every dimensions/vector_dims/model correct, and 100% content_sha256
           equal to the sha256 of the CURRENT legal_chunks.text
-  V3      idempotent + quota arithmetic: second run skips 1307 and issues zero
+  V3      idempotent + quota arithmetic: second run skips every row and issues zero
           API calls (proved from the audit log, not from the script's stdout),
-          md5 of all 1307 vectors unchanged; one edited text re-embeds exactly
+          md5 of all vectors unchanged; one edited text re-embeds exactly
           one row and the new sha matches
   V4      vector golden: every expected_chunk_id inside vector-only top-5; all
           norms finite; 5 re-embedded sample chunks at cosine >= 0.999
@@ -25,7 +25,7 @@ verification itself does not burn the team quota.
   V6      metrics floor: hybrid Hit@5 >= 0.8 and MRR >= 0.6, and hybrid not
           behind either single arm by more than 0.1 on either metric
   V7      quota + resume: corpus tokens <= 1M, every logged request gap >= 1.0s,
-          and a process killed mid-run resumes to 1307 rows with no duplicates
+          and a process killed mid-run resumes to EXPECTED_ROWS with no duplicates
   V8      source untouched + no regression: the 8 frozen JSON files match
           source_manifest.json, verify_db.py still 70/70, mutation_test.py
           still 18/18
@@ -52,6 +52,7 @@ from sqlalchemy.orm import Session, sessionmaker
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from scripts import corpus_expectations  # noqa: E402
 from src.core.config import settings  # noqa: E402
 from src.models.legal import EMBEDDING_DIM, EMBEDDING_MODEL_NAME  # noqa: E402
 from src.services.embeddings_client import (  # noqa: E402
@@ -83,20 +84,13 @@ SessionLocal = sessionmaker(bind=_engine, autoflush=False, expire_on_commit=Fals
 CHUNK_DIR = PROJECT_ROOT / "data" / "chunk"
 GOLDEN_PATH = PROJECT_ROOT / "eval" / "legal_golden.json"
 MANIFEST_PATH = CHUNK_DIR / "source_manifest.json"
-SOURCE_FILES = [
-    "chunks_BLLD.json",
-    "chunks_ND145_2020.json",
-    "chunks_ND283_2026.json",
-    "chunks_NQCT.json",
-    "document_tree_BLLD.json",
-    "document_tree_ND145_2020.json",
-    "document_tree_ND283_2026.json",
-    "document_tree_NQCT.json",
-]
+SOURCE_FILES = corpus_expectations.CHUNK_FILES + corpus_expectations.TREE_FILES
 
-# Frozen expectations (plan 1 / 2). Hard numbers, never recomputed from the DB.
-EXPECTED_ROWS = 1307
-EXPECTED_CHUNKS = 1307
+# Expectations (plan 1 / 2). Derived from data/chunk/chunks_*.json, never from
+# the DB — recomputing from the DB would make each equality below trivially
+# true. See scripts/corpus_expectations.py.
+EXPECTED_ROWS = corpus_expectations.TOTAL_CHUNKS
+EXPECTED_CHUNKS = corpus_expectations.TOTAL_CHUNKS
 EXPECTED_MODEL = EMBEDDING_MODEL_NAME
 EXPECTED_DIM = EMBEDDING_DIM
 
@@ -445,7 +439,7 @@ def verify_v3(db: Session) -> None:
         if (stored_sha or "").strip() != sha256_text(text):
             stale += 1
     record(
-        "V3.skipped_equals_1307",
+        "V3.skipped_equals_all_rows",
         stale == 0 and total_rows(db) == EXPECTED_ROWS,
         f"chunks with a stale hash after the rerun={stale} (so skipped="
         f"{EXPECTED_ROWS - stale}), rows={total_rows(db)}",
@@ -454,7 +448,7 @@ def verify_v3(db: Session) -> None:
     after_fp = vector_fingerprint(db)
     after_log = log_line_count()
     # Zero new API calls, proved by the audit log — not by trusting the
-    # "skipped (fresh): 1307" line the script printed about itself.
+    # "skipped (fresh): N" line the script printed about itself.
     record(
         "V3.zero_new_api_requests",
         after_log == before_log,
@@ -878,7 +872,7 @@ def verify_v7(db: Session) -> None:
 
     # The resumed rows must be FRESH, not merely present. content_sha256 is
     # recomputed in Python from the current legal_chunks.text for exactly the
-    # rows the crash test destroyed — the same way V2 does it for all 1307.
+    # rows the crash test destroyed — the same way V2 does it for the whole corpus.
     resumed_stale = [
         cid
         for cid, stored_sha, text in db.execute(

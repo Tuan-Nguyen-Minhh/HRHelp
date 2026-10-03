@@ -38,7 +38,9 @@ DOC_ID_MAP = {
     "noi_quy_mau_cong_ty": {
         "document_id": "NQLD-HRCORP-2026", "document_type": "NOI_QUY",
         "document_form": "VAN_BAN_NOI_BO", "doc_code": "NQCT",
-        "max_article": 18,
+        # 82 Dieu sau dot bo sung cac ho quy trinh (2026-10-03). Gia tri nay
+        # chi de doi chieu canh bao; run_step3 lay max thuc te tu cay.
+        "max_article": 82,
     },
 }
 

@@ -3,21 +3,27 @@
 Tightened to match `data_pipeline_steps/step4_5_plan.md` REV.2 exactly. Every
 check asserts a concrete, recomputed value — no check is hard-coded to pass.
 
+Counts (chunks / articles / refs, per document and total) are derived from
+`data/chunk/chunks_*.json` by `scripts/corpus_expectations.py`, so they follow a
+deliberate source change instead of rotting in a literal. See that module for
+why the sha256 pins — not these numbers — are the real tripwire.
+
   V1      connection + migration: alembic current == head, 3 tables, vector ext
-  V2      legal_documents: 4 rows; 220/115/68/18; BLLD PARTIALLY_AMENDED; 2 ND ACTIVE;
-          NQCT ACTIVE (NOI_QUY/VAN_BAN_NOI_BO); amended_by BLLD non-null; chunk_count/article_count
-          cross-checked against real rows
-  V3      legal_chunks: hard 381/377/531/18 = 1307; 0 empty; 0 dup id; article coverage
+  V2      legal_documents: one row per corpus document; BLLD PARTIALLY_AMENDED;
+          ND ACTIVE; NQCT ACTIVE (NOI_QUY/VAN_BAN_NOI_BO); amended_by BLLD
+          non-null; chunk_count/article_count cross-checked against real rows
+  V3      legal_chunks: per-doc counts derived from source; 0 empty; 0 dup id;
+          article coverage against document_tree (tree is the expectation)
   V3-bis  special columns: seed=42, 30 chunk ids PRINTED IN FULL, JSON<->DB 100%
   V3-ter  dangling parent: DB count == JSON count (both printed)
-  V4      refs: hard 568 = 125+233+207+3; target_doc valid; internal article exists;
-          anchor level matches ref granularity
+  V4      refs: per-doc counts derived from source; target_doc valid; internal
+          article exists; anchor level matches ref granularity
   V4-bis  UNRESOLVED == 0
-  V4-ter  BOUNDARY == 3 AND UNRESOLVED == 0
+  V4-ter  BOUNDARY budget == 3 AND UNRESOLVED == 0 (hand-pinned: cross-ref policy)
   V5-auto 5 fixed traversal cases with HARD assertions
   V6      idempotent: runs the real CLI in a subprocess, counts unchanged,
           0 stale rows
-  V7      source untouched: sha256 captured before V6 and compared after
+  V7      source untouched: sha256 vs source_manifest.json pins, before/after
 """
 from __future__ import annotations
 
@@ -37,6 +43,7 @@ from sqlalchemy.orm import Session, sessionmaker
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from scripts import corpus_expectations  # noqa: E402
 from src.core.config import settings  # noqa: E402
 from src.models.legal import (  # noqa: E402
     DOC_STATUS_ACTIVE,
@@ -57,45 +64,32 @@ _engine = sa.create_engine(settings.SYNC_DATABASE_URI)
 SessionLocal = sessionmaker(bind=_engine, autoflush=False, expire_on_commit=False)
 
 CHUNK_DIR = PROJECT_ROOT / "data" / "chunk"
-CHUNK_FILES = [
-    "chunks_BLLD.json",
-    "chunks_ND145_2020.json",
-    "chunks_ND283_2026.json",
-    "chunks_NQCT.json",
-]
-TREE_FILES = [
-    "document_tree_BLLD.json",
-    "document_tree_ND145_2020.json",
-    "document_tree_ND283_2026.json",
-    "document_tree_NQCT.json",
-]
-SOURCE_FILES = CHUNK_FILES + TREE_FILES
+CHUNK_FILES = corpus_expectations.CHUNK_FILES
+TREE_FILES = corpus_expectations.TREE_FILES
+SOURCE_FILES = corpus_expectations.CHUNK_FILES + corpus_expectations.TREE_FILES
 # Pinned known-good hashes. Without this anchor, a "before/after" comparison
 # inside a single run cannot detect source files that were already corrupted —
 # the comparison would trivially hold. Regenerate deliberately with
 #   python scripts/verify_db.py --write-manifest
 MANIFEST_PATH = CHUNK_DIR / "source_manifest.json"
 
-# Frozen expectations (plan 4) — hard, never recomputed from the DB.
-# P-029 FIX 2026-10-01 (NQCT + bare-qualifier): tong van 568 = 125+233+207+3.
-# Bare-qualifier sua 3 ref ND145 A081 (DEFAULT_SELF sai -> EXPLICIT dung ve
-# NĐ 105/2020, giu nguyen count) va 3 ref NQCT (2 BOUNDARY sai -> EXPLICIT,
-# 1 DEFAULT_SELF -> EXPLICIT_SELF) nen BOUNDARY 5->3.
-EXPECTED_CHUNK_COUNTS = {"18/VBHN-VPQH": 381, "145/2020/NĐ-CP": 377, "283/2026/NĐ-CP": 531, "NQLD-HRCORP-2026": 18}
-EXPECTED_ARTICLE_COUNTS = {"18/VBHN-VPQH": 220, "145/2020/NĐ-CP": 115, "283/2026/NĐ-CP": 68, "NQLD-HRCORP-2026": 18}
-EXPECTED_REF_COUNTS = {"18/VBHN-VPQH": 125, "145/2020/NĐ-CP": 233, "283/2026/NĐ-CP": 207, "NQLD-HRCORP-2026": 3}
-TOTAL_CHUNKS = 1307
-TOTAL_REFS = 568
-EXPECTED_BOUNDARY = 3
-EXPECTED_UNRESOLVED = 0
+# Counts are DERIVED from data/chunk/chunks_*.json, not hand-pinned literals.
+# P-029 (2026-10-03): they used to live here as literals (NQCT=18, TOTAL=1307)
+# and silently rotted the moment the internal regulation was enriched, breaking
+# this script, embed_legal.py and verify_embeddings.py at once. Deriving them
+# keeps every DB-vs-source assertion just as strict while removing the drift;
+# the sha256 pins below are still what catch an unintended source edit.
+EXPECTED_CHUNK_COUNTS = corpus_expectations.EXPECTED_CHUNK_COUNTS
+EXPECTED_ARTICLE_COUNTS = corpus_expectations.EXPECTED_ARTICLE_COUNTS
+EXPECTED_REF_COUNTS = corpus_expectations.EXPECTED_REF_COUNTS
+TOTAL_CHUNKS = corpus_expectations.TOTAL_CHUNKS
+TOTAL_REFS = corpus_expectations.TOTAL_REFS
+EXPECTED_BOUNDARY = corpus_expectations.EXPECTED_BOUNDARY
+EXPECTED_UNRESOLVED = corpus_expectations.EXPECTED_UNRESOLVED
 
 INTERNAL_DOC_IDS = set(EXPECTED_CHUNK_COUNTS)
-DOC_ID_TO_CODE = {
-    "18/VBHN-VPQH": "BLLD",
-    "145/2020/NĐ-CP": "ND145_2020",
-    "283/2026/NĐ-CP": "ND283_2026",
-    "NQLD-HRCORP-2026": "NQCT",
-}
+DOC_ID_TO_CODE = corpus_expectations.DOC_ID_TO_CODE
+EXPECTED_DOC_COUNT = corpus_expectations.TOTAL_DOCS
 
 EXTERNAL_LAW_ALLOWLIST: set[str] = {
     "Luật Người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng",
@@ -260,7 +254,8 @@ def verify_v1(db: Session) -> None:
 def verify_v2(db: Session) -> None:
     logger.info("--- V2: legal_documents ---")
     doc_count = db.scalar(sa.select(sa.func.count()).select_from(LegalDocument))
-    record("V2.doc_count", doc_count == 4, f"count={doc_count}")
+    record("V2.doc_count", doc_count == EXPECTED_DOC_COUNT,
+           f"count={doc_count} expected={EXPECTED_DOC_COUNT}")
 
     for doc_id, expected_art in EXPECTED_ARTICLE_COUNTS.items():
         doc = db.get(LegalDocument, doc_id)
