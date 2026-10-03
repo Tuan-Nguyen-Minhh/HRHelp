@@ -4,9 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { StatusBadge } from "@/components/common/StatusBadge";
-import { FAMILY_LABEL } from "@/lib/labels";
-import { clip, formatDate, placeLabel } from "@/lib/utils";
+import { clip, placeLabel } from "@/lib/utils";
 import type {
   AssessmentForm,
   AssessmentSections,
@@ -14,42 +12,18 @@ import type {
   ConfirmedFact,
   EmployeeInformation,
   EvidenceCard,
-  FactStatus,
-  FieldSource,
   IncidentSummary,
-  ResultStatus,
 } from "@/types/assessment";
 
 export type EditKey = "case" | "employee" | "incident" | "facts" | "rationale";
 
 const NAV = [
-  ["case", "I. Vụ việc"],
-  ["employee", "II. Người lao động"],
-  ["incident", "III. Diễn biến"],
-  ["facts", "IV. Tình tiết"],
-  ["evidence", "V. Căn cứ"],
-  ["assessment", "VI. Đánh giá"],
-  ["result", "VII. Kết quả"],
-  ["handling", "VIII. Đề xuất"],
-  ["risk", "IX. Rủi ro"],
-  ["steps", "X. Bước tiếp"],
-  ["citations", "XI. Trích dẫn"],
+  ["minutes", "Biên bản"],
+  ["participants", "Thành phần"],
+  ["content", "Nội dung"],
+  ["signatures", "Chữ ký"],
+  ["evidence", "Căn cứ"],
 ] as const;
-
-const FACT_STATUS: Record<FactStatus, string> = {
-  CONFIRMED: "Đã xác nhận",
-  MISSING: "Còn thiếu",
-  UNCERTAIN: "Chưa chắc",
-  HR_EDITED: "HR đã sửa",
-};
-
-const RESULT_LABEL: Record<ResultStatus, string> = {
-  SUPPORTED: "Đủ căn cứ tham khảo",
-  PARTIALLY_SUPPORTED: "Đủ một phần",
-  INSUFFICIENT_EVIDENCE: "Chưa đủ căn cứ",
-  CONFLICTING_EVIDENCE: "Căn cứ mâu thuẫn",
-  NEED_LEGAL_REVIEW: "Cần pháp chế xem",
-};
 
 const LAYER_LABEL: Record<string, string> = {
   legal_basis: "Luật và nghị định",
@@ -57,15 +31,6 @@ const LAYER_LABEL: Record<string, string> = {
   precedent: "Tiền lệ",
   inspection_risk: "Cảnh báo thanh tra",
 };
-
-const EMPLOYEE_FIELDS: { key: keyof EmployeeInformation; label: string }[] = [
-  { key: "employee_code", label: "Mã nhân viên" },
-  { key: "employee_name", label: "Họ và tên" },
-  { key: "department", label: "Đơn vị" },
-  { key: "position", label: "Vị trí" },
-  { key: "contract_type", label: "Loại hợp đồng" },
-  { key: "employment_status", label: "Tình trạng làm việc" },
-];
 
 export function sectionLinks(): { id: string; label: string }[] {
   return NAV.map(([id, label]) => ({ id, label }));
@@ -82,7 +47,6 @@ export function DocumentSections({
   onCase,
   onEmployee,
   onIncident,
-  onFacts,
   onRationale,
   onOpen,
 }: {
@@ -101,127 +65,181 @@ export function DocumentSections({
   onOpen: (card: EvidenceCard) => void;
 }) {
   const canEdit = view.permissions.can_edit;
-  const blocked = sections.confirmed_facts.filter((item) => item.blocking);
+  const employee = sections.employee_information;
+  const incident = sections.incident_summary;
+  const info = sections.case_information;
+  const caseMeta = caseDescriptionMeta(info.description);
+  const employeePosition = employee.position || caseMeta.position || "";
+  const employeeDepartment = employee.department || caseMeta.department || "";
+  const incidentNarrative = incidentNarrativeValue(incident.narrative, info.description, sections.confirmed_facts);
+  const resultSummary =
+    cleanMinutesText(sections.assessment_result.summary) ||
+    "HR xem xét trên thông tin đã thu thập và căn cứ áp dụng trước khi quyết định hình thức xử lý.";
+  const proposed = sections.handling_proposal.proposed_actions.map((item) => item.label).join("; ") || "Chưa xác định do chưa đủ căn cứ.";
+  const basisCards = orderedBasis(sections.citations.length ? sections.citations : sections.evidence_reviewed);
+  const evidence = basisCards.map((item) => item.citation_label || item.title).join("; ");
   return (
     <div className="space-y-4">
-      <Section
-        id="case"
-        title="I. Thông tin vụ việc"
-        editing={editing === "case"}
-        canEdit={canEdit}
-        saving={saving}
-        onEdit={() => onBegin("case")}
-        onCancel={onCancel}
-        onSave={onSave}
-        extra={<Origin source={view.sources["case_information.description"]} />}
-      >
-        <CaseBlock info={sections.case_information} editing={editing === "case"} onChange={onCase} />
-      </Section>
+      <section id="minutes" className="scroll-mt-4 rounded-xl border border-[#d5e8ed] bg-white">
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-[#d5e8ed] px-4 py-3">
+          <div>
+            <h2 className="text-sm font-semibold tracking-wide text-[#073642]">Biên bản xử lý vi phạm kỷ luật</h2>
+            <p className="text-xs text-[#4d7380]">Mẫu xem trước đúng cấu trúc Word. HR sửa các ô cần thiết rồi xuất DOCX.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {canEdit ? (
+              <>
+                {editing ? (
+                  <>
+                    <Button size="sm" variant="secondary" disabled={saving} onClick={onCancel}>
+                      Hủy
+                    </Button>
+                    <Button size="sm" disabled={saving} onClick={onSave}>
+                      {saving ? "Đang lưu…" : "Lưu"}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button size="sm" variant="secondary" onClick={() => onBegin("case")}>
+                      Sửa vụ việc
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => onBegin("employee")}>
+                      Sửa người lao động
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => onBegin("incident")}>
+                      Sửa nội dung
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => onBegin("rationale")}>
+                      Sửa xử phạt
+                    </Button>
+                  </>
+                )}
+              </>
+            ) : null}
+          </div>
+        </header>
 
-      <Section
-        id="employee"
-        title="II. Người lao động"
-        editing={editing === "employee"}
-        canEdit={canEdit}
-        saving={saving}
-        onEdit={() => onBegin("employee")}
-        onCancel={onCancel}
-        onSave={onSave}
-        extra={<Origin source={view.sources["employee_information.employee_name"]} />}
-      >
-        <div className="grid gap-3 sm:grid-cols-2">
-          {EMPLOYEE_FIELDS.map((field) => (
-            <label key={field.key} className="block text-sm">
-              <span className="text-xs text-[#4d7380]">{field.label}</span>
-              {editing === "employee" ? (
-                <Input
-                  className="mt-1"
-                  value={sections.employee_information[field.key] ?? ""}
-                  onChange={(event) =>
-                    onEmployee({ ...sections.employee_information, [field.key]: event.target.value || null })
-                  }
-                />
-              ) : (
-                <p className="mt-1 font-medium text-[#073642]">{sections.employee_information[field.key] || "—"}</p>
-              )}
-            </label>
-          ))}
+        <div className="overflow-x-auto bg-[#f6fbfd] px-3 py-4">
+          <article className="mx-auto min-h-[68rem] w-full max-w-[52rem] bg-white px-8 py-8 font-serif text-[15px] leading-7 text-black shadow-sm sm:px-12">
+            <div className="grid grid-cols-2 gap-8 text-center">
+              <div className="text-left">
+                <p className="text-center font-bold">CÔNG TY .................</p>
+                <p className="text-center">Số: ...../...../BB-.....</p>
+              </div>
+              <div>
+                <p className="font-bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                <p className="font-bold">Độc lập - Tự do - Hạnh phúc</p>
+                <p className="mt-4">........., ngày ..... tháng ..... năm ......</p>
+              </div>
+            </div>
+
+            <h1 className="mt-10 text-center text-xl font-bold">BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT</h1>
+
+            <p className="mt-8">Biên bản xem xét xử lý vi phạm kỷ luật lao động đối với:</p>
+            <div className="grid grid-cols-2 gap-x-10">
+              <EditableLine
+                label="Ông/Bà"
+                value={employee.employee_name || ""}
+                placeholder="........................................"
+                editing={editing === "employee"}
+                onChange={(value) => onEmployee({ ...employee, employee_name: value || null })}
+              />
+              <EditableLine
+                label="Mã số nhân viên"
+                value={employee.employee_code || ""}
+                placeholder="......................................"
+                editing={editing === "employee"}
+                onChange={(value) => onEmployee({ ...employee, employee_code: value || null })}
+              />
+              <EditableLine
+                label="Chức vụ/Chức danh"
+                value={employeePosition}
+                placeholder="....................."
+                editing={editing === "employee"}
+                onChange={(value) => onEmployee({ ...employee, position: value || null })}
+              />
+              <EditableLine
+                label="Phòng ban/Bộ phận"
+                value={employeeDepartment}
+                placeholder="................................."
+                editing={editing === "employee"}
+                onChange={(value) => onEmployee({ ...employee, department: value || null })}
+              />
+            </div>
+            <p>
+              Vào lúc: ..... giờ ..... phút, ngày {dateParts(info.incident_date)}
+            </p>
+            <p>Tại: Phòng họp Công ty ...............................................................................................................</p>
+
+            <h2 id="participants" className="mt-3 font-bold">
+              I. THÀNH PHẦN THAM DỰ:
+            </h2>
+            <p>- Đại diện Ban lãnh đạo:</p>
+            <p>Ông/Bà: ........................................................... &nbsp;&nbsp;&nbsp;&nbsp; Chức vụ: ..................................................</p>
+            <p>- Đại diện nhân sự công ty:</p>
+            <p>Ông/Bà: .......................................................................................................................................</p>
+            <p>Chức vụ: ......................................................... &nbsp;&nbsp;&nbsp;&nbsp; Phòng ban: ...............................................</p>
+            <p>- Người bị lập biên bản:</p>
+            <p>Ông/Bà: {employee.employee_name || "........................................................................................................................................"}</p>
+            <p>
+              Chức vụ: {employeePosition || "........................................................."} &nbsp;&nbsp;&nbsp;&nbsp; Phòng ban:{" "}
+              {employeeDepartment || "..............................................."}
+            </p>
+            <p>- Người làm chứng:</p>
+            <p>Ông/Bà: .......................................................................................................................................</p>
+            <p>Chức vụ: ......................................................... &nbsp;&nbsp;&nbsp;&nbsp; Phòng ban: ...............................................</p>
+
+            <h2 id="content" className="mt-3 font-bold">
+              II. NỘI DUNG:
+            </h2>
+            <EditableArea
+              label="- Thời gian, địa điểm xảy ra sự việc vi phạm"
+              value={incident.timeline}
+              placeholder="............................................................................."
+              editing={editing === "incident"}
+              onChange={(value) => onIncident({ ...incident, timeline: value })}
+            />
+            <EditableArea
+              label="- Diễn biến sự việc"
+              value={incidentNarrative}
+              placeholder="...................................................................................................................."
+              editing={editing === "incident" || editing === "case"}
+              bulleted
+              onChange={(value) => {
+                if (editing === "case") onCase({ ...info, description: value });
+                else onIncident({ ...incident, narrative: value });
+              }}
+            />
+            <p>- Đối chiếu quy định: {evidence || "............................................................................... ..............................."}</p>
+            <p>- Thiệt hại của công ty: ................................................................................ ...............................</p>
+            <EditableArea
+              label="- Ý kiến của người bị lập biên bản"
+              value={incident.employee_statement}
+              placeholder="............................................................................................"
+              editing={editing === "incident"}
+              onChange={(value) => onIncident({ ...incident, employee_statement: value })}
+            />
+            <p>- Kết quả đánh giá: {resultSummary}</p>
+            <EditableArea
+              label="- Hình thức xử phạt của Ban lãnh đạo"
+              value={proposed}
+              placeholder="......................................................................................."
+              editing={editing === "rationale"}
+              onChange={onRationale}
+            />
+            <p>- Ý kiến của người làm chứng và đại diện nhân sự công ty: ......................................................</p>
+            <p>.....................................................................................................................................................</p>
+            <p>.....................................................................................................................................................</p>
+
+            <div id="signatures" className="mt-10 grid grid-cols-2 gap-x-8 gap-y-14 text-center">
+              <Signature title="Đại diện Ban lãnh đạo" subtitle="(Ký tên, ghi họ tên và đóng dấu)" />
+              <Signature title="Người bị lập biên bản" subtitle="(Ký tên, ghi rõ họ tên)" />
+              <Signature title="Đại diện nhân sự công ty" subtitle="(Ký tên, ghi rõ họ tên)" />
+              <Signature title="Người làm chứng" subtitle="(Ký tên, ghi rõ họ tên)" />
+            </div>
+          </article>
         </div>
-      </Section>
-
-      <Section
-        id="incident"
-        title="III. Nội dung và diễn biến"
-        editing={editing === "incident"}
-        canEdit={canEdit}
-        saving={saving}
-        onEdit={() => onBegin("incident")}
-        onCancel={onCancel}
-        onSave={onSave}
-        extra={<Origin source={view.sources["incident_summary.narrative"]} />}
-      >
-        <Narrative
-          incident={sections.incident_summary}
-          editing={editing === "incident"}
-          onChange={onIncident}
-        />
-      </Section>
-
-      <Section
-        id="facts"
-        title="IV. Tình tiết đã xác nhận"
-        editing={editing === "facts"}
-        canEdit={canEdit}
-        saving={saving}
-        onEdit={() => onBegin("facts")}
-        onCancel={onCancel}
-        onSave={onSave}
-      >
-        {blocked.length ? (
-          <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-            Hồ sơ vẫn còn {blocked.length} thông tin bắt buộc cần bổ sung.
-          </p>
-        ) : null}
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[36rem] text-left text-sm">
-            <thead className="text-xs uppercase tracking-wide text-[#4d7380]">
-              <tr className="border-b border-[#d5e8ed]">
-                <th className="py-2 pr-3 font-medium">Tình tiết</th>
-                <th className="py-2 pr-3 font-medium">Giá trị</th>
-                <th className="py-2 font-medium">Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sections.confirmed_facts.map((fact) => (
-                <tr key={fact.fact_key} className="border-b border-[#e7f3f6]">
-                  <td className="py-2 pr-3 text-[#073642]">{fact.label}</td>
-                  <td className="py-2 pr-3">
-                    {editing === "facts" ? (
-                      <Input
-                        value={fact.value ?? ""}
-                        aria-label={fact.label}
-                        onChange={(event) =>
-                          onFacts(
-                            sections.confirmed_facts.map((item) =>
-                              item.fact_key === fact.fact_key ? { ...item, value: event.target.value || null } : item,
-                            ),
-                          )
-                        }
-                      />
-                    ) : (
-                      <span className="text-[#073642]">{fact.value || "—"}</span>
-                    )}
-                  </td>
-                  <td className="py-2">
-                    <FactBadge fact={fact} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {sections.confirmed_facts.length === 0 ? <p className="text-sm text-[#4d7380]">Chưa có tình tiết trên biên bản.</p> : null}
-      </Section>
+      </section>
 
       <Section id="evidence" title="V. Căn cứ và tài liệu">
         {sections.evidence_reviewed.length === 0 ? (
@@ -245,98 +263,6 @@ export function DocumentSections({
           </div>
         )}
       </Section>
-
-      <Section id="assessment" title="VI. Đánh giá và đối chiếu">
-        <Read label="Nhận định" text={sections.assessment.narrative || "—"} />
-        <Bullet label="Căn cứ áp dụng" items={sections.assessment.applied_basis} />
-        <Bullet label="Điểm phù hợp" items={sections.assessment.matches} />
-        <Bullet label="Điểm chưa đủ" items={sections.assessment.gaps} />
-        <Bullet label="Mâu thuẫn" items={sections.assessment.conflicts} />
-      </Section>
-
-      <Section id="result" title="VII. Kết quả đánh giá">
-        <Badge tone={resultTone(sections.assessment_result.status)}>{RESULT_LABEL[sections.assessment_result.status]}</Badge>
-        <p className="text-xs text-[#4d7380]">{sections.assessment_result.status}</p>
-        <p className="text-sm leading-6 text-[#073642]">{sections.assessment_result.summary}</p>
-      </Section>
-
-      <Section
-        id="handling"
-        title="VIII. Đề xuất hướng xử lý"
-        editing={editing === "rationale"}
-        canEdit={canEdit}
-        saving={saving}
-        onEdit={() => onBegin("rationale")}
-        onCancel={onCancel}
-        onSave={onSave}
-        extra={<Origin source={view.sources["handling_proposal.rationale"]} />}
-      >
-        <p className="text-sm text-[#4d7380]">Đây là phương án tham khảo. Biên bản không chốt hình thức kỷ luật.</p>
-        <OptionList title="Phương án tham khảo" items={sections.handling_proposal.proposed_actions} />
-        <OptionList title="Phương án khác" items={sections.handling_proposal.alternatives} />
-        {sections.handling_proposal.proposed_actions.length === 0 ? (
-          <p className="text-sm text-[#073642]">Chưa có phương án tham khảo.</p>
-        ) : null}
-        {sections.handling_proposal.requires_legal_review ? (
-          <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">Cần pháp chế xem xét trước khi coi đây là hướng xử lý.</p>
-        ) : null}
-        <label className="block text-sm">
-          <span className="text-xs text-[#4d7380]">Lý do</span>
-          {editing === "rationale" ? (
-            <Textarea className="mt-1" value={sections.handling_proposal.rationale} onChange={(event) => onRationale(event.target.value)} />
-          ) : (
-            <p className="mt-1 whitespace-pre-wrap leading-6 text-[#073642]">{sections.handling_proposal.rationale || "—"}</p>
-          )}
-        </label>
-      </Section>
-
-      <Section id="risk" title="IX. Rủi ro và khoảng trống chứng cứ">
-        <p className="text-sm text-[#073642]">
-          Mức rủi ro căn cứ: <span className="font-semibold">{sections.risk_and_gaps.risk_level || "Chưa có"}</span>
-        </p>
-        <Bullet label="Khoảng trống" items={sections.risk_and_gaps.evidence_gaps} />
-        <Bullet label="Mâu thuẫn" items={sections.risk_and_gaps.conflicts} />
-        {sections.risk_and_gaps.missing_information.length ? (
-          <ul className="space-y-1 text-sm text-[#073642]">
-            {sections.risk_and_gaps.missing_information.map((item) => (
-              <li key={item.fact_key}>
-                {item.blocking ? "Bắt buộc: " : "Không chặn xác nhận: "}
-                {item.reason}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-        {sections.risk_and_gaps.legal_review_required ? <p className="text-sm text-[#4d7380]">Hồ sơ vẫn cần pháp chế xem khi phiếu được gửi.</p> : null}
-      </Section>
-
-      <Section id="steps" title="X. Các bước tiếp theo">
-        <ol className="list-decimal space-y-1 pl-5 text-sm text-[#073642]">
-          {sections.next_steps.map((step) => (
-            <li key={step.order}>{step.text}</li>
-          ))}
-        </ol>
-      </Section>
-
-      <Section id="citations" title="XI. Danh mục căn cứ trích dẫn">
-        {sections.citations.length === 0 ? (
-          <p className="text-sm text-[#4d7380]">Chưa có trích dẫn.</p>
-        ) : (
-          <ol className="space-y-3">
-            {sections.citations.map((card, index) => (
-              <li key={`${card.evidence_id}-${index}`} className="text-sm">
-                <p className="font-medium text-[#073642]">
-                  [{index + 1}] {card.title}
-                </p>
-                <p className="text-[#4d7380]">{card.citation_label}</p>
-                <p className="text-xs text-[#4d7380]">Đoạn: {card.chunk_id || "Không có mã đoạn"}</p>
-                <Button className="mt-1" size="sm" variant="secondary" onClick={() => onOpen(card)}>
-                  Xem đoạn
-                </Button>
-              </li>
-            ))}
-          </ol>
-        )}
-      </Section>
     </div>
   );
 }
@@ -351,7 +277,6 @@ export function EvidenceDetail({ card }: { card: EvidenceCard }) {
         <Row label="Loại" value={card.policy_type || "—"} />
         <Row label="Lớp" value={LAYER_LABEL[card.layer] || card.layer} />
         <Row label="Vị trí" value={placeLabel(card.article, card.clause, card.point) || "—"} />
-        <Row label="Mã đoạn" value={card.chunk_id || "Không có"} />
         <Row label="Mã văn bản" value={card.document_id || "Đoạn đã lưu không có mã văn bản riêng."} />
       </dl>
       <blockquote className="whitespace-pre-wrap rounded-md border border-[#d5e8ed] bg-[#f4fafb] px-3 py-3 leading-6 text-[#073642]">
@@ -361,97 +286,184 @@ export function EvidenceDetail({ card }: { card: EvidenceCard }) {
   );
 }
 
-function CaseBlock({
-  info,
+function EditableLine({
+  label,
+  value,
+  placeholder,
   editing,
   onChange,
 }: {
-  info: CaseInformation;
+  label: string;
+  value: string;
+  placeholder: string;
   editing: boolean;
-  onChange: (value: CaseInformation) => void;
+  onChange: (value: string) => void;
 }) {
   return (
-    <div className="grid gap-3">
-      <Read label="Mã vụ việc" text={info.case_code} />
-      <div>
-        <p className="text-xs text-[#4d7380]">Trạng thái hồ sơ</p>
-        <div className="mt-1">
-          <StatusBadge status={info.case_status} />
-        </div>
-      </div>
-      <label className="block text-sm">
-        <span className="text-xs text-[#4d7380]">Loại vi phạm</span>
-        {editing ? (
-          <select
-            className="mt-1 flex h-9 w-full rounded-md border border-[#d5e8ed] bg-white px-3 text-sm text-[#073642]"
-            value={info.violation_type ?? ""}
-            onChange={(event) => onChange({ ...info, violation_type: event.target.value || null })}
-          >
-            <option value="">Chưa phân loại</option>
-            {Object.entries(FAMILY_LABEL).map(([code, label]) => (
-              <option key={code} value={code}>
-                {label}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <p className="mt-1 font-medium text-[#073642]">{info.violation_type ? FAMILY_LABEL[info.violation_type] || info.violation_type : "—"}</p>
-        )}
-      </label>
-      <label className="block text-sm">
-        <span className="text-xs text-[#4d7380]">Ngày xảy ra</span>
-        {editing ? (
-          <Input
-            className="mt-1"
-            type="date"
-            value={info.incident_date ?? ""}
-            onChange={(event) => onChange({ ...info, incident_date: event.target.value || null })}
-          />
-        ) : (
-          <p className="mt-1 font-medium text-[#073642]">{formatDate(info.incident_date)}</p>
-        )}
-      </label>
-      <label className="block text-sm">
-        <span className="text-xs text-[#4d7380]">Mô tả</span>
-        {editing ? (
-          <Textarea className="mt-1" value={info.description} onChange={(event) => onChange({ ...info, description: event.target.value })} />
-        ) : (
-          <p className="mt-1 whitespace-pre-wrap leading-6 text-[#073642]">{info.description || "—"}</p>
-        )}
-      </label>
+    <label className="block">
+      <span>{label}: </span>
+      {editing ? (
+        <Input className="inline-flex h-8 w-56 rounded-none border-0 border-b border-dotted border-black px-1 font-sans text-sm shadow-none" value={value} onChange={(event) => onChange(event.target.value)} />
+      ) : (
+        <span>{value || placeholder}</span>
+      )}
+    </label>
+  );
+}
+
+function EditableArea({
+  label,
+  value,
+  placeholder,
+  editing,
+  bulleted = false,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  placeholder: string;
+  editing: boolean;
+  bulleted?: boolean;
+  onChange: (value: string) => void;
+}) {
+  const bullets = bulleted ? minutesBullets(value) : [];
+  return (
+    <div>
+      <p>
+        {label}:{editing || (bulleted && bullets.length) ? null : ` ${value || placeholder}`}
+      </p>
+      {!editing && bulleted && bullets.length ? (
+        <ul className="ml-7 list-disc">
+          {bullets.map((item, index) => (
+            <li key={`${item}-${index}`}>{item}</li>
+          ))}
+        </ul>
+      ) : null}
+      {editing ? (
+        <Textarea className="mt-1 min-h-24 rounded-none border border-dotted border-black font-sans text-sm" value={value} onChange={(event) => onChange(event.target.value)} />
+      ) : value || bullets.length ? null : (
+        <>
+          <p>.....................................................................................................................................................</p>
+          <p>.....................................................................................................................................................</p>
+        </>
+      )}
     </div>
   );
 }
 
-function Narrative({
-  incident,
-  editing,
-  onChange,
-}: {
-  incident: IncidentSummary;
-  editing: boolean;
-  onChange: (value: IncidentSummary) => void;
-}) {
-  const fields: { key: keyof IncidentSummary; label: string }[] = [
-    { key: "narrative", label: "Diễn biến vụ việc" },
-    { key: "timeline", label: "Dòng thời gian" },
-    { key: "employee_statement", label: "Ý kiến người lao động" },
-    { key: "hr_description", label: "Mô tả của HR" },
-  ];
+function minutesBullets(value: string): string[] {
+  const clean = cleanMinutesText(value);
+  const roughLines = clean.split(/\n+/);
+  return roughLines
+    .map((line) => line.replace(/^[-•]\s*/, "").replace(/[.;]\s*$/, "").trim())
+    .filter((line) => Boolean(line) && !looksLikeAssessmentReport(line))
+    .slice(0, 5);
+}
+
+function cleanMinutesText(value: string): string {
+  return value
+    .replace(/\s*-?\s*Chunk[_\s-]*id\s*:\s*[\w-]+/gi, "")
+    .replace(/[*_`]+/g, "")
+    .replace(/\b[IVXLCDM]{1,6}\.\s+[A-ZÀ-Ỹ][^.\n]*(?:\.|\s+-)?/giu, "")
+    .replace(/\b[IVXLCDM]{1,6}\.\s*/giu, "")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+}
+
+function incidentNarrativeValue(narrative: string, description: string, facts: ConfirmedFact[]): string {
+  if (narrative && !looksLikeAssessmentReport(narrative) && !looksLikeCaseMetadata(narrative)) return narrative;
+  const meta = caseDescriptionMeta(description);
+  const rows: string[] = [];
+  if (meta.violation) rows.push(meta.violation);
+  if (meta.body && !looksLikeAssessmentReport(meta.body)) rows.push(meta.body);
+  for (const fact of facts) {
+    if (INCIDENT_FACT_KEYS.has(fact.fact_key) && fact.value) rows.push(`${fact.label}: ${fact.value}`);
+  }
+  return rows.map((item) => `- ${cleanMinutesText(item).replace(/[.;]\s*$/, "")}.`).join("\n");
+}
+
+function caseDescriptionMeta(description: string): { department?: string; position?: string; violation?: string; body?: string } {
+  const meta: { department?: string; position?: string; violation?: string; body?: string } = {};
+  const body: string[] = [];
+  for (const rawLine of description.split(/\n+/)) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    const separator = line.indexOf(":");
+    const key = separator >= 0 ? line.slice(0, separator).trim().toLocaleLowerCase("vi-VN") : "";
+    const value = separator >= 0 ? line.slice(separator + 1).trim() : "";
+    if (key === "phòng ban") meta.department = value;
+    else if (key === "chức danh" || key === "chức vụ" || key === "vị trí") meta.position = value;
+    else if (key === "vi phạm") meta.violation = value;
+    else body.push(line);
+  }
+  if (body.length) meta.body = body.join(" ");
+  return meta;
+}
+
+function looksLikeAssessmentReport(value: string): boolean {
+  const upper = value.toUpperCase();
   return (
-    <div className="space-y-3">
-      {fields.map((field) => (
-        <label key={field.key} className="block text-sm">
-          <span className="text-xs text-[#4d7380]">{field.label}</span>
-          {editing ? (
-            <Textarea className="mt-1" value={incident[field.key]} onChange={(event) => onChange({ ...incident, [field.key]: event.target.value })} />
-          ) : (
-            <p className="mt-1 whitespace-pre-wrap leading-6 text-[#073642]">{incident[field.key] || "—"}</p>
-          )}
-        </label>
-      ))}
+    upper.includes("BIÊN BẢN ĐÁNH GIÁ") ||
+    upper.includes("BIEN BAN ĐANH GIA") ||
+    upper.includes("KẾT QUẢ ĐÁNH GIÁ") ||
+    upper.includes("CĂN CỨ ĐÁNH GIÁ") ||
+    upper.includes("PHÂN TÍCH ĐIỀU KIỆN") ||
+    upper.includes("QUY TRÌNH XỬ LÝ") ||
+    upper.includes("CHUNK_ID") ||
+    upper.includes("CHUNK ID")
+  );
+}
+
+function looksLikeCaseMetadata(value: string): boolean {
+  return value
+    .split(/\n+/)
+    .map((line) => line.trim().toLocaleLowerCase("vi-VN"))
+    .some(
+      (line) =>
+        line.startsWith("phòng ban:") ||
+        line.startsWith("chức danh:") ||
+        line.startsWith("chức vụ:") ||
+        line.startsWith("vị trí:") ||
+        line.startsWith("vi phạm:"),
+    );
+}
+
+const INCIDENT_FACT_KEYS = new Set([
+  "absence_days",
+  "late_days",
+  "notice_form",
+  "violation_time",
+  "violation_place",
+  "violation_description",
+]);
+
+function orderedBasis(items: EvidenceCard[]): EvidenceCard[] {
+  return items.map((item, index) => ({ item, index })).sort((left, right) => basisRank(left.item) - basisRank(right.item) || left.index - right.index).map(({ item }) => item);
+}
+
+function basisRank(item: EvidenceCard): number {
+  const policyType = (item.policy_type || "").toUpperCase();
+  const title = `${item.citation_label || ""} ${item.title || ""}`.toUpperCase();
+  if (policyType === "INTERNAL_RULE" || title.includes("NỘI QUY") || title.includes("NOI QUY") || title.includes("QUY ĐỊNH")) return 0;
+  if (policyType === "DECREE" || policyType === "CIRCULAR" || title.includes("NGHỊ ĐỊNH") || title.includes("NGHI DINH")) return 1;
+  if (policyType === "LAW" || title.includes("BỘ LUẬT") || title.includes("BO LUAT") || title.includes("LUẬT")) return 2;
+  return 3;
+}
+
+function Signature({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="min-h-28">
+      <p className="font-bold">{title}</p>
+      <p>{subtitle}</p>
     </div>
   );
+}
+
+function dateParts(value: string | null): string {
+  if (!value) return "..... tháng ..... năm .....";
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) return "..... tháng ..... năm .....";
+  return `${day} tháng ${month} năm ${year}`;
 }
 
 function Section({
@@ -503,68 +515,6 @@ function Section({
       </header>
       <div className="space-y-3 px-4 py-4">{children}</div>
     </section>
-  );
-}
-
-function Origin({ source }: { source?: FieldSource }) {
-  if (source === "HR") return <Badge tone="info">HR đã sửa</Badge>;
-  if (source === "CONFIRMED") return <Badge tone="success">Đã xác nhận</Badge>;
-  return <Badge tone="neutral">AI đề xuất</Badge>;
-}
-
-function FactBadge({ fact }: { fact: ConfirmedFact }) {
-  const tone = fact.status === "CONFIRMED" ? "success" : fact.status === "HR_EDITED" ? "info" : fact.blocking ? "warning" : "neutral";
-  return <Badge tone={tone}>{FACT_STATUS[fact.status]}</Badge>;
-}
-
-function resultTone(status: ResultStatus): "success" | "warning" | "danger" | "info" {
-  if (status === "SUPPORTED") return "success";
-  if (status === "CONFLICTING_EVIDENCE") return "danger";
-  if (status === "NEED_LEGAL_REVIEW") return "info";
-  return "warning";
-}
-
-function Read({ label, text }: { label: string; text: string }) {
-  return (
-    <div>
-      <p className="text-xs text-[#4d7380]">{label}</p>
-      <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-[#073642]">{text}</p>
-    </div>
-  );
-}
-
-function Bullet({ label, items }: { label: string; items: string[] }) {
-  return (
-    <div>
-      <p className="text-xs text-[#4d7380]">{label}</p>
-      {items.length ? (
-        <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-[#073642]">
-          {items.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-1 text-sm text-[#073642]">—</p>
-      )}
-    </div>
-  );
-}
-
-function OptionList({ title, items }: { title: string; items: { code: string; label: string }[] }) {
-  if (!items.length) return null;
-  return (
-    <div>
-      <p className="text-xs text-[#4d7380]">{title}</p>
-      <ul className="mt-1 space-y-2">
-        {items.map((item) => (
-          <li key={item.code} className="flex items-center gap-3 rounded-md border border-[#d5e8ed] px-3 py-2 text-sm">
-            <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-[#009EC1]" aria-hidden="true" />
-            <span className="font-medium text-[#073642]">{item.label}</span>
-            <span className="text-xs text-[#4d7380]">{item.code}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
 

@@ -7,6 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.features.answer.schema import AnswerView
+from src.features.assessment.schemas import AssessmentView
 
 
 class ReviewRequest(BaseModel):
@@ -58,3 +59,4 @@ class ReviewPack(BaseModel):
     incident_date: date | None
     description: str | None
     answer: AnswerView
+    assessment: AssessmentView | None = None

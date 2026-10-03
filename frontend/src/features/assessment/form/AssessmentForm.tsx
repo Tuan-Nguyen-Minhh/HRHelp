@@ -66,6 +66,8 @@ export function AssessmentForm() {
   const [notice, setNotice] = useState<string | null>(null);
   const [askConfirm, setAskConfirm] = useState(false);
   const [askRedo, setAskRedo] = useState(false);
+  const [exportNote, setExportNote] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [selected, setSelected] = useState<EvidenceCard | null>(null);
   const view = query.data ?? null;
   const versionKey = view ? `${view.assessment_id}:${view.version}:${view.status}` : "";
@@ -131,6 +133,26 @@ export function AssessmentForm() {
     await save.mutateAsync(patch);
   }
 
+  async function exportWord() {
+    if (toPatch(draft)) {
+      setNotice("Hãy lưu phần đang sửa trước khi xuất Word.");
+      return;
+    }
+    setExporting(true);
+    setExportNote(null);
+    try {
+      const payload = await api.exportCase(caseId, "assessment", "docx");
+      const content = typeof payload.content === "object" && payload.content !== null ? payload.content : {};
+      const fileName = "file_name" in content && typeof content.file_name === "string" ? content.file_name : "biên bản Word";
+      const path = "path" in content && typeof content.path === "string" ? content.path : "";
+      setExportNote(path ? `Đã tạo ${fileName}: ${path}` : `Đã tạo ${fileName}.`);
+    } catch (error) {
+      setExportNote(errorMessage(error));
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (query.isLoading) {
     return <p className="rounded-xl border border-[#d5e8ed] bg-white px-4 py-6 text-sm text-[#4d7380]">Đang tải biên bản…</p>;
   }
@@ -166,15 +188,21 @@ export function AssessmentForm() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold tracking-[0.14em] text-[#009EC1]">HỒ SƠ #{sections.case_information.case_code}</p>
-            <h2 className="mt-1 text-xl font-semibold text-[#073642]">Biên bản đánh giá và đề xuất xử lý</h2>
+            <h2 className="mt-1 text-xl font-semibold text-[#073642]">Biên bản xử lý vi phạm kỷ luật</h2>
             <p className="mt-1 text-sm text-[#4d7380]">
               {view.metadata.source === "HR" ? "HR đã sửa bản này." : "AI đề xuất bản nháp."} Lập ngày {formatDate(view.metadata.generated_at)}. Phiên bản {view.version}.
             </p>
           </div>
-          <p className="rounded-md border border-[#d5e8ed] bg-[#f4fafb] px-3 py-1.5 text-sm font-medium text-[#073642]">
-            {FORM_STATUS[view.form_status]}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" disabled={busy || exporting} onClick={() => void exportWord()}>
+              {exporting ? "Đang xuất…" : "Xuất Word"}
+            </Button>
+            <p className="rounded-md border border-[#d5e8ed] bg-[#f4fafb] px-3 py-1.5 text-sm font-medium text-[#073642]">
+              {FORM_STATUS[view.form_status]}
+            </p>
+          </div>
         </div>
+        {exportNote ? <p className="mt-3 rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-[#276274]">{exportNote}</p> : null}
       </header>
 
       <div className="grid items-start gap-4 lg:grid-cols-[13rem_minmax(0,1fr)]">

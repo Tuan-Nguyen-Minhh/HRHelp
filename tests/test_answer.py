@@ -18,12 +18,24 @@ from src.features.answer.model.assessment import (
     RiskAssessment,
     SanctionAssessment,
 )
+from src.features.answer.model.case_tools import disciplinary_minutes_document, export_word_document
 from src.features.answer.model.decide import DecisionInput, decide, should_synthesize
 from src.features.answer.model.draft import AnswerInput, draft_answer
 from src.features.answer.model.layers import LayeredBasis, split_passages
 from src.features.answer.model.standard import applied_standard
 from src.features.answer.model.synthesis import PROMPT_VERSION, SYSTEM_PROMPT, guard, synthesize
 from src.features.answer.schema.render import HEADINGS
+from src.features.assessment.schemas import (
+    AssessmentResult,
+    AssessmentSection,
+    CaseInformation,
+    EmployeeInformation,
+    EvidenceCard,
+    HandlingProposal,
+    IncidentSummary,
+    RiskAndGaps,
+    Sections,
+)
 from src.features.cite.model.passage import Passage
 from src.features.cite.model.query import SearchQuery
 from src.features.clarify.model.assess import StoredFact
@@ -96,6 +108,136 @@ def _supported(level: str, law: Passage, rule: Passage, quote_law: str | None = 
         downstream_handoff=DownstreamHandoff(can_recommend=True),
     )
     return guard(raw, [law, rule])
+
+
+def test_disciplinary_minutes_document_is_returned_even_without_a_sanction():
+    case = Case(
+        id=uuid4(),
+        created_by=uuid4(),
+        case_code="CASE-001",
+        employee_code="NV001",
+        employee_name="Nguyễn Văn A",
+        description="Phòng ban: SOFTWARE\nChức danh: DEVELOPER\nVi phạm: Người lao động nghỉ không phép 5 ngày.",
+        incident_date=date(2026, 3, 1),
+        status="ANALYZED",
+        family=ABSENCE,
+    )
+    document = disciplinary_minutes_document(case, None)
+
+    assert document.title == "BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT"
+    assert "Ông/Bà: Nguyễn Văn A" in document.content
+    assert "Chức vụ/Chức danh: DEVELOPER" in document.content
+    assert "Phòng ban/Bộ phận: SOFTWARE" in document.content
+    assert "Đối chiếu quy định" in document.content
+    assert "Bằng chứng, tang vật" not in document.content
+    assert "Cuộc họp kết thúc" not in document.content
+    content_section = document.content.split("- Diễn biến sự việc:", maxsplit=1)[1]
+    content_section = content_section.split("- Đối chiếu quy định:", maxsplit=1)[0]
+    assert "Phòng ban:" not in content_section
+    assert "Chức danh:" not in content_section
+    assert "Hình thức xử phạt của Ban lãnh đạo: ......................................................................................." in document.content
+    assert "Đại diện Ban lãnh đạo" in document.content
+
+
+def test_disciplinary_minutes_exports_word_form(monkeypatch, tmp_path):
+    from docx import Document
+
+    from src.features.answer.model import case_tools
+
+    monkeypatch.setattr(case_tools, "_EXPORT_DIR", tmp_path)
+    case = Case(
+        id=uuid4(),
+        created_by=uuid4(),
+        case_code="CASE-002",
+        employee_code="NV002",
+        employee_name="Trần Thị B",
+        description="Đi muộn nhiều lần.",
+        incident_date=date(2026, 4, 2),
+        status="ANALYZED",
+        family="LATE",
+    )
+    path = export_word_document(disciplinary_minutes_document(case, None), "bien-ban-test")
+
+    doc = Document(path)
+    text = "\n".join(paragraph.text for paragraph in doc.paragraphs)
+    table_text = "\n".join(cell.text for table in doc.tables for row in table.rows for cell in row.cells)
+    assert "BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT" in text
+    assert "Trần Thị B" in text
+    assert "CÔNG TY" in table_text
+    assert "Người bị lập biên bản" in table_text
+
+
+def test_disciplinary_minutes_cleans_raw_report_from_incident_narrative():
+    case = Case(
+        id=uuid4(),
+        created_by=uuid4(),
+        case_code="CASE-003",
+        employee_code="NV003",
+        employee_name="Nguyễn Văn C",
+        description="Tự ý nghỉ không phép trong 5 ngày liên tục.",
+        incident_date=date(2026, 10, 20),
+        status="ANALYZED",
+        family=ABSENCE,
+    )
+    sections = Sections(
+        case_information=CaseInformation(case_code="CASE-003", incident_date=date(2026, 10, 20), case_status="ANALYZED"),
+        employee_information=EmployeeInformation(employee_code="NV003", employee_name="Nguyễn Văn C"),
+        incident_summary=IncidentSummary(
+            narrative=(
+                "BIEN BAN ĐANH GIA VU VIEC I. THONG TIN VU VIEC - Nhân viên: Nguyễn Văn C. "
+                "II. TÌNH TIẾT - Chunk_id: 5d8458e0-04af-44fa-970c-157922461604."
+            )
+        ),
+        confirmed_facts=[],
+        evidence_reviewed=[],
+        assessment=AssessmentSection(),
+        assessment_result=AssessmentResult(status="INSUFFICIENT_EVIDENCE", summary=""),
+        handling_proposal=HandlingProposal(),
+        risk_and_gaps=RiskAndGaps(),
+        next_steps=[],
+        citations=[],
+    )
+    document = disciplinary_minutes_document(case, None, sections)
+
+    assert "- Diễn biến sự việc:\n  - Tự ý nghỉ không phép trong 5 ngày liên tục." in document.content
+    assert "Chunk_id" not in document.content
+    assert "BIEN BAN ĐANH GIA" not in document.content
+
+
+def test_disciplinary_minutes_orders_rule_decree_law_in_basis():
+    case = Case(
+        id=uuid4(),
+        created_by=uuid4(),
+        case_code="CASE-004",
+        employee_code="NV004",
+        employee_name="Nguyễn Văn D",
+        description="Đi muộn nhiều lần.",
+        incident_date=date(2026, 10, 21),
+        status="ANALYZED",
+        family="LATE",
+    )
+    sections = Sections(
+        case_information=CaseInformation(case_code="CASE-004", incident_date=date(2026, 10, 21), case_status="ANALYZED"),
+        employee_information=EmployeeInformation(employee_code="NV004", employee_name="Nguyễn Văn D"),
+        incident_summary=IncidentSummary(narrative="- Đi muộn nhiều lần."),
+        confirmed_facts=[],
+        evidence_reviewed=[],
+        assessment=AssessmentSection(),
+        assessment_result=AssessmentResult(status="INSUFFICIENT_EVIDENCE", summary="Chưa đủ căn cứ."),
+        handling_proposal=HandlingProposal(),
+        risk_and_gaps=RiskAndGaps(),
+        next_steps=[],
+        citations=[
+            EvidenceCard(evidence_id="EV-001", policy_type="LAW", title="Bộ luật Lao động", citation_label="Bộ luật Lao động — Điều 34", quote="", layer="legal_basis"),
+            EvidenceCard(evidence_id="EV-002", policy_type="DECREE", title="Nghị định 283", citation_label="Nghị định 283 — Điều 17", quote="", layer="legal_basis"),
+            EvidenceCard(evidence_id="EV-003", policy_type="INTERNAL_RULE", title="Nội quy lao động", citation_label="Nội quy lao động — Điều 11", quote="", layer="internal_rule"),
+        ],
+    )
+
+    document = disciplinary_minutes_document(case, None, sections)
+    basis = document.content.split("- Đối chiếu quy định: ", maxsplit=1)[1].splitlines()[0]
+
+    assert basis.index("Nội quy lao động") < basis.index("Nghị định 283") < basis.index("Bộ luật Lao động")
 
 
 def test_python_does_not_infer_a_window_or_a_level_from_the_passage_text():

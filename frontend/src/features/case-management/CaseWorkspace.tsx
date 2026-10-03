@@ -4,6 +4,7 @@ import { Link, Outlet, useParams } from "react-router-dom";
 
 import { AgentStatus } from "@/components/common/AgentStatus";
 import { clearIdempotency, idempotencyKey } from "@/lib/idempotency";
+import { isRawHandoffMessage } from "@/lib/report";
 import { clearHandoff, loadHandoff, loadMessages, rememberCase, saveHandoff, saveMessages } from "@/lib/session";
 import { agentAfterTurn } from "@/lib/workflow";
 import { api, errorMessage } from "@/services/api";
@@ -124,7 +125,9 @@ export function CaseWorkspace() {
     onSuccess: (turn) => {
       applyTurn(turn);
       const next = loadMessages(caseId).filter((item) => item.id !== "pending");
-      next.push({ id: crypto.randomUUID(), role: "assistant", text: turn.assistant_message, at: new Date().toISOString() });
+      if (!isRawHandoffMessage(turn.assistant_message)) {
+        next.push({ id: crypto.randomUUID(), role: "assistant", text: turn.assistant_message, at: new Date().toISOString() });
+      }
       commitMessages(next);
       serverSyncedAt.current = Date.now();
       void queryClient.invalidateQueries({ queryKey: ["messages", caseId] });
@@ -151,7 +154,7 @@ export function CaseWorkspace() {
       api.confirmFacts(caseId, [{ fact_key: factKey, fact_value: factValue, confirmed: true }]),
     onSuccess: (turn) => {
       applyTurn(turn);
-      if (turn.assistant_message) {
+      if (turn.assistant_message && !isRawHandoffMessage(turn.assistant_message)) {
         const next = loadMessages(caseId);
         next.push({ id: crypto.randomUUID(), role: "assistant", text: turn.assistant_message, at: new Date().toISOString() });
         commitMessages(next);
@@ -198,12 +201,14 @@ export function CaseWorkspace() {
     const rows = messageQuery.data?.messages;
     if (!rows || sendMutation.isPending || confirmMutation.isPending) return;
     if (messageQuery.dataUpdatedAt < serverSyncedAt.current) return;
-    const mapped: ChatMessage[] = rows.map((item) => ({
-      id: item.id,
-      role: toChatRole(item.role),
-      text: item.content,
-      at: item.created_at,
-    }));
+    const mapped: ChatMessage[] = rows
+      .map((item) => ({
+        id: item.id,
+        role: toChatRole(item.role),
+        text: item.content,
+        at: item.created_at,
+      }))
+      .filter((item) => !isRawHandoffMessage(item.text));
     saveMessages(caseId, mapped);
     setMessages(mapped);
   }, [messageQuery.data, messageQuery.dataUpdatedAt, sendMutation.isPending, confirmMutation.isPending, caseId]);

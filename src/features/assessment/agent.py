@@ -5,6 +5,7 @@ Python already checked. The prompt in ``prompts.py`` is the contract: this step
 does not confirm the form and does not send a ticket.
 """
 
+import re
 from dataclasses import dataclass
 from datetime import date
 
@@ -31,6 +32,17 @@ _COMPANY = {
     "WAGE_POSTPONEMENT": "Kéo dài thời hạn nâng lương",
     "DEMOTION": "Cách chức",
     "DISMISSAL": "Sa thải",
+}
+_CHUNK_ID_RE = re.compile(r"\s*-?\s*Chunk[_\s-]*id\s*:\s*[\w-]+", re.IGNORECASE)
+_MARKDOWN_RE = re.compile(r"[*_`]+")
+_ROMAN_HEADING_RE = re.compile(r"\b[IVXLCDM]{1,6}\.\s+[A-ZÀ-Ỹ][^.\n]*(?:\.|\s+-)?", re.IGNORECASE)
+_INCIDENT_FACT_KEYS = {
+    "absence_days",
+    "late_days",
+    "notice_form",
+    "violation_time",
+    "violation_place",
+    "violation_description",
 }
 
 
@@ -73,7 +85,9 @@ def compose(source: ComposeInput) -> tuple[Sections, dict[str, str]]:
     gaps = [item.reason for item in missing]
     if source.answer.missing_internal_rule:
         gaps.append("Chưa có đoạn nội quy áp dụng.")
-    narrative = (source.answer.message or source.answer.rationale or "").strip()
+    report = _clean_minutes_text(source.answer.message or source.answer.rationale or "")
+    case_meta = _case_description_meta(source.description)
+    narrative = _incident_narrative(source, facts, report)
     sections = Sections(
         case_information=CaseInformation(
             case_code=source.case_code,
@@ -85,6 +99,8 @@ def compose(source: ComposeInput) -> tuple[Sections, dict[str, str]]:
         employee_information=EmployeeInformation(
             employee_code=source.employee_code,
             employee_name=source.employee_name,
+            department=case_meta.get("department"),
+            position=case_meta.get("position"),
             contract_type=_fact_value(facts, "contract_type"),
         ),
         incident_summary=IncidentSummary(
@@ -95,7 +111,7 @@ def compose(source: ComposeInput) -> tuple[Sections, dict[str, str]]:
         confirmed_facts=facts,
         evidence_reviewed=cards,
         assessment=AssessmentSection(
-            narrative=source.answer.rationale or narrative,
+            narrative=_clean_minutes_text(source.answer.rationale or report or narrative),
             applied_basis=[card.citation_label for card in cards if card.layer in {"legal_basis", "internal_rule"}],
             matches=[item.label for item in facts if item.status == "CONFIRMED"],
             gaps=gaps,
@@ -105,7 +121,7 @@ def compose(source: ComposeInput) -> tuple[Sections, dict[str, str]]:
             proposed_actions=proposed,
             confidence="MEDIUM" if proposed and risk in {"LOW", "MEDIUM"} else "LOW",
             requires_legal_review=not proposed or risk in {"HIGH", "CRITICAL"},
-            rationale=source.answer.rationale or "Mức này là đề xuất để HR xem, chưa phải quyết định.",
+            rationale=_handling_summary(result, proposed, gaps),
         ),
         risk_and_gaps=RiskAndGaps(
             risk_level=risk,
@@ -123,6 +139,71 @@ def compose(source: ComposeInput) -> tuple[Sections, dict[str, str]]:
         "handling_proposal.rationale": "AI",
     }
     return sections, sources
+
+
+def _incident_narrative(source: ComposeInput, facts: list[ConfirmedFact], fallback: str) -> str:
+    """Keep minutes narrative factual and readable, not a raw assessment report."""
+    case_meta = _case_description_meta(source.description)
+    items: list[str] = []
+    if case_meta.get("violation"):
+        items.append(case_meta["violation"])
+    if case_meta.get("body"):
+        items.append(case_meta["body"])
+    if source.incident_date:
+        items.append(f"Ngày xảy ra: {source.incident_date.isoformat()}")
+    for fact in facts:
+        if fact.fact_key in _INCIDENT_FACT_KEYS and fact.value and fact.status in {"CONFIRMED", "UNCERTAIN", "HR_EDITED"}:
+            items.append(f"{fact.label}: {fact.value}")
+    if not items and fallback:
+        items.append(fallback)
+    clean_items = [_clean_minutes_text(item).strip(" -.;") for item in items]
+    return "\n".join(f"- {item}." for item in clean_items if item and not _looks_like_assessment_report(item))
+
+
+def _case_description_meta(description: str) -> dict[str, str]:
+    meta: dict[str, str] = {}
+    body: list[str] = []
+    for line in (description or "").splitlines():
+        text = line.strip()
+        if not text:
+            continue
+        key, sep, value = text.partition(":")
+        normalized = key.strip().casefold()
+        clean_value = value.strip()
+        if sep and normalized == "phòng ban":
+            meta["department"] = clean_value
+        elif sep and normalized in {"chức danh", "chức vụ", "vị trí"}:
+            meta["position"] = clean_value
+        elif sep and normalized == "vi phạm":
+            meta["violation"] = clean_value
+        else:
+            body.append(text)
+    if body:
+        meta["body"] = " ".join(body)
+    return meta
+
+
+def _clean_minutes_text(value: str) -> str:
+    text = _CHUNK_ID_RE.sub("", value or "")
+    text = _MARKDOWN_RE.sub("", text)
+    text = _ROMAN_HEADING_RE.sub("", text)
+    text = re.sub(r"\b[IVXLCDM]{1,6}\.\s*", "", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def _handling_summary(result: AssessmentResult, proposed: list[ProposedAction], gaps: list[str]) -> str:
+    if proposed:
+        return f"{result.summary} Mức đề xuất để HR xem xét: {', '.join(item.label for item in proposed)}."
+    if gaps:
+        return f"{result.summary} Cần bổ sung: {'; '.join(gaps[:3])}."
+    return result.summary
+
+
+def _looks_like_assessment_report(value: str) -> bool:
+    upper = value.upper()
+    markers = ("BIÊN BẢN ĐÁNH GIÁ", "BIEN BAN ĐANH GIA", "KẾT QUẢ ĐÁNH GIÁ", "CĂN CỨ ĐÁNH GIÁ", "PHÂN TÍCH ĐIỀU KIỆN")
+    return any(marker in upper for marker in markers) or "CHUNK_ID" in upper or "CHUNK ID" in upper
 
 
 def known_chunk_ids(sections: Sections) -> set[str]:

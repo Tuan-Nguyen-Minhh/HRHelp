@@ -15,6 +15,16 @@ from src.features.clarify.model.prompt import PROMPT_VERSION
 
 logger = logging.getLogger(__name__)
 
+_WORKFLOW_ACTIONS = frozenset(
+    {
+        "request_retrieval",
+        "draft_minutes",
+        "create_ticket_preview",
+        "send_to_legal",
+    }
+)
+_DIRECT_ACTIONS = frozenset({"answer_policy_question", "show_assessment", "unsupported"})
+
 
 async def extract_node(state: dict) -> dict:
     """Read the narrative and merge it with facts already stored."""
@@ -42,14 +52,22 @@ def ask_node(state: dict) -> dict:
 
 
 def route_after_extract(state: dict) -> str:
-    """Choose ask, done, or retrieve from validated state. A model string is not an edge."""
+    """Choose ask, action, done, or retrieve from validated state.
+
+    The planner may label natural-language actions, but Python keeps the edge
+    decision tied to confirmed facts, dates, and the case workflow boundary.
+    """
     if state.get("conflicts"):
         return "ask"
+    action = state.get("requested_action") or ""
+    if action in _DIRECT_ACTIONS:
+        return "action"
     if not state.get("facts_locked"):
         return "ask"
     if state.get("step") == "cite" or bool(state.get("advance")):
         return "retrieve"
-    if state.get("incident_date") is not None and state.get("agent_run_id") is not None:
+    ready = state.get("incident_date") is not None and state.get("agent_run_id") is not None
+    if ready and (not action or action in _WORKFLOW_ACTIONS or action == "complete_facts"):
         return "retrieve"
     return "done"
 

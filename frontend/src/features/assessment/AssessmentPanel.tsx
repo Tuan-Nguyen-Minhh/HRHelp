@@ -4,12 +4,14 @@ import { RiskAssessment } from "@/features/assessment/RiskAssessment";
 import { ReviewMinutes } from "@/features/assessment/ReviewMinutes";
 import { SanctionAssessment } from "@/features/assessment/SanctionAssessment";
 import { useWorkspace } from "@/features/case-management/CaseWorkspace";
+import { visibleReportText } from "@/lib/report";
 import { assessmentView } from "@/lib/workflow";
 
 export function AssessmentPanel() {
   const { answer, answerLoading, answerError, facts, caseView } = useWorkspace();
   const view = assessmentView(caseView.status, answer, facts?.missing_fact_keys.length ?? 0);
   const showReport = Boolean(answer) && view !== "collecting";
+  const savedReport = visibleReportText(answer?.message);
 
   return (
     <section className="space-y-4" aria-label="Đánh giá căn cứ">
@@ -31,10 +33,10 @@ export function AssessmentPanel() {
             <PrecedentSection />
             <AdministrativeSection />
           </div>
-          {answer?.message ? (
+          {savedReport ? (
             <details className="rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm">
               <summary className="cursor-pointer font-medium">Nội dung báo cáo đã lưu</summary>
-              <p className="mt-3 whitespace-pre-wrap leading-6 text-neutral-800">{answer.message}</p>
+              <p className="mt-3 whitespace-pre-wrap leading-6 text-neutral-800">{savedReport}</p>
             </details>
           ) : null}
         </>

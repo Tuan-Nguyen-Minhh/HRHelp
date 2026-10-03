@@ -12,6 +12,15 @@ from src.common.idempotency import claim, complete, request_hash
 from src.common.notify import notify, notify_managers
 from src.common.workflow import CaseAccessLevel, assert_transition, lock_case
 from src.features.answer.model.answers import load_stored
+from src.features.assessment.repository import current_version, get_report
+from src.features.assessment.schemas import (
+    AssessmentMetadata,
+    AssessmentView,
+    Permissions,
+    Sections,
+)
+from src.features.assessment.service import ticket_allowed
+from src.features.assessment.validator import validate_sections
 from src.features.legal_review.schema import QueueItem, QueueResponse, ReviewPack, ReviewRequest, ReviewView
 from src.models.case_drafts import CaseDraft
 from src.models.cases import Case
@@ -59,6 +68,7 @@ async def review_pack(session: AsyncSession, actor: User, case_id: UUID) -> Revi
         incident_date=case.incident_date,
         description=case.description,
         answer=view,
+        assessment=await _assessment_view(session, case, view),
     )
 
 
@@ -199,3 +209,49 @@ async def _pending_recommendation(session: AsyncSession, case_id: UUID) -> Recom
         .with_for_update()
     )
     return (await session.execute(stmt)).scalar_one_or_none()
+
+
+async def _assessment_view(session: AsyncSession, case: Case, answer) -> AssessmentView | None:
+    report = await get_report(session, case.id)
+    if report is None:
+        return None
+    version = await current_version(session, report)
+    if version is None:
+        return None
+    payload = version.payload or {}
+    sections = Sections.model_validate(payload.get("sections") or {})
+    sources = dict(payload.get("sources") or {})
+    validation = validate_sections(sections, _stored_chunk_ids(answer))
+    confirmed = version.status == "CONFIRMED"
+    ticket = None if answer.ticket is None else answer.ticket.disposition
+    return AssessmentView(
+        assessment_id=report.id,
+        case_id=case.id,
+        version=version.version,
+        status="CONFIRMED" if confirmed else "DRAFT",
+        form_status="CONFIRMED" if confirmed else ("READY_FOR_CONFIRM" if validation.is_valid else "AI_DRAFT"),
+        sections=sections,
+        validation=validation,
+        permissions=Permissions(
+            can_edit=False,
+            can_confirm=False,
+            can_reanalyze=False,
+            can_create_ticket=ticket_allowed(confirmed, case.status, ticket, answer.sanction_type),
+        ),
+        metadata=AssessmentMetadata(
+            generated_at=version.created_at,
+            source="HR" if version.source == "HR" else "AI",
+            recommendation_id=report.recommendation_id,
+            prompt_version="assessment-form-v1",
+        ),
+        sources=sources,
+    )
+
+
+def _stored_chunk_ids(answer) -> set[str]:
+    found = set()
+    for rows in (answer.legal_basis, answer.internal_rule, answer.precedent, answer.inspection_risk):
+        for item in rows:
+            if item.chunk_id is not None:
+                found.add(str(item.chunk_id))
+    return found

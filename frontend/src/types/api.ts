@@ -1,3 +1,5 @@
+import type { AssessmentForm } from "@/types/assessment";
+
 export type CaseStatus =
   | "OPEN"
   | "NEED_INFO"
@@ -268,6 +270,7 @@ export interface ReviewPack {
   incident_date: string | null;
   description: string | null;
   answer: AnswerView;
+  assessment: AssessmentForm | null;
 }
 
 export interface ReviewView {
@@ -313,7 +316,15 @@ export interface RecidivismView {
 export interface ExportPayload {
   format: string;
   kind: string;
-  content: unknown;
+  content:
+    | string
+    | {
+        path?: string;
+        file_name?: string;
+        content_type?: string;
+        preview?: string;
+      }
+    | Record<string, unknown>;
 }
 
 export interface TurnResponse {

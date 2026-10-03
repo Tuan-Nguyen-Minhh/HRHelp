@@ -2,7 +2,7 @@
 
 from src.features.clarify.model.catalog import ABSENCE, GENERAL, LATE, required_specs
 
-PROMPT_VERSION = "clarify-planner-v1"
+PROMPT_VERSION = "clarify-planner-v2"
 
 SYSTEM_PROMPT = """You are the semantic planning component of an HR case clarification agent.
 
@@ -35,6 +35,12 @@ requested_action is only a hint:
 - need_clarification when a required fact is missing, ambiguous, or still unconfirmed.
 - complete_facts when the user supplied or confirmed facts and did not ask for a rule lookup.
 - request_retrieval when the user asked to look up the rules or asked how this case should be handled.
+- answer_policy_question when the user asks what the law, company rule, or applicable regulation says.
+- draft_minutes when the user asks to create, show, or prepare the assessment minutes/biên bản.
+- create_ticket_preview when the user asks to create, prepare, or preview a legal ticket/phiếu.
+- show_assessment when the user asks to see the current assessment, recommendation, or drafted answer.
+- send_to_legal when the user asks to submit/send/push the ticket to legal/pháp chế.
+- unsupported when the user asks to approve, reject, sign, close, delete, bypass review, or do something outside HR case analysis.
 
 The downstream Python workflow validates this decision, rejects keys outside the catalog, protects confirmed facts, computes which facts are missing, and chooses the LangGraph edge.
 """
