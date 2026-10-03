@@ -213,7 +213,7 @@ sequenceDiagram
 
 `POST /api/v1/cases/{id}/messages` chạy `step = clarify` với `semantic = true`. Client gửi `Authorization: Bearer`. Quyền là `case:chat`. `users.role` là `HR` hoặc `MANAGER`, và user là `cases.created_by`.
 
-Extract gọi planner `gpt-4o-mini` qua `OPENAI_API_KEY`. Python bỏ key lạ, giá trị mơ hồ và độ tin cậy dưới 0.5, rồi ghi fact hợp lệ với `confirmed = true` và `confirmed_by` là người gửi. Câu sau nêu giá trị khác thì thay giá trị đang lưu. Thiếu khóa hoặc planner lỗi sau một lần thử thì dùng bộ đọc regex. Dòng `key: value` vẫn được Python đọc. `agent_runs.model` của lượt chat là `hr-help-rules`.
+Extract gọi planner Mistral qua `MISTRAL_API_KEY`, `MODEL_NAME` và `FALLBACK_MODEL_NAME`. Python bỏ key lạ, giá trị mơ hồ và độ tin cậy dưới 0.5, rồi ghi fact hợp lệ với `confirmed = true` và `confirmed_by` là người gửi. Câu sau nêu giá trị khác thì thay giá trị đang lưu. Thiếu khóa hoặc planner lỗi sau một lần thử thì dùng bộ đọc regex. Dòng `key: value` vẫn được Python đọc. `agent_runs.model` của lượt chat là `hr-help-rules`.
 
 Thiếu mục bắt buộc thì một câu hỏi liệt kê hết các mục đó, hồ sơ sang `NEED_INFO`, chưa có `CaseHandoff`. Đủ mục nhưng chưa có `incident_date` thì trả lời là chưa đối chiếu được, không retrieve. Đủ mục và có `incident_date` thì cùng graph đi `retrieve` → `handoff`. FastAPI đưa `CaseHandoff` sang feature 6 rồi feature 7 trong cùng request. Không có lần gọi `step = cite` riêng trên lối chat.
 
@@ -464,7 +464,7 @@ Chuẩn là `AppliedStandard` trên câu trả lời và trên `ProposalHandoff`
 
 Graph là `precedent` rồi `recommend`. `recommend` tách `passages` thành bốn lớp. Python chặn model trước khi gọi nếu retrieval chỉ là mục lục, kho trống, hợp đồng thử việc, không có luật áp được, biên bản hoặc yêu cầu giải trình chưa xong, hoặc không có nội quy. Các cửa đó để `sanction_type` trống và rủi ro `HIGH`. Kho trống khi không còn lớp áp được thì rủi ro `CRITICAL`.
 
-Model là `gpt-4o-mini` qua `OPENAI_API_KEY`, temperature 0. Không có khóa, gọi lỗi, hoặc đánh giá `NEED_MORE_FACTS` thì mức trống và rủi ro `HIGH`. `MULTIPLE_SUPPORTED` để trống mức, rủi ro `MEDIUM`. Trích dẫn không phải nguyên văn trong chunk được nêu thì Python bỏ mức. Chuẩn không bao giờ nhận `TERMINATION`. Một mức đã được chứng minh vẫn chưa đủ để đẩy phiếu: feature 7 còn xét rủi ro, nội quy và thủ tục.
+Model là Mistral qua `MISTRAL_API_KEY`, `MODEL_NAME` và `FALLBACK_MODEL_NAME`, temperature 0. Không có khóa, gọi lỗi, hoặc đánh giá `NEED_MORE_FACTS` thì mức trống và rủi ro `HIGH`. `MULTIPLE_SUPPORTED` để trống mức, rủi ro `MEDIUM`. Trích dẫn không phải nguyên văn trong chunk được nêu thì Python bỏ mức. Chuẩn không bao giờ nhận `TERMINATION`. Một mức đã được chứng minh vẫn chưa đủ để đẩy phiếu: feature 7 còn xét rủi ro, nội quy và thủ tục.
 
 Kết quả ghi vào `recommendations`: nhận định, `sanction_type`, `process_steps`, `risk_level`. Mỗi citation giữ `quote`, điều, khoản, điểm và `chunk_id`.
 

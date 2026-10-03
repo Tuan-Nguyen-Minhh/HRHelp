@@ -14,6 +14,9 @@ import json
 import logging
 from uuid import UUID
 
+import httpx
+from langchain_mistralai import ChatMistralAI
+
 from src.agents.handoff import CaseHandoff
 from src.core.config import settings
 from src.features.answer.model.assessment import (
@@ -190,20 +193,22 @@ def unavailable_assessment(facts: dict[str, str], reason: str) -> Assessment:
 
 async def synthesize(message: CaseHandoff, layered: LayeredBasis) -> Assessment:
     """Read one handoff. A missing key or a bad payload leaves the level unset."""
-    if not settings.chat_candidates():
+    if not settings.MISTRAL_API_KEY:
         return unavailable_assessment(message.facts, "Chưa có mô hình tổng hợp. Mức xử lý đề xuất: chưa xác định.")
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": _payload(message, layered)},
     ]
+    model_names = settings.mistral_chat_models()
     last_error = "invalid_assessment"
     for attempt in range(MAX_RETRIES + 1):
-        try:
-            parsed = await _complete(messages, attempt)
-            return guard(parsed, _passages(layered))
-        except Exception as exc:
-            last_error = type(exc).__name__
-            logger.warning("evidence synthesis attempt %s failed: %s", attempt + 1, last_error)
+        for model_name in model_names:
+            try:
+                parsed = await _complete(messages, attempt, model_name)
+                return guard(parsed, _passages(layered))
+            except Exception as exc:
+                last_error = f"{model_name}: {_error_name(exc)}"
+                logger.warning("evidence synthesis attempt %s failed: %s", attempt + 1, last_error)
     reason = f"Không đọc được bản tổng hợp ({last_error}). Mức xử lý đề xuất: chưa xác định."
     return unavailable_assessment(message.facts, reason)
 
@@ -399,20 +404,41 @@ def _chunk_key(value: UUID | str) -> str:
         return str(value)
 
 
-async def _complete(messages: list[dict[str, str]], attempt: int) -> Assessment:
-    from src.services.chat import acomplete_structured
+async def _complete(messages: list[dict[str, str]], attempt: int, model_name: str) -> Assessment:
+    prompt = list(messages)
+    if attempt:
+        prompt.append(
+            {
+                "role": "user",
+                "content": (
+                    "Bản trước không đúng schema. Trả một assessment hợp lệ. "
+                    "report bắt đầu bằng BIÊN BẢN ĐÁNH GIÁ VỤ VIỆC và đủ mục I đến XI. "
+                    "Nếu một điều khoản LAW, DECREE hoặc INTERNAL_RULE khớp đủ điều kiện, "
+                    "status là SUPPORTED và recommended_sanction là mã của hình thức đó. "
+                    "Chỉ có nội quy thì vẫn ghi mức đó, risk HIGH, can_create_legal_ticket false. "
+                    "Chỉ bắt đầu reason bằng 'Chưa đủ căn cứ retrieval để xác định mức xử lý.' "
+                    "khi không đoạn luật, nghị định hướng dẫn hoặc nội quy nào áp dụng."
+                ),
+            }
+        )
+    model = ChatMistralAI(
+        **settings.mistral_chat_kwargs(model_name),
+        temperature=0,
+        timeout=45,
+        max_retries=2,
+    )
+    structured = model.with_structured_output(Assessment)
+    parsed = await structured.ainvoke(prompt)
+    if isinstance(parsed, Assessment):
+        return parsed
+    if isinstance(parsed, dict):
+        return Assessment.model_validate(parsed)
+    raise TypeError("synthesis returned an unexpected payload")
 
-    retry = (
-        "Bản trước không đúng schema. Trả một assessment hợp lệ. "
-        "report bắt đầu bằng BIÊN BẢN ĐÁNH GIÁ VỤ VIỆC và đủ mục I đến XI. "
-        "Nếu một điều khoản LAW, DECREE hoặc INTERNAL_RULE khớp đủ điều kiện, "
-        "status là SUPPORTED và recommended_sanction là mã của hình thức đó. "
-        "Chỉ có nội quy thì vẫn ghi mức đó, risk HIGH, can_create_legal_ticket false. "
-        "Chỉ bắt đầu reason bằng 'Chưa đủ căn cứ retrieval để xác định mức xử lý.' "
-        "khi không đoạn luật, nghị định hướng dẫn hoặc nội quy nào áp dụng."
-        if attempt
-        else None
-    )
-    return await acomplete_structured(
-        messages, Assessment, retry_prompt=retry, temperature=0, timeout=45
-    )
+
+def _error_name(exc: Exception) -> str:
+    if isinstance(exc, httpx.HTTPStatusError):
+        response = exc.response
+        body = response.text.replace("\n", " ")[:500]
+        return f"HTTP {response.status_code}: {body}"
+    return type(exc).__name__

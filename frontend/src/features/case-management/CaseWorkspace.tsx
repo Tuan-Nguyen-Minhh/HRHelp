@@ -56,6 +56,7 @@ export function CaseWorkspace() {
   const [failedDraft, setFailedDraft] = useState<string | null>(null);
   const [chatNode, setChatNode] = useState<HTMLTextAreaElement | null>(null);
   const serverSyncedAt = useRef(0);
+  const sendingLocked = useRef(false);
 
   useEffect(() => {
     setMessages(loadMessages(caseId));
@@ -77,8 +78,9 @@ export function CaseWorkspace() {
   }, [caseQuery.data, caseId]);
 
   function commitMessages(next: ChatMessage[]) {
-    saveMessages(caseId, next);
-    setMessages(next);
+    const normalized = dedupeQuickUserRepeats(next);
+    saveMessages(caseId, normalized);
+    setMessages(normalized);
   }
 
   function applyTurn(turn: TurnResponse) {
@@ -237,10 +239,22 @@ export function CaseWorkspace() {
     sendingTicket: ticketMutation.isPending,
     failedDraft,
     async send(content) {
-      await sendMutation.mutateAsync({ content, echo: true });
+      if (sendingLocked.current) return;
+      sendingLocked.current = true;
+      try {
+        await sendMutation.mutateAsync({ content, echo: true });
+      } finally {
+        sendingLocked.current = false;
+      }
     },
     async retry() {
-      if (failedDraft) await sendMutation.mutateAsync({ content: failedDraft, echo: false });
+      if (!failedDraft || sendingLocked.current) return;
+      sendingLocked.current = true;
+      try {
+        await sendMutation.mutateAsync({ content: failedDraft, echo: false });
+      } finally {
+        sendingLocked.current = false;
+      }
     },
     async sendTicket(legalCode) {
       await ticketMutation.mutateAsync(legalCode);
@@ -285,4 +299,21 @@ function toChatRole(role: string): ChatRole {
   if (value === "USER") return "user";
   if (value === "ASSISTANT") return "assistant";
   return "system";
+}
+
+function dedupeQuickUserRepeats(messages: ChatMessage[]): ChatMessage[] {
+  const result: ChatMessage[] = [];
+  for (const message of messages) {
+    const previous = result.at(-1);
+    if (
+      previous?.role === "user" &&
+      message.role === "user" &&
+      previous.text.trim() === message.text.trim() &&
+      Math.abs(new Date(message.at).getTime() - new Date(previous.at).getTime()) <= 5000
+    ) {
+      continue;
+    }
+    result.push(message);
+  }
+  return result;
 }
