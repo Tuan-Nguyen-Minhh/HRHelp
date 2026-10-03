@@ -1,14 +1,14 @@
 {
- "pinned_at": "2026-10-01T04:39:19.368288+00:00",
+ "pinned_at": "2026-10-03T17:13:16.159476+00:00",
  "note": "Known-good sha256 of the frozen step3 outputs consumed by B4/B5. Regenerate only after an intentional, reviewed source change: python scripts/verify_db.py --write-manifest",
  "files": {
   "chunks_BLLD.json": "6a8d3f75b93bbcf33743610c9236868349b4b1ce791c76da33e95799470f5eb0",
   "chunks_ND145_2020.json": "c2afc58970923beb06e24323d8e0387bf13bd97070660b14f40d6b5d77cbe254",
   "chunks_ND283_2026.json": "be52e4a329aaebd814402d9494c00dd8f00556a3bc7baa71a0b111f3bfc700af",
-  "chunks_NQCT.json": "8545a767680befa580572bbcee62bb541f10a07230158691db67f17fb5751772",
+  "chunks_NQCT.json": "018f7b86830cb68cec733714f52458d2be20bd3e8ceff2b08ef154ac64ebe7f5",
   "document_tree_BLLD.json": "f7fdea870ac7beb73ec3543d224663d26292f9410422043ce05a457492647a66",
   "document_tree_ND145_2020.json": "45b303eada87f52d6b690140cfd87c20d095313c96f535b727460ec825eab630",
   "document_tree_ND283_2026.json": "bf6987d3f155277bafc1ec29b6ce5c6f42c977267dfc75ffe525bfe664c443fb",
-  "document_tree_NQCT.json": "bcd9c404aa885a652969ef0a6ebc09f0a7b0c8efb87a735192dc319ededfa1ed"
+  "document_tree_NQCT.json": "29677c3f3866c7c8a1822074416826822e1689dee2b9fd0ffb8856bf242bb1ab"
  }
 }
