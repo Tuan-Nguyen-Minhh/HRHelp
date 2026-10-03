@@ -1,4 +1,4 @@
-"""B6: embed the 1289 legal chunks into ``legal_chunk_embeddings``.
+"""B6: embed the 1307 legal chunks into ``legal_chunk_embeddings``.
 
 Plan: ``data_pipeline_steps/step6_7_plan.md`` section 2 (B6).
 
@@ -6,8 +6,8 @@ What it does, in order:
 
 1. **Preflight before spending anything.** Refuses to run unless
    ``EMBEDDING_MODEL``/``EMBEDDING_DIMENSIONS`` still match the frozen contract,
-   ``MISTRAL_API_KEY`` is present, alembic is at head ``0003_legal_embeddings``
-   and ``legal_chunks`` holds exactly 1289 rows. A wrong model would write
+   ``MISTRAL_API_KEY`` is present, alembic is at the repository migration head
+   and ``legal_chunks`` holds exactly 1307 rows. A wrong model would write
    vectors that V4 then reports as garbage, and a wrong row count would mean
    silently embedding the wrong corpus.
 
@@ -21,7 +21,7 @@ What it does, in order:
    ``legal_chunks.text``. A changed text therefore re-embeds exactly one row,
    and a crash costs at most the current batch.
 
-4. **Batches of 32 texts per request.** 1289 chunks / 32 = 41 requests, ~41 s
+4. **Batches of 32 texts per request.** 1307 chunks / 32 = 41 requests, ~41 s
    at 1 RPS. Unbatched it would be ~22 minutes for the same tokens — batching
    is a quota decision, not a nicety.
 
@@ -86,10 +86,20 @@ CHUNK_DIR = PROJECT_ROOT / "data" / "chunk"
 CHECKPOINT_PATH = CHUNK_DIR / "embed_progress.json"
 
 EXPECTED_TOTAL_CHUNKS = 1307
-EXPECTED_ALEMBIC_HEAD = "0004_document_chunks_tsv"
+
+
+def alembic_head() -> str:
+    """Resolve the migration head from the checked-out repository."""
+    from alembic.config import Config
+    from alembic.script import ScriptDirectory
+
+    config = Config(str(PROJECT_ROOT / "alembic.ini"))
+    config.set_main_option("script_location", str(PROJECT_ROOT / "alembic"))
+    return ScriptDirectory.from_config(config).get_current_head()
+
 
 #: Texts per Mistral request. 32 is the plan's value: 41 requests instead of
-#: 1289, which is the difference between ~41 s and ~22 min of wall clock.
+#: 1307, which is the difference between ~41 s and ~22 min of wall clock.
 BATCH_SIZE = 32
 
 #: The 3 step3 chunks over the 1000-token threshold. Embedded anyway (the model
@@ -210,10 +220,11 @@ def preflight(db: Session) -> None:
     if not settings.MISTRAL_API_KEY:
         problems.append("MISTRAL_API_KEY is empty (plan section 1 prerequisite)")
 
-    current = db.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-    if current != EXPECTED_ALEMBIC_HEAD:
+    current = list(db.scalars(sa.text("SELECT version_num FROM alembic_version")))
+    head = alembic_head()
+    if current != [head]:
         problems.append(
-            f"alembic current={current!r}, expected {EXPECTED_ALEMBIC_HEAD!r}; "
+            f"alembic current={current!r}, expected {head!r}; "
             "run `alembic upgrade head` first"
         )
 
