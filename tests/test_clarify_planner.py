@@ -69,13 +69,25 @@ def _state(plan, **extra) -> dict:
 
 
 def test_prompt_keeps_the_planner_off_the_graph_edge():
-    assert PROMPT_VERSION == "clarify-planner-v1"
+    assert PROMPT_VERSION == "clarify-planner-v3"
     assert "Never invent missing facts" in SYSTEM_PROMPT
     assert "LangGraph" in SYSTEM_PROMPT
+    assert "lập biên bản" in SYSTEM_PROMPT
     rendered = render_case_prompt("nghỉ 5 ngày", ["absence_days = 5 ngày [pending]"])
     assert "absence_days" in rendered
     assert "UNAUTHORIZED_ABSENCE" in rendered
     assert "CURRENT STORED FACTS" in rendered
+
+
+def test_minutes_request_keeps_draft_action_even_when_facts_are_missing():
+    plan = apply_decision(
+        "lập biên bản vi phạm cho tôi",
+        {},
+        _decision(requested_action=RequestedAction.ANSWER_POLICY_QUESTION),
+    )
+    assert plan.requested_action == "draft_minutes"
+    assert plan.locked is False
+    assert route_after_extract(_state(plan, incident_date=date(2026, 3, 1), agent_run_id=uuid4())) == "ask"
 
 
 def test_direct_fact_does_not_fill_the_rest_of_the_catalog():
@@ -306,7 +318,7 @@ def test_complete_facts_without_a_retrieval_request_stop():
 def test_a_raw_edge_name_does_not_decide_the_route():
     plan = apply_decision("Đã đủ.", _ABSENCE_STORED, _decision())
     state = _state(plan, incident_date=date(2026, 3, 1), agent_run_id=uuid4(), requested_action="retrieve")
-    assert route_after_extract(state) == "retrieve"
+    assert route_after_extract(state) == "done"
 
 
 def test_cite_step_still_retrieves_from_locked_facts():

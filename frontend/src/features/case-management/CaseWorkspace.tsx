@@ -35,6 +35,7 @@ interface WorkspaceValue {
   sendTicket: (legalCode: string) => Promise<void>;
   confirmFact: (factKey: string, factValue: string) => Promise<void>;
   confirming: boolean;
+  needsLockedFactsPrompt: boolean;
   focusChat: () => void;
   registerChat: (node: HTMLTextAreaElement | null) => void;
 }
@@ -55,6 +56,7 @@ export function CaseWorkspace() {
   const [agent, setAgent] = useState<AgentEvent | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [failedDraft, setFailedDraft] = useState<string | null>(null);
+  const [needsLockedFactsPrompt, setNeedsLockedFactsPrompt] = useState(false);
   const [chatNode, setChatNode] = useState<HTMLTextAreaElement | null>(null);
   const serverSyncedAt = useRef(0);
   const sendingLocked = useRef(false);
@@ -65,6 +67,7 @@ export function CaseWorkspace() {
     setAgent(null);
     setError(null);
     setFailedDraft(null);
+    setNeedsLockedFactsPrompt(false);
   }, [caseId]);
 
   useEffect(() => subscribeAgentEvents(caseId, setAgent), [caseId]);
@@ -106,6 +109,11 @@ export function CaseWorkspace() {
       setHandoff(null);
     }
     setAgent(agentAfterTurn(turn));
+    setNeedsLockedFactsPrompt((current) => {
+      if (turn.facts_locked || turn.missing_fact_keys.length === 0) return false;
+      if (requiresLockedFacts(turn.requested_action)) return true;
+      return current;
+    });
   }
 
   const sendMutation = useMutation({
@@ -243,6 +251,7 @@ export function CaseWorkspace() {
     sending: sendMutation.isPending,
     sendingTicket: ticketMutation.isPending,
     failedDraft,
+    needsLockedFactsPrompt,
     async send(content) {
       if (sendingLocked.current) return;
       sendingLocked.current = true;
@@ -297,6 +306,10 @@ export function CaseWorkspace() {
       </div>
     </WorkspaceContext.Provider>
   );
+}
+
+function requiresLockedFacts(action: string | null | undefined): boolean {
+  return action === "draft_minutes" || action === "create_ticket_preview" || action === "send_to_legal";
 }
 
 function toChatRole(role: string): ChatRole {

@@ -21,6 +21,7 @@ from src.features.answer.schema import AnswerView
 from src.features.cite.model.search import search_policies
 from src.features.clarify.model.assess import ClarifyPlan, FactConflict, StoredFact, build_question
 from src.features.clarify.model.catalog import OPTIONAL_FACT_KEYS, required_specs
+from src.features.clarify.model.memory import build_turn_context, update_memory
 from src.features.clarify.model.multi_agent import run_dispatch_gate, run_downstream_agents, run_recommendation_agent
 from src.features.clarify.model.store import (
     FactWrite,
@@ -136,6 +137,7 @@ async def _clarify(
         assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff"}))
         finish_run(run, assistant.id)
         downstream = await run_downstream_agents(session, case, conversation, handoff, assistant.id)
+        await update_memory(session, conversation.id, plan, downstream.assistant_text)
         await session.commit()
         return _turn(
             case,
@@ -161,6 +163,7 @@ async def _clarify(
         text = _question(plan)
     assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", text, {"kind": "clarify"}))
     finish_run(run, assistant.id)
+    await update_memory(session, conversation.id, plan, text)
     await session.commit()
     return _turn(case, conversation.id, plan, text, answer, None, run.id)
 
@@ -183,6 +186,7 @@ async def _confirm(
         await _reopen(session, case)
         question = _question(plan)
         await add_message(session, NewMessage(conversation.id, "ASSISTANT", question, {"kind": "clarify"}))
+        await update_memory(session, conversation.id, plan, question)
         return _turn(case, conversation.id, plan, question, None, None, None)
     return await _cite(session, case, conversation, plan)
 
@@ -230,6 +234,7 @@ async def _cite(session: AsyncSession, case: Case, conversation: Conversation, p
     assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff"}))
     finish_run(run, assistant.id)
     downstream = await run_downstream_agents(session, case, conversation, message, assistant.id)
+    await update_memory(session, conversation.id, plan, downstream.assistant_text)
     return _turn(
         case,
         conversation.id,
@@ -354,8 +359,8 @@ async def _plan(
     semantic: bool = False,
     run_id: UUID | None = None,
 ) -> tuple[ClarifyPlan, CaseHandoff | None]:
-    text = await _transcript(session, case, conversation_id)
     stored = await _stored(session, case.id)
+    text = await _transcript(session, case, conversation_id, stored)
     graph = build_case_graph(lambda query: search_policies(session, query))
     state = await graph.ainvoke(
         {
@@ -411,6 +416,8 @@ def _turn(
         answer=answer,
         handoff=handoff,
         agent_run_id=run_id,
+        requested_action=plan.requested_action or None,
+        user_intent=plan.user_intent or None,
     )
 
 
@@ -580,7 +587,15 @@ async def _conversation(session: AsyncSession, case_id: UUID) -> Conversation:
     return conversation
 
 
-async def _transcript(session: AsyncSession, case: Case, conversation_id: UUID | None) -> str:
+async def _transcript(
+    session: AsyncSession,
+    case: Case,
+    conversation_id: UUID | None,
+    stored: dict[str, StoredFact] | None = None,
+) -> str:
+    context = await build_turn_context(session, conversation_id, case.description or "", stored or {})
+    if context:
+        return context
     spoken = await list_user_text(session, conversation_id) if conversation_id else ""
     return "\n".join(part for part in (case.description or "", spoken) if part)
 
