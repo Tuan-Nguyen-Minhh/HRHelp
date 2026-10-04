@@ -72,6 +72,8 @@ class TurnResponse(BaseModel):
     answer: AnswerView | None = None
     handoff: CaseHandoff | None = None
     agent_run_id: UUID | None = None
+    requested_action: str | None = None
+    user_intent: str | None = None
 
 
 class FactListResponse(BaseModel):

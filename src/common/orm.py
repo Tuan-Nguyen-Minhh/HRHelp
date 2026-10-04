@@ -9,6 +9,7 @@ from src.models.case_drafts import CaseDraft
 from src.models.case_facts import CaseFact
 from src.models.case_violations import CaseViolation
 from src.models.cases import Case
+from src.models.conversation_memories import ConversationMemory
 from src.models.conversations import Conversation
 from src.models.disciplinary_decisions import DisciplinaryDecision
 from src.models.document_chunks import DocumentChunk
@@ -42,6 +43,7 @@ __all__ = [
     "CaseFact",
     "CaseViolation",
     "Conversation",
+    "ConversationMemory",
     "DisciplinaryDecision",
     "Document",
     "DocumentChunk",

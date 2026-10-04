@@ -339,6 +339,8 @@ export interface TurnResponse {
   answer: AnswerView | null;
   handoff: CaseHandoff | null;
   agent_run_id: string | null;
+  requested_action?: string | null;
+  user_intent?: string | null;
 }
 
 export type AgentName = "clarification" | "retrieval" | "evidence_synthesis" | "decision" | "legal_review";

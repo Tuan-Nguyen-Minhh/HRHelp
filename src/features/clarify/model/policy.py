@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from src.features.clarify.model.assess import ClarifyPlan, FactConflict, StoredFact, _all_confirmed, _missing
 from src.features.clarify.model.catalog import ABSENCE, GENERAL, LATE, catalog_keys, detect_family, required_specs
-from src.features.clarify.model.decision import ClarifyDecision, ExtractedFact, UserIntent
+from src.features.clarify.model.decision import ClarifyDecision, ExtractedFact, RequestedAction, UserIntent
 from src.features.clarify.model.extract import _flag, explicit_facts, extract_facts
 
 _MIN_FACT_CONFIDENCE = 0.5
@@ -96,19 +96,129 @@ def apply_decision(
     _accept_present(family, merged, conflicts)
     missing = _missing(family, merged)
     locked = not missing and _all_confirmed(family, merged) and not conflicts
+    requested_action = _guard_requested_action(text, decision.requested_action)
     return ClarifyPlan(
         family=family,
         merged=merged,
         missing_keys=missing,
         locked=locked,
         conflicts=tuple(conflicts),
-        requested_action=decision.requested_action.value,
+        requested_action=requested_action.value,
         planner_fallback=fallback,
         user_intent=decision.user_intent.value,
         ambiguities=tuple(dict.fromkeys(ambiguous)),
         validation=_validation(ignored, ambiguous),
         accepted_keys=tuple(dict.fromkeys(accepted)),
     )
+
+
+def _guard_requested_action(text: str, action: RequestedAction) -> RequestedAction:
+    """Keep workflow artifact requests out of the policy-QA branch."""
+    folded = _fold(text)
+    if _asks_for_minutes(folded):
+        return RequestedAction.DRAFT_MINUTES
+    if _asks_for_ticket(folded):
+        return RequestedAction.CREATE_TICKET_PREVIEW
+    if _asks_to_send_legal(folded):
+        return RequestedAction.SEND_TO_LEGAL
+    return action
+
+
+def _asks_for_minutes(text: str) -> bool:
+    return any(
+        phrase in text
+        for phrase in (
+            "lap bien ban",
+            "tao bien ban",
+            "soan bien ban",
+            "chuan bi bien ban",
+            "bien ban vi pham",
+            "bien ban danh gia",
+        )
+    )
+
+
+def _asks_for_ticket(text: str) -> bool:
+    return any(phrase in text for phrase in ("tao phieu", "lap phieu", "preview phieu", "phieu phap che"))
+
+
+def _asks_to_send_legal(text: str) -> bool:
+    return any(phrase in text for phrase in ("gui phap che", "chuyen phap che", "submit phap che"))
+
+
+def _fold(text: str) -> str:
+    table = str.maketrans(
+        {
+            "à": "a",
+            "á": "a",
+            "ả": "a",
+            "ã": "a",
+            "ạ": "a",
+            "ă": "a",
+            "ằ": "a",
+            "ắ": "a",
+            "ẳ": "a",
+            "ẵ": "a",
+            "ặ": "a",
+            "â": "a",
+            "ầ": "a",
+            "ấ": "a",
+            "ẩ": "a",
+            "ẫ": "a",
+            "ậ": "a",
+            "è": "e",
+            "é": "e",
+            "ẻ": "e",
+            "ẽ": "e",
+            "ẹ": "e",
+            "ê": "e",
+            "ề": "e",
+            "ế": "e",
+            "ể": "e",
+            "ễ": "e",
+            "ệ": "e",
+            "ì": "i",
+            "í": "i",
+            "ỉ": "i",
+            "ĩ": "i",
+            "ị": "i",
+            "ò": "o",
+            "ó": "o",
+            "ỏ": "o",
+            "õ": "o",
+            "ọ": "o",
+            "ô": "o",
+            "ồ": "o",
+            "ố": "o",
+            "ổ": "o",
+            "ỗ": "o",
+            "ộ": "o",
+            "ơ": "o",
+            "ờ": "o",
+            "ớ": "o",
+            "ở": "o",
+            "ỡ": "o",
+            "ợ": "o",
+            "ù": "u",
+            "ú": "u",
+            "ủ": "u",
+            "ũ": "u",
+            "ụ": "u",
+            "ư": "u",
+            "ừ": "u",
+            "ứ": "u",
+            "ử": "u",
+            "ữ": "u",
+            "ự": "u",
+            "ỳ": "y",
+            "ý": "y",
+            "ỷ": "y",
+            "ỹ": "y",
+            "ỵ": "y",
+            "đ": "d",
+        }
+    )
+    return text.casefold().translate(table)
 
 
 def _reads(decision: ClarifyDecision, ignored: list[str], ambiguous: list[str]) -> list[_Read]:
