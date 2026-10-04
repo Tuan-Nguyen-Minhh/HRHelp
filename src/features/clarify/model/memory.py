@@ -7,7 +7,7 @@ It is context for the next turn, not evidence and not a source of sanctions.
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.features.clarify.model.assess import ClarifyPlan, StoredFact
@@ -58,6 +58,8 @@ async def update_memory(
 ) -> None:
     """Persist the current turn memory. The caller owns commit/rollback."""
     memory = await ensure_memory(session, conversation_id)
+    if memory is None:
+        return
     memory.pending_fact_keys = list(plan.missing_keys)
     memory.open_questions = _open_questions(plan)
     memory.pending_action = plan.requested_action or None
@@ -70,11 +72,15 @@ async def update_memory(
 async def get_memory(session: AsyncSession, conversation_id: UUID | None) -> ConversationMemory | None:
     if conversation_id is None:
         return None
+    if not await _memory_table_exists(session):
+        return None
     stmt = select(ConversationMemory).where(ConversationMemory.conversation_id == conversation_id)
     return (await session.execute(stmt)).scalar_one_or_none()
 
 
-async def ensure_memory(session: AsyncSession, conversation_id: UUID) -> ConversationMemory:
+async def ensure_memory(session: AsyncSession, conversation_id: UUID) -> ConversationMemory | None:
+    if not await _memory_table_exists(session):
+        return None
     row = await get_memory(session, conversation_id)
     if row is not None:
         return row
@@ -149,3 +155,8 @@ def _strings(value: object) -> list[str]:
     if not isinstance(value, list):
         return []
     return [item for item in value if isinstance(item, str)]
+
+
+async def _memory_table_exists(session: AsyncSession) -> bool:
+    found = await session.scalar(text("select to_regclass('public.conversation_memories')"))
+    return found is not None
