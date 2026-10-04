@@ -25,6 +25,7 @@ from langgraph.graph.state import CompiledStateGraph
 from src.agents.handoff import CaseHandoff
 from src.features.cite.model.graph import SearchFn, handoff_node
 from src.features.cite.model.passage import Passage
+from src.features.cite.model.policy_answer import answer_policy_question
 from src.features.cite.model.query import SearchQuery
 from src.features.clarify.model.assess import StoredFact
 from src.features.clarify.model.graph import ask_node, extract_node, route_after_extract
@@ -151,19 +152,5 @@ async def _policy_answer_node(state: CaseState, retrieve: SearchFn) -> dict:
         description=state.get("description") or "",
     )
     hits = await retrieve(query)
-    return {"question": _policy_answer_text(hits), "hits": hits, "query": query.text}
-
-
-def _policy_answer_text(hits: list[Passage]) -> str:
-    if not hits:
-        return "Chưa tìm thấy đoạn văn bản còn hiệu lực phù hợp với câu hỏi này."
-    lines = ["Tìm thấy các căn cứ liên quan:"]
-    for index, hit in enumerate(hits[:5], start=1):
-        location = " ".join(part for part in (hit.article, hit.clause, hit.point) if part)
-        label = f"{hit.policy_name}"
-        if location:
-            label = f"{label} - {location}"
-        snippet = " ".join(hit.content.split())[:500]
-        lines.append(f"{index}. {label}: {snippet}")
-    lines.append("Các đoạn trên là kết quả tra cứu để HR đối chiếu; chưa phải quyết định kỷ luật.")
-    return "\n".join(lines)
+    text = await answer_policy_question(query.text, hits, description=query.description)
+    return {"question": text, "hits": hits, "query": query.text}
