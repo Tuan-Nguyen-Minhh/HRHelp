@@ -162,7 +162,7 @@ File: `src/agents/case_graph.py`
 
 | Action | Xu ly |
 |---|---|
-| `answer_policy_question` | Dung retriever nhu RAG tool, lay toi da 5 passage con hieu luc theo `incident_date`, tra cau tra loi boundary |
+| `answer_policy_question` | Retrieve cac passage con hieu luc theo `incident_date`, neu rong thi tra thong diep chua co cau tra loi/can cu; neu co hit thi goi Policy QA Agent de synthesize cau tra loi tieng Viet co dan nguon `[1]`, `[2]`; neu LLM loi/chua cau hinh thi fallback sang tom tat passage |
 | `show_assessment` | De `turns.py` doc answer hien tai neu co |
 | `unsupported` | Tra thong diep an toan: agent khong duyet/ky/dong/bo qua quy trinh |
 

@@ -10,6 +10,7 @@ from src.features.cite.model.bm25 import bm25_rank
 from src.features.cite.model.graph import handoff_node
 from src.features.cite.model.page_index import select_article_heads
 from src.features.cite.model.pipeline import compile_retrieval
+from src.features.cite.model.policy_answer import NO_ANSWER, PolicyAnswer, answer_policy_question
 from src.features.cite.model.query import SearchQuery
 from src.features.cite.model.rank import rank_passages
 from src.features.cite.model.rrf import reciprocal_rank_fusion
@@ -245,3 +246,34 @@ def test_in_force_filter_requires_the_incident_date_on_both_bounds():
     assert "effective_to" in sql
     assert "ACTIVE" in sql
     assert "2026-03-01" in sql
+
+
+@pytest.mark.asyncio
+async def test_policy_answer_returns_no_answer_when_retrieval_is_empty():
+    text = await answer_policy_question("Đi muộn xử lý thế nào?", [])
+    assert text == NO_ANSWER
+    assert "chưa tìm thấy căn cứ" in text.casefold()
+
+
+@pytest.mark.asyncio
+async def test_policy_answer_uses_llm_formatter_when_configured(monkeypatch):
+    hit = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn nhiều lần có thể bị khiển trách.")
+    seen = {}
+
+    async def complete(messages, attempt, model_name):
+        seen["messages"] = messages
+        seen["attempt"] = attempt
+        seen["model_name"] = model_name
+        return PolicyAnswer(answer="Theo nội quy, hành vi đi muộn có thể bị khiển trách [1].")
+
+    monkeypatch.setattr("src.features.cite.model.policy_answer.settings.MISTRAL_API_KEY", "test-key")
+    monkeypatch.setattr("src.features.cite.model.policy_answer.settings.MODEL_NAME", "model-a")
+    monkeypatch.setattr("src.features.cite.model.policy_answer.settings.FALLBACK_MODEL_NAME", "model-a")
+    monkeypatch.setattr("src.features.cite.model.policy_answer._complete", complete)
+
+    text = await answer_policy_question("Đi muộn xử lý thế nào?", [hit], description="Nhân viên đi muộn.")
+
+    assert seen["model_name"] == "model-a"
+    assert "Đi muộn xử lý thế nào?" in seen["messages"][1]["content"]
+    assert "khiển trách [1]" in text
+    assert "chưa phải quyết định kỷ luật" in text
