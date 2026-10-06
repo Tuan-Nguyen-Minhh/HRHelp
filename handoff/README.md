@@ -10,8 +10,8 @@ _Ngày: 2026-09-27 (B4/B5), bổ sung 2026-09-28 (B6/B7), đổi tên dump `b6b7
   **full** của cả database — đủ 4 bảng legal
   (documents 4 / chunks 1377 / references 599 / **embeddings 1377**).
 - `b4b5_*` là **lịch sử**, giữ lại để biết B4/B5 bàn giao cái gì. Nó **thiếu
-  bảng vector** — import bản này rồi chạy `verify_db.py` thì xanh nhưng
-  `verify_embeddings.py` đỏ ngay. Đừng dùng để deploy.
+  bảng vector** — import bản này thì `document_chunks` không có embedding nên
+  nhánh `similarity` của cite trả về rỗng. Đừng dùng để deploy.
 
 ## 1. Có gì trong thư mục này
 
@@ -41,7 +41,7 @@ powershell -ExecutionPolicy Bypass -File scripts/restore_handoff.ps1
 
 Script tự làm hết: check container → check sha256 của dump → copy vào
 container → `pg_restore` (`--clean --if-exists`, chạy lại thoải mái).
-Xong chạy `python scripts/verify_db.py` (kỳ vọng 77 PASS, 0 FAIL).
+Xong kiểm bằng các câu SQL ở mục 4.
 
 Làm tay (khi script không chạy được, VD container tên khác — kiểm tra bằng
 `docker ps` rồi thay tên):
@@ -49,15 +49,26 @@ Làm tay (khi script không chạy được, VD container tên khác — kiểm 
 ```powershell
 certutil -hashfile handoff\full_build_phase_p029.dump SHA256
 # phải khớp handoff\full_build_phase_p029.dump.sha256:
-# 31ACFE408E0CFB97AB9334F7CA3747B3F22399880C93C122BE19EB6BCF3433AF
+# 9DF9D466B8F0348BF2708A475905FE4AC5505BA17A7D44C1A9DB77C729EAF8FF
 docker cp handoff\full_build_phase_p029.dump p-029-db-1:/tmp/full.dump
 docker exec p-029-db-1 pg_restore -U postgres -d build_phase_p029 --no-owner --no-privileges --clean --if-exists /tmp/full.dump
 ```
 ```
 
-**Không cần chạy Alembic** — dump đã chứa cả bảng `alembic_version` với giá trị
-`0004_document_chunks_tsv`, và cả extension `vector` sẽ được tạo lại nếu máy mới thiếu
-(yêu cầu image Postgres có pgvector, giống `p029-postgres`).
+**Không cần chạy Alembic** — dump đã chứa bảng `alembic_version` với giá trị
+`0011_chunk_references`.
+
+> ⚠️ **`pg_dump` KHÔNG tạo lại extension.** `vector` (pgvector) và `btree_gist`
+> (cho `ExcludeConstraint` uuid của `policy_versions`) phải có sẵn ở database
+> đích trước khi restore. Thiếu `vector` → `document_chunks.embedding vector(1024)`
+> không tạo được → 16 lỗi FK liên tiếp, và `pg_restore` **vẫn exit 0** trong khi
+> báo `errors ignored: 17`.
+>
+> `scripts/restore_handoff.ps1` đã tạo 2 extension đó ở bước 3 và kiểm tra
+> exit code của `pg_restore`. Nếu bạn restore thủ công, làm y hệt — và **đếm bảng
+> sau khi restore** (kỳ vọng 16), đừng tin dòng "Restore xong".
+>
+> Image Postgres phải có pgvector, giống `p029-postgres`.
 
 ## 3. Nội dung (bản full)
 
@@ -67,36 +78,81 @@ docker exec p-029-db-1 pg_restore -U postgres -d build_phase_p029 --no-owner --n
 | `policy_versions` | 4 | Thời gian hiệu lực từng văn bản (bảo vệ bằng ExcludeConstraint) |
 | `documents` | 4 | Bản ghi tài liệu nguồn (`ingest_status='EMBEDDED'`) |
 | `document_chunks` | 1377 | 1377 chunks đầy đủ text, vector 1024-dim, và search_tsv (GIN) |
+| `chunk_references` | 599 | **Đồ thị dẫn chiếu trên corpus sống.** FK → `document_chunks.id`. 63 dòng đích NULL = luật ngoài bộ 3 |
 | `legal_documents` | 4 | 3 văn bản luật + 1 nội quy (`NOI_QUY`/`VAN_BAN_NOI_BO`) + footnote sửa đổi |
 | `legal_chunks` | 1377 | Nội dung đã chia nhỏ (Điều / khoản / điểm), 88 chunk NQCT đánh số tuần tự 1–82 |
 | `legal_chunk_references` | 599 | Đồ thị dẫn chiếu (NQCT: 21 EXPLICIT + 4 EXPLICIT_SELF + 6 LIST_EXPANSION + 2 DEFAULT_SELF, 0 BOUNDARY; BOUNDARY toàn corpus = 3) |
 | `legal_chunk_embeddings` | 1377 | Vector `mistral-embed` 1024-dim + tsvector BM25 (B6/B7) |
-| `alembic_version` | 1 | Phiên bản migration đã áp dụng (`0009_assessment_form`) |
+| `roles` / `permissions` | 5 / 18 | Seed RBAC — thiếu thì app không đăng nhập được |
+| `users` | 5 | Tài khoản demo từ `scripts/seed_demo_users.py` (kèm hash mật khẩu) |
+| `alembic_version` | 1 | Phiên bản migration đã áp dụng (`0011_chunk_references`) |
 
+> **Bản này chỉ chứa corpus + seed** — 16 bảng. 21 bảng vận hành (`cases`,
+> `messages`, `recommendations`, `agent_runs`, `audit_logs`, …) cố ý **không**
+> đưa vào dump; đó là dữ liệu demo cục bộ. `legal_*` vẫn có trong dump làm bản
+> dựng lại corpus.
+>
 > **Số trên lấy từ `scripts/corpus_expectations.py`** (tự dẫn từ
 > `data/chunk/chunks_*.json`), không gõ tay. Chạy
 > `python scripts/corpus_expectations.py` để in lại bất cứ lúc nào.
-> `full_build_phase_p029.dump` đã refresh ở head `0009_assessment_form` sau lần
-> mở rộng NQCT (2026-10-03) và đã được `pg_restore` thử vào DB tạm để đối chiếu
-> (4 / 1377 / 599 / 1377 / 1377, 0 embedding NULL) trước khi thay thế.
+> `full_build_phase_p029.dump` đã refresh ở head `0011_chunk_references`
+> (2026-10-06) và **đã được `pg_restore` thử vào DB tạm `p029_verify` để đối
+> chiếu** — 16/16 bảng, `document_chunks` 1377, `chunk_references` 599,
+> `legal_chunk_embeddings` 1377, 0 lỗi.
 
 Chi tiết B4/B5: `data/chunk/CHANGELOG_B4B5.md`. Chi tiết B6/B7:
 `data/chunk/CHANGELOG_B6B7.md`.
 
-## 4. Sau khi import phải chạy lại verify
+## 4. Sau khi import phải tự kiểm
 
-Không tin lời tôi, tự kiểm. Cần `data/chunk/*.json` (8 file: 4 chunks + 4 tree) và
-`data/chunk/source_manifest.json` trong repo:
+> **Cập nhật 2026-10-06:** `scripts/verify_db.py`, `scripts/verify_embeddings.py`
+> và `scripts/mutation_test.py` đã bị gỡ khỏi repo (cùng `src/services/hybrid_search.py`
+> và bộ kết quả `eval/results/retrieval_eval_*`). Lý do: chúng đo một engine mà
+> agent không gọi, và số liệu đó không kiểm chứng được nên không nên đưa vào báo cáo.
+> Các mục lịch sử 4-bis / 5 / 5-ter bên dưới **giữ nguyên số cũ theo đúng ngày
+> chúng được chạy** — đó là bản ghi, không phải số hiện tại.
 
-```bash
-python -m alembic upgrade head      # no-op, dump đã ở head
-python scripts/verify_db.py         # 77 check B4/B5
-python scripts/verify_embeddings.py # 76 check + 2 FAIL đã biết (V4/V5 đường
-                                    # vector-only — xem CHANGELOG_B6B7.md mục 5)
+Không tin lời tôi, tự kiểm bằng SQL trên database vừa import:
+
+```sql
+-- Kỳ vọng: 16 — nếu thiếu, restore đã hỏng dù script in "Restore xong"
+SELECT count(*) FROM pg_tables WHERE schemaname = 'public';
+
+-- Kỳ vọng: 4 / 1377 / 599 / 599 / 1377 / 1377
+SELECT 'legal_documents' t, count(*) FROM legal_documents
+UNION ALL SELECT 'legal_chunks', count(*) FROM legal_chunks
+UNION ALL SELECT 'legal_chunk_references', count(*) FROM legal_chunk_references
+UNION ALL SELECT 'chunk_references', count(*) FROM chunk_references
+UNION ALL SELECT 'legal_chunk_embeddings', count(*) FROM legal_chunk_embeddings
+UNION ALL SELECT 'document_chunks', count(*) FROM document_chunks;
+
+-- Kỳ vọng: 1 dòng, version_num = 0011_chunk_references
+SELECT * FROM alembic_version;
+
+-- Kỳ vọng: 0 — đồ thị không có cạnh nào trỏ tới chunk không tồn tại
+SELECT count(*) FROM chunk_references r
+LEFT JOIN document_chunks d ON d.id = r.source_chunk_id WHERE d.id IS NULL;
+
+-- Kỳ vọng: 1377 dòng đều có vector đúng 1024 chiều, 0 NULL
+SELECT count(*) FILTER (WHERE embedding IS NULL) AS null_vec,
+       count(*) FILTER (WHERE vector_dims(embedding) <> 1024) AS wrong_dim
+FROM legal_chunk_embeddings;
+
+-- Kỳ vọng: 0 — vector phải khớp sha256 của text hiện tại
+SELECT count(*) AS stale
+FROM legal_chunk_embeddings e JOIN legal_chunks c USING (chunk_id)
+WHERE e.content_sha256 <> encode(sha256(convert_to(c.text, 'UTF8')), 'hex');
+
+-- Kỳ vọng: 1377 — đây mới là bảng cite đọc lúc runtime
+SELECT count(*) FROM document_chunks dc
+JOIN documents d ON d.id = dc.document_id
+JOIN policy_versions pv ON pv.id = d.policy_version_id
+JOIN policies p ON p.id = pv.policy_id
+WHERE p.is_active AND d.ingest_status IN ('CHUNKED','EMBEDDED');
 ```
 
-Kết quả mong đợi: `Total: 77 PASS, 0 FAIL` cho `verify_db.py`;
-`Total: 76 PASS, 2 FAIL` cho `verify_embeddings.py`.
+Số kỳ vọng từ `python scripts/corpus_expectations.py` (tự dẫn từ
+`data/chunk/chunks_*.json`, không gõ tay).
 
 ## 4-bis. Đã kiểm chứng dump full 2026-10-01 thế nào
 

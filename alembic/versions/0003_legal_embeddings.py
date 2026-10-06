@@ -28,8 +28,8 @@ Three decisions worth stating before the DDL:
    per query in SQL (which cannot use a GIN index). Repeating the two text
    columns keeps ``legal_chunks`` byte-identical to the B4/B5 output while
    still allowing a stored, indexed tsvector. The copies are protected by
-   ``ON DELETE CASCADE`` and are asserted byte-equal to the originals by
-   ``scripts/verify_embeddings.py`` V2, so they cannot silently drift.
+   ``ON DELETE CASCADE`` and were asserted byte-equal to the originals by the
+   corpus verify scripts (since removed), so they cannot silently drift.
 
 The 1024-dim literal and the 'simple' tsvector config are the single-model
 decision of 2026-09-26 (see DECISION in 0002). They are written as literals

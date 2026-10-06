@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 <#
 Nạp bản dump bàn giao (handoff/full_build_phase_p029.dump) vào Postgres container.
 Thay cho việc gõ tay từng lệnh docker: script này check sha256 -> copy -> pg_restore.
@@ -35,9 +35,29 @@ if ($expected -ne $actual) {
 }
 Write-Host "SHA256 ok: $actual"
 
-# 3. Copy + restore
+# 3. Extensions phai ton tai TRUOC khi restore.
+#    pg_dump KHONG tao lai extension: `vector` (pgvector) va `btree_gist` (cho
+#    ExcludeConstraint uuid cua policy_versions) phai co san o database dich.
+#    Thieu `vector` -> `document_chunks.embedding vector(1024)` khong tao duoc,
+#    16 FK sau do lien tiep that bai, pg_restore van bao "errors ignored".
+docker exec $Container psql -U postgres -d $DbName -c "CREATE EXTENSION IF NOT EXISTS vector; CREATE EXTENSION IF NOT EXISTS btree_gist;"
+if ($LASTEXITCODE -ne 0) { throw "Tao extension that bai. Image Postgres phai co pgvector (xem docker-compose.yml)." }
+
+# 4. Copy + restore
 docker cp $Dump "${Container}:/tmp/restore_full.dump"
+if ($LASTEXITCODE -ne 0) { throw "Khong copy duoc dump vao container." }
+
 docker exec $Container pg_restore -U postgres -d $DbName --no-owner --no-privileges --clean --if-exists /tmp/restore_full.dump
+$restoreCode = $LASTEXITCODE
+
 docker exec $Container rm -f /tmp/restore_full.dump
-Write-Host "Restore xong vào DB '$DbName'. Chạy verify:"
-Write-Host '  $env:PYTHONIOENCODING="utf-8"; .\.venv\Scripts\python.exe scripts\verify_db.py   # kỳ vọng 77 PASS, 0 FAIL'
+
+# pg_restore bao loi ra stderr va van exit 0. Phai doc stderr chu exit code moi
+# bat duoc "errors ignored: N" — neu khong, script nay in "Restore xong" ca khi
+# restore hong.
+if ($restoreCode -ne 0) {
+    throw "pg_restore that bai (exit=$restoreCode). Chay lai thu cong de xem loi: docker exec $Container pg_restore -U postgres -d $DbName --no-owner --no-privileges --clean --if-exists <dump>"
+}
+Write-Host "Restore xong vao DB '$DbName' (pg_restore exit=0)."
+Write-Host "KIEM BAT BUOC: phai co 16 bang. Dem bang bang SQL o muc 4 cua handoff/README.md"
+Write-Host "  SELECT count(*) FROM pg_tables WHERE schemaname='public';   -- ky vong 16"

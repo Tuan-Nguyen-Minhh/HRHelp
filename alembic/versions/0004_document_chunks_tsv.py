@@ -5,7 +5,7 @@ Revises: 0003_legal_embeddings
 Create Date: 2026-09-29
 
 Bridges the BM25 capability from legal_chunk_embeddings into document_chunks
-so that cite and hybrid_search can use full-text search on the HR tables
+so that cite can use full-text search on the HR tables
 after the legal→HR data migration (seed_hr_from_legal.py).
 
 The expression mirrors the legal_chunk_embeddings approach: ``'simple'``

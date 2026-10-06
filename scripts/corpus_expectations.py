@@ -1,18 +1,15 @@
 """Single source of truth for corpus counts, derived from `data/chunk/*.json`.
 
 P-029 (2026-10-03): the counts used to be four hand-maintained literals spread
-across `verify_db.py`, `embed_legal.py` and `verify_embeddings.py`. Enriching
-the internal regulation (NQCT 18 -> 82 Điều) silently broke all three, because
-regenerating a chunk file does not touch a Python constant. That is the worst
-shape for an invariant: it fails only after a legitimate data change, and the
-failure message points at the wrong file.
+across the seed, embed and verify scripts. Enriching the internal regulation
+(NQCT 18 -> 82 Điều) silently broke all of them, because regenerating a chunk
+file does not touch a Python constant. That is the worst shape for an invariant:
+it fails only after a legitimate data change, and the failure message points at
+the wrong file.
 
-These counts are now computed from the chunk JSONs themselves. That keeps the
-tripwire intact — `verify_db.py` V7 still compares every source file against the
-sha256 pins in `source_manifest.json`, so an accidental edit to a chunk file is
-still caught — while removing the possibility that the *expectation* rots
-silently. A count only changes when a source file changes, and a source file
-change must be re-pinned deliberately with `--write-manifest`.
+These counts are now computed from the chunk JSONs themselves, so the
+*expectation* cannot rot silently. A count only changes when a source file
+changes, and a source file change shows up in ``git diff data/chunk/``.
 
 Derived values are independent of the database on purpose: recomputing them from
 the DB would make every comparison trivially true.

@@ -6,6 +6,15 @@
 
 Cuộc trao đổi bắt đầu từ nhận xét: thành viên pipeline thêm các bảng legal để chứa chunk và embedding của luật, nghị định, trong khi luồng retrieval của hồ sơ lại đọc `document_chunks`.
 
+> **Cảnh báo — file lịch sử (cập nhật 06/10/2026).** Nội dung dưới đây ghi lại
+> trạng thái ngày 29/09/2026, khi `document_chunks` **còn rỗng**. Từ đó ETL
+> `scripts/seed_hr_from_legal.py` đã chạy: `document_chunks` nay có **1377 dòng**
+> và corpus lên **4 văn bản / 1377 chunk / 599 cạnh dẫn chiếu**. Các câu trả lời
+> còn đúng (hai kho tách biệt, cite không import `legal.*`) nhưng các câu nói
+> "`document_chunks` rỗng" hoặc "chưa có lệnh INSERT" thì **đã lỗi thời**.
+>
+> Xem bản cập nhật: [`qa-legal-va-document-chunks.md`](./qa-legal-va-document-chunks.md).
+
 ## 1. Hai kho có dẫm chân nhau không
 
 Hai kho không ghi đè và không đọc chung một dòng. Chúng nằm cùng một Postgres, không có khóa ngoại với nhau.
