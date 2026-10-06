@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict y5mOo5eNJqWB8MF7d6vNhugFFLor55Ur4EWg0aY0m1775EJq6sv8FK0YqcqfRxg
+\restrict dBOX8ZQaunOUrU682PY5kuyncD48Q9KRzfw7eVjnAlNwgoglU7PvWa4SRuVB0fI
 
 -- Dumped from database version 16.15 (Debian 16.15-1.pgdg12+2)
 -- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg12+2)
@@ -26,7 +26,7 @@ CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;
 
 
 --
--- Name: EXTENSION btree_gist; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION btree_gist; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION btree_gist IS 'support for indexing common datatypes in GiST';
@@ -40,7 +40,7 @@ CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;
 
 
 --
--- Name: EXTENSION vector; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION vector; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION vector IS 'vector data type and ivfflat and hnsw access methods';
@@ -51,7 +51,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: agent_retrievals; Type: TABLE; Schema: public; Owner: postgres
+-- Name: agent_retrievals; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.agent_retrievals (
@@ -61,14 +61,13 @@ CREATE TABLE public.agent_retrievals (
     score double precision,
     rank integer NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    retrieval_method character varying(50),
     CONSTRAINT ck_agent_retrievals_rank CHECK ((rank > 0))
 );
 
 
-ALTER TABLE public.agent_retrievals OWNER TO postgres;
-
 --
--- Name: agent_runs; Type: TABLE; Schema: public; Owner: postgres
+-- Name: agent_runs; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.agent_runs (
@@ -84,14 +83,16 @@ CREATE TABLE public.agent_runs (
     started_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     completed_at timestamp without time zone,
     error text,
+    agent_name character varying(100),
+    graph_name character varying(100),
+    total_tokens integer,
+    metadata jsonb,
     CONSTRAINT ck_agent_runs_status CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'RUNNING'::character varying, 'SUCCEEDED'::character varying, 'FAILED'::character varying])::text[])))
 );
 
 
-ALTER TABLE public.agent_runs OWNER TO postgres;
-
 --
--- Name: alembic_version; Type: TABLE; Schema: public; Owner: postgres
+-- Name: alembic_version; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.alembic_version (
@@ -99,10 +100,61 @@ CREATE TABLE public.alembic_version (
 );
 
 
-ALTER TABLE public.alembic_version OWNER TO postgres;
+--
+-- Name: assessment_reports; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.assessment_reports (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    case_id uuid NOT NULL,
+    recommendation_id uuid,
+    status character varying(50) DEFAULT 'DRAFT'::character varying NOT NULL,
+    current_version integer DEFAULT 1 NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT ck_assessment_reports_status CHECK (((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'CONFIRMED'::character varying, 'SUPERSEDED'::character varying])::text[])))
+);
+
 
 --
--- Name: case_access; Type: TABLE; Schema: public; Owner: postgres
+-- Name: assessment_versions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.assessment_versions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    report_id uuid NOT NULL,
+    version integer NOT NULL,
+    status character varying(50) NOT NULL,
+    source character varying(20) NOT NULL,
+    payload jsonb NOT NULL,
+    edited_by uuid,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT ck_assessment_versions_source CHECK (((source)::text = ANY ((ARRAY['AI'::character varying, 'HR'::character varying])::text[]))),
+    CONSTRAINT ck_assessment_versions_status CHECK (((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'CONFIRMED'::character varying, 'SUPERSEDED'::character varying])::text[])))
+);
+
+
+--
+-- Name: audit_logs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.audit_logs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    case_id uuid,
+    actor_id uuid,
+    actor_role character varying(50),
+    action character varying(64) NOT NULL,
+    entity_type character varying(64) NOT NULL,
+    entity_id uuid,
+    before jsonb,
+    after jsonb,
+    metadata jsonb,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+--
+-- Name: case_access; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.case_access (
@@ -112,14 +164,12 @@ CREATE TABLE public.case_access (
     access_level character varying(50) NOT NULL,
     granted_by uuid,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT ck_case_access_access_level CHECK (((access_level)::text = ANY ((ARRAY['VIEW'::character varying, 'REVIEW'::character varying])::text[])))
+    CONSTRAINT ck_case_access_access_level CHECK (((access_level)::text = ANY ((ARRAY['VIEW'::character varying, 'REVIEW'::character varying, 'EDIT'::character varying])::text[])))
 );
 
 
-ALTER TABLE public.case_access OWNER TO postgres;
-
 --
--- Name: case_drafts; Type: TABLE; Schema: public; Owner: postgres
+-- Name: case_drafts; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.case_drafts (
@@ -138,10 +188,8 @@ CREATE TABLE public.case_drafts (
 );
 
 
-ALTER TABLE public.case_drafts OWNER TO postgres;
-
 --
--- Name: case_facts; Type: TABLE; Schema: public; Owner: postgres
+-- Name: case_facts; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.case_facts (
@@ -155,14 +203,13 @@ CREATE TABLE public.case_facts (
     confirmed_at timestamp without time zone,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    confidence double precision,
     CONSTRAINT ck_case_facts_confirmed CHECK ((((confirmed = false) AND (confirmed_by IS NULL) AND (confirmed_at IS NULL)) OR ((confirmed = true) AND (confirmed_by IS NOT NULL) AND (confirmed_at IS NOT NULL))))
 );
 
 
-ALTER TABLE public.case_facts OWNER TO postgres;
-
 --
--- Name: case_violations; Type: TABLE; Schema: public; Owner: postgres
+-- Name: case_violations; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.case_violations (
@@ -176,10 +223,8 @@ CREATE TABLE public.case_violations (
 );
 
 
-ALTER TABLE public.case_violations OWNER TO postgres;
-
 --
--- Name: cases; Type: TABLE; Schema: public; Owner: postgres
+-- Name: cases; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.cases (
@@ -193,14 +238,75 @@ CREATE TABLE public.cases (
     status character varying(50) DEFAULT 'OPEN'::character varying NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    family character varying(50),
+    CONSTRAINT ck_cases_family CHECK (((family IS NULL) OR ((family)::text = ANY ((ARRAY['UNAUTHORIZED_ABSENCE'::character varying, 'LATE'::character varying, 'GENERAL'::character varying])::text[])))),
     CONSTRAINT ck_cases_status CHECK (((status)::text = ANY ((ARRAY['OPEN'::character varying, 'NEED_INFO'::character varying, 'ANALYZED'::character varying, 'PENDING_LEGAL'::character varying, 'APPROVED'::character varying, 'REJECTED'::character varying, 'DECIDED'::character varying, 'CLOSED'::character varying])::text[])))
 );
 
 
-ALTER TABLE public.cases OWNER TO postgres;
+--
+-- Name: chunk_references; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.chunk_references (
+    ref_id integer NOT NULL,
+    source_chunk_id uuid NOT NULL,
+    target_chunk_id uuid,
+    target_doc character varying(128) NOT NULL,
+    article integer NOT NULL,
+    clause integer,
+    point character varying(16),
+    rule character varying(64) NOT NULL,
+    confidence character varying(16) NOT NULL,
+    needs_review boolean DEFAULT false NOT NULL,
+    needs_reason character varying(16),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT ck_chunk_references_confidence CHECK (((confidence)::text = ANY ((ARRAY['HIGH'::character varying, 'LOW'::character varying])::text[]))),
+    CONSTRAINT ck_chunk_references_needs_reason CHECK (((needs_reason)::text = ANY ((ARRAY['BOUNDARY'::character varying, 'UNRESOLVED'::character varying])::text[])))
+);
+
 
 --
--- Name: conversations; Type: TABLE; Schema: public; Owner: postgres
+-- Name: chunk_references_ref_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.chunk_references_ref_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: chunk_references_ref_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.chunk_references_ref_id_seq OWNED BY public.chunk_references.ref_id;
+
+
+--
+-- Name: conversation_memories; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.conversation_memories (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    conversation_id uuid NOT NULL,
+    summary text DEFAULT ''::text NOT NULL,
+    open_questions jsonb DEFAULT '[]'::jsonb NOT NULL,
+    pending_fact_keys jsonb DEFAULT '[]'::jsonb NOT NULL,
+    last_user_intent character varying(80),
+    pending_action character varying(80),
+    recent_messages jsonb DEFAULT '[]'::jsonb NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+--
+-- Name: conversations; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.conversations (
@@ -215,10 +321,8 @@ CREATE TABLE public.conversations (
 );
 
 
-ALTER TABLE public.conversations OWNER TO postgres;
-
 --
--- Name: disciplinary_decisions; Type: TABLE; Schema: public; Owner: postgres
+-- Name: disciplinary_decisions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.disciplinary_decisions (
@@ -242,10 +346,8 @@ CREATE TABLE public.disciplinary_decisions (
 );
 
 
-ALTER TABLE public.disciplinary_decisions OWNER TO postgres;
-
 --
--- Name: document_chunks; Type: TABLE; Schema: public; Owner: postgres
+-- Name: document_chunks; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.document_chunks (
@@ -266,10 +368,8 @@ CREATE TABLE public.document_chunks (
 );
 
 
-ALTER TABLE public.document_chunks OWNER TO postgres;
-
 --
--- Name: documents; Type: TABLE; Schema: public; Owner: postgres
+-- Name: documents; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.documents (
@@ -283,14 +383,30 @@ CREATE TABLE public.documents (
     page_count integer,
     ingest_status character varying(50) DEFAULT 'UPLOADED'::character varying NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    deleted_at timestamp without time zone,
     CONSTRAINT ck_documents_ingest_status CHECK (((ingest_status)::text = ANY ((ARRAY['UPLOADED'::character varying, 'CHUNKED'::character varying, 'EMBEDDED'::character varying, 'FAILED'::character varying])::text[])))
 );
 
 
-ALTER TABLE public.documents OWNER TO postgres;
+--
+-- Name: idempotency_keys; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.idempotency_keys (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    actor_id uuid NOT NULL,
+    route character varying(255) NOT NULL,
+    idempotency_key character varying(200) NOT NULL,
+    request_hash character varying(64) NOT NULL,
+    status character varying(32) DEFAULT 'IN_PROGRESS'::character varying NOT NULL,
+    status_code integer,
+    response_body jsonb,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
 
 --
--- Name: legal_chunk_embeddings; Type: TABLE; Schema: public; Owner: postgres
+-- Name: legal_chunk_embeddings; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.legal_chunk_embeddings (
@@ -309,10 +425,8 @@ CREATE TABLE public.legal_chunk_embeddings (
 );
 
 
-ALTER TABLE public.legal_chunk_embeddings OWNER TO postgres;
-
 --
--- Name: legal_chunk_references; Type: TABLE; Schema: public; Owner: postgres
+-- Name: legal_chunk_references; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.legal_chunk_references (
@@ -334,10 +448,8 @@ CREATE TABLE public.legal_chunk_references (
 );
 
 
-ALTER TABLE public.legal_chunk_references OWNER TO postgres;
-
 --
--- Name: legal_chunk_references_ref_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: legal_chunk_references_ref_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.legal_chunk_references_ref_id_seq
@@ -349,17 +461,15 @@ CREATE SEQUENCE public.legal_chunk_references_ref_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.legal_chunk_references_ref_id_seq OWNER TO postgres;
-
 --
--- Name: legal_chunk_references_ref_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: legal_chunk_references_ref_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.legal_chunk_references_ref_id_seq OWNED BY public.legal_chunk_references.ref_id;
 
 
 --
--- Name: legal_chunks; Type: TABLE; Schema: public; Owner: postgres
+-- Name: legal_chunks; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.legal_chunks (
@@ -379,10 +489,8 @@ CREATE TABLE public.legal_chunks (
 );
 
 
-ALTER TABLE public.legal_chunks OWNER TO postgres;
-
 --
--- Name: legal_documents; Type: TABLE; Schema: public; Owner: postgres
+-- Name: legal_documents; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.legal_documents (
@@ -401,10 +509,8 @@ CREATE TABLE public.legal_documents (
 );
 
 
-ALTER TABLE public.legal_documents OWNER TO postgres;
-
 --
--- Name: messages; Type: TABLE; Schema: public; Owner: postgres
+-- Name: messages; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.messages (
@@ -418,10 +524,51 @@ CREATE TABLE public.messages (
 );
 
 
-ALTER TABLE public.messages OWNER TO postgres;
+--
+-- Name: notifications; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notifications (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    case_id uuid,
+    event character varying(64) NOT NULL,
+    title character varying(255) NOT NULL,
+    body text NOT NULL,
+    read_at timestamp without time zone,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT ck_notifications_event CHECK (((event)::text = ANY ((ARRAY['CASE_NEEDS_INFO'::character varying, 'ASSESSMENT_READY'::character varying, 'LEGAL_TICKET_SUBMITTED'::character varying, 'LEGAL_APPROVED'::character varying, 'LEGAL_REJECTED'::character varying, 'MANAGER_REVIEW_REQUESTED'::character varying, 'DECISION_ISSUED'::character varying, 'CASE_CLOSED'::character varying])::text[])))
+);
+
 
 --
--- Name: policies; Type: TABLE; Schema: public; Owner: postgres
+-- Name: permission_roles; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.permission_roles (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    role_id uuid NOT NULL,
+    permission_id uuid NOT NULL
+);
+
+
+--
+-- Name: permissions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.permissions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(100) NOT NULL,
+    resource character varying(50),
+    action character varying(50),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT ck_permissions_name CHECK (((name)::text = ANY ((ARRAY['case:open'::character varying, 'case:read'::character varying, 'case:chat'::character varying, 'case:confirm'::character varying, 'answer:read'::character varying, 'case:update'::character varying, 'case:access'::character varying, 'legal:review'::character varying, 'decision:issue'::character varying, 'decision:read'::character varying, 'case:close'::character varying, 'case:reopen'::character varying, 'dashboard:read'::character varying, 'audit:read'::character varying, 'document:manage'::character varying, 'notification:read'::character varying, 'precedent:write'::character varying, 'user:manage'::character varying])::text[])))
+);
+
+
+--
+-- Name: policies; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.policies (
@@ -433,14 +580,13 @@ CREATE TABLE public.policies (
     is_active boolean DEFAULT true NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    deleted_at timestamp without time zone,
     CONSTRAINT ck_policies_policy_type CHECK (((policy_type IS NULL) OR ((policy_type)::text = ANY ((ARRAY['LAW'::character varying, 'DECREE'::character varying, 'CIRCULAR'::character varying, 'INTERNAL_RULE'::character varying, 'PRECEDENT'::character varying])::text[]))))
 );
 
 
-ALTER TABLE public.policies OWNER TO postgres;
-
 --
--- Name: policy_versions; Type: TABLE; Schema: public; Owner: postgres
+-- Name: policy_versions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.policy_versions (
@@ -456,10 +602,8 @@ CREATE TABLE public.policy_versions (
 );
 
 
-ALTER TABLE public.policy_versions OWNER TO postgres;
-
 --
--- Name: recommendation_citations; Type: TABLE; Schema: public; Owner: postgres
+-- Name: recommendation_citations; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.recommendation_citations (
@@ -475,10 +619,8 @@ CREATE TABLE public.recommendation_citations (
 );
 
 
-ALTER TABLE public.recommendation_citations OWNER TO postgres;
-
 --
--- Name: recommendations; Type: TABLE; Schema: public; Owner: postgres
+-- Name: recommendations; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.recommendations (
@@ -499,10 +641,8 @@ CREATE TABLE public.recommendations (
 );
 
 
-ALTER TABLE public.recommendations OWNER TO postgres;
-
 --
--- Name: reviews; Type: TABLE; Schema: public; Owner: postgres
+-- Name: reviews; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.reviews (
@@ -519,10 +659,35 @@ CREATE TABLE public.reviews (
 );
 
 
-ALTER TABLE public.reviews OWNER TO postgres;
+--
+-- Name: revoked_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.revoked_tokens (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    token_hash character varying(64) NOT NULL,
+    expires_at timestamp without time zone,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
 
 --
--- Name: tool_calls; Type: TABLE; Schema: public; Owner: postgres
+-- Name: roles; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.roles (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(50) NOT NULL,
+    description character varying(200),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT ck_roles_name CHECK (((name)::text = ANY ((ARRAY['HR'::character varying, 'MANAGER'::character varying, 'LEGAL'::character varying, 'SIGNER'::character varying, 'ADMIN'::character varying])::text[])))
+);
+
+
+--
+-- Name: tool_calls; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.tool_calls (
@@ -535,14 +700,26 @@ CREATE TABLE public.tool_calls (
     started_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     completed_at timestamp without time zone,
     error text,
+    duration_ms integer,
     CONSTRAINT ck_tool_calls_status CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'RUNNING'::character varying, 'SUCCEEDED'::character varying, 'FAILED'::character varying])::text[])))
 );
 
 
-ALTER TABLE public.tool_calls OWNER TO postgres;
+--
+-- Name: user_roles; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_roles (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    role_id uuid NOT NULL,
+    assigned_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    assigned_by uuid
+);
+
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: postgres
+-- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.users (
@@ -554,14 +731,13 @@ CREATE TABLE public.users (
     is_active boolean DEFAULT true NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT ck_users_role CHECK (((role)::text = ANY ((ARRAY['HR'::character varying, 'MANAGER'::character varying, 'LEGAL'::character varying])::text[])))
+    deleted_at timestamp without time zone,
+    CONSTRAINT ck_users_role CHECK (((role)::text = ANY ((ARRAY['HR'::character varying, 'MANAGER'::character varying, 'LEGAL'::character varying, 'SIGNER'::character varying, 'ADMIN'::character varying])::text[])))
 );
 
 
-ALTER TABLE public.users OWNER TO postgres;
-
 --
--- Name: violation_types; Type: TABLE; Schema: public; Owner: postgres
+-- Name: violation_types; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.violation_types (
@@ -577,17 +753,22 @@ CREATE TABLE public.violation_types (
 );
 
 
-ALTER TABLE public.violation_types OWNER TO postgres;
+--
+-- Name: chunk_references ref_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chunk_references ALTER COLUMN ref_id SET DEFAULT nextval('public.chunk_references_ref_id_seq'::regclass);
+
 
 --
--- Name: legal_chunk_references ref_id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: legal_chunk_references ref_id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.legal_chunk_references ALTER COLUMN ref_id SET DEFAULT nextval('public.legal_chunk_references_ref_id_seq'::regclass);
 
 
 --
--- Name: agent_retrievals agent_retrievals_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: agent_retrievals agent_retrievals_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.agent_retrievals
@@ -595,7 +776,7 @@ ALTER TABLE ONLY public.agent_retrievals
 
 
 --
--- Name: agent_runs agent_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: agent_runs agent_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.agent_runs
@@ -603,7 +784,7 @@ ALTER TABLE ONLY public.agent_runs
 
 
 --
--- Name: alembic_version alembic_version_pkc; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: alembic_version alembic_version_pkc; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.alembic_version
@@ -611,7 +792,31 @@ ALTER TABLE ONLY public.alembic_version
 
 
 --
--- Name: case_access case_access_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: assessment_reports assessment_reports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assessment_reports
+    ADD CONSTRAINT assessment_reports_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: assessment_versions assessment_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assessment_versions
+    ADD CONSTRAINT assessment_versions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: audit_logs audit_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_logs
+    ADD CONSTRAINT audit_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: case_access case_access_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_access
@@ -619,7 +824,7 @@ ALTER TABLE ONLY public.case_access
 
 
 --
--- Name: case_drafts case_drafts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_drafts case_drafts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_drafts
@@ -627,7 +832,7 @@ ALTER TABLE ONLY public.case_drafts
 
 
 --
--- Name: case_facts case_facts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_facts case_facts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_facts
@@ -635,7 +840,7 @@ ALTER TABLE ONLY public.case_facts
 
 
 --
--- Name: case_violations case_violations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_violations case_violations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_violations
@@ -643,7 +848,7 @@ ALTER TABLE ONLY public.case_violations
 
 
 --
--- Name: cases cases_case_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: cases cases_case_code_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.cases
@@ -651,7 +856,7 @@ ALTER TABLE ONLY public.cases
 
 
 --
--- Name: cases cases_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: cases cases_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.cases
@@ -659,7 +864,23 @@ ALTER TABLE ONLY public.cases
 
 
 --
--- Name: conversations conversations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: chunk_references chunk_references_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chunk_references
+    ADD CONSTRAINT chunk_references_pkey PRIMARY KEY (ref_id);
+
+
+--
+-- Name: conversation_memories conversation_memories_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.conversation_memories
+    ADD CONSTRAINT conversation_memories_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: conversations conversations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.conversations
@@ -667,7 +888,7 @@ ALTER TABLE ONLY public.conversations
 
 
 --
--- Name: disciplinary_decisions disciplinary_decisions_case_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disciplinary_decisions disciplinary_decisions_case_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disciplinary_decisions
@@ -675,7 +896,7 @@ ALTER TABLE ONLY public.disciplinary_decisions
 
 
 --
--- Name: disciplinary_decisions disciplinary_decisions_decision_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disciplinary_decisions disciplinary_decisions_decision_code_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disciplinary_decisions
@@ -683,7 +904,7 @@ ALTER TABLE ONLY public.disciplinary_decisions
 
 
 --
--- Name: disciplinary_decisions disciplinary_decisions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disciplinary_decisions disciplinary_decisions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disciplinary_decisions
@@ -691,7 +912,7 @@ ALTER TABLE ONLY public.disciplinary_decisions
 
 
 --
--- Name: document_chunks document_chunks_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: document_chunks document_chunks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.document_chunks
@@ -699,7 +920,7 @@ ALTER TABLE ONLY public.document_chunks
 
 
 --
--- Name: documents documents_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: documents documents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.documents
@@ -707,7 +928,7 @@ ALTER TABLE ONLY public.documents
 
 
 --
--- Name: policy_versions ex_policy_versions_no_overlap; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: policy_versions ex_policy_versions_no_overlap; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.policy_versions
@@ -719,7 +940,15 @@ END, '[)'::text) WITH &&);
 
 
 --
--- Name: legal_chunk_embeddings legal_chunk_embeddings_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: idempotency_keys idempotency_keys_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.idempotency_keys
+    ADD CONSTRAINT idempotency_keys_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: legal_chunk_embeddings legal_chunk_embeddings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.legal_chunk_embeddings
@@ -727,7 +956,7 @@ ALTER TABLE ONLY public.legal_chunk_embeddings
 
 
 --
--- Name: legal_chunk_references legal_chunk_references_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: legal_chunk_references legal_chunk_references_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.legal_chunk_references
@@ -735,7 +964,7 @@ ALTER TABLE ONLY public.legal_chunk_references
 
 
 --
--- Name: legal_chunks legal_chunks_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: legal_chunks legal_chunks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.legal_chunks
@@ -743,7 +972,7 @@ ALTER TABLE ONLY public.legal_chunks
 
 
 --
--- Name: legal_documents legal_documents_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: legal_documents legal_documents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.legal_documents
@@ -751,7 +980,7 @@ ALTER TABLE ONLY public.legal_documents
 
 
 --
--- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: messages messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.messages
@@ -759,7 +988,39 @@ ALTER TABLE ONLY public.messages
 
 
 --
--- Name: policies policies_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: permission_roles permission_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.permission_roles
+    ADD CONSTRAINT permission_roles_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: permissions permissions_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_name_key UNIQUE (name);
+
+
+--
+-- Name: permissions permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: policies policies_code_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.policies
@@ -767,7 +1028,7 @@ ALTER TABLE ONLY public.policies
 
 
 --
--- Name: policies policies_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: policies policies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.policies
@@ -775,7 +1036,7 @@ ALTER TABLE ONLY public.policies
 
 
 --
--- Name: policy_versions policy_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: policy_versions policy_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.policy_versions
@@ -783,7 +1044,7 @@ ALTER TABLE ONLY public.policy_versions
 
 
 --
--- Name: recommendation_citations recommendation_citations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: recommendation_citations recommendation_citations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.recommendation_citations
@@ -791,7 +1052,7 @@ ALTER TABLE ONLY public.recommendation_citations
 
 
 --
--- Name: recommendations recommendations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: recommendations recommendations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.recommendations
@@ -799,7 +1060,7 @@ ALTER TABLE ONLY public.recommendations
 
 
 --
--- Name: reviews reviews_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: reviews reviews_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.reviews
@@ -807,7 +1068,39 @@ ALTER TABLE ONLY public.reviews
 
 
 --
--- Name: tool_calls tool_calls_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: revoked_tokens revoked_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.revoked_tokens
+    ADD CONSTRAINT revoked_tokens_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: revoked_tokens revoked_tokens_token_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.revoked_tokens
+    ADD CONSTRAINT revoked_tokens_token_hash_key UNIQUE (token_hash);
+
+
+--
+-- Name: roles roles_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.roles
+    ADD CONSTRAINT roles_name_key UNIQUE (name);
+
+
+--
+-- Name: roles roles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.roles
+    ADD CONSTRAINT roles_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tool_calls tool_calls_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tool_calls
@@ -815,7 +1108,7 @@ ALTER TABLE ONLY public.tool_calls
 
 
 --
--- Name: agent_retrievals uq_agent_retrievals_run_chunk; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: agent_retrievals uq_agent_retrievals_run_chunk; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.agent_retrievals
@@ -823,7 +1116,7 @@ ALTER TABLE ONLY public.agent_retrievals
 
 
 --
--- Name: agent_retrievals uq_agent_retrievals_run_rank; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: agent_retrievals uq_agent_retrievals_run_rank; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.agent_retrievals
@@ -831,7 +1124,7 @@ ALTER TABLE ONLY public.agent_retrievals
 
 
 --
--- Name: case_access uq_case_access_case_user; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_access uq_case_access_case_user; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_access
@@ -839,7 +1132,7 @@ ALTER TABLE ONLY public.case_access
 
 
 --
--- Name: case_facts uq_case_facts_case_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_facts uq_case_facts_case_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_facts
@@ -847,7 +1140,7 @@ ALTER TABLE ONLY public.case_facts
 
 
 --
--- Name: document_chunks uq_document_chunk_index; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: document_chunks uq_document_chunk_index; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.document_chunks
@@ -855,7 +1148,15 @@ ALTER TABLE ONLY public.document_chunks
 
 
 --
--- Name: legal_chunk_references uq_legal_chunk_references; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: idempotency_keys uq_idempotency_actor_route_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.idempotency_keys
+    ADD CONSTRAINT uq_idempotency_actor_route_key UNIQUE (actor_id, route, idempotency_key);
+
+
+--
+-- Name: legal_chunk_references uq_legal_chunk_references; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.legal_chunk_references
@@ -863,7 +1164,15 @@ ALTER TABLE ONLY public.legal_chunk_references
 
 
 --
--- Name: policy_versions uq_policy_version; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: permission_roles uq_permission_roles_role_permission; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.permission_roles
+    ADD CONSTRAINT uq_permission_roles_role_permission UNIQUE (role_id, permission_id);
+
+
+--
+-- Name: policy_versions uq_policy_version; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.policy_versions
@@ -871,7 +1180,23 @@ ALTER TABLE ONLY public.policy_versions
 
 
 --
--- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_roles uq_user_roles_user_role; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_roles
+    ADD CONSTRAINT uq_user_roles_user_role UNIQUE (user_id, role_id);
+
+
+--
+-- Name: user_roles user_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_roles
+    ADD CONSTRAINT user_roles_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -879,7 +1204,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -887,7 +1212,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: violation_types violation_types_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: violation_types violation_types_code_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.violation_types
@@ -895,7 +1220,7 @@ ALTER TABLE ONLY public.violation_types
 
 
 --
--- Name: violation_types violation_types_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: violation_types violation_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.violation_types
@@ -903,343 +1228,448 @@ ALTER TABLE ONLY public.violation_types
 
 
 --
--- Name: idx_agent_retrievals_chunk_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_agent_retrievals_chunk_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_agent_retrievals_chunk_id ON public.agent_retrievals USING btree (chunk_id);
 
 
 --
--- Name: idx_agent_runs_conversation_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_agent_runs_conversation_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_agent_runs_conversation_id ON public.agent_runs USING btree (conversation_id);
 
 
 --
--- Name: idx_agent_runs_message_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_agent_runs_message_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_agent_runs_message_id ON public.agent_runs USING btree (message_id);
 
 
 --
--- Name: idx_agent_runs_output_message_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_agent_runs_output_message_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_agent_runs_output_message_id ON public.agent_runs USING btree (output_message_id);
 
 
 --
--- Name: idx_case_access_user_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_audit_logs_action; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_logs_action ON public.audit_logs USING btree (action);
+
+
+--
+-- Name: idx_audit_logs_actor_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_logs_actor_id ON public.audit_logs USING btree (actor_id);
+
+
+--
+-- Name: idx_audit_logs_case_id_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_logs_case_id_created_at ON public.audit_logs USING btree (case_id, created_at);
+
+
+--
+-- Name: idx_case_access_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_case_access_user_id ON public.case_access USING btree (user_id);
 
 
 --
--- Name: idx_case_drafts_case_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_case_drafts_case_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_case_drafts_case_id ON public.case_drafts USING btree (case_id);
 
 
 --
--- Name: idx_case_drafts_recommendation_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_case_drafts_recommendation_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_case_drafts_recommendation_id ON public.case_drafts USING btree (recommendation_id);
 
 
 --
--- Name: idx_case_violations_case_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_case_violations_case_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_case_violations_case_id ON public.case_violations USING btree (case_id);
 
 
 --
--- Name: idx_case_violations_violation_type_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_case_violations_violation_type_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_case_violations_violation_type_id ON public.case_violations USING btree (violation_type_id);
 
 
 --
--- Name: idx_cases_created_by; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_cases_created_by; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_cases_created_by ON public.cases USING btree (created_by);
 
 
 --
--- Name: idx_cases_employee_code; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_cases_employee_code; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_cases_employee_code ON public.cases USING btree (employee_code);
 
 
 --
--- Name: idx_cases_incident_date; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_cases_incident_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_cases_incident_date ON public.cases USING btree (incident_date);
 
 
 --
--- Name: idx_cases_status; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_cases_status; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_cases_status ON public.cases USING btree (status);
 
 
 --
--- Name: idx_conversations_case_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_conversation_memories_pending_action; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_conversation_memories_pending_action ON public.conversation_memories USING btree (pending_action);
+
+
+--
+-- Name: idx_conversations_case_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_conversations_case_id ON public.conversations USING btree (case_id);
 
 
 --
--- Name: idx_conversations_user_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_conversations_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_conversations_user_id ON public.conversations USING btree (user_id);
 
 
 --
--- Name: idx_disciplinary_decisions_embedding_hnsw; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_disciplinary_decisions_embedding_hnsw; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_disciplinary_decisions_embedding_hnsw ON public.disciplinary_decisions USING hnsw (embedding public.vector_cosine_ops) WITH (m='16', ef_construction='64') WHERE (is_precedent AND (embedding IS NOT NULL));
 
 
 --
--- Name: idx_disciplinary_decisions_issued_by; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_disciplinary_decisions_issued_by; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_disciplinary_decisions_issued_by ON public.disciplinary_decisions USING btree (issued_by);
 
 
 --
--- Name: idx_disciplinary_decisions_precedent; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_disciplinary_decisions_precedent; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_disciplinary_decisions_precedent ON public.disciplinary_decisions USING btree (is_precedent) WHERE is_precedent;
 
 
 --
--- Name: idx_document_chunks_document_article; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_document_chunks_document_article; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_document_chunks_document_article ON public.document_chunks USING btree (document_id, article);
 
 
 --
--- Name: idx_document_chunks_embedding_hnsw; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_document_chunks_embedding_hnsw; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_document_chunks_embedding_hnsw ON public.document_chunks USING hnsw (embedding public.vector_cosine_ops) WITH (m='16', ef_construction='64') WHERE (embedding IS NOT NULL);
 
 
 --
--- Name: idx_documents_content_hash; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_documents_content_hash; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_documents_content_hash ON public.documents USING btree (content_hash);
 
 
 --
--- Name: idx_documents_ingest_status; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_documents_ingest_status; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_documents_ingest_status ON public.documents USING btree (ingest_status);
 
 
 --
--- Name: idx_documents_policy_version_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_documents_policy_version_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_documents_policy_version_id ON public.documents USING btree (policy_version_id);
 
 
 --
--- Name: idx_messages_conversation_id_created_at; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_idempotency_keys_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_idempotency_keys_created_at ON public.idempotency_keys USING btree (created_at);
+
+
+--
+-- Name: idx_messages_conversation_id_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_messages_conversation_id_created_at ON public.messages USING btree (conversation_id, created_at);
 
 
 --
--- Name: idx_policies_policy_type; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_notifications_case_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_notifications_case_id ON public.notifications USING btree (case_id);
+
+
+--
+-- Name: idx_notifications_user_id_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_notifications_user_id_created_at ON public.notifications USING btree (user_id, created_at);
+
+
+--
+-- Name: idx_permission_roles_role_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_permission_roles_role_id ON public.permission_roles USING btree (role_id);
+
+
+--
+-- Name: idx_policies_policy_type; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_policies_policy_type ON public.policies USING btree (policy_type);
 
 
 --
--- Name: idx_policy_versions_effective_from; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_policy_versions_effective_from; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_policy_versions_effective_from ON public.policy_versions USING btree (effective_from);
 
 
 --
--- Name: idx_policy_versions_status; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_policy_versions_status; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_policy_versions_status ON public.policy_versions USING btree (status);
 
 
 --
--- Name: idx_recommendation_citations_chunk_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_recommendation_citations_chunk_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_recommendation_citations_chunk_id ON public.recommendation_citations USING btree (chunk_id);
 
 
 --
--- Name: idx_recommendation_citations_recommendation_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_recommendation_citations_recommendation_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_recommendation_citations_recommendation_id ON public.recommendation_citations USING btree (recommendation_id);
 
 
 --
--- Name: idx_recommendations_agent_run_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_recommendations_agent_run_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_recommendations_agent_run_id ON public.recommendations USING btree (agent_run_id);
 
 
 --
--- Name: idx_recommendations_case_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_recommendations_case_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_recommendations_case_id ON public.recommendations USING btree (case_id);
 
 
 --
--- Name: idx_recommendations_status; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_recommendations_status; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_recommendations_status ON public.recommendations USING btree (status);
 
 
 --
--- Name: idx_reviews_case_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_reviews_case_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_reviews_case_id ON public.reviews USING btree (case_id);
 
 
 --
--- Name: idx_reviews_draft_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_reviews_draft_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_reviews_draft_id ON public.reviews USING btree (draft_id);
 
 
 --
--- Name: idx_reviews_recommendation_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_reviews_recommendation_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_reviews_recommendation_id ON public.reviews USING btree (recommendation_id);
 
 
 --
--- Name: idx_reviews_reviewer_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_reviews_reviewer_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_reviews_reviewer_id ON public.reviews USING btree (reviewer_id);
 
 
 --
--- Name: idx_tool_calls_agent_run_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_tool_calls_agent_run_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_tool_calls_agent_run_id ON public.tool_calls USING btree (agent_run_id);
 
 
 --
--- Name: ix_document_chunks_search_tsv; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_user_roles_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_user_roles_user_id ON public.user_roles USING btree (user_id);
+
+
+--
+-- Name: ix_chunk_references_target_source; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_chunk_references_target_source ON public.chunk_references USING btree (target_chunk_id, source_chunk_id);
+
+
+--
+-- Name: ix_document_chunks_search_tsv; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_document_chunks_search_tsv ON public.document_chunks USING gin (search_tsv);
 
 
 --
--- Name: ix_legal_chunk_embeddings_search_tsv; Type: INDEX; Schema: public; Owner: postgres
+-- Name: ix_legal_chunk_embeddings_search_tsv; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_legal_chunk_embeddings_search_tsv ON public.legal_chunk_embeddings USING gin (search_tsv);
 
 
 --
--- Name: ix_legal_chunk_references_target_source; Type: INDEX; Schema: public; Owner: postgres
+-- Name: ix_legal_chunk_references_target_source; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_legal_chunk_references_target_source ON public.legal_chunk_references USING btree (target_chunk_id, source_chunk_id) NULLS NOT DISTINCT;
 
 
 --
--- Name: ix_legal_chunks_article_number; Type: INDEX; Schema: public; Owner: postgres
+-- Name: ix_legal_chunks_article_number; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_legal_chunks_article_number ON public.legal_chunks USING btree (article_number);
 
 
 --
--- Name: ix_legal_chunks_chunk_level; Type: INDEX; Schema: public; Owner: postgres
+-- Name: ix_legal_chunks_chunk_level; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_legal_chunks_chunk_level ON public.legal_chunks USING btree (chunk_level);
 
 
 --
--- Name: ix_legal_chunks_clause_number; Type: INDEX; Schema: public; Owner: postgres
+-- Name: ix_legal_chunks_clause_number; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_legal_chunks_clause_number ON public.legal_chunks USING btree (clause_number);
 
 
 --
--- Name: ix_legal_chunks_document_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: ix_legal_chunks_document_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_legal_chunks_document_id ON public.legal_chunks USING btree (document_id);
 
 
 --
--- Name: ix_legal_chunks_point_letter; Type: INDEX; Schema: public; Owner: postgres
+-- Name: ix_legal_chunks_point_letter; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_legal_chunks_point_letter ON public.legal_chunks USING btree (point_letter);
 
 
 --
--- Name: ix_legal_documents_doc_code; Type: INDEX; Schema: public; Owner: postgres
+-- Name: ix_legal_documents_doc_code; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX ix_legal_documents_doc_code ON public.legal_documents USING btree (doc_code);
 
 
 --
--- Name: ix_legal_embeddings_hnsw; Type: INDEX; Schema: public; Owner: postgres
+-- Name: ix_legal_embeddings_hnsw; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_legal_embeddings_hnsw ON public.legal_chunk_embeddings USING hnsw (embedding public.vector_cosine_ops) WITH (m='16', ef_construction='64');
 
 
 --
--- Name: uq_policy_versions_one_active; Type: INDEX; Schema: public; Owner: postgres
+-- Name: uq_assessment_reports_case_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_assessment_reports_case_id ON public.assessment_reports USING btree (case_id);
+
+
+--
+-- Name: uq_assessment_versions_report_version; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_assessment_versions_report_version ON public.assessment_versions USING btree (report_id, version);
+
+
+--
+-- Name: uq_chunk_references; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_chunk_references ON public.chunk_references USING btree (source_chunk_id, target_chunk_id, target_doc, article, clause, point, rule) NULLS NOT DISTINCT;
+
+
+--
+-- Name: uq_conversation_memories_conversation_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_conversation_memories_conversation_id ON public.conversation_memories USING btree (conversation_id);
+
+
+--
+-- Name: uq_documents_content_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_documents_content_hash ON public.documents USING btree (content_hash) WHERE (content_hash IS NOT NULL);
+
+
+--
+-- Name: uq_policy_versions_one_active; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX uq_policy_versions_one_active ON public.policy_versions USING btree (policy_id) WHERE ((status)::text = 'ACTIVE'::text);
 
 
 --
--- Name: agent_retrievals agent_retrievals_agent_run_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: agent_retrievals agent_retrievals_agent_run_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.agent_retrievals
@@ -1247,7 +1677,7 @@ ALTER TABLE ONLY public.agent_retrievals
 
 
 --
--- Name: agent_retrievals agent_retrievals_chunk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: agent_retrievals agent_retrievals_chunk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.agent_retrievals
@@ -1255,7 +1685,7 @@ ALTER TABLE ONLY public.agent_retrievals
 
 
 --
--- Name: agent_runs agent_runs_conversation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: agent_runs agent_runs_conversation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.agent_runs
@@ -1263,7 +1693,7 @@ ALTER TABLE ONLY public.agent_runs
 
 
 --
--- Name: agent_runs agent_runs_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: agent_runs agent_runs_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.agent_runs
@@ -1271,7 +1701,7 @@ ALTER TABLE ONLY public.agent_runs
 
 
 --
--- Name: agent_runs agent_runs_output_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: agent_runs agent_runs_output_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.agent_runs
@@ -1279,7 +1709,55 @@ ALTER TABLE ONLY public.agent_runs
 
 
 --
--- Name: case_access case_access_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: assessment_reports assessment_reports_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assessment_reports
+    ADD CONSTRAINT assessment_reports_case_id_fkey FOREIGN KEY (case_id) REFERENCES public.cases(id) ON DELETE CASCADE;
+
+
+--
+-- Name: assessment_reports assessment_reports_recommendation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assessment_reports
+    ADD CONSTRAINT assessment_reports_recommendation_id_fkey FOREIGN KEY (recommendation_id) REFERENCES public.recommendations(id) ON DELETE SET NULL;
+
+
+--
+-- Name: assessment_versions assessment_versions_edited_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assessment_versions
+    ADD CONSTRAINT assessment_versions_edited_by_fkey FOREIGN KEY (edited_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: assessment_versions assessment_versions_report_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.assessment_versions
+    ADD CONSTRAINT assessment_versions_report_id_fkey FOREIGN KEY (report_id) REFERENCES public.assessment_reports(id) ON DELETE CASCADE;
+
+
+--
+-- Name: audit_logs audit_logs_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_logs
+    ADD CONSTRAINT audit_logs_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: audit_logs audit_logs_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_logs
+    ADD CONSTRAINT audit_logs_case_id_fkey FOREIGN KEY (case_id) REFERENCES public.cases(id) ON DELETE SET NULL;
+
+
+--
+-- Name: case_access case_access_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_access
@@ -1287,7 +1765,7 @@ ALTER TABLE ONLY public.case_access
 
 
 --
--- Name: case_access case_access_granted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_access case_access_granted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_access
@@ -1295,7 +1773,7 @@ ALTER TABLE ONLY public.case_access
 
 
 --
--- Name: case_access case_access_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_access case_access_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_access
@@ -1303,7 +1781,7 @@ ALTER TABLE ONLY public.case_access
 
 
 --
--- Name: case_drafts case_drafts_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_drafts case_drafts_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_drafts
@@ -1311,7 +1789,7 @@ ALTER TABLE ONLY public.case_drafts
 
 
 --
--- Name: case_drafts case_drafts_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_drafts case_drafts_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_drafts
@@ -1319,7 +1797,7 @@ ALTER TABLE ONLY public.case_drafts
 
 
 --
--- Name: case_drafts case_drafts_recommendation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_drafts case_drafts_recommendation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_drafts
@@ -1327,7 +1805,7 @@ ALTER TABLE ONLY public.case_drafts
 
 
 --
--- Name: case_facts case_facts_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_facts case_facts_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_facts
@@ -1335,7 +1813,7 @@ ALTER TABLE ONLY public.case_facts
 
 
 --
--- Name: case_facts case_facts_confirmed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_facts case_facts_confirmed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_facts
@@ -1343,7 +1821,7 @@ ALTER TABLE ONLY public.case_facts
 
 
 --
--- Name: case_facts case_facts_source_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_facts case_facts_source_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_facts
@@ -1351,7 +1829,7 @@ ALTER TABLE ONLY public.case_facts
 
 
 --
--- Name: case_violations case_violations_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_violations case_violations_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_violations
@@ -1359,7 +1837,7 @@ ALTER TABLE ONLY public.case_violations
 
 
 --
--- Name: case_violations case_violations_violation_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: case_violations case_violations_violation_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.case_violations
@@ -1367,7 +1845,7 @@ ALTER TABLE ONLY public.case_violations
 
 
 --
--- Name: cases cases_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: cases cases_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.cases
@@ -1375,7 +1853,31 @@ ALTER TABLE ONLY public.cases
 
 
 --
--- Name: conversations conversations_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: chunk_references chunk_references_source_chunk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chunk_references
+    ADD CONSTRAINT chunk_references_source_chunk_id_fkey FOREIGN KEY (source_chunk_id) REFERENCES public.document_chunks(id) ON DELETE CASCADE;
+
+
+--
+-- Name: chunk_references chunk_references_target_chunk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chunk_references
+    ADD CONSTRAINT chunk_references_target_chunk_id_fkey FOREIGN KEY (target_chunk_id) REFERENCES public.document_chunks(id) ON DELETE SET NULL;
+
+
+--
+-- Name: conversation_memories conversation_memories_conversation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.conversation_memories
+    ADD CONSTRAINT conversation_memories_conversation_id_fkey FOREIGN KEY (conversation_id) REFERENCES public.conversations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: conversations conversations_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.conversations
@@ -1383,7 +1885,7 @@ ALTER TABLE ONLY public.conversations
 
 
 --
--- Name: conversations conversations_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: conversations conversations_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.conversations
@@ -1391,7 +1893,7 @@ ALTER TABLE ONLY public.conversations
 
 
 --
--- Name: disciplinary_decisions disciplinary_decisions_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disciplinary_decisions disciplinary_decisions_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disciplinary_decisions
@@ -1399,7 +1901,7 @@ ALTER TABLE ONLY public.disciplinary_decisions
 
 
 --
--- Name: disciplinary_decisions disciplinary_decisions_draft_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disciplinary_decisions disciplinary_decisions_draft_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disciplinary_decisions
@@ -1407,7 +1909,7 @@ ALTER TABLE ONLY public.disciplinary_decisions
 
 
 --
--- Name: disciplinary_decisions disciplinary_decisions_issued_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disciplinary_decisions disciplinary_decisions_issued_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disciplinary_decisions
@@ -1415,7 +1917,7 @@ ALTER TABLE ONLY public.disciplinary_decisions
 
 
 --
--- Name: document_chunks document_chunks_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: document_chunks document_chunks_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.document_chunks
@@ -1423,7 +1925,7 @@ ALTER TABLE ONLY public.document_chunks
 
 
 --
--- Name: documents documents_policy_version_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: documents documents_policy_version_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.documents
@@ -1431,7 +1933,7 @@ ALTER TABLE ONLY public.documents
 
 
 --
--- Name: legal_chunk_references fk_legal_chunk_references_source_chunk_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: legal_chunk_references fk_legal_chunk_references_source_chunk_id; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.legal_chunk_references
@@ -1439,7 +1941,7 @@ ALTER TABLE ONLY public.legal_chunk_references
 
 
 --
--- Name: legal_chunk_references fk_legal_chunk_references_target_chunk_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: legal_chunk_references fk_legal_chunk_references_target_chunk_id; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.legal_chunk_references
@@ -1447,7 +1949,7 @@ ALTER TABLE ONLY public.legal_chunk_references
 
 
 --
--- Name: legal_chunks fk_legal_chunks_document_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: legal_chunks fk_legal_chunks_document_id; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.legal_chunks
@@ -1455,7 +1957,15 @@ ALTER TABLE ONLY public.legal_chunks
 
 
 --
--- Name: legal_chunk_embeddings legal_chunk_embeddings_chunk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: idempotency_keys idempotency_keys_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.idempotency_keys
+    ADD CONSTRAINT idempotency_keys_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: legal_chunk_embeddings legal_chunk_embeddings_chunk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.legal_chunk_embeddings
@@ -1463,7 +1973,7 @@ ALTER TABLE ONLY public.legal_chunk_embeddings
 
 
 --
--- Name: messages messages_conversation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: messages messages_conversation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.messages
@@ -1471,7 +1981,39 @@ ALTER TABLE ONLY public.messages
 
 
 --
--- Name: policy_versions policy_versions_policy_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: notifications notifications_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_case_id_fkey FOREIGN KEY (case_id) REFERENCES public.cases(id) ON DELETE SET NULL;
+
+
+--
+-- Name: notifications notifications_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: permission_roles permission_roles_permission_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.permission_roles
+    ADD CONSTRAINT permission_roles_permission_id_fkey FOREIGN KEY (permission_id) REFERENCES public.permissions(id) ON DELETE CASCADE;
+
+
+--
+-- Name: permission_roles permission_roles_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.permission_roles
+    ADD CONSTRAINT permission_roles_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: policy_versions policy_versions_policy_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.policy_versions
@@ -1479,7 +2021,7 @@ ALTER TABLE ONLY public.policy_versions
 
 
 --
--- Name: recommendation_citations recommendation_citations_chunk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: recommendation_citations recommendation_citations_chunk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.recommendation_citations
@@ -1487,7 +2029,7 @@ ALTER TABLE ONLY public.recommendation_citations
 
 
 --
--- Name: recommendation_citations recommendation_citations_recommendation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: recommendation_citations recommendation_citations_recommendation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.recommendation_citations
@@ -1495,7 +2037,7 @@ ALTER TABLE ONLY public.recommendation_citations
 
 
 --
--- Name: recommendations recommendations_agent_run_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: recommendations recommendations_agent_run_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.recommendations
@@ -1503,7 +2045,7 @@ ALTER TABLE ONLY public.recommendations
 
 
 --
--- Name: recommendations recommendations_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: recommendations recommendations_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.recommendations
@@ -1511,7 +2053,7 @@ ALTER TABLE ONLY public.recommendations
 
 
 --
--- Name: reviews reviews_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: reviews reviews_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.reviews
@@ -1519,7 +2061,7 @@ ALTER TABLE ONLY public.reviews
 
 
 --
--- Name: reviews reviews_draft_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: reviews reviews_draft_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.reviews
@@ -1527,7 +2069,7 @@ ALTER TABLE ONLY public.reviews
 
 
 --
--- Name: reviews reviews_recommendation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: reviews reviews_recommendation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.reviews
@@ -1535,7 +2077,7 @@ ALTER TABLE ONLY public.reviews
 
 
 --
--- Name: reviews reviews_reviewer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: reviews reviews_reviewer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.reviews
@@ -1543,7 +2085,15 @@ ALTER TABLE ONLY public.reviews
 
 
 --
--- Name: tool_calls tool_calls_agent_run_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: revoked_tokens revoked_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.revoked_tokens
+    ADD CONSTRAINT revoked_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tool_calls tool_calls_agent_run_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tool_calls
@@ -1551,8 +2101,32 @@ ALTER TABLE ONLY public.tool_calls
 
 
 --
+-- Name: user_roles user_roles_assigned_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_roles
+    ADD CONSTRAINT user_roles_assigned_by_fkey FOREIGN KEY (assigned_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: user_roles user_roles_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_roles
+    ADD CONSTRAINT user_roles_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_roles user_roles_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_roles
+    ADD CONSTRAINT user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict y5mOo5eNJqWB8MF7d6vNhugFFLor55Ur4EWg0aY0m1775EJq6sv8FK0YqcqfRxg
+\unrestrict dBOX8ZQaunOUrU682PY5kuyncD48Q9KRzfw7eVjnAlNwgoglU7PvWa4SRuVB0fI
 
