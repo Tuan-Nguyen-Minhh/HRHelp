@@ -21,11 +21,11 @@ flowchart LR
 |---|---|---|---|
 | B1 Ingestion | Biến file Word gốc thành Markdown giữ cấu trúc Chương/Mục/Điều | `data/raw/*.docx` → `data/markdown/*.md` | ✅ xong |
 | B2 Preprocessing | Xóa nhiễu (bảng trình bày, escape sai) để bước cắt không lệch | md thô → `data/cleaned_markdown/` | ✅ xong (`step2/`, có test) |
-| B3 Chunking | Cắt văn bản theo **Điều → Khoản → Điểm**, giữ ngữ cảnh cha + phát hiện dẫn chiếu thô | md sạch → `data/chunk/*.json` (1289 chunk) | ✅ xong (có golden test) |
-| B4 Metadata | Đưa 3 văn bản + 1289 chunk vào Postgres kèm hiệu lực, sẵn sàng lọc | JSON → `legal_documents` (3) + `legal_chunks` (1289) | ✅ xong, verify **70/70** |
-| B5 Graph | Biến dẫn chiếu ("khoản 2 Điều 169") thành cạnh nối giữa các chunk | refs thô → `legal_chunk_references` (565) | ✅ xong, verify **70/70** |
-| B6 Embedding | Biến chữ thành 1289 vector `mistral-embed` (tài sản tốn quota) | chunks → `legal_chunk_embeddings` (1289×1024) | ✅ xong, verify **76/2** (2 FAIL đã biết, xem dưới) |
-| B7 Search | Dựng máy tìm kiếm lai (vector + từ khóa) và bộ đề thi chống hồi quy | vectors → `hybrid_search()` + `legal_golden.json` (10 query) | ✅ xong (hybrid Hit@5 0,9) |
+| B3 Chunking | Cắt văn bản theo **Điều → Khoản → Điểm**, giữ ngữ cảnh cha + phát hiện dẫn chiếu thô | md sạch → `data/chunk/*.json` (**1377 chunk**: BLLD 381 / NĐ145 377 / NĐ283 531 / NQCT 88) | ✅ xong (có golden test) |
+| B4 Metadata | Đưa 4 văn bản + 1377 chunk vào Postgres kèm hiệu lực, sẵn sàng lọc | JSON → `legal_documents` (4) + `legal_chunks` (1377) | ✅ xong |
+| B5 Graph | Biến dẫn chiếu ("khoản 2 Điều 169") thành cạnh nối giữa các chunk | refs thô → `legal_chunk_references` (**599**) | ✅ xong |
+| B6 Embedding | Biến chữ thành 1377 vector `mistral-embed` (tài sản tốn quota) | chunks → `legal_chunk_embeddings` (1377×1024) | ✅ xong |
+| B7 Search | Máy tìm kiếm lai (vector + từ khóa) + bộ đề thi chống hồi quy | vectors → `hybrid_search()` + `legal_golden.json` (17 query) | ⚠️ **đã gỡ 2026-10-06** — xem mục B7 bên dưới |
 | B8 Agent | Vòng lặp user hỏi → agent đáp → log lại để đo liên tục | _milestone sau_ | ⬜ chưa làm |
 
 ## Từng bước làm gì, vì sao
@@ -62,44 +62,53 @@ hỏi dạng "khoản này dẫn tới đâu", và đi ngược "điều này đ
 **B6 — nhúng vector.** (`scripts/embed_legal.py`, migration `0003`.) 1289 text
 (`header_context + text`) → 41 request batch-32 → 683 096 tokens (~68% trần V7),
 1 RPS có log kiểm toán từng request. Bảng riêng + `content_sha256` để chữ bị
-sửa thì vector cũ lộ mặt, reseed B5 không xóa mất tiền đã đốt. Chi tiết:
-`data/chunk/CHANGELOG_B6B7.md` §1–2.
+sửa thì vector cũ lộ mặt, reseed B5 không xóa mất tiền đã đốt. (Con số 1289 là
+của lần embed đầu tiên, 2026-09-28; sau khi mở rộng NQCT lên 1377 chunk thì
+phần NQCT được embed bổ sung. Chi tiết: `data/chunk/CHANGELOG_B6B7.md` §1–2 và
+`data/chunk/CHANGELOG_P029_NQCT_2026-10.md`.)
 
-**B7 — tìm kiếm lai + đề thi.** (`src/services/hybrid_search.py`.) Vector
-top-20 (gần nghĩa) + BM25 top-20 (trùng từ) gộp bằng RRF k=60; chỉ lộ `top_k`.
-10 query golden phủ 3 văn bản × 3 cấp chunk, đáp án ghim sau khi đọc tay.
-Ý nghĩa kép: (1) đây là **cửa duy nhất** agent gọi khi phục vụ user;
-(2) là **chuông báo cháy** — sau này đổi model/chunking mà rớt điểm là biết ngay.
-Số đo: hybrid Hit@5 **0,900**, MRR **0,650**, đúng Điều 10/10.
+**B7 — tìm kiếm lai + đề thi.** ~~(`src/services/hybrid_search.py`.)~~ **Đã gỡ
+2026-10-06.** Vector top-20 + BM25 top-20 gộp RRF k=60.
 
-**B8 — agent + đánh giá liên tục.** Chưa làm (plan dặn log retrieval đi cùng
-milestone agent, không phải B7). B7 đã để sẵn cửa `hybrid_search()` cho milestone
-này gọi.
+> **Sự thật quan trọng về kiến trúc:** `hybrid_search()` **không phải** đường mà
+> agent dùng. Nó chỉ được gọi từ script đo. Đường retrieval thật của hồ sơ là
+> LangGraph sub-graph ở `src/features/cite/model/pipeline.py` — 3 nhánh song song
+> (`similarity` / `bm25` / `lexical`) → RRF → rerank → fallback `page_index` — và
+> đọc bảng `document_chunks`, không đọc `legal_*`. Vì vậy số đo của B7 **không mô
+> tả** hệ thống đang chạy. Xem `ARCHITECTURE.md` mục "Retrieval And CaseHandoff".
 
-## 2 FAIL đã biết (đọc để khỏi tưởng milestone hỏng)
+**B8 — agent + đánh giá liên tục.** Chưa làm. Đường agent đã có sẵn (`cite/model/pipeline.py`)
+nhưng **chưa từng được đo** — chưa có bộ đề nào chạy qua đường đó. Đây là lỗ hổng
+đo lường lớn nhất của dự án, và cũng là chỗ nên làm khi thiết kế lại corpus.
 
-Đường **vector-only** trượt 3/10 query (Điều 118 rank 7, Điều 1 NĐ145 rank 15,
-Điểm a1 Điều 38 rank 23) — đã chứng minh là giới hạn của `mistral-embed` trên
-tiếng Việt (HNSW bit-for-bit như quét tay, re-embed cosine = 1,0), không phải
-bug. Không nới gì để cho xanh; đường agent dùng (hybrid) vẫn đạt sàn V6.
-Người review chọn hướng xử lý ở `CHANGELOG_B6B7.md` §9, ký tay ở
-`eval/verify_retrieval_manual.md`.
+## Về 2 FAIL đã biết của đường vector-only
+
+> **Lịch sử, đã gỡ cùng B7 (2026-10-06).** Đường vector-only trượt 3/10 query
+> (Điều 118 rank 7, Điều 1 NĐ145 rank 15, Điểm a1 Điều 38 rank 23) — đã chứng
+> minh là giới hạn của `mistral-embed` trên tiếng Việt (HNSW bit-for-bit như quét
+> tay, re-embed cosine = 1,0), không phải bug. Chi tiết ở `CHANGELOG_B6B7.md` §9.
+
+Kết luận vẫn giữ nguyên và còn đúng hơn bây giờ: **đừng đổi embedding model.**
+Cái thiếu không phải model tốt hơn, mà là một bộ đo chạy đúng đường agent gọi.
 
 ## Người mới bắt đầu từ đâu
 
 1. Đọc bảng tổng ở trên + `pipeline_design.md` (thiết kế gốc).
 2. Muốn hiểu từng bước: plan trong `step2/preprocessing_plan.md`,
    `step3/semantic_chunking_plan.md`, `step4_5_plan.md`, `step6_7_plan.md`.
-3. Muốn thấy DB thật: mở `handoff/README.md` (bản dump nào để deploy) rồi chạy
-   `python scripts/verify_db.py` (70 check) + `python scripts/verify_embeddings.py`.
-4. Muốn hiểu số liệu: `data/chunk/CHANGELOG_B4B5.md` + `data/chunk/CHANGELOG_B6B7.md`.
+   *(Các plan này là bản chốt tại ngày viết — số trong đó có thể cũ hơn thực tế
+   sau khi mở rộng NQCT. Số hiện tại lấy từ `scripts/corpus_expectations.py`.)*
+3. Muốn thấy DB thật: mở `handoff/README.md` (bản dump nào để deploy), import
+   rồi chạy các câu SQL đếm ở **mục 4** của file đó.
+4. Muốn hiểu số liệu lịch sử: `data/chunk/CHANGELOG_B4B5.md` +
+   `data/chunk/CHANGELOG_B6B7.md` + `data/chunk/CHANGELOG_P029_NQCT_2026-10.md`.
 
 ## Chạy lại từ đầu (máy mới)
 
 ```bash
 docker compose up -d db
-# import bản full (đủ 4 bảng legal, head 0003) — xem handoff/README.md mục 0-2
-python -m alembic upgrade head   # no-op nếu vừa import
-python scripts/verify_db.py         # expect 70 PASS
-python scripts/verify_embeddings.py # expect 76 PASS, 2 FAIL (đã biết, xem trên)
+# import bản full — xem handoff/README.md mục 0-2
+powershell -ExecutionPolicy Bypass -File scripts/restore_handoff.ps1
+python -m pytest -q     # cổng chặn chính còn lại
+# rồi chạy SQL đếm ở handoff/README.md mục 4 — kỳ vọng 4/1377/599/1377/1377
 ```

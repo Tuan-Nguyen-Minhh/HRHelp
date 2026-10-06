@@ -94,7 +94,7 @@ graph TB
 | API | FastAPI, Pydantic, SQLAlchemy async | `src/main.py`, `src/features/*/controller.py` |
 | Workflow | LangGraph | `src/agents`, `src/features/*/model` |
 | LLM planning | Mistral-compatible planner config | `src/features/clarify/model/planner.py`, `prompt.py` |
-| Retrieval | PostgreSQL/pgvector hybrid search | `src/features/cite/model`, `src/services/hybrid_search.py` |
+| Retrieval | PostgreSQL/pgvector hybrid search | `src/features/cite/model/*` |
 | Database | PostgreSQL with pgvector | `src/models`, migrations |
 | Export | JSON, Markdown, DOCX | `src/features/export`, `src/features/answer/model/case_tools.py` |
 
@@ -203,10 +203,27 @@ Retrieval runs only when required facts are locked and the case has `incident_da
 
 Main files:
 
-- `src/features/cite/model/search.py`
-- `src/features/cite/model/query.py`
-- `src/features/cite/model/graph.py`
-- `src/agents/handoff.py`
+- `src/features/cite/model/pipeline.py` — the retrieval sub-graph
+- `src/features/cite/model/search.py` — audited entry point (`search_policies`)
+- `src/features/cite/model/store.py` — SQL and the in-force filter
+- `src/features/cite/model/query.py` — `SearchQuery` input contract
+- `src/features/cite/model/page_index.py` — article-outline fallback
+- `src/agents/handoff.py` — `CaseHandoff` / `CitedPassage`
+
+The retrieval sub-graph is a LangGraph `StateGraph` that fans out three retrievers in parallel and fuses them:
+
+```text
+START ─┬─ similarity ──→ pgvector HNSW cosine          K=8  ─┐
+START ─┼─ bm25 ────────→ ts_rank on search_tsv          K=8  ─┼→ rrf (k=60) → rerank ─┬→ END
+START ─┴─ lexical ─────→ ILIKE term + term-overlap rank K=8  ─┘                          └→ page_index → END
+```
+
+Rules that matter when changing this code:
+
+- **Every arm goes through `_candidate_stmt()`** in `store.py`, so the in-force filter (`policy_versions.effective_from <= incident_date AND (effective_to IS NULL OR effective_to >= incident_date)`, `status='ACTIVE'`, `policy.is_active`, `ingest_status IN ('CHUNKED','EMBEDDED')`) can never be bypassed by adding a fourth arm.
+- **A failing arm degrades, it does not fail the turn.** `_arm()` catches per-retriever exceptions and returns an empty list; RRF then treats that arm as contributing no rank mass.
+- **`page_index` is a fallback, not a second chance.** It runs only when all three ranked arms return nothing, and `retrieval` is then set to `page_index`, which makes the synthesis path abstain instead of guessing.
+- **`rerank` is currently a pass-through.** `cite/model/rerank.py` returns its input unchanged; the node exists as the seam for a cross-encoder. Retrieval quality is currently decided entirely by the three arms plus RRF.
 
 `CaseHandoff` is the immutable contract passed to downstream agents. It contains case metadata, locked facts, fact lines, retrieved passages, and retrieval flags.
 
@@ -300,6 +317,22 @@ Primary data groups:
 | Governance | `audit_logs`, `notifications`, `idempotency_keys` |
 
 Knowledge retrieval uses effective-date filtering against policy versions/chunks. This is critical because the applicable rule is determined by `cases.incident_date`, not by the current date.
+
+### Two corpus stores, and which one is live
+
+The database holds two copies of the same corpus. Only one is read at runtime.
+
+| | `document_chunks` (live) | `legal_*` (backup / build-time) |
+|---|---|---|
+| Read by | `src/features/cite/model/store.py` — every retrieval arm | nothing in `src/` |
+| Rows | 1377 | 1377 across `legal_chunks` / `legal_chunk_embeddings`, 599 refs |
+| Primary key | UUID; semantic id kept in `chunk_metadata['legal_chunk_id']` | semantic, e.g. `BLLD:CVIII:M01:A125` |
+| Populated by | `scripts/seed_hr_from_legal.py` (one-time ETL from `legal_*`) | `scripts/seed_legal.py` + `scripts/embed_legal.py` |
+| Cross-reference graph | none | `legal_chunk_references` (599 edges, nothing traverses it) |
+
+`legal_*` is treated as the build-time staging area and the recoverable copy of the corpus. Dropping those tables is safe for the case flow but **destroys the graph and the semantic chunk ids**, so the ETL cannot be re-run. `handoff/full_build_phase_p029.dump` remains the only full snapshot.
+
+**Corpus provenance is not yet verified.** The chunks are generated from `.docx` by MarkItDown and have not been checked article-by-article against the official texts. Treat `document_chunks` as demo-grade, not as an authoritative legal source.
 
 ## Frontend Architecture
 

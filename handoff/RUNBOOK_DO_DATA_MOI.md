@@ -17,10 +17,11 @@ docker compose up -d db  # chờ healthy: docker ps
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/restore_handoff.ps1
-$env:PYTHONIOENCODING="utf-8"; .\.venv\Scripts\python.exe scripts\verify_db.py
 ```
 
-Xong khi `Total: 77 PASS, 0 FAIL`. Không chạy thêm seed gì.
+Xong thì kiểm bằng các câu SQL ở mục 4 của `handoff/README.md`
+(kỳ vọng `4 / 1377 / 599 / 1377 / 1377`, 0 embedding NULL).
+Không chạy thêm seed gì.
 Tên container khác `p-029-db-1` thì truyền `-Container <tên> -DbName <tên>` (xem tên bằng `docker ps`).
 
 ## 2. Đường đầy đủ — build DB từ nguồn (khi sửa/nguồn đổi/thêm văn bản)
@@ -34,9 +35,18 @@ $env:PYTHONIOENCODING="utf-8"
 .\.venv\Scripts\python.exe scripts\seed_legal.py
 .\.venv\Scripts\python.exe scripts\embed_legal.py
 .\.venv\Scripts\python.exe scripts\seed_hr_from_legal.py
-.\.venv\Scripts\python.exe scripts\verify_db.py   # 77 PASS, 0 FAIL
+.\.venv\Scripts\python.exe scripts\copy_chunk_references.py   # đồ thị dẫn chiếu
 .\.venv\Scripts\python.exe -m pytest -q           # 32 passed
 ```
+
+> ⚠️ **Thứ tự bắt buộc:** `copy_chunk_references.py` phải chạy **sau**
+> `seed_hr_from_legal.py`. ETL chunk xoá rồi insert lại nên **sinh UUID mới mỗi lần**;
+> `chunk_references` FK theo `document_chunks.id` với `ON DELETE CASCADE` nên sẽ bị
+> dọn sạch. Chạy lại `copy_chunk_references.py` sau là xong — nó idempotent.
+
+> **Cập nhật 2026-10-06:** bước `verify_db.py` trong list cũ đã bị gỡ khỏi repo
+> cùng bộ đo retrieval. Thay bằng các câu SQL đếm ở mục 4 của `handoff/README.md`.
+> `pytest` vẫn là cổng chặn chính.
 
 Lưu ý duy nhất hay vấp: bước step3 phải in `Tokenizer fallback used: False`.
 Nếu `True` là thiếu `mistral-common` → `pip install -r requirements.txt`, chạy lại.
@@ -45,9 +55,8 @@ Nếu `True` là thiếu `mistral-common` → `pip install -r requirements.txt`,
 
 **Không hardcode số ở đây.** Chạy
 `.\.venv\Scripts\python.exe scripts\corpus_expectations.py` để in số đúng
-tính từ `data/chunk/chunks_*.json` — cùng nguồn mà `verify_db.py`,
-`embed_legal.py`, `verify_embeddings.py` dùng để đối chiếu. Lệch số nào thì
-dừng, đừng seed tiếp.
+tính từ `data/chunk/chunks_*.json` — cùng nguồn mà `embed_legal.py` dùng để
+đối chiếu. Lệch số nào thì dừng, đừng seed tiếp.
 
 Hiện tại: `legal_documents` 4 · `legal_chunks` 1377
 (381+377+531+88) · refs 599 (BOUNDARY 3, UNRESOLVED 0) ·
@@ -66,7 +75,6 @@ embeddings 1377 (0 NULL) · `policies`/`documents` 4 ·
    `DELETE FROM legal_chunk_embeddings WHERE chunk_id LIKE '<PREFIX>%';
     DELETE FROM legal_chunks WHERE document_id='<id mới>';`
    (seed chỉ upsert, không xóa dòng cũ).
-4. Chạy mục 2, review `git diff data/chunk/`, rồi
-   `python scripts/verify_db.py --write-manifest`.
+4. Chạy mục 2, review `git diff data/chunk/`.
 5. Refresh dump + sha256, sửa số trong `handoff/README.md`, ghi 1 mục vào
    `data/chunk/CHANGELOG.md`.

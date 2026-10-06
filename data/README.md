@@ -19,7 +19,7 @@ Dưới đây là danh sách các văn bản luật có trong thư mục, bao g�
 | `noi_quy_mau_cong_ty` | `NOI_QUY` | **Nội quy lao động** của Công ty (số hiệu `NQLD-HRCORP-2026`) — xem mục "Văn bản nội bộ trong corpus" bên dưới. |
 
 Cả 4 văn bản (3 luật + 1 nội quy) đều đi qua cùng một pipeline
-step2 → step3 → seed → embed, và `verify_db.py` đối chiếu cả 4 như nhau.
+step2 → step3 → seed → embed.
 
 ## Cấu trúc thư mục
 
@@ -30,8 +30,7 @@ step2 → step3 → seed → embed, và `verify_db.py` đối chiếu cả 4 nh�
 
 > Số chunk không gõ tay ở đây và trong `scripts/`. Chạy
 > `python scripts/corpus_expectations.py` để in số đúng tính từ
-> `data/chunk/chunks_*.json` — cùng nguồn mà `verify_db.py`,
-> `embed_legal.py`, `verify_embeddings.py` dùng.
+> `data/chunk/chunks_*.json` — cùng nguồn mà `embed_legal.py` dùng.
 
 ## Văn bản nội bộ trong corpus
 

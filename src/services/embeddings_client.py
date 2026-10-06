@@ -9,13 +9,12 @@ exists so that quota is a *provable* property instead of a hopeful one:
   cannot fire two requests 50 ms apart just because the previous process exited.
 * :class:`EmbeddingClient` appends **one line per HTTP request** to
   ``data/chunk/embed_api_calls.jsonl`` — before/after the call, with the token
-  usage the API reported. ``scripts/verify_embeddings.py`` V7 reads that file to
-  check the token spend and the request spacing instead of trusting this
-  module's own arithmetic.
+  usage the API reported. The log is the authoritative record of token spend and
+  request spacing; this module's own arithmetic is not.
 
 The client sets ``max_retries=0`` deliberately: an SDK-internal retry is an HTTP
 request that this module would never log, which would make the audit log a lie.
-A failed call raises; the callers (embed_legal / hybrid_search / eval) are
+A failed call raises; the callers (``embed_legal.py``, ``similarity.py``) are
 crash-safe and resume.
 """
 from __future__ import annotations

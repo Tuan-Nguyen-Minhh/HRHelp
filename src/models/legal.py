@@ -25,8 +25,8 @@ Column decisions that are easy to get wrong:
   plan puts the BM25 ``search_tsv`` generated column on the embeddings table
   (plan 3.4, "chung với tạo bảng") so that B7 never has to modify the B4 tables.
   The copies are not a second source of truth: the FK is ON DELETE CASCADE, and
-  verify_embeddings V2 asserts every copy byte-equals its ``legal_chunks``
-  original, so drift is a FAIL, not a silent inconsistency.
+  the corpus verify scripts asserted every copy byte-equalled its ``legal_chunks``
+  original, so drift was a FAIL, not a silent inconsistency.
 """
 from __future__ import annotations
 
@@ -313,7 +313,7 @@ class LegalChunkEmbedding(Base):
     # sha256 of legal_chunks.text AT EMBED TIME. Without it, re-running step3
     # or hand-editing a chunk leaves the old vector in the DB and search keeps
     # returning it — wrong, with no signal anywhere. With it, staleness is one
-    # SQL statement (verify_embeddings V2) and embed_legal.py can skip safely.
+    # SQL statement and embed_legal.py can skip safely.
     # CHAR(64): sha256 hex is always exactly 64 chars, so bpchar never stores
     # padding and `=` against a computed sha matches normally.
     content_sha256: Mapped[str] = mapped_column(sa.CHAR(64), nullable=False)

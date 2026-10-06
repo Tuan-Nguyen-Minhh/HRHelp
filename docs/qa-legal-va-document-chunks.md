@@ -9,6 +9,36 @@
 
 ---
 
+## ⚠️ Đọc trước — trạng thái đã thay đổi (cập nhật 06/10/2026)
+
+File này ghim theo commit `99a3b72` ngày 29/09/2026 và **giữ nguyên số đo tại ngày đó**
+để làm bản ghi. Nhưng hiện tại đã khác:
+
+| | Ngày 29/09 (file này) | Hiện tại 06/10 |
+|---|---|---|
+| `legal_documents` | 3 | **4** (thêm nội quy `NQLD-HRCORP-2026`) |
+| `legal_chunks` | 1289 | **1377** (BLLD 381 / NĐ145 377 / NĐ283 531 / NQCT 88) |
+| `legal_chunk_references` | 565 | **599** |
+| `legal_chunk_embeddings` | 1289 | **1377** |
+| `policies` / `policy_versions` / `documents` / `document_chunks` | **0** | **4 / 4 / 4 / 1377** |
+| `alembic_version` | `0003_legal_embeddings` | `0010_conversation_memories` |
+
+Hai việc đã xảy ra sau ngày ghim:
+
+1. **ETL `scripts/seed_hr_from_legal.py` đã chạy** — `document_chunks` không còn
+   rỗng. Đây là lý do câu 12 (mục 7) bên dưới không còn đúng: nó nói "không có lệnh
+   `INSERT` vào `document_chunks`", nhưng hiện tại đã có 1377 dòng.
+2. **Bộ đo retrieval đã bị gỡ** — `src/services/hybrid_search.py`,
+   `scripts/{verify_db,verify_embeddings,eval_retrieval,mutation_test}.py` và
+   `eval/results/retrieval_eval_*` không còn trong repo. Số liệu Hit@5/MRR ở mục 6
+   và mục 8 là lịch sử, **không dùng làm bằng chứng** vì chúng đo một engine mà
+   agent không gọi.
+
+Đường retrieval thật của hồ sơ là `src/features/cite/model/pipeline.py`, đọc
+`document_chunks`. Xem `ARCHITECTURE.md`.
+
+---
+
 ## 0. Bảng tra nhanh — trạng thái thật ngày 29/09/2026
 
 | Bảng | Số dòng | Ai ghi | Ai đọc |
