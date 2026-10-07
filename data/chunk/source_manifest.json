@@ -1,6 +1,6 @@
 {
  "pinned_at": "2026-10-07T16:12:16.202106+00:00",
- "note": "Known-good sha256 of the frozen step3 outputs consumed by B4/B5. Regenerate only after an intentional, reviewed source change: python scripts/verify_db.py --write-manifest",
+ "note": "Known-good sha256 of the frozen step3 outputs consumed by B4/B5. Regenerate only after an intentional, reviewed source change. scripts/verify_db.py --write-manifest was removed 2026-10-06, so re-pin by recomputing each file's sha256 (certutil/sha256sum) and editing the matching value here.",
  "files": {
   "chunks_BLLD.json": "6a8d3f75b93bbcf33743610c9236868349b4b1ce791c76da33e95799470f5eb0",
   "chunks_ND145_2020.json": "c2afc58970923beb06e24323d8e0387bf13bd97070660b14f40d6b5d77cbe254",

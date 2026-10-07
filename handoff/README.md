@@ -8,7 +8,7 @@ _Ngày: 2026-09-27 (B4/B5), bổ sung 2026-09-28 (B6/B7), đổi tên dump `b6b7
 
 - **Máy mới / deploy: chỉ dùng `full_build_phase_p029.dump`.** Đó là snapshot
   **full** của cả database — đủ 4 bảng legal
-  (documents 4 / chunks 1377 / references 599 / **embeddings 1377**).
+  (documents 4 / chunks 1405 / references 615 / **embeddings 1405**).
 - `b4b5_*` là **lịch sử**, giữ lại để biết B4/B5 bàn giao cái gì. Nó **thiếu
   bảng vector** — import bản này thì `document_chunks` không có embedding nên
   nhánh `similarity` của cite trả về rỗng. Đừng dùng để deploy.
@@ -17,7 +17,7 @@ _Ngày: 2026-09-27 (B4/B5), bổ sung 2026-09-28 (B6/B7), đổi tên dump `b6b7
 
 | File | Kích thước | Dùng để |
 |---|---|---|
-| `full_build_phase_p029.dump` | ~11,0 MB | **DÙNG BẢN NÀY để import** — snapshot full ở head `0009`, định dạng custom của `pg_dump`, nén `-Z 9` |
+| `full_build_phase_p029.dump` | ~11,1 MB | **DÙNG BẢN NÀY để import** — snapshot full ở head `0011_chunk_references`, định dạng custom của `pg_dump`, nén `-Z 9` |
 | `full_build_phase_p029.dump.sha256` | — | Kiểm tra file còn nguyên (toàn bộ `handoff/` đã commit vào git) |
 | `full_build_phase_p029.schema.sql` | 50 KB | **Chỉ phần schema, không có data** — để đọc/diff/review DDL (nhất là `0003`); KHÔNG dùng để import |
 | `b4b5_build_phase_p029.dump` | 290 KB | Lịch sử B4/B5 (thiếu bảng vector) — không dùng để deploy |
@@ -49,7 +49,7 @@ Làm tay (khi script không chạy được, VD container tên khác — kiểm 
 ```powershell
 certutil -hashfile handoff\full_build_phase_p029.dump SHA256
 # phải khớp handoff\full_build_phase_p029.dump.sha256:
-# 9DF9D466B8F0348BF2708A475905FE4AC5505BA17A7D44C1A9DB77C729EAF8FF
+# 2ECBAF54C9BCC406AFC595FD33D8F9ECB6CB94A1A960506031A84B0CACA7C809
 docker cp handoff\full_build_phase_p029.dump p-029-db-1:/tmp/full.dump
 docker exec p-029-db-1 pg_restore -U postgres -d build_phase_p029 --no-owner --no-privileges --clean --if-exists /tmp/full.dump
 ```
@@ -95,9 +95,12 @@ docker exec p-029-db-1 pg_restore -U postgres -d build_phase_p029 --no-owner --n
 > **Số trên lấy từ `scripts/corpus_expectations.py`** (tự dẫn từ
 > `data/chunk/chunks_*.json`), không gõ tay. Chạy
 > `python scripts/corpus_expectations.py` để in lại bất cứ lúc nào.
-> `full_build_phase_p029.dump` đã refresh ở head `0011_chunk_references`
-> và có đầy đủ 100 Điều NQCT — 16/16 bảng, `document_chunks` 1405, `chunk_references` 615,
-> `legal_chunk_embeddings` 1405, 0 lỗi.
+> `full_build_phase_p029.dump` đã refresh 2026-10-08 ở head `0011_chunk_references`
+> với đầy đủ 100 Điều NQCT, và **đã được `pg_restore` thử vào DB tạm `p029_verify`
+> để đối chiếu** — 16/16 bảng, `document_chunks` 1405, `chunk_references` 615,
+> `legal_chunk_embeddings` 1405 (0 vector NULL, 0 sai chiều), `alembic_version`
+> `0011_chunk_references`, 0 lỗi. Dump chỉ chứa 16 bảng corpus + seed; 21 bảng
+> vận hành (`cases`, `messages`, …) cố ý không đưa vào.
 
 Chi tiết B4/B5: `data/chunk/CHANGELOG_B4B5.md`. Chi tiết B6/B7:
 `data/chunk/CHANGELOG_B6B7.md`.
