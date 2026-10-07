@@ -538,3 +538,229 @@ c) Trưởng bộ phận tổng hợp và đề xuất giải pháp với Phòng
 2. Các trưởng bộ phận có trách nhiệm giám sát, hướng dẫn và chịu trách nhiệm khi để xảy ra vi phạm tại bộ phận mình quản lý.
 3. Việc sửa đổi, bổ sung Nội quy lao động phải được thực hiện theo trình tự ban hành văn bản quy định tại Chương XIV và phải lấy ý kiến của tổ chức đại diện người lao động tại cơ sở.
 4. Mọi người lao động có trách nhiệm nghiêm túc chấp hành các quy định nêu trong Nội quy lao động này.
+
+## Chương XXII. QUY TRÌNH QUẢN LÝ CON DẤU, CHỮ KÝ SỐ VÀ TÀI LIỆU PHÁP LÝ
+
+#### Điều 83. Quy trình quản lý, bảo quản và sử dụng con dấu công ty
+1. Nguyên tắc quản lý và bảo quản con dấu:
+a) Con dấu của Công ty bao gồm dấu pháp nhân (dấu doanh nghiệp), dấu chức danh và dấu chuyên môn do Ban Tổng Giám đốc giao cho Phòng Hành chính - Quản trị chịu trách nhiệm quản lý trực tiếp và bảo quản an toàn tại két sắt chuyên dụng;
+b) Người được giao quản lý con dấu không được giao chìa khóa két hoặc chuyển giao quyền đóng dấu cho người khác khi chưa có sự đồng ý bằng văn bản của Tổng Giám đốc;
+c) Nghiêm cấm mọi hành vi đóng dấu khống chỉ (đóng dấu vào giấy trắng hoặc văn bản chưa có nội dung, chưa có chữ ký của người có thẩm quyền).
+
+2. Quy trình đóng dấu văn bản:
+a) Bước 1 (Kiểm tra thể thức): Nhân viên phụ trách đối chiếu văn bản cần đóng dấu, bảo đảm văn bản đã có chữ ký đúng thẩm quyền, đã được kiểm soát thể thức theo quy định tại Điều 58 Nội quy này;
+b) Bước 2 (Đóng dấu): Thực hiện đóng dấu trùm lên 1/3 chữ ký về phía bên trái đối với văn bản thông thường; đóng dấu giáp lai đối với văn bản từ 02 trang trở lên; đóng dấu treo tại góc trên bên trái của văn bản đối với các phụ lục kèm theo theo quy định;
+c) Bước 3 (Ghi sổ đăng ký): Ghi chép đầy đủ số lượng, ngày tháng, trích yếu văn bản, người nhận và người ký duyệt vào Sổ theo dõi sử dụng con dấu;
+d) Bước 4 (Lưu trữ và bàn giao): Lưu 01 bản gốc tại Phòng Hành chính và bàn giao bản chính cho đơn vị, cá nhân chủ trì thực hiện.
+
+3. Thủ tục mang con dấu ra ngoài trụ sở Công ty:
+a) Trường hợp cần đóng dấu tại hiện trường công chứng, ngân hàng hoặc giao dịch khẩn cấp bên ngoài trụ sở, đơn vị đề xuất phải lập Phiếu đề xuất mang con dấu ra ngoài và được Tổng Giám đốc phê duyệt bằng văn bản;
+b) Nhân sự được phân công giữ dấu có trách nhiệm trực tiếp mang, áp tải và bảo quản con dấu trong suốt quá trình đi công tác bên ngoài và mang về bàn giao ngay sau khi kết thúc công việc.
+
+#### Điều 84. Quy trình quản lý và sử dụng chữ ký số, tài khoản phân quyền số
+1. Cấp phát và quản lý chữ ký số (Token USB / Chứng thư số đám mây):
+a) Chữ ký số của Công ty do người đại diện theo pháp luật đứng tên và chỉ được giao cho nhân sự được Tổng Giám đốc ủy quyền bằng văn bản để thực hiện ký số hồ sơ thuế, bảo hiểm xã hội, hải quan, hóa đơn điện tử hoặc hợp đồng điện tử;
+b) Nhân sự được cấp chứng thư số cá nhân theo thẩm quyền phê duyệt công việc chịu trách nhiệm bảo mật mã PIN và mật khẩu truy cập tài khoản định danh số;
+c) Không được tiết lộ mã PIN, mật khẩu hoặc cho người khác mượn Token chữ ký số.
+
+2. Quy trình ký số và lưu trữ tài liệu số:
+a) Nhân sự chủ trì soạn thảo tài liệu chuyển văn bản đã được phê duyệt qua hệ thống quản lý văn bản điện tử;
+b) Người có thẩm quyền thực hiện kiểm tra nội dung và ký số theo đúng phân quyền;
+c) Tài liệu sau khi ký số phải được lưu trữ trên máy chủ dữ liệu bảo mật của Công ty và gắn mã định danh điện tử để phục vụ tra cứu.
+
+3. Thu hồi và hủy bỏ chứng thư số:
+a) Khi người lao động được giao quản lý chữ ký số chấm dứt hợp đồng lao động hoặc chuyển công tác, Phòng Hành chính phối hợp cùng Phòng Công nghệ thông tin tiến hành thu hồi Token, đổi mật khẩu và cập nhật chứng thư số mới trong thời hạn 24 giờ;
+b) Trường hợp phát hiện Token bị thất lạc hoặc mã PIN bị lộ, người quản lý phải báo cáo ngay cho Trưởng phòng Hành chính và Tổng Giám đốc để thông báo nhà cung cấp dịch vụ khóa chứng thư số khẩn cấp.
+
+## Chương XXIII. QUY TRÌNH KIỂM SOÁT RA VÀO CỔNG, AN NINH VÀ TIẾP ĐÓN KHÁCH
+
+#### Điều 85. Quy trình kiểm soát người và phương tiện ra vào cổng cơ sở làm việc
+1. Kiểm soát người lao động ra vào cổng:
+a) Người lao động khi đến nơi làm việc phải mặc đồng phục (nếu có), đeo thẻ nhân viên và thực hiện chấm công theo quy định tại Điều 3 Nội quy này;
+b) Người lao động điều khiển phương tiện cá nhân (xe máy, ô tô) phải gửi xe đúng nơi quy định, tuân thủ tốc độ tối đa không quá 10 km/h trong khuôn viên Công ty và tắt máy khi dắt xe vào nhà xe;
+c) Nghiêm cấm mang vũ khí, hung khí, chất gây cháy nổ, chất độc hại, rượu bia hoặc chất kích thích bị cấm vào cơ sở làm việc của Công ty.
+
+2. Kiểm soát phương tiện vận tải, vật tư hàng hóa:
+a) Xe vận chuyển nguyên vật liệu, thiết bị, hàng hóa ra vào cổng phải xuất trình Lệnh điều xe, Phiếu xuất kho hoặc Phiếu giao nhận hàng hóa hợp lệ cho lực lượng Bảo vệ kiểm tra;
+b) Bảo vệ có trách nhiệm kiểm tra thùng xe, đối chiếu số lượng thực tế với chứng từ, ghi chép vào Sổ nhật ký xe và hướng dẫn tài xế dừng đỗ tại khu vực bốc xếp quy định;
+c) Khi xe rời khỏi khuôn viên, Bảo vệ kiểm tra lại chứng từ xuất kho có đầy đủ chữ ký của Thủ kho và người giao nhận trước khi mở cổng cho xe xuất bến.
+
+#### Điều 86. Quy trình tiếp đón và quản lý khách đến làm việc
+1. Đăng ký và tiếp nhận khách tại cổng / lễ tân:
+a) Khách đến liên hệ công tác phải xuất trình giấy tờ tùy thân (Căn cước công dân hoặc Giấy giới thiệu) tại phòng Bảo vệ / quầy Lễ tân;
+b) Lễ tân hoặc Bảo vệ liên hệ với phòng ban, cá nhân có liên quan để xác nhận việc tiếp khách, ghi thông tin vào Sổ theo dõi khách và cấp thẻ khách (Visitor Card);
+c) Khách phải đeo thẻ khách trong suốt thời gian làm việc tại Công ty và trả lại thẻ khi ra về.
+
+2. Trách nhiệm đón tiếp và giám sát khách:
+a) Nhân sự đón tiếp có trách nhiệm đón khách tại khu vực tiếp khách và hướng dẫn khách di chuyển đến phòng họp hoặc nơi làm việc đã bố trí;
+b) Khách không được tự ý đi lại trong các khu vực sản xuất, kho bãi, phòng thí nghiệm hoặc phòng máy chủ khi chưa có sự đồng ý của Trưởng bộ phận phụ trách;
+c) Đối với khách tham quan nhà xưởng, khu vực sản xuất, nhân sự hướng dẫn phải cung cấp và yêu cầu khách mang đầy đủ phương tiện bảo hộ cá nhân (mũ bảo hộ, kính bảo hộ) theo Điều 31 Nội quy này.
+
+#### Điều 87. Quy trình mang tài sản, thiết bị và công cụ ra ngoài phạm vi Công ty
+1. Nguyên tắc mang tài sản ra ngoài:
+a) Mọi tài sản, máy móc, thiết bị, linh kiện, công cụ dụng cụ của Công ty (bao gồm cả máy tính xách tay do Công ty cấp phát) khi mang ra khỏi khuôn viên Công ty phải có Phiếu ra cổng hợp lệ;
+b) Phiếu ra cổng phải ghi rõ chủng loại, nhãn hiệu, số serial (nếu có), số lượng, lý do mang ra ngoài (đi công tác, sửa chữa, bàn giao cho khách hàng) và ngày dự kiến mang trả lại.
+
+2. Trình tự phê duyệt và kiểm soát tại cổng:
+a) Người mang tài sản lập Phiếu ra cổng và trình Trưởng bộ phận quản lý trực tiếp ký xác nhận;
+b) Trình Trưởng phòng Hành chính hoặc người được Tổng Giám đốc ủy quyền phê duyệt;
+c) Xuất trình Phiếu ra cổng cho Bảo vệ đối chiếu tài sản thực tế trước khi mang ra khỏi cơ sở làm việc;
+d) Bảo vệ giữ 01 liên Phiếu ra cổng, ghi vào Sổ theo dõi tài sản và ký xác nhận khi tài sản được mang hoàn trả về Công ty.
+
+## Chương XXIV. QUY TRÌNH QUẢN LÝ VÀ CẤP PHÁT PHƯƠNG TIỆN BẢO VỆ CÁ NHÂN (PPE)
+
+#### Điều 88. Quy trình cấp phát và đổi mới phương tiện bảo vệ cá nhân
+1. Định mức và tiêu chuẩn cấp phát:
+a) Người lao động làm việc tại các vị trí sản xuất, bảo dưỡng, kho bãi, thi công hiện trường được Công ty trang bị đầy đủ phương tiện bảo vệ cá nhân (quần áo bảo hộ, giày bảo hộ, mũ cứng, găng tay, kính bảo hộ, khẩu trang, nút bịt tai) phù hợp với yếu tố nguy hiểm, có hại của công việc theo quy định của pháp luật về an toàn, vệ sinh lao động;
+b) Phương tiện bảo vệ cá nhân được cấp phát hoàn toàn miễn phí cho người lao động, không được trừ vào lương hoặc thu tiền dưới bất kỳ hình thức nào;
+c) Phòng An toàn lao động phối hợp với Phòng Nhân sự định kỳ rà soát và ban hành Danh mục định mức trang cấp phương tiện bảo vệ cá nhân cho từng vị trí làm việc.
+
+2. Quy trình cấp phát và nguyên tắc đổi mới:
+a) Bước 1 (Đề xuất cấp phát): Định kỳ theo quý hoặc khi có nhân sự mới, Quản lý bộ phận lập Bảng tổng hợp nhu cầu cấp phát phương tiện bảo vệ cá nhân gửi Phòng An toàn lao động thẩm định;
+b) Bước 2 (Phê duyệt và xuất kho): Sau khi được Trưởng phòng An toàn lao động và Trưởng phòng Hành chính duyệt, Thủ kho thực hiện xuất cấp phương tiện bảo vệ cá nhân;
+c) Bước 3 (Bàn giao và ký nhận): Người lao động nhận trang bị và ký vào Phiếu cấp phát trang thiết bị bảo hộ lao động;
+d) Bước 4 (Đổi mới theo nguyên tắc đổi cũ lấy mới): Khi phương tiện bảo hộ bị hư hỏng, rách, mòn mất tác dụng bảo vệ trong quá trình làm việc trước thời hạn định mức, người lao động mang phương tiện cũ đến nộp cho Thủ kho để được đổi phương tiện mới theo nguyên tắc "đổi cũ lấy mới".
+
+#### Điều 89. Quy trình bảo quản, kiểm tra và thu hồi phương tiện bảo vệ cá nhân
+1. Trách nhiệm sử dụng và bảo quản của người lao động:
+a) Người lao động có nghĩa vụ sử dụng đúng và đầy đủ phương tiện bảo hộ cá nhân trong suốt thời gian làm việc tại vị trí có quy định bắt buộc mang bảo hộ;
+b) Người lao động có trách nhiệm tự vệ sinh, làm sạch và cất giữ phương tiện bảo hộ tại tủ đồ cá nhân sau khi kết thúc ca làm việc;
+c) Nghiêm cấm mang phương tiện bảo hộ của Công ty đem bán, tặng hoặc sử dụng cho mục đích cá nhân ngoài phạm vi công việc của Công ty.
+
+2. Kiểm tra định kỳ và thu hồi:
+a) Cán bộ chuyên trách an toàn lao động và Quản lý trực tiếp có trách nhiệm kiểm tra việc sử dụng phương tiện bảo vệ cá nhân trước mỗi đầu ca làm việc; kiên quyết đình chỉ làm việc đối với người không mang đầy đủ bảo hộ theo quy định;
+b) Khi người lao động chấm dứt hợp đồng lao động, người lao động phải hoàn trả các phương tiện bảo vệ cá nhân có thời hạn sử dụng dài (như mũ bảo hộ, dây đai an toàn, trang thiết bị chuyên dụng) theo quy trình bàn giao quy định tại Điều 65 Nội quy này.
+
+## Chương XXV. QUY TRÌNH ĐIỀU CHUYỂN TẠM THỜI NGƯỜI LAO ĐỘNG LÀM CÔNG VIỆC KHÁC
+
+#### Điều 90. Căn cứ và thẩm quyền tạm thời chuyển người lao động làm công việc khác
+1. Căn cứ điều chuyển tạm thời:
+a) Công ty được quyền tạm thời chuyển người lao động làm công việc khác so với hợp đồng lao động khi gặp khó khăn đột xuất do thiên tai, hỏa hoạn, dịch bệnh nguy hiểm; áp dụng biện pháp ngăn ngừa, khắc phục tai nạn lao động, bệnh nghề nghiệp hoặc sự cố kỹ thuật, máy móc;
+b) Do nhu cầu sản xuất, kinh doanh đột xuất để đáp ứng tiến độ hoàn thành đơn hàng, công trình cấp bách theo phương án điều động sản xuất của Ban Tổng Giám đốc;
+c) Việc chuyển người lao động làm công việc khác so với hợp đồng lao động phải tuân thủ đúng quy định tại Điều 29 Bộ luật Lao động.
+
+2. Thẩm quyền quyết định:
+a) Trưởng bộ phận có nhu cầu điều chuyển lập Tờ trình điều động nhân sự tạm thời gửi Phòng Nhân sự;
+b) Phòng Nhân sự kiểm tra thời hạn điều chuyển và tính hợp pháp, trình Tổng Giám đốc hoặc Phó Tổng Giám đốc được ủy quyền ký Quyết định điều chuyển tạm thời.
+
+#### Điều 91. Trình tự, thủ tục và chế độ quyền lợi khi tạm thời chuyển công việc khác
+1. Trình tự thực hiện điều chuyển:
+a) Bước 1 (Thông báo trước): Công ty phải thông báo bằng văn bản cho người lao động biết trước ít nhất 03 ngày làm việc về lý do điều chuyển, công việc mới, địa điểm làm việc, thời hạn tạm chuyển và mức lương áp dụng;
+b) Bước 2 (Giới hạn thời hạn): Thời gian tạm thời chuyển người lao động làm công việc khác không được quá 60 ngày làm việc cộng dồn trong 01 năm. Trường hợp Công ty muốn chuyển người lao động làm công việc khác quá 60 ngày làm việc cộng dồn trong 01 năm thì phải được người lao động đồng ý bằng văn bản;
+c) Bước 3 (Bàn giao công việc): Người lao động thực hiện bàn giao công việc hiện tại cho người được chỉ định và nhận bàn giao nhiệm vụ mới tại bộ phận được điều chuyển;
+d) Bước 4 (Tái bố trí sau điều chuyển): Khi hết thời hạn điều chuyển tạm thời, Công ty có trách nhiệm bố trí người lao động trở lại làm công việc đúng theo hợp đồng lao động đã giao kết.
+
+2. Chế độ tiền lương và quyền lợi trong thời gian điều chuyển:
+a) Người lao động chuyển sang làm công việc khác so với hợp đồng lao động được trả lương theo công việc mới;
+b) Nếu tiền lương của công việc mới thấp hơn tiền lương của công việc cũ thì được giữ nguyên mức tiền lương của công việc cũ trong thời hạn 30 ngày làm việc;
+c) Tiền lương theo công việc mới ít nhất phải bằng 85% mức tiền lương của công việc cũ nhưng không thấp hơn mức lương tối thiểu do Chính phủ quy định;
+d) Trường hợp người lao động không đồng ý tạm thời làm công việc khác quá 60 ngày làm việc cộng dồn trong 01 năm mà phải ngừng việc thì Công ty trả lương ngừng việc theo quy định của Bộ luật Lao động.
+
+## Chương XXVI. QUY TRÌNH TIẾP NHẬN VÀ XỬ LÝ KHIẾU NẠI VỀ QUẤY RỐI TÌNH DỤC TẠI NƠI LÀM VIỆC
+
+#### Điều 92. Quy trình tiếp nhận đơn tố cáo và bảo vệ thông tin nạn nhân quấy rối tình dục
+1. Kênh tiếp nhận và hình thức tố cáo:
+a) Người lao động bị quấy rối tình dục hoặc phát hiện hành vi quấy rối tình dục tại nơi làm việc có quyền gửi đơn khiếu nại, tố cáo bằng văn bản trực tiếp hoặc qua hòm thư điện tử bảo mật chuyên biệt của Ban Kiểm soát / Phòng Nhân sự;
+b) Khi tiếp nhận phản ánh trực tiếp bằng lời nói, cán bộ phụ trách nhân sự có trách nhiệm lập Biên bản tiếp nhận thông tin, ghi nhận đầy đủ thời gian, địa điểm, diễn biến sự việc, nhân chứng (nếu có) và yêu cầu người phản ánh ký tên xác nhận;
+c) Việc tiếp nhận thông tin được thực hiện bí mật, bảo đảm an toàn và tôn trọng danh dự, nhân phẩm của người khiếu nại, tố cáo theo quy định tại Điều 84 và Điều 85 Nghị định 145/2020/NĐ-CP.
+
+2. Biện pháp bảo vệ và cách ly tạm thời:
+a) Trong thời gian chờ kết quả xác minh, Trưởng phòng Nhân sự báo cáo Tổng Giám đốc áp dụng ngay các biện pháp tạm thời nhằm bảo vệ nạn nhân và người tố cáo, bao gồm: bố trí làm việc tại các vị trí khác nhau, điều chỉnh ca làm việc hoặc phân công người giám sát độc lập;
+b) Nghiêm cấm mọi hành vi đe dọa, trù dập, trả thù người khiếu nại, tố cáo hoặc người cung cấp chứng cứ liên quan đến hành vi quấy rối tình dục.
+
+#### Điều 93. Trình tự xác minh, kết luận và xử lý vi phạm quấy rối tình dục
+1. Thành lập Tổ xác minh và thời hạn giải quyết:
+a) Trong thời hạn 02 ngày làm việc kể từ ngày nhận được đơn khiếu nại, tố cáo, Tổng Giám đốc ra quyết định thành lập Tổ xác minh gồm ít nhất 03 thành viên: Đại diện Phòng Nhân sự, Đại diện Ban Chấp hành Công đoàn cơ sở và Đại diện Ban Lãnh đạo Công ty;
+b) Thời hạn tiến hành xác minh và đưa ra kết luận giải quyết không quá 15 ngày làm việc kể từ ngày thành lập Tổ xác minh (trường hợp phức tạp có thể gia hạn nhưng không quá 30 ngày làm việc).
+
+2. Trình tự tiến hành xác minh và xử lý:
+a) Bước 1 (Thu thập chứng cứ): Tổ xác minh làm việc độc lập với người bị tố cáo, người khiếu nại và các nhân chứng liên quan; thu thập dữ liệu camera giám sát, tin nhắn, email hoặc tài liệu liên quan;
+b) Bước 2 (Đối chất và lập biên bản): Tổ chức phiên làm việc kín giữa các bên (nếu cần thiết và được người khiếu nại đồng ý) và lập Biên bản xác minh có chữ ký của các bên tham gia;
+c) Bước 3 (Báo cáo kết luận): Tổ xác minh hoàn thành Báo cáo kết luận xác minh, xác định hành vi vi phạm và kiến nghị biện pháp xử lý gửi Tổng Giám đốc;
+d) Bước 4 (Xử lý kỷ luật): Căn cứ kết luận xác minh, Tổng Giám đốc chỉ đạo tiến hành cuộc họp xử lý kỷ luật lao động theo quy định tại Điều 15 và Điều 16 Nội quy này. Người có hành vi quấy rối tình dục tùy theo mức độ vi phạm sẽ bị xử lý từ Khiển trách, Kéo dài thời hạn nâng lương, Cách chức hoặc Sa thải theo Điều 124 và Điều 125 Bộ luật Lao động, đồng thời phải công khai xin lỗi nạn nhân;
+đ) Bước 5 (Xử lý tố cáo sai sự thật): Trường hợp xác minh người tố cáo cố ý bịa đặt, vu khống, xúc phạm danh dự của người khác thì người tố cáo sai sự thật sẽ bị xử lý kỷ luật lao động tương ứng với mức độ vi phạm theo quy định của Nội quy này.
+
+## Chương XXVII. QUY TRÌNH GIẢI QUYẾT CHẾ ĐỘ BẢO HIỂM XÃ HỘI VÀ TRỢ CẤP NỘI BỘ
+
+#### Điều 94. Trình tự tiếp nhận hồ sơ và giải quyết chế độ ốm đau, thai sản
+1. Thành phần hồ sơ hưởng chế độ bảo hiểm xã hội:
+a) Chế độ ốm đau: Giấy chứng nhận nghỉ việc hưởng bảo hiểm xã hội (Mẫu C65-HD bản gốc có dấu của cơ sở khám chữa bệnh) hoặc Giấy ra viện đối với trường hợp điều trị nội trú;
+b) Chế độ khám thai: Giấy chứng nhận nghỉ việc hưởng bảo hiểm xã hội ghi rõ nội dung khám thai;
+c) Chế độ sinh con (lao động nữ): Bản sao Giấy khai sinh hoặc bản sao Trích lục khai sinh hoặc Giấy chứng sinh của con; Giấy ra viện (nếu sinh mổ hoặc sinh non);
+d) Chế độ cho lao động nam khi vợ sinh con: Bản sao Giấy khai sinh/Giấy chứng sinh của con kèm Giấy xác nhận của cơ sở y tế đối với trường hợp sinh mổ, sinh con dưới 32 tuần tuổi.
+
+2. Thời hạn nộp hồ sơ và thủ tục nộp cho cơ quan bảo hiểm:
+a) Trong thời hạn tối đa 45 ngày kể từ ngày người lao động trở lại làm việc sau thời gian nghỉ ốm đau, thai sản, người lao động có trách nhiệm nộp đầy đủ hồ sơ theo quy định tại khoản 1 Điều này cho Phòng Nhân sự;
+b) Trong thời hạn 10 ngày kể từ ngày nhận đủ hồ sơ hợp lệ từ người lao động, Phòng Nhân sự có trách nhiệm lập Danh sách đề nghị giải quyết hưởng chế độ ốm đau, thai sản, dưỡng sức phục hồi sức khỏe (Mẫu 01B-HSB) và nộp qua cổng giao dịch điện tử cho cơ quan Bảo hiểm xã hội quận/huyện quản lý;
+c) Trường hợp người lao động nộp hồ sơ chậm trễ quá thời hạn nêu trên mà không có lý do chính đáng dẫn đến việc cơ quan Bảo hiểm xã hội từ chối thanh toán thì người lao động phải tự chịu trách nhiệm về quyền lợi của mình.
+
+#### Điều 95. Quy trình chi trả trợ cấp, tạm ứng và đối soát tiền bảo hiểm xã hội
+1. Chi trả tiền trợ cấp bảo hiểm xã hội:
+a) Tiền trợ cấp ốm đau, thai sản, dưỡng sức phục hồi sức khỏe do cơ quan Bảo hiểm xã hội chi trả trực tiếp vào tài khoản ngân hàng cá nhân của người lao động theo thông tin đã đăng ký;
+b) Trường hợp cơ quan Bảo hiểm xã hội chuyển tiền trợ cấp qua tài khoản của Công ty, trong thời hạn 03 ngày làm việc kể từ ngày nhận được tiền từ cơ quan Bảo hiểm xã hội, Phòng Kế toán có trách nhiệm chuyển trả toàn bộ số tiền trợ cấp vào tài khoản của người lao động.
+
+2. Chính sách tạm ứng và hỗ trợ nội bộ của Công ty:
+a) Đối với trường hợp người lao động bị ốm đau dài ngày hoặc tai nạn lao động phải điều trị nội trú có hoàn cảnh khó khăn, người lao động có thể làm Giấy đề nghị tạm ứng tiền hỗ trợ viện phí gửi Phòng Nhân sự và Phòng Kế toán xem xét trình Tổng Giám đốc duyệt tạm ứng tối đa 50% mức lương cơ bản;
+b) Số tiền tạm ứng sẽ được đối soát và khấu trừ dần khi người lao động nhận tiền trợ cấp từ cơ quan Bảo hiểm xã hội hoặc nhận lương hàng tháng theo thỏa thuận bằng văn bản giữa hai bên.
+
+## Chương XXVIII. QUY TRÌNH ỨNG PHÓ SỰ CỐ Y TẾ VÀ DỊCH BỆNH TẠI NƠI LÀM VIỆC
+
+#### Điều 96. Quy trình sơ cứu ban đầu và chuyển viện khi xảy ra sự cố y tế
+1. Trang bị y tế và lực lượng sơ cứu tại chỗ:
+a) Công ty bố trí Tủ thuốc sơ cứu tại các văn phòng làm việc, phân xưởng sản xuất và kho bãi với đầy đủ dụng cụ y tế, bông băng, thuốc sát trùng theo đúng danh mục quy định của Bộ Y tế;
+b) Mỗi bộ phận sản xuất phải phân công ít nhất 01 nhân sự được đào tạo, cấp chứng nhận về sơ cấp cứu ban đầu theo quy định của pháp luật về an toàn, vệ sinh lao động;
+c) Danh sách và số điện thoại liên hệ của nhân sự sơ cứu phải được niêm yết công khai tại vị trí đặt Tủ thuốc sơ cứu.
+
+2. Trình tự xử lý khi có người lao động gặp sự cố sức khỏe hoặc tai nạn:
+a) Bước 1 (Sơ cứu tại chỗ): Nhân sự sơ cứu hoặc người có mặt gần nhất nhanh chóng đưa nạn nhân ra khỏi khu vực nguy hiểm (nếu có) và tiến hành sơ cứu ban đầu theo đúng chuyên môn;
+b) Bước 2 (Thông báo khẩn cấp): Thông báo ngay cho Trưởng bộ phận, Cán bộ phụ trách an toàn và Phòng Nhân sự;
+c) Bước 3 (Chuyển viện cấp cứu): Trường hợp nạn nhân bị thương nặng, bất tỉnh hoặc nghi ngờ gãy xương, ngộ độc, người phụ trách phải gọi ngay cấp cứu 115 hoặc bố trí xe ô tô của Công ty đưa nạn nhân đến cơ sở y tế gần nhất; cử ít nhất 01 nhân sự đi cùng để hỗ trợ thủ tục nhập viện;
+d) Bước 4 (Thông báo cho thân nhân): Phòng Nhân sự có trách nhiệm liên hệ thông báo kịp thời tình trạng sức khỏe của người lao động cho gia đình/thân nhân;
+đ) Bước 5 (Lập biên bản sự việc): Bộ phận an toàn phối hợp cùng Quản lý trực tiếp lập Biên bản ghi nhận sự việc và thực hiện quy trình điều tra tai nạn theo quy định tại Điều 75 Nội quy này.
+
+#### Điều 97. Quy trình phòng ngừa và kiểm soát dịch bệnh truyền nhiễm tại cơ sở công ty
+1. Các biện pháp phòng ngừa dịch bệnh:
+a) Khi có thông báo bùng phát dịch bệnh truyền nhiễm từ cơ quan y tế có thẩm quyền, Công ty kích hoạt Ban chỉ đạo phòng chống dịch bệnh nội bộ do Tổng Giám đốc hoặc Phó Tổng Giám đốc làm Trưởng ban;
+b) Thực hiện các biện pháp khử khuẩn định kỳ khuôn viên nơi làm việc, nhà ăn, nhà vệ sinh; trang bị dung dịch sát khuẩn tay, khẩu trang y tế và thiết bị đo thân nhiệt tại các cửa ra vào;
+c) Tuyên truyền, hướng dẫn người lao động thực hiện các biện pháp vệ sinh cá nhân, khai báo y tế trung thực khi có triệu chứng nhiễm bệnh hoặc tiếp xúc với nguồn lây dịch.
+
+2. Trình tự xử lý khi phát hiện ca nghi nhiễm hoặc ca bệnh tại Công ty:
+a) Bước 1 (Cách ly tạm thời): Đưa người lao động có triệu chứng sốt, ho, khó thở vào phòng cách ly y tế tạm thời đã được bố trí trước;
+b) Bước 2 (Thông báo y tế địa phương): Liên hệ ngay với Trạm y tế hoặc Trung tâm y tế địa phương để phối hợp lấy mẫu xét nghiệm và hướng dẫn xử lý chuyên môn;
+c) Bước 3 (Khoanh vùng và khử khuẩn): Tạm thời phong tỏa khu vực làm việc của người nghi nhiễm để tiến hành phun thuốc khử khuẩn toàn bộ; rà soát danh sách nhân sự có tiếp xúc gần để hướng dẫn tự theo dõi sức khỏe hoặc làm việc từ xa;
+d) Bước 4 (Bố trí làm việc linh hoạt): Căn cứ tình hình dịch bệnh, Ban Tổng Giám đốc ban hành phương án làm việc luân phiên, làm việc từ xa (Work From Home) nhằm duy trì hoạt động sản xuất kinh doanh liên tục và bảo đảm an toàn tối đa cho người lao động.
+
+## Chương XXIX. QUY TRÌNH XÓA KỶ LUẬT VÀ GIẢM THỜI HẠN CHẤP HÀNH KỶ LUẬT
+
+#### Điều 98. Điều kiện và thời hạn tự động xóa kỷ luật lao động
+1. Thời hạn tự động xóa kỷ luật lao động:
+a) Sau 03 tháng kể từ ngày bị xử lý kỷ luật lao động bằng hình thức Khiển trách, nếu người lao động không tái phạm hành vi vi phạm kỷ luật lao động thì đương nhiên được xóa kỷ luật;
+b) Sau 06 tháng kể từ ngày bị xử lý kỷ luật lao động bằng hình thức Kéo dài thời hạn nâng lương, nếu người lao động không tái phạm hành vi vi phạm kỷ luật lao động thì đương nhiên được xóa kỷ luật;
+c) Sau 03 năm kể từ ngày bị xử lý kỷ luật lao động bằng hình thức Cách chức, nếu người lao động tiếp tục làm việc cho Công ty và không tái phạm hành vi vi phạm kỷ luật lao động thì đương nhiên được xóa kỷ luật;
+d) Việc xóa kỷ luật lao động được thực hiện theo đúng quy định tại khoản 1 Điều 126 Bộ luật Lao động.
+
+2. Thủ tục xác nhận xóa kỷ luật:
+a) Khi hết thời hạn quy định tại khoản 1 Điều này, Phòng Nhân sự có trách nhiệm tự động cập nhật trạng thái hồ sơ nhân sự, lưu biên bản xác nhận hết thời hạn kỷ luật vào hồ sơ cá nhân của người lao động;
+b) Người lao động đã được xóa kỷ luật có đầy đủ quyền lợi, được xét thi đua, khen thưởng và nâng bậc lương định kỳ như các nhân sự bình thường khác.
+
+#### Điều 99. Quy trình xét giảm thời hạn chấp hành kỷ luật lao động
+1. Điều kiện được xét giảm thời hạn:
+a) Người lao động bị xử lý kỷ luật bằng hình thức Kéo dài thời hạn nâng lương sau khi chấp hành được một nửa thời hạn (được 03 tháng) mà có sửa chữa tiến bộ, hoàn thành tốt nhiệm vụ được giao và được Quản lý trực tiếp đánh giá cao thì được Công ty xem xét giảm thời hạn chấp hành kỷ luật;
+b) Việc xét giảm thời hạn chấp hành kỷ luật lao động tuân thủ quy định tại khoản 2 Điều 126 Bộ luật Lao động.
+
+2. Trình tự và thủ tục xét giảm thời hạn:
+a) Bước 1 (Đề xuất giảm thời hạn): Quản lý trực tiếp của người lao động lập Đơn đề xuất giảm thời hạn chấp hành kỷ luật lao động, kèm theo bản đánh giá kết quả công việc và thái độ sửa chữa tiến bộ của người lao động gửi Phòng Nhân sự;
+b) Bước 2 (Thẩm tra hồ sơ): Phòng Nhân sự kiểm tra thời gian đã chấp hành kỷ luật, hồ sơ công việc và lấy ý kiến của Ban Chấp hành Công đoàn cơ sở;
+c) Bước 3 (Phê duyệt quyết định): Phòng Nhân sự lập Tờ trình kèm dự thảo Quyết định giảm thời hạn chấp hành kỷ luật trình Tổng Giám đốc xem xét ký ban hành;
+d) Bước 4 (Công bố và thực hiện): Quyết định giảm thời hạn chấp hành kỷ luật được gửi cho người lao động, Quản lý bộ phận và lưu hồ sơ nhân sự. Người lao động được hưởng chế độ nâng lương kể từ ngày quyết định giảm thời hạn có hiệu lực.
+
+## Chương XXX. ĐIỀU KHOẢN THI HÀNH VÀ ÁP DỤNG QUY CHẾ
+
+#### Điều 100. Hiệu lực thi hành và áp dụng văn bản nội bộ
+1. Hiệu lực áp dụng:
+a) Toàn bộ các quy định từ Điều 1 đến Điều 100 của Nội quy lao động này có hiệu lực áp dụng thống nhất và bắt buộc đối với tất cả cán bộ, nhân viên, người lao động làm việc tại Công ty Cổ phần Nhà khung thép và thiết bị công nghiệp;
+b) Nội quy lao động này được niêm yết công khai tại nơi làm việc và phổ biến đến từng người lao động khi tiếp nhận vào làm việc tại Công ty.
+
+2. Trách nhiệm tổ chức thực hiện:
+a) Ban Tổng Giám đốc, Trưởng các Phòng, Ban, Đơn vị trực thuộc và Ban Chấp hành Công đoàn cơ sở có trách nhiệm phổ biến, đôn đốc và giám sát việc thực hiện nghiêm túc Nội quy này;
+b) Trong quá trình thực hiện, nếu có vướng mắc hoặc phát sinh vấn đề mới chưa phù hợp với thực tiễn sản xuất kinh doanh và quy định của pháp luật lao động hiện hành, Phòng Nhân sự có trách nhiệm tổng hợp, báo cáo Tổng Giám đốc để phối hợp cùng Công đoàn cơ sở tiến hành sửa đổi, bổ sung cho phù hợp.
