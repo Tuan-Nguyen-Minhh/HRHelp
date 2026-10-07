@@ -20,13 +20,13 @@ _Regenerate tự động: `validate_step3` liệt kê mọi `data/chunk/chunks_*
 - anomaly per-doc: {'POINT_BODY_OVER_LIMIT': 2}
 - chunks is_quoted_external_text=true: 0
 
-## NQCT: 88 chunks, 82/82 Điều bao phủ, thiếu Điều: không, vượt 1000 token: 0 []
-- refs theo rule: {'EXPLICIT': 18, 'EXPLICIT_SELF': 6, 'DEFAULT_SELF': 6, 'LIST_EXPANSION': 4}
-- refs theo confidence: {'HIGH': 34}
+## NQCT: 116 chunks, 100/100 Điều bao phủ, thiếu Điều: không, vượt 1000 token: 0 []
+- refs theo rule: {'EXPLICIT': 21, 'EXPLICIT_SELF': 15, 'DEFAULT_SELF': 6, 'LIST_EXPANSION': 8}
+- refs theo confidence: {'HIGH': 50}
 - anomaly per-doc: {}
 - chunks is_quoted_external_text=true: 0
 
-## Toàn cục: 1377 chunk id duy nhất, trùng id: không
+## Toàn cục: 1405 chunk id duy nhất, trùng id: không
 - chunk rỗng: không (0)
 - target_doc invalid (>40/colon/newline, tru allowlist): 0 
 
@@ -39,6 +39,6 @@ _Regenerate tự động: `validate_step3` liệt kê mọi `data/chunk/chunks_*
 - MISSING_FORMULA_IMAGE: 1 chunk (vd: ND145_2020:CVI:M02:A056)
 
 ## Cross-reference (toan cuc):
-- Theo rule: {'EXPLICIT_SELF': 259, 'EXPLICIT': 212, 'LIST_EXPANSION': 22, 'QUOTED_EXTERNAL': 3, 'DEFAULT_SELF': 75, 'SCOPED_CHAPEAU': 25, 'BOUNDARY_CHECK': 3}
-- Theo confidence: {'HIGH': 596, 'LOW': 3}
+- Theo rule: {'EXPLICIT_SELF': 268, 'EXPLICIT': 215, 'LIST_EXPANSION': 26, 'QUOTED_EXTERNAL': 3, 'DEFAULT_SELF': 75, 'SCOPED_CHAPEAU': 25, 'BOUNDARY_CHECK': 3}
+- Theo confidence: {'HIGH': 612, 'LOW': 3}
 - LOW cần review tay: 3 case

@@ -32,6 +32,8 @@ Thumbs.db
 data/*
 !data/cleaned_markdown/
 !data/cleaned_markdown/**
+!data/reference/
+!data/reference/*.md
 # Step2 input must be tracked, or the runbook's "thả file vào data/markdown/"
 # is a dead end: git refuses the new file and only cleaned_markdown survives.
 # NQCT has no .docx in data/raw at all, so data/markdown is its ONLY source.

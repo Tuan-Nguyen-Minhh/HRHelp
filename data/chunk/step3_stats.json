@@ -4,11 +4,11 @@
   "document_id": "NQLD-HRCORP-2026",
   "tokenizer": "mistral",
   "max_tokens": 1000,
-  "articles_in_tree": 82,
-  "chunks": 88,
+  "articles_in_tree": 100,
+  "chunks": 116,
   "levels": {
-   "ARTICLE": 80,
-   "CLAUSE": 8
+   "ARTICLE": 90,
+   "CLAUSE": 26
   },
   "chunks_over_token_limit": 0,
   "chunks_with_anomaly_flags": 0,

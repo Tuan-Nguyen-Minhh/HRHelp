@@ -38,12 +38,12 @@ QUALIFIER_RE = re.compile(
     re.IGNORECASE,
 )
 SELF_WORDS = re.compile(
-    r"(Nghị định này|Điều này|Khoản này|Bộ luật này|Nội quy này)", re.IGNORECASE
+    r"(Nghị định này|Điều này|Khoản này|Bộ luật này|Nội quy lao động này|Nội quy này)", re.IGNORECASE
 )
 # Qualifier self mo rong: 'cua Luat nay/Bo luat nay...' co the dung truoc text
 # thuong (khong nhat thiet truoc dau cau) -> match rieng khong yeu cau punctuation.
 SELF_QUAL_RE = re.compile(
-    r"của\s+(Luật này|Bộ luật này|Nghị định này|Điều này|Khoản này|Nội quy này)\b",
+    r"của\s+(Luật này|Bộ luật này|Nghị định này|Điều này|Khoản này|Nội quy lao động này|Nội quy này)\b",
     re.IGNORECASE,
 )
 # 'Luat nay' mo ho: trong quote external -> tro ve luat ngoai; ngoai quote -> self.
@@ -69,7 +69,7 @@ BARE_QUALIFIER_RE = re.compile(
 )
 # Self TRAN ke sat mention (khong co 'cua'): 'Dieu 15 Noi quy nay' -> self.
 BARE_SELF_RE = re.compile(
-    r"^\s*(Nội quy này|Nghị định này|Bộ luật này|Điều này|Khoản này)\b",
+    r"^\s*(Nội quy lao động này|Nội quy này|Nghị định này|Bộ luật này|Điều này|Khoản này)\b",
     re.IGNORECASE,
 )
 
@@ -431,7 +431,7 @@ def resolve_cross_references(text: str, scope: DocScope,
                 continue
             target, _ = _resolve_named(
                 near_qm.group(1) if near_qm.lastindex else near_qm.group(0))
-            if target.lower() in ("nghị định này", "bộ luật này", "nội quy này"):
+            if target.lower() in ("nghị định này", "bộ luật này", "nội quy này", "nội quy lao động này"):
                 target = scope.document_id
             conf = "HIGH" if _is_valid_target(target) else "LOW"
             rule = "EXPLICIT" if conf == "HIGH" else "EXPLICIT_LOW"
