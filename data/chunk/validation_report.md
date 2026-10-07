@@ -21,7 +21,7 @@ _Regenerate tự động: `validate_step3` liệt kê mọi `data/chunk/chunks_*
 - chunks is_quoted_external_text=true: 0
 
 ## NQCT: 116 chunks, 100/100 Điều bao phủ, thiếu Điều: không, vượt 1000 token: 0 []
-- refs theo rule: {'EXPLICIT': 22, 'EXPLICIT_SELF': 13, 'DEFAULT_SELF': 7, 'LIST_EXPANSION': 8}
+- refs theo rule: {'EXPLICIT': 21, 'EXPLICIT_SELF': 15, 'DEFAULT_SELF': 6, 'LIST_EXPANSION': 8}
 - refs theo confidence: {'HIGH': 50}
 - anomaly per-doc: {}
 - chunks is_quoted_external_text=true: 0
@@ -39,6 +39,6 @@ _Regenerate tự động: `validate_step3` liệt kê mọi `data/chunk/chunks_*
 - MISSING_FORMULA_IMAGE: 1 chunk (vd: ND145_2020:CVI:M02:A056)
 
 ## Cross-reference (toan cuc):
-- Theo rule: {'EXPLICIT_SELF': 266, 'EXPLICIT': 216, 'LIST_EXPANSION': 26, 'QUOTED_EXTERNAL': 3, 'DEFAULT_SELF': 76, 'SCOPED_CHAPEAU': 25, 'BOUNDARY_CHECK': 3}
+- Theo rule: {'EXPLICIT_SELF': 268, 'EXPLICIT': 215, 'LIST_EXPANSION': 26, 'QUOTED_EXTERNAL': 3, 'DEFAULT_SELF': 75, 'SCOPED_CHAPEAU': 25, 'BOUNDARY_CHECK': 3}
 - Theo confidence: {'HIGH': 612, 'LOW': 3}
 - LOW cần review tay: 3 case

@@ -222,3 +222,13 @@ tài liệu mới. Tổng corpus: 1307 chunk / 568 ref, BOUNDARY về lại 3._
   `ruff check src/ tests/` sạch.
 - Embedding: resume theo `content_sha256` — chỉ 1 request cho 18 chunk NQCT
   (7 456 prompt tokens), 1289 vector cũ giữ nguyên.
+
+## Bổ sung 2026-10-07 — Mở rộng NQCT 82 → 100 Điều từ Nội quy lao động thực tế
+
+_Ngày: 2026-10-07. Chi tiết xem `data/chunk/CHANGELOG_NQCT_2026-10-07.md`._
+- Mở rộng NQCT từ 82 lên 100 Điều (+18 Điều, +28 chunk, +17 cross-ref).
+- Thêm Chương XXII–XXX: Quản lý con dấu, chữ ký số, an ninh ra vào cổng, tiếp đón khách, mang tài sản ra ngoài, quản lý & cấp phát PPE ("đổi cũ lấy mới"), điều chuyển tạm thời NLĐ, quy trình xác minh quấy rối tình dục (NĐ 145), chế độ BHXH ốm đau thai sản, ứng phó sự cố y tế & dịch bệnh, xóa & giảm thời hạn kỷ luật lao động.
+- Corpus tổng: 1405 chunk, 615 cross-refs, 1405 vector embeddings (1024-dim), 0 UNRESOLVED, 0 null vector.
+- Pytest test suite: 178 passed.
+- Thêm Q16–Q18 vào `eval/legal_golden.json`.
+

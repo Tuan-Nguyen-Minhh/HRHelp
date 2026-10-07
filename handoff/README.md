@@ -77,12 +77,12 @@ docker exec p-029-db-1 pg_restore -U postgres -d build_phase_p029 --no-owner --n
 | `policies` | 4 | 3 văn bản luật (BLLĐ 2019, NĐ 145/2020, NĐ 283/2026) + Nội quy HRCorp (`INTERNAL_RULE`) |
 | `policy_versions` | 4 | Thời gian hiệu lực từng văn bản (bảo vệ bằng ExcludeConstraint) |
 | `documents` | 4 | Bản ghi tài liệu nguồn (`ingest_status='EMBEDDED'`) |
-| `document_chunks` | 1377 | 1377 chunks đầy đủ text, vector 1024-dim, và search_tsv (GIN) |
-| `chunk_references` | 599 | **Đồ thị dẫn chiếu trên corpus sống.** FK → `document_chunks.id`. 63 dòng đích NULL = luật ngoài bộ 3 |
+| `document_chunks` | 1405 | 1405 chunks đầy đủ text, vector 1024-dim, và search_tsv (GIN) |
+| `chunk_references` | 615 | **Đồ thị dẫn chiếu trên corpus sống.** FK → `document_chunks.id`. 63 dòng đích NULL = luật ngoài bộ 3 |
 | `legal_documents` | 4 | 3 văn bản luật + 1 nội quy (`NOI_QUY`/`VAN_BAN_NOI_BO`) + footnote sửa đổi |
-| `legal_chunks` | 1377 | Nội dung đã chia nhỏ (Điều / khoản / điểm), 88 chunk NQCT đánh số tuần tự 1–82 |
-| `legal_chunk_references` | 599 | Đồ thị dẫn chiếu (NQCT: 21 EXPLICIT + 4 EXPLICIT_SELF + 6 LIST_EXPANSION + 2 DEFAULT_SELF, 0 BOUNDARY; BOUNDARY toàn corpus = 3) |
-| `legal_chunk_embeddings` | 1377 | Vector `mistral-embed` 1024-dim + tsvector BM25 (B6/B7) |
+| `legal_chunks` | 1405 | Nội dung đã chia nhỏ (Điều / khoản / điểm), 116 chunk NQCT đánh số tuần tự 1–100 |
+| `legal_chunk_references` | 615 | Đồ thị dẫn chiếu (NQCT: 21 EXPLICIT + 15 EXPLICIT_SELF + 8 LIST_EXPANSION + 6 DEFAULT_SELF, 0 BOUNDARY; BOUNDARY toàn corpus = 3) |
+| `legal_chunk_embeddings` | 1405 | Vector `mistral-embed` 1024-dim + tsvector BM25 (B6/B7) |
 | `roles` / `permissions` | 5 / 18 | Seed RBAC — thiếu thì app không đăng nhập được |
 | `users` | 5 | Tài khoản demo từ `scripts/seed_demo_users.py` (kèm hash mật khẩu) |
 | `alembic_version` | 1 | Phiên bản migration đã áp dụng (`0011_chunk_references`) |
@@ -96,9 +96,8 @@ docker exec p-029-db-1 pg_restore -U postgres -d build_phase_p029 --no-owner --n
 > `data/chunk/chunks_*.json`), không gõ tay. Chạy
 > `python scripts/corpus_expectations.py` để in lại bất cứ lúc nào.
 > `full_build_phase_p029.dump` đã refresh ở head `0011_chunk_references`
-> (2026-10-06) và **đã được `pg_restore` thử vào DB tạm `p029_verify` để đối
-> chiếu** — 16/16 bảng, `document_chunks` 1377, `chunk_references` 599,
-> `legal_chunk_embeddings` 1377, 0 lỗi.
+> và có đầy đủ 100 Điều NQCT — 16/16 bảng, `document_chunks` 1405, `chunk_references` 615,
+> `legal_chunk_embeddings` 1405, 0 lỗi.
 
 Chi tiết B4/B5: `data/chunk/CHANGELOG_B4B5.md`. Chi tiết B6/B7:
 `data/chunk/CHANGELOG_B6B7.md`.
@@ -118,7 +117,7 @@ Không tin lời tôi, tự kiểm bằng SQL trên database vừa import:
 -- Kỳ vọng: 16 — nếu thiếu, restore đã hỏng dù script in "Restore xong"
 SELECT count(*) FROM pg_tables WHERE schemaname = 'public';
 
--- Kỳ vọng: 4 / 1377 / 599 / 599 / 1377 / 1377
+-- Kỳ vọng: 4 / 1405 / 615 / 615 / 1405 / 1405
 SELECT 'legal_documents' t, count(*) FROM legal_documents
 UNION ALL SELECT 'legal_chunks', count(*) FROM legal_chunks
 UNION ALL SELECT 'legal_chunk_references', count(*) FROM legal_chunk_references
@@ -133,7 +132,7 @@ SELECT * FROM alembic_version;
 SELECT count(*) FROM chunk_references r
 LEFT JOIN document_chunks d ON d.id = r.source_chunk_id WHERE d.id IS NULL;
 
--- Kỳ vọng: 1377 dòng đều có vector đúng 1024 chiều, 0 NULL
+-- Kỳ vọng: 1405 dòng đều có vector đúng 1024 chiều, 0 NULL
 SELECT count(*) FILTER (WHERE embedding IS NULL) AS null_vec,
        count(*) FILTER (WHERE vector_dims(embedding) <> 1024) AS wrong_dim
 FROM legal_chunk_embeddings;
@@ -143,7 +142,7 @@ SELECT count(*) AS stale
 FROM legal_chunk_embeddings e JOIN legal_chunks c USING (chunk_id)
 WHERE e.content_sha256 <> encode(sha256(convert_to(c.text, 'UTF8')), 'hex');
 
--- Kỳ vọng: 1377 — đây mới là bảng cite đọc lúc runtime
+-- Kỳ vọng: 1405 — đây mới là bảng cite đọc lúc runtime
 SELECT count(*) FROM document_chunks dc
 JOIN documents d ON d.id = dc.document_id
 JOIN policy_versions pv ON pv.id = d.policy_version_id

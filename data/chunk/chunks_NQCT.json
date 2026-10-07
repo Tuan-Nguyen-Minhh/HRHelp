@@ -4250,15 +4250,15 @@
     "clause": null,
     "point": null,
     "confidence": "HIGH",
-    "rule": "DEFAULT_SELF"
+    "rule": "EXPLICIT_SELF"
    },
    {
-    "target_doc": "Nội quy lao động này",
+    "target_doc": "NQLD-HRCORP-2026",
     "article": 100,
     "clause": null,
     "point": null,
     "confidence": "HIGH",
-    "rule": "EXPLICIT"
+    "rule": "EXPLICIT_SELF"
    }
   ]
  }

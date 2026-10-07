@@ -186,6 +186,39 @@
     "NQCT:CXV:M00:A061"
    ],
    "why": "Điều 61 NQCT khoản 1 điểm c — phân cấp thẩm quyền theo ngưỡng giá trị (Trưởng bộ phận / Giám đốc / HĐQT trên 500 triệu). Đây là dạng quy trình có ngưỡng số và nhánh quyết định, khác hẳn dạng liệt kê; nhắm vào khả năng reasoning theo điều kiện."
+  },
+  {
+   "id": "Q16",
+   "query": "Thủ tục mang con dấu công ty ra ngoài trụ sở cần ai phê duyệt?",
+   "expected_document_id": "NQLD-HRCORP-2026",
+   "must_contain_article": 83,
+   "expected_chunk_level": "CLAUSE",
+   "expected_chunk_ids": [
+    "NQCT:CXXII:M00:A083:C03"
+   ],
+   "why": "Điều 83 NQCT khoản 3 — thủ tục mang con dấu ra ngoài trụ sở Công ty phải được Tổng Giám đốc phê duyệt bằng văn bản và có người áp tải. Phủ họ quy trình quản lý con dấu."
+  },
+  {
+   "id": "Q17",
+   "query": "Quy trình đổi mới phương tiện bảo vệ cá nhân theo nguyên tắc nào?",
+   "expected_document_id": "NQLD-HRCORP-2026",
+   "must_contain_article": 88,
+   "expected_chunk_level": "CLAUSE",
+   "expected_chunk_ids": [
+    "NQCT:CXXIV:M00:A088:C02"
+   ],
+   "why": "Điều 88 NQCT khoản 2 điểm d — nguyên tắc đổi cũ lấy mới khi trang bị bảo hộ bị hư hỏng trong quá trình làm việc. Phủ họ quy trình trang bị và quản lý bảo hộ lao động (PPE)."
+  },
+  {
+   "id": "Q18",
+   "query": "Tổ xác minh khiếu nại quấy rối tình dục gồm bao nhiêu thành viên và thời hạn xác minh?",
+   "expected_document_id": "NQLD-HRCORP-2026",
+   "must_contain_article": 93,
+   "expected_chunk_level": "CLAUSE",
+   "expected_chunk_ids": [
+    "NQCT:CXXVI:M00:A093:C01"
+   ],
+   "why": "Điều 93 NQCT khoản 1 — Tổ xác minh gồm ít nhất 03 thành viên (Nhân sự, Công đoàn, Lãnh đạo) và thời hạn giải quyết không quá 15 ngày làm việc. Phủ quy trình giải quyết khiếu nại quấy rối tình dục nội bộ."
   }
  ]
 }
