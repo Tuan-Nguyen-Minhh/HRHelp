@@ -1,6 +1,6 @@
 """Run the retrieval graph and audit it on the agent ledger.
 
-The graph is similarity, ts_rank on ``search_tsv``, and lexical search in parallel, then RRF, then rerank.
+The graph runs three search arms, then RRF, hop-1 graph expansion, and rerank.
 An empty rerank walks the article outline before the handoff is packed.
 """
 
@@ -25,6 +25,7 @@ async def search_policies(session: AsyncSession, query: SearchQuery) -> list[Pas
             "incident_date": query.incident_date.isoformat(),
             "terms": terms,
             "retrievers": ["similarity", "bm25", "lexical", "page_index"],
+            "expansion": "graph_hop1",
         },
     )
     graph = build_retrieval_graph(session)
@@ -34,10 +35,7 @@ async def search_policies(session: AsyncSession, query: SearchQuery) -> list[Pas
     await save_retrievals(
         session,
         query.agent_run_id,
-        [
-            RetrievalHit(passage.chunk_id, passage.score, passage.origin or "hybrid")
-            for passage in ranked
-        ],
+        [RetrievalHit(passage.chunk_id, passage.score, passage.origin or "hybrid") for passage in ranked],
     )
     return ranked
 
@@ -50,4 +48,21 @@ def _output(ranked: list[Passage]) -> dict:
         "policy_version_ids": sorted({str(passage.policy_version_id) for passage in ranked}),
         "missing_internal_rule": missing_internal,
         "retrieval": retrieval_mode(ranked),
+        "graph_provenance": [
+            {
+                "chunk_id": str(passage.chunk_id),
+                "edges": [
+                    {
+                        "seed_chunk_id": str(edge.seed_chunk_id),
+                        "source_chunk_id": str(edge.source_chunk_id),
+                        "target_chunk_id": str(edge.target_chunk_id),
+                        "rule": edge.rule,
+                        "confidence": edge.confidence,
+                    }
+                    for edge in passage.graph_edges
+                ],
+            }
+            for passage in ranked
+            if passage.origin == "graph"
+        ],
     }

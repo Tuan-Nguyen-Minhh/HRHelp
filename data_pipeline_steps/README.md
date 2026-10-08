@@ -23,7 +23,7 @@ flowchart LR
 | B2 Preprocessing | Xóa nhiễu (bảng trình bày, escape sai) để bước cắt không lệch | md thô → `data/cleaned_markdown/` | ✅ xong (`step2/`, có test) |
 | B3 Chunking | Cắt văn bản theo **Điều → Khoản → Điểm**, giữ ngữ cảnh cha + phát hiện dẫn chiếu thô | md sạch → `data/chunk/*.json` (**1377 chunk**: BLLD 381 / NĐ145 377 / NĐ283 531 / NQCT 88) | ✅ xong (có golden test) |
 | B4 Metadata | Đưa 4 văn bản + 1377 chunk vào Postgres kèm hiệu lực, sẵn sàng lọc | JSON → `legal_documents` (4) + `legal_chunks` (1377) | ✅ xong |
-| B5 Graph | Biến dẫn chiếu ("khoản 2 Điều 169") thành cạnh nối giữa các chunk | refs thô → `legal_chunk_references` (**599**) | ✅ xong |
+| B5 Graph | Biến dẫn chiếu ("khoản 2 Điều 169") thành cạnh nối giữa các chunk | refs thô → `legal_chunk_references` (**599**) → `chunk_references` | ✅ xong; runtime đọc hop-1 qua node `expand` |
 | B6 Embedding | Biến chữ thành 1377 vector `mistral-embed` (tài sản tốn quota) | chunks → `legal_chunk_embeddings` (1377×1024) | ✅ xong |
 | B7 Search | Máy tìm kiếm lai (vector + từ khóa) + bộ đề thi chống hồi quy | vectors → `hybrid_search()` + `legal_golden.json` (17 query) | ⚠️ **đã gỡ 2026-10-06** — xem mục B7 bên dưới |
 | B8 Agent | Vòng lặp user hỏi → agent đáp → log lại để đo liên tục | _milestone sau_ | ⬜ chưa làm |
@@ -58,6 +58,11 @@ mò trong JSON.
 theo thứ tự Điểm → Khoản → Điều; trỏ ra luật ngoài bộ 3 thì `target_chunk_id`
 NULL (60 dòng — **không phải dữ liệu hỏng**). Ý nghĩa: agent trả lời được câu
 hỏi dạng "khoản này dẫn tới đâu", và đi ngược "điều này được ai trích dẫn".
+Runtime hiện đọc bản sao `chunk_references` qua node `expand` trong
+`src/features/cite/model/graph_expand.py`: lấy top-5 seed từ RRF, duyệt một hop
+cả hai chiều, chỉ nhận cạnh HIGH không cần review và neighbor còn hiệu lực
+tại `incident_date`. Thêm tối đa 12 neighbor với điểm seed tốt nhất × 0.6;
+hit mới có `origin="graph"`, cạnh dẫn chiếu được ghi vào audit `tool_calls`.
 
 **B6 — nhúng vector.** (`scripts/embed_legal.py`, migration `0003`.) 1289 text
 (`header_context + text`) → 41 request batch-32 → 683 096 tokens (~68% trần V7),
@@ -73,11 +78,12 @@ phần NQCT được embed bổ sung. Chi tiết: `data/chunk/CHANGELOG_B6B7.md`
 > **Sự thật quan trọng về kiến trúc:** `hybrid_search()` **không phải** đường mà
 > agent dùng. Nó chỉ được gọi từ script đo. Đường retrieval thật của hồ sơ là
 > LangGraph sub-graph ở `src/features/cite/model/pipeline.py` — 3 nhánh song song
-> (`similarity` / `bm25` / `lexical`) → RRF → rerank → fallback `page_index` — và
-> đọc bảng `document_chunks`, không đọc `legal_*`. Vì vậy số đo của B7 **không mô
+> (`similarity` / `bm25` / `lexical`) → RRF → **expand hop-1** → rerank → fallback `page_index` — và
+> đọc bảng `document_chunks` + `chunk_references`, không đọc `legal_*`. Vì vậy số đo của B7 **không mô
 > tả** hệ thống đang chạy. Xem `ARCHITECTURE.md` mục "Retrieval And CaseHandoff".
 
 **B8 — agent + đánh giá liên tục.** Chưa làm. Đường agent đã có sẵn (`cite/model/pipeline.py`)
+và đã tiêu thụ graph hop-1 trong retrieval thật;
 nhưng **chưa từng được đo** — chưa có bộ đề nào chạy qua đường đó. Đây là lỗ hổng
 đo lường lớn nhất của dự án, và cũng là chỗ nên làm khi thiết kế lại corpus.
 

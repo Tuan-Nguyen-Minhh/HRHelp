@@ -224,7 +224,10 @@ Không có chunk `CLAUSE`/`POINT` cho Điều 125. Nếu sau này map `legal_chu
 
 - `target_chunk_id IS NULL`: **60** dòng → trích luật ngoài bộ 3 văn bản (Luật BHXH, Luật Công đoàn, `124/2025/QH15`…). **Không phải dữ liệu hỏng.**
 - `needs_review = true`: **3** dòng, tất cả `needs_reason = 'BOUNDARY'`.
-- **Không runtime nào đọc bảng này.** `hybrid_search` không join nó.
+- Runtime không đọc trực tiếp `legal_chunk_references`: `scripts/copy_chunk_references.py`
+  chép cạnh sang `chunk_references`. Node `expand` (`src/features/cite/model/graph_expand.py`)
+  đọc bản sao này qua `fetch_graph_neighbors()` trong `cite/model/store.py`, duyệt hop-1
+  hai chiều sau RRF, trước rerank; chỉ nhận cạnh HIGH không cần review và chunk còn hiệu lực.
 
 ### 4.4 `legal_chunk_embeddings` — 1289 dòng
 

@@ -1,4 +1,4 @@
-"""Retrieval sub-graph: similarity, ts_rank BM25, and lexical search, then RRF, then rerank.
+"""Retrieval sub-graph: three search arms, RRF, hop-1 graph expansion, then rerank.
 
 Each retriever writes its own channel. RRF waits until all three have finished.
 A failing retriever yields an empty list and the other arms still fuse.
@@ -12,6 +12,7 @@ from typing import TypedDict
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from src.features.cite.model.graph_expand import expand_node
 from src.features.cite.model.page_index import anchors_for, select_article_heads
 from src.features.cite.model.passage import Passage
 from src.features.cite.model.query import SearchQuery
@@ -36,6 +37,7 @@ class RetrievalState(TypedDict, total=False):
     bm25: list[Passage]
     lexical: list[Passage]
     fused: list[Passage]
+    expanded: list[Passage]
     hits: list[Passage]
     retrieval: str
 
@@ -55,23 +57,25 @@ def build_retrieval_graph(session) -> CompiledStateGraph:
     async def page_index(state: RetrievalState) -> dict:
         return await _page_index(session, state)
 
-    return compile_retrieval(similarity, bm25, lexical, page_index)
+    return compile_retrieval(similarity, bm25, lexical, page_index, expand_node(session))
 
 
-def compile_retrieval(similarity, bm25, lexical, page_index=None) -> CompiledStateGraph:
-    """Compile three retriever nodes into RRF and rerank. Tests pass fakes here."""
+def compile_retrieval(similarity, bm25, lexical, page_index=None, expand=None) -> CompiledStateGraph:
+    """Compile RRF → expand → rerank. Omitted expansion preserves existing callers."""
     graph = StateGraph(RetrievalState)
     graph.add_node("similarity", similarity)
     graph.add_node("bm25", bm25)
     graph.add_node("lexical", lexical)
     graph.add_node("rrf", rrf_node)
+    graph.add_node("expand", expand or _passthrough_expand)
     graph.add_node("rerank", rerank_node)
     graph.add_node("page_index", page_index or _abstain)
     graph.add_edge(START, "similarity")
     graph.add_edge(START, "bm25")
     graph.add_edge(START, "lexical")
     graph.add_edge(["similarity", "bm25", "lexical"], "rrf")
-    graph.add_edge("rrf", "rerank")
+    graph.add_edge("rrf", "expand")
+    graph.add_edge("expand", "rerank")
     graph.add_conditional_edges("rerank", _after_rerank, {"done": END, "page_index": "page_index"})
     graph.add_edge("page_index", END)
     return graph.compile()
@@ -83,10 +87,14 @@ def rrf_node(state: RetrievalState) -> dict:
     return {"fused": reciprocal_rank_fusion(rankings, RETRIEVAL_K)}
 
 
+def _passthrough_expand(state: RetrievalState) -> dict:
+    return {"expanded": list(state.get("fused") or [])}
+
+
 def rerank_node(state: RetrievalState) -> dict:
     """Apply the rerank hook. The default hook keeps fused order."""
     query = state["query"]
-    hits = rerank(query.text, list(state.get("fused") or []))
+    hits = rerank(query.text, list(state.get("expanded") or state.get("fused") or []))
     if not hits:
         return {"hits": []}
     return {"hits": hits, "retrieval": "hybrid"}
