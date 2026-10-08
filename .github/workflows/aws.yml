@@ -31,7 +31,7 @@ jobs:
   build-and-push:
     name: Build & push image
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') }}
+    if: ${{ github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && contains(fromJSON('["main", "DeployOnAWS"]'), github.event.workflow_run.head_branch)) }}
     outputs:
       image: ${{ steps.build-image.outputs.image }}
       image-tag: ${{ steps.meta.outputs.image-tag }}
