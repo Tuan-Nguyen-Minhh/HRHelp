@@ -10,8 +10,8 @@ HERE = Path(__file__).resolve().parent
 
 
 def prepare(runs: list[dict], *, facts_for_faithfulness: bool = False) -> list[dict]:
-    base = json.loads((HERE / "ragas_dataset.json").read_text())
-    manifest = json.loads((HERE / "source_metadata.json").read_text())
+    base = json.loads((HERE / "ragas_dataset.json").read_text(encoding="utf-8"))
+    manifest = json.loads((HERE / "source_metadata.json").read_text(encoding="utf-8"))
     expected_ids = manifest["case_ids_in_row_order"]
     if not isinstance(runs, list) or any(not isinstance(run, dict) for run in runs):
         raise ValueError("Captured runs must be a JSON list of objects")
@@ -44,7 +44,7 @@ def load_dataset(path: str | Path | None = None):
     """Load a RAGAS EvaluationDataset. Draft samples may have null run fields."""
     from ragas import EvaluationDataset
 
-    rows = json.loads(Path(path or HERE / "ragas_dataset.json").read_text())
+    rows = json.loads(Path(path or HERE / "ragas_dataset.json").read_text(encoding="utf-8"))
     return EvaluationDataset.from_list(rows)
 
 
@@ -55,11 +55,11 @@ def main() -> None:
     parser.add_argument("--facts-for-faithfulness", action="store_true",
                         help="Append supplied case input as supporting context; use this output only for grounding, not retrieval metrics")
     args = parser.parse_args()
-    rows = prepare(json.loads(args.runs.read_text()), facts_for_faithfulness=args.facts_for_faithfulness)
+    rows = prepare(json.loads(args.runs.read_text(encoding="utf-8")), facts_for_faithfulness=args.facts_for_faithfulness)
     from ragas import EvaluationDataset
 
     EvaluationDataset.from_list(rows)  # Verify the actual installed RAGAS schema.
-    args.output.write_text(json.dumps(rows, ensure_ascii=False, indent=2) + "\n")
+    args.output.write_text(json.dumps(rows, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Saved {len(rows)} samples to {args.output}")
     if args.facts_for_faithfulness:
         print("Supporting case input included: do not use this output for retrieval precision/recall.")

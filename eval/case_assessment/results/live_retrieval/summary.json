@@ -1,0 +1,42 @@
+{
+  "status": "complete",
+  "sample_count": 5,
+  "evaluation_scope": "live_retrieval_direct_component; not end-to-end chat",
+  "ragas_version": "0.4.3",
+  "judge_provider": "mistral",
+  "judge_model": "ministral-8b-2512",
+  "created_at": "2026-10-12T16:39:47.791975+00:00",
+  "source_dataset": "eval/case_assessment/results/live_retrieval/dataset.completed.json",
+  "source_dataset_sha256": "cbd5eaa1076ec7a016b12a08b9b5575c6595c2bae9205d3ac319d6966662d8dd",
+  "reference_status": "draft_pending_expert_review",
+  "faithfulness_context": "policies_plus_supplied_case_input",
+  "requested_metrics": [
+    "faithfulness",
+    "factual_correctness",
+    "context_precision",
+    "context_recall"
+  ],
+  "metrics": {
+    "faithfulness": {
+      "mean": 0.8245281868265135,
+      "scored_count": 5,
+      "failed_count": 0
+    },
+    "factual_correctness": {
+      "mean": 0.5760000000000001,
+      "scored_count": 5,
+      "failed_count": 0
+    },
+    "context_precision": {
+      "mean": 0.9140929705092231,
+      "scored_count": 5,
+      "failed_count": 0
+    },
+    "context_recall": {
+      "mean": 0.34963800904977377,
+      "scored_count": 5,
+      "failed_count": 0
+    }
+  },
+  "errors": []
+}

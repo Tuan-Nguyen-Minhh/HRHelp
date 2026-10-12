@@ -161,7 +161,7 @@ HR lựa chọn: đồng ý với đánh giá; yêu cầu bổ sung thông tin; 
 
 
 def main() -> None:
-    snapshot = json.loads((HERE / "policy_snapshot.json").read_text())
+    snapshot = json.loads((HERE / "policy_snapshot.json").read_text(encoding="utf-8"))
     samples, metadata = [], []
     for case in CASES:
         path = ROOT / "tested_golden_dataset" / case["file"]
@@ -235,7 +235,7 @@ def main() -> None:
         "cases": metadata,
     }
     for name, value in [("ragas_dataset.json", samples), ("source_metadata.json", manifest)]:
-        (HERE / name).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+        (HERE / name).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Extracted {len(samples)} cases; wrote ragas_dataset.json and source_metadata.json")
 
 
