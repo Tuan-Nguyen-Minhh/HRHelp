@@ -43,12 +43,12 @@ export function AssessmentEntry() {
   const query = useQuery({ queryKey: ["assessment", caseId], queryFn: () => api.getAssessment(caseId) });
   const form = query.data;
   return (
-    <section className="rounded-xl border border-[#d5e8ed] bg-white px-4 py-4">
-      <p className="text-xs font-semibold tracking-[0.14em] text-[#009EC1]">BIÊN BẢN ĐÁNH GIÁ</p>
-      <p className="mt-1 text-sm text-[#073642]">
+    <section className="rounded-xl border border-rule bg-white px-4 py-4">
+      <p className="text-xs font-semibold tracking-[0.14em] text-son-dark">BIÊN BẢN ĐÁNH GIÁ</p>
+      <p className="mt-1 text-sm text-ink">
         {form ? `Phiên bản ${form.version}. ${FORM_STATUS[form.form_status]}.` : "Chưa có biên bản dạng biểu mẫu."}
       </p>
-      <p className="mt-1 text-sm text-[#4d7380]">AI soạn bản nháp. HR xem, sửa và xác nhận trước khi gửi phiếu.</p>
+      <p className="mt-1 text-sm text-ink-3">AI soạn bản nháp. HR xem, sửa và xác nhận trước khi gửi phiếu.</p>
       <Button asChild className="mt-3">
         <Link to={`/cases/${caseId}/assessment`}>Mở biên bản</Link>
       </Button>
@@ -154,26 +154,26 @@ export function AssessmentForm() {
   }
 
   if (query.isLoading) {
-    return <p className="rounded-xl border border-[#d5e8ed] bg-white px-4 py-6 text-sm text-[#4d7380]">Đang tải biên bản…</p>;
+    return <p className="rounded-xl border border-rule bg-white px-4 py-6 text-sm text-ink-3">Đang tải biên bản…</p>;
   }
   if (query.isError) {
-    return <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-900">{errorMessage(query.error)}</p>;
+    return <p className="rounded-xl border border-son-line bg-son-tint px-4 py-4 text-sm text-son-dark">{errorMessage(query.error)}</p>;
   }
   if (!view) {
     return (
-      <section className="rounded-xl border border-[#d5e8ed] bg-white px-4 py-6">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#009EC1]">BIÊN BẢN ĐÁNH GIÁ VÀ ĐỀ XUẤT XỬ LÝ</p>
-        <h2 className="mt-2 text-xl font-semibold text-[#073642]">Chưa có biên bản dạng biểu mẫu</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#4d7380]">
+      <section className="rounded-xl border border-rule bg-white px-4 py-6">
+        <p className="text-xs font-semibold tracking-[0.14em] text-son-dark">BIÊN BẢN ĐÁNH GIÁ VÀ ĐỀ XUẤT XỬ LÝ</p>
+        <h2 className="mt-2 text-xl font-semibold text-ink">Chưa có biên bản dạng biểu mẫu</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-3">
           AI lập bản nháp từ tình tiết đã xác nhận và căn cứ đã truy xuất. Sau khi HR xác nhận biên bản, chọn email pháp chế để gửi phiếu. AI không tự gửi.
         </p>
-        {failure ? <p className="mt-3 text-sm text-red-800">{errorMessage(failure)}</p> : null}
+        {failure ? <p className="mt-3 text-sm text-son-dark">{errorMessage(failure)}</p> : null}
         {canStart ? (
           <Button className="mt-4" disabled={busy} onClick={() => generate.mutate()}>
             {generate.isPending ? "Đang lập biên bản…" : "Lập biên bản"}
           </Button>
         ) : (
-          <p className="mt-4 text-sm text-[#4d7380]">Chỉ HR lập và xác nhận biên bản.</p>
+          <p className="mt-4 text-sm text-ink-3">Chỉ HR lập và xác nhận biên bản.</p>
         )}
       </section>
     );
@@ -184,12 +184,12 @@ export function AssessmentForm() {
 
   return (
     <div className="space-y-4">
-      <header className="rounded-xl border border-[#d5e8ed] bg-white px-4 py-4">
+      <header className="rounded-xl border border-rule bg-white px-4 py-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold tracking-[0.14em] text-[#009EC1]">HỒ SƠ #{sections.case_information.case_code}</p>
-            <h2 className="mt-1 text-xl font-semibold text-[#073642]">Biên bản xử lý vi phạm kỷ luật</h2>
-            <p className="mt-1 text-sm text-[#4d7380]">
+            <p className="text-xs font-semibold tracking-[0.14em] text-son-dark">HỒ SƠ #{sections.case_information.case_code}</p>
+            <h2 className="mt-1 text-xl font-semibold text-ink">Biên bản xử lý vi phạm kỷ luật</h2>
+            <p className="mt-1 text-sm text-ink-3">
               {view.metadata.source === "HR" ? "HR đã sửa bản này." : "AI đề xuất bản nháp."} Lập ngày {formatDate(view.metadata.generated_at)}. Phiên bản {view.version}.
             </p>
           </div>
@@ -197,12 +197,12 @@ export function AssessmentForm() {
             <Button variant="secondary" disabled={busy || exporting} onClick={() => void exportWord()}>
               {exporting ? "Đang xuất…" : "Xuất Word"}
             </Button>
-            <p className="rounded-md border border-[#d5e8ed] bg-[#f4fafb] px-3 py-1.5 text-sm font-medium text-[#073642]">
+            <p className="rounded-md border border-rule bg-paper-2 px-3 py-1.5 text-sm font-medium text-ink">
               {FORM_STATUS[view.form_status]}
             </p>
           </div>
         </div>
-        {exportNote ? <p className="mt-3 rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-[#276274]">{exportNote}</p> : null}
+        {exportNote ? <p className="mt-3 rounded-md border border-rule bg-paper-2 px-3 py-2 text-xs text-ink-2">{exportNote}</p> : null}
       </header>
 
       <div className="grid items-start gap-4 lg:grid-cols-[13rem_minmax(0,1fr)]">
@@ -211,7 +211,7 @@ export function AssessmentForm() {
             <a
               key={item.id}
               href={`#${item.id}`}
-              className="block shrink-0 rounded-md px-3 py-1.5 text-sm text-[#073642] hover:bg-[#e7f6f9]"
+              className="block shrink-0 rounded-md px-3 py-1.5 text-sm text-ink hover:bg-paper-2"
             >
               {item.label}
             </a>
@@ -244,7 +244,7 @@ export function AssessmentForm() {
       </div>
 
       {blocking.length ? (
-        <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
+        <section className="rounded-xl border border-son-line bg-son-tint px-4 py-4 text-sm text-son-dark">
           <h2 className="font-semibold">Không thể xác nhận biên bản</h2>
           <p className="mt-1">Còn {blocking.length} thông tin bắt buộc cần bổ sung:</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
@@ -266,7 +266,7 @@ export function AssessmentForm() {
       ) : null}
 
       {view.validation.warnings.length ? (
-        <section className="rounded-xl border border-[#d5e8ed] bg-white px-4 py-3 text-sm text-[#073642]">
+        <section className="rounded-xl border border-rule bg-white px-4 py-3 text-sm text-ink">
           <h2 className="font-medium">Lưu ý không chặn xác nhận</h2>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {view.validation.warnings.map((item) => (
@@ -277,21 +277,21 @@ export function AssessmentForm() {
       ) : null}
 
       {view.status === "CONFIRMED" ? (
-        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+        <p className="rounded-xl border border-rule bg-paper-2 px-4 py-3 text-sm text-ink">
           {view.permissions.can_create_ticket
             ? "Biên bản đã được HR xác nhận. Chọn email pháp chế bên dưới rồi gửi phiếu. AI không tự gửi."
             : "Biên bản đã được HR xác nhận. Phiếu này không mở để gửi."}
         </p>
       ) : null}
 
-      <div className="rounded-xl border border-[#d5e8ed] bg-white px-4 py-3">
+      <div className="rounded-xl border border-rule bg-white px-4 py-3">
         {!view.permissions.can_confirm && view.status !== "CONFIRMED" && blocking.length === 0 ? (
-          <p className="mb-2 text-sm text-[#4d7380]">Xác nhận chỉ mở khi hồ sơ còn ở bước HR và biên bản không còn lỗi bắt buộc.</p>
+          <p className="mb-2 text-sm text-ink-3">Xác nhận chỉ mở khi hồ sơ còn ở bước HR và biên bản không còn lỗi bắt buộc.</p>
         ) : null}
-        {notice ? <p className="mb-2 text-sm text-[#4d7380]">{notice}</p> : null}
-        {failure ? <p className="mb-2 text-sm text-red-800">{errorMessage(failure)}</p> : null}
+        {notice ? <p className="mb-2 text-sm text-ink-3">{notice}</p> : null}
+        {failure ? <p className="mb-2 text-sm text-son-dark">{errorMessage(failure)}</p> : null}
         {askConfirm ? (
-          <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950">
+          <div className="mb-3 rounded-md border border-son-line bg-son-tint px-3 py-3 text-sm text-son-dark">
             <p>Xác nhận biên bản này? AI không gửi phiếu. HR vẫn xác nhận phiếu ở bước sau.</p>
             <div className="mt-2 flex gap-2">
               <Button variant="secondary" onClick={() => setAskConfirm(false)}>
@@ -304,7 +304,7 @@ export function AssessmentForm() {
           </div>
         ) : null}
         {askRedo ? (
-          <div className="mb-3 rounded-md border border-[#d5e8ed] bg-[#f4fafb] px-3 py-3 text-sm text-[#073642]">
+          <div className="mb-3 rounded-md border border-rule bg-paper-2 px-3 py-3 text-sm text-ink">
             <p>Lập lại tạo một phiên bản mới từ tình tiết và căn cứ đã lưu. Bản cũ được giữ. Phiếu không được gửi.</p>
             <div className="mt-2 flex gap-2">
               <Button variant="secondary" onClick={() => setAskRedo(false)}>

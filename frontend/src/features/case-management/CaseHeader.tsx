@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 
-import { StatusBadge } from "@/components/common/StatusBadge";
-import { familyLabel } from "@/lib/labels";
+import { StatusBadge, ToneBadge } from "@/components/common/StatusBadge";
+import { familyLabel, riskLabel, riskTone } from "@/lib/labels";
 import { cn, formatDate } from "@/lib/utils";
 import { useWorkspace } from "@/features/case-management/CaseWorkspace";
 
@@ -21,38 +21,36 @@ export function CaseHeader() {
   const { caseId, caseView, facts, answer } = useWorkspace();
   const violation = firstLine(caseView.description);
   return (
-    <header className="rounded-xl border border-[#d5e8ed] bg-white px-4 py-4 shadow-sm">
+    <header className="rounded-xl border border-rule bg-white px-4 py-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-semibold tracking-[0.16em] text-[#009EC1]">HỒ SƠ</p>
-          <h1 className="text-2xl font-semibold text-[#073642]">#{caseView.case_code}</h1>
+          <p className="text-xs font-semibold tracking-[0.16em] text-son-dark">HỒ SƠ</p>
+          <h1 className="text-2xl font-semibold text-ink">#{caseView.case_code}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={caseView.status} />
           {answer?.risk_level ? (
-            <span className="rounded-md border border-[#d5e8ed] bg-[#f4fafb] px-2 py-1 text-xs text-[#073642]">
-              Rủi ro {answer.risk_level}
-            </span>
+            <ToneBadge tone={riskTone(answer.risk_level)} label={`Rủi ro ${riskLabel(answer.risk_level).toLowerCase()}`} />
           ) : null}
         </div>
       </div>
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
         <div>
-          <dt className="text-xs text-[#4d7380]">Nhân viên</dt>
-          <dd className="font-medium text-[#073642]">{caseView.employee_name || "—"}</dd>
-          <dd className="text-xs text-[#4d7380]">{caseView.employee_code || "Chưa có mã"}</dd>
+          <dt className="text-xs text-ink-3">Nhân viên</dt>
+          <dd className="font-medium text-ink">{caseView.employee_name || "—"}</dd>
+          <dd className="text-xs text-ink-3">{caseView.employee_code || "Chưa có mã"}</dd>
         </div>
         <div>
-          <dt className="text-xs text-[#4d7380]">Sự việc</dt>
-          <dd className="line-clamp-2 font-medium text-[#073642]">{violation || "Chưa có mô tả"}</dd>
+          <dt className="text-xs text-ink-3">Sự việc</dt>
+          <dd className="line-clamp-2 font-medium text-ink">{violation || "Chưa có mô tả"}</dd>
         </div>
         <div>
-          <dt className="text-xs text-[#4d7380]">Ngày xảy ra</dt>
-          <dd className="font-medium text-[#073642]">{formatDate(caseView.incident_date)}</dd>
+          <dt className="text-xs text-ink-3">Ngày xảy ra</dt>
+          <dd className="font-medium text-ink">{formatDate(caseView.incident_date)}</dd>
         </div>
         <div>
-          <dt className="text-xs text-[#4d7380]">Nhóm</dt>
-          <dd className="font-medium text-[#073642]">{familyLabel(caseView.family || facts?.family)}</dd>
+          <dt className="text-xs text-ink-3">Nhóm</dt>
+          <dd className="font-medium text-ink">{familyLabel(caseView.family || facts?.family)}</dd>
         </div>
       </dl>
       <nav className="mt-4 flex gap-1 overflow-x-auto" aria-label="Phần hồ sơ">
@@ -64,7 +62,7 @@ export function CaseHeader() {
             className={({ isActive }) =>
               cn(
                 "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium",
-                isActive ? "bg-[#009EC1] text-white" : "bg-[#e7f6f9] text-[#073642] hover:bg-[#d3eef4]",
+                isActive ? "bg-son text-white" : "bg-paper-2 text-ink hover:bg-paper-3",
               )
             }
           >

@@ -57,8 +57,8 @@ export function CasesPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold tracking-[0.16em] text-[#009EC1]">HỒ SƠ</p>
-          <h1 className="text-2xl font-semibold text-[#073642]">Danh sách vụ việc</h1>
+          <p className="text-xs font-semibold tracking-[0.16em] text-son-dark">HỒ SƠ</p>
+          <h1 className="text-2xl font-semibold text-ink">Danh sách vụ việc</h1>
         </div>
         {canCreate ? (
           <Button asChild>
@@ -66,16 +66,16 @@ export function CasesPage() {
           </Button>
         ) : null}
       </div>
-      <div className="grid gap-3 rounded-xl border border-[#d5e8ed] bg-white p-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-3 rounded-xl border border-rule bg-white p-3 md:grid-cols-3 xl:grid-cols-6">
         <Input value={text} onChange={(event) => setText(event.target.value)} placeholder="Tìm mã hồ sơ hoặc nhân viên" />
-        <select className="h-9 rounded-md border border-[#d5e8ed] bg-white px-2 text-sm" value={status} onChange={(event) => setStatus(event.target.value)}>
+        <select className="h-10 rounded-md border border-rule bg-white px-2 text-sm" value={status} onChange={(event) => setStatus(event.target.value)}>
           {STATUSES.map((item) => (
             <option key={item || "all"} value={item}>
               {item ? statusLabel(item) : "Mọi trạng thái"}
             </option>
           ))}
         </select>
-        <select className="h-9 rounded-md border border-[#d5e8ed] bg-white px-2 text-sm" value={family} onChange={(event) => setFamily(event.target.value)}>
+        <select className="h-10 rounded-md border border-rule bg-white px-2 text-sm" value={family} onChange={(event) => setFamily(event.target.value)}>
           <option value="">Mọi nhóm</option>
           <option value="UNAUTHORIZED_ABSENCE">{familyLabel("UNAUTHORIZED_ABSENCE")}</option>
           <option value="LATE">{familyLabel("LATE")}</option>
@@ -83,27 +83,33 @@ export function CasesPage() {
         </select>
         <Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} aria-label="Từ ngày" />
         <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} aria-label="Đến ngày" />
-        <select className="h-9 rounded-md border border-[#d5e8ed] bg-white px-2 text-sm" value={sort} onChange={(event) => setSort(event.target.value as "date" | "code" | "employee")}>
+        <select className="h-10 rounded-md border border-rule bg-white px-2 text-sm" value={sort} onChange={(event) => setSort(event.target.value as "date" | "code" | "employee")}>
           <option value="date">Ngày vụ mới nhất</option>
           <option value="code">Mã hồ sơ</option>
           <option value="employee">Tên nhân viên</option>
         </select>
       </div>
-      {query.isLoading ? <p className="text-sm text-[#4d7380]">Đang tải hồ sơ…</p> : null}
-      {query.isError ? <p className="text-sm text-red-800">{errorMessage(query.error)}</p> : null}
+      {query.isLoading ? (
+        <div className="space-y-2 rounded-xl border border-rule bg-white p-3" role="status" aria-label="Đang tải hồ sơ">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="skeleton h-10" aria-hidden="true" />
+          ))}
+        </div>
+      ) : null}
+      {query.isError ? <p className="text-sm text-son-dark">{errorMessage(query.error)}</p> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#9fd0db] bg-white px-4 py-8 text-sm text-[#4d7380]">
+        <div className="rounded-xl border border-dashed border-rule-2 bg-white px-4 py-8 text-sm text-ink-3">
           Không có hồ sơ khớp bộ lọc.
           {canCreate ? (
-            <Link className="ml-2 font-medium text-[#009EC1] underline" to="/cases/new">
+            <Link className="ml-2 font-medium text-son-dark underline" to="/cases/new">
               Tạo hồ sơ mới
             </Link>
           ) : null}
         </div>
       ) : null}
-      <div className="overflow-x-auto rounded-xl border border-[#d5e8ed] bg-white">
+      <div className="overflow-x-auto rounded-xl border border-rule bg-white">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-[#e7f6f9] text-xs uppercase tracking-wide text-[#4d7380]">
+          <thead className="bg-paper-2 text-xs uppercase tracking-wide text-ink-3">
             <tr>
               <th className="px-3 py-2">Mã</th>
               <th className="px-3 py-2">Nhân viên</th>
@@ -114,15 +120,15 @@ export function CasesPage() {
           </thead>
           <tbody>
             {visible.map((item) => (
-              <tr key={item.case_id} className="border-t border-[#eef6f8]">
+              <tr key={item.case_id} className="border-t border-rule">
                 <td className="px-3 py-2">
-                  <Link className="font-medium text-[#009EC1] underline" to={`/cases/${item.case_id}`}>
+                  <Link className="font-medium text-son-dark underline" to={`/cases/${item.case_id}`}>
                     {item.case_code}
                   </Link>
                 </td>
                 <td className="px-3 py-2">
                   <p>{item.employee_name || "—"}</p>
-                  <p className="text-xs text-[#4d7380]">{item.employee_code}</p>
+                  <p className="text-xs text-ink-3">{item.employee_code}</p>
                 </td>
                 <td className="px-3 py-2">{familyLabel(item.family)}</td>
                 <td className="px-3 py-2">{formatDate(item.incident_date)}</td>
@@ -135,7 +141,7 @@ export function CasesPage() {
         </table>
       </div>
       {rows.length > pageSize ? (
-        <div className="flex items-center justify-between text-sm text-[#4d7380]">
+        <div className="flex items-center justify-between text-sm text-ink-3">
           <span>
             {page + 1} / {pageCount}
           </span>

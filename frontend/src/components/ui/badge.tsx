@@ -3,12 +3,14 @@ import type { HTMLAttributes } from "react";
 import type { StatusTone } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
+/* Monochrome value-steps + vermilion for "needs action".
+   See design-system/hr-help/MASTER.md §2. */
 const tones: Record<StatusTone, string> = {
-  info: "border-brand-200 bg-brand-50 text-brand-800",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  warning: "border-amber-200 bg-amber-50 text-amber-800",
-  danger: "border-red-200 bg-red-50 text-red-800",
-  neutral: "border-slate-200 bg-slate-100 text-slate-600",
+  info: "border-rule bg-paper-3 text-ink-2",
+  success: "border-leather bg-leather text-paper",
+  warning: "border-son-line bg-son-tint text-son-dark",
+  danger: "border-son bg-son text-white",
+  neutral: "border-rule bg-transparent text-ink-3",
 };
 
 export function Badge({
@@ -19,7 +21,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wide",
+        "inline-flex items-center gap-1.5 rounded border px-2.5 py-0.5 text-xs font-semibold tracking-wide",
         tones[tone],
         className,
       )}

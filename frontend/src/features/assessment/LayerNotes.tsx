@@ -16,7 +16,7 @@ export function PrecedentSection() {
         <CardTitle>Tiền lệ tham khảo</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
-        <p className="text-neutral-700">
+        <p className="text-ink-2">
           {items.length} đoạn tiền lệ. Đây là tham chiếu ngữ cảnh. Tiền lệ không nằm trong danh sách mức kỷ luật của công ty.
         </p>
         <ReferenceList items={items} empty="Lượt này không có tiền lệ." />
@@ -28,13 +28,13 @@ export function PrecedentSection() {
 export function AdministrativeSection() {
   const items = useLayer("ADMINISTRATIVE_PENALTY");
   return (
-    <Card className="border-amber-300 bg-amber-50/40">
+    <Card className="border-son-line bg-son-tint/40">
       <CardHeader>
         <CardTitle>Xử phạt hành chính</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
-        <p className="font-medium text-amber-950">Nhóm này không phải chế tài kỷ luật đối với người lao động.</p>
-        <p className="text-neutral-700">Backend tách các đoạn xử phạt hành chính khỏi mức kỷ luật của công ty.</p>
+        <p className="font-medium text-son-dark">Nhóm này không phải chế tài kỷ luật đối với người lao động.</p>
+        <p className="text-ink-2">Backend tách các đoạn xử phạt hành chính khỏi mức kỷ luật của công ty.</p>
         <ReferenceList items={items} empty="Lượt này không có đoạn xử phạt hành chính." />
       </CardContent>
     </Card>
@@ -48,14 +48,14 @@ function useLayer(kind: EvidenceItem["kind"]): EvidenceItem[] {
 
 function ReferenceList({ items, empty }: { items: EvidenceItem[]; empty: string }) {
   const [selected, setSelected] = useState<EvidenceItem | null>(null);
-  if (!items.length) return <p className="text-neutral-600">{empty}</p>;
+  if (!items.length) return <p className="text-ink-2">{empty}</p>;
   return (
     <>
       <ul className="space-y-2">
         {items.map((item) => (
-          <li key={item.id} className="rounded-md border border-neutral-200 bg-white px-3 py-2">
+          <li key={item.id} className="rounded-md border border-rule bg-white px-3 py-2">
             <p className="font-medium">{item.policyName || item.policyCode || "Văn bản"}</p>
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-ink-3">
               {placeLabel(item.article, item.clause, item.point) || "Không có vị trí điều khoản"}
               {" · "}
               {item.chunkId || "không có mã đoạn"}

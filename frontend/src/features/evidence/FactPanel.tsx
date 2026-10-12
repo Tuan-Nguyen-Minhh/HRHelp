@@ -30,12 +30,12 @@ export function FactPanel() {
       <CardHeader>
         <div>
           <CardTitle>Tình tiết</CardTitle>
-          <p className="mt-1 text-xs text-[#4d7380]">{facts ? familyLabel(facts.family) : "Đang đọc nhóm tình tiết"}</p>
+          <p className="mt-1 text-xs text-ink-3">{facts ? familyLabel(facts.family) : "Đang đọc nhóm tình tiết"}</p>
         </div>
       </CardHeader>
       <CardContent>
-        {factsLoading ? <p className="text-sm text-[#4d7380]">Đang tải tình tiết…</p> : null}
-        {factsError ? <p className="text-sm text-red-800">{factsError}</p> : null}
+        {factsLoading ? <p className="text-sm text-ink-3">Đang tải tình tiết…</p> : null}
+        {factsError ? <p className="text-sm text-son-dark">{factsError}</p> : null}
         {facts ? (
           <ul>
             {facts.facts.map((fact) => (
@@ -43,18 +43,18 @@ export function FactPanel() {
             ))}
           </ul>
         ) : null}
-        {!factsLoading && !facts ? <p className="text-sm text-[#4d7380]">Chưa đọc được tình tiết.</p> : null}
+        {!factsLoading && !facts ? <p className="text-sm text-ink-3">Chưa đọc được tình tiết.</p> : null}
         {editing ? (
-          <div className="mt-3 rounded-lg border border-[#d5e8ed] bg-[#f4fafb] p-3 text-sm">
-            <p className="font-medium text-[#073642]">{editing.label}</p>
-            <p className="mt-1 text-[#4d7380]">AI nhận diện: {editing.fact_value}</p>
+          <div className="mt-3 rounded-lg border border-rule bg-paper-2 p-3 text-sm">
+            <p className="font-medium text-ink">{editing.label}</p>
+            <p className="mt-1 text-ink-3">AI nhận diện: {editing.fact_value}</p>
             <label className="mt-2 block space-y-1" htmlFor="fact-correction">
               <span className="text-xs font-medium">Giá trị HR xác nhận</span>
               <Input id="fact-correction" value={draft} onChange={(event) => setDraft(event.target.value)} />
             </label>
-            {error ? <p className="mt-2 text-red-800">{error}</p> : null}
+            {error ? <p className="mt-2 text-son-dark">{error}</p> : null}
             {ask ? (
-              <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3">
+              <div className="mt-3 rounded-md border border-son-line bg-son-tint p-3">
                 <p>AI nhận diện: {editing.fact_value}</p>
                 <p className="mt-1">Giá trị của bạn: {draft.trim()}</p>
                 <div className="mt-2 flex gap-2">

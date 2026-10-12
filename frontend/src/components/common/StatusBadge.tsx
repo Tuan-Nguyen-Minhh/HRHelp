@@ -24,7 +24,6 @@ export function StatusBadge({ status }: { status: string }) {
       )}
       <Icon className="h-3.5 w-3.5" aria-hidden="true" />
       <span>{statusLabel(status)}</span>
-      <span className="font-normal text-xs opacity-60">{status}</span>
     </Badge>
   );
 }

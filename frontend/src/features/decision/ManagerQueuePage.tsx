@@ -11,31 +11,31 @@ export function ManagerQueuePage() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-xs font-semibold tracking-[0.16em] text-[#009EC1]">QUẢN LÝ</p>
-        <h1 className="text-2xl font-semibold text-[#073642]">Duyệt lần cuối</h1>
-        <p className="mt-1 max-w-2xl text-sm text-[#4d7380]">
+        <p className="text-xs font-semibold tracking-[0.16em] text-son-dark">QUẢN LÝ</p>
+        <h1 className="text-2xl font-semibold text-ink">Duyệt lần cuối</h1>
+        <p className="mt-1 max-w-2xl text-sm text-ink-3">
           Hồ sơ pháp chế đã duyệt, hoặc HR chuyển thẳng. Mức kỷ luật lấy từ báo cáo đã lưu. Quản lý không chọn mức khác.
         </p>
       </div>
-      {query.isLoading ? <p className="text-sm text-[#4d7380]">Đang tải hàng chờ…</p> : null}
-      {query.isError ? <p className="text-sm text-red-800">{errorMessage(query.error)}</p> : null}
+      {query.isLoading ? (<div className="space-y-2" role="status" aria-label="Đang tải hàng chờ">{Array.from({ length: 4 }).map((_, i) => (<div key={i} className="skeleton h-12" aria-hidden="true" />))}</div>) : null}
+      {query.isError ? <p className="text-sm text-son-dark">{errorMessage(query.error)}</p> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-[#9fd0db] bg-white px-4 py-8 text-sm text-[#4d7380]">
+        <p className="rounded-xl border border-dashed border-rule-2 bg-white px-4 py-8 text-sm text-ink-3">
           Không có hồ sơ chờ duyệt cuối.
         </p>
       ) : null}
       <ul className="space-y-2">
         {rows.map((item) => (
-          <li key={item.case_id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#d5e8ed] bg-white px-4 py-3">
+          <li key={item.case_id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-rule bg-white px-4 py-3">
             <div>
-              <Link className="font-medium text-[#009EC1] underline" to={`/manager/${item.case_id}`}>
+              <Link className="font-medium text-son-dark underline" to={`/manager/${item.case_id}`}>
                 {item.case_code}
               </Link>
-              <p className="text-sm text-[#4d7380]">
+              <p className="text-sm text-ink-3">
                 {item.employee_name || "Chưa có tên"} · {formatDate(item.incident_date)}
               </p>
             </div>
-            <span className="text-xs font-medium text-[#073642]">Chờ duyệt cuối</span>
+            <span className="text-xs font-medium text-ink">Chờ duyệt cuối</span>
           </li>
         ))}
       </ul>

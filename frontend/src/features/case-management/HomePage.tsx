@@ -21,9 +21,9 @@ export function HomePage() {
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-xs font-semibold tracking-wide text-neutral-500">KHÔNG GIAN HỒ SƠ</p>
-        <h1 className="mt-1 text-2xl font-semibold text-neutral-950">Hồ sơ của tôi</h1>
-        <p className="mt-1 max-w-2xl text-sm text-neutral-600">
+        <p className="text-xs font-semibold tracking-wide text-ink-3">KHÔNG GIAN HỒ SƠ</p>
+        <h1 className="mt-1 text-2xl font-semibold text-ink">Hồ sơ của tôi</h1>
+        <p className="mt-1 max-w-2xl text-sm text-ink-2">
           Máy chủ chưa có danh sách hồ sơ. Tạo hồ sơ mới, mở lại hồ sơ trong phiên này, hoặc dán mã định danh.
         </p>
       </div>
@@ -33,7 +33,7 @@ export function HomePage() {
             <CardTitle>Hồ sơ mới</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-neutral-600">Ghi nhận nhân viên, ngày xảy ra việc và mô tả. Tình tiết được hỏi ở bước sau.</p>
+            <p className="text-sm text-ink-2">Ghi nhận nhân viên, ngày xảy ra việc và mô tả. Tình tiết được hỏi ở bước sau.</p>
             <Button asChild>
               <Link to="/cases/new">Tạo hồ sơ</Link>
             </Button>
@@ -52,20 +52,20 @@ export function HomePage() {
                 <Label htmlFor="case-id">Mã định danh</Label>
                 <Input id="case-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" {...form.register("caseId")} />
                 {form.formState.errors.caseId ? (
-                  <p className="text-xs text-red-700">{form.formState.errors.caseId.message}</p>
+                  <p className="text-xs text-son-dark">{form.formState.errors.caseId.message}</p>
                 ) : null}
               </div>
               <Button type="submit">Mở</Button>
             </form>
             {saved ? (
-              <p className="mt-4 text-sm text-neutral-600">
+              <p className="mt-4 text-sm text-ink-2">
                 Hồ sơ gần nhất trong phiên này:{" "}
-                <Link className="font-medium text-neutral-900 underline" to={`/cases/${saved}`}>
+                <Link className="font-medium text-ink underline" to={`/cases/${saved}`}>
                   {saved}
                 </Link>
               </p>
             ) : (
-              <p className="mt-4 text-sm text-neutral-500">Chưa có hồ sơ nào trong phiên trình duyệt này.</p>
+              <p className="mt-4 text-sm text-ink-3">Chưa có hồ sơ nào trong phiên trình duyệt này.</p>
             )}
           </CardContent>
         </Card>

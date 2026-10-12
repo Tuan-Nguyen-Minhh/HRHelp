@@ -41,11 +41,11 @@ export function ReopenCard() {
   if (caseView.status !== "REJECTED" || (role !== "HR" && role !== "MANAGER")) return null;
 
   return (
-    <section className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+    <section className="rounded-xl border border-son-line bg-son-tint px-4 py-3 text-sm text-son-dark">
       <p className="font-medium">Pháp chế đã trả hồ sơ</p>
       <p className="mt-1">Pháp chế yêu cầu xử lý lại. HR mở lại để bổ sung, rồi gửi phiếu hoặc chuyển quản lý.</p>
       {note.data?.comment ? <p className="mt-2 whitespace-pre-wrap">Ghi chú pháp chế: {note.data.comment}</p> : null}
-      {error ? <p className="mt-2 text-red-800">{error}</p> : null}
+      {error ? <p className="mt-2 text-son-dark">{error}</p> : null}
       {open ? (
         <div className="mt-3 space-y-2">
           <label className="block text-xs font-medium" htmlFor="reopen-target">
@@ -53,7 +53,7 @@ export function ReopenCard() {
           </label>
           <select
             id="reopen-target"
-            className="h-9 rounded-md border border-amber-300 bg-white px-2 text-sm text-[#073642]"
+            className="h-9 rounded-md border border-son-line bg-white px-2 text-sm text-ink"
             value={target}
             onChange={(event) => setTarget(event.target.value as "NEED_INFO" | "ANALYZED")}
           >

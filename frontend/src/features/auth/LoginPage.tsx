@@ -508,7 +508,7 @@ export function LoginPage() {
             <h1 className="headline">
               Xử lý kỷ luật lao động
               <br />
-              <em>nhanh hơn, chặt chắn hơn.</em>
+              <em>nhanh hơn, chắc chắn hơn.</em>
             </h1>
             <p className="lead rv">
               HR Help đọc tình tiết, dẫn văn bản điều luật còn hiệu lực, đối chiếu chứng cứ và chuyển hồ

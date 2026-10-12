@@ -62,12 +62,12 @@ export function NewCasePage() {
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <div>
-        <Link className="text-sm font-medium text-[#009EC1] underline" to="/cases">
+        <Link className="text-sm font-medium text-son-dark underline" to="/cases">
           Danh sách hồ sơ
         </Link>
-        <p className="mt-3 text-xs font-semibold tracking-[0.16em] text-[#009EC1]">HỒ SƠ MỚI</p>
-        <h1 className="mt-1 text-2xl font-semibold text-[#073642]">Ghi nhận vụ việc</h1>
-        <p className="mt-1 text-sm text-neutral-600">
+        <p className="mt-3 text-xs font-semibold tracking-[0.16em] text-son-dark">HỒ SƠ MỚI</p>
+        <h1 className="mt-1 text-2xl font-semibold text-ink">Ghi nhận vụ việc</h1>
+        <p className="mt-1 text-sm text-ink-2">
           Phòng ban, chức danh và mô tả vi phạm được ghi vào phần mô tả. API lưu một trường mô tả cùng ngày xảy ra việc.
         </p>
       </div>
@@ -77,7 +77,7 @@ export function NewCasePage() {
         </CardHeader>
         <CardContent>
           {error ? (
-            <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
+            <p className="mb-4 rounded-md border border-son-line bg-son-tint px-3 py-2 text-sm text-son-dark" role="alert">
               {error}
             </p>
           ) : null}
@@ -109,7 +109,7 @@ export function NewCasePage() {
               </Field>
               <Field label="Nhóm vụ việc" error={form.formState.errors.family?.message}>
                 <select
-                  className="flex h-9 w-full rounded-md border border-[#d5e8ed] bg-white px-3 text-sm"
+                  className="flex h-10 w-full rounded-md border border-rule bg-white px-3 text-sm text-ink"
                   {...form.register("family")}
                 >
                   <option value="UNAUTHORIZED_ABSENCE">{familyLabel("UNAUTHORIZED_ABSENCE")}</option>
@@ -157,10 +157,10 @@ export function NewCasePage() {
 
 function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
-    <label className="block space-y-1.5 text-sm font-medium text-neutral-800">
+    <label className="block space-y-1.5 text-sm font-medium text-ink">
       <span>{label}</span>
       {children}
-      {error ? <span className="block text-xs font-normal text-red-700">{error}</span> : null}
+      {error ? <span className="block text-xs font-normal text-son-dark">{error}</span> : null}
     </label>
   );
 }

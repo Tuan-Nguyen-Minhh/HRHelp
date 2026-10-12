@@ -50,7 +50,7 @@ export function ReviewMinutes() {
   }
 
   return (
-    <Card id="bien-ban" className="scroll-mt-4 border-sky-200">
+    <Card id="bien-ban" className="scroll-mt-4 border-rule">
       <CardHeader>
         <div>
           <CardTitle>Biên bản đánh giá vụ việc</CardTitle>
@@ -61,12 +61,12 @@ export function ReviewMinutes() {
         </Button>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
-        <p className="text-neutral-700">
+        <p className="text-ink-2">
           Biên bản gom tình tiết đã xác nhận, đoạn đã truy xuất và mức xử lý đề xuất. HR có thể mở bản biểu mẫu để xem trước, sửa tay rồi mới xác nhận hoặc xuất Word.
         </p>
-        <h3 className="font-medium text-neutral-900">{report ? "Biên bản đánh giá" : minutes?.title}</h3>
-        <p className="whitespace-pre-wrap leading-6 text-neutral-800">{body}</p>
-        {exportNote ? <p className="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-[#276274]">{exportNote}</p> : null}
+        <h3 className="font-medium text-ink">{report ? "Biên bản đánh giá" : minutes?.title}</h3>
+        <p className="whitespace-pre-wrap leading-6 text-ink">{body}</p>
+        {exportNote ? <p className="rounded-md border border-rule bg-paper-2 px-3 py-2 text-xs text-ink-2">{exportNote}</p> : null}
         <div className="flex flex-wrap gap-2" role="group" aria-label="Quyết định của HR">
           <Button asChild variant="secondary">
             <Link to={`/cases/${caseId}/assessment`}>Mở biên bản để sửa</Link>
@@ -83,7 +83,7 @@ export function ReviewMinutes() {
             ),
           )}
         </div>
-        {choice ? <p className="text-xs text-neutral-600">{choiceNote(choice, canSend)}</p> : null}
+        {choice ? <p className="text-xs text-ink-2">{choiceNote(choice, canSend)}</p> : null}
       </CardContent>
     </Card>
   );

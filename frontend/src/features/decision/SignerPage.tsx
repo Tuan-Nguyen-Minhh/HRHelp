@@ -80,24 +80,24 @@ export function SignerPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <Link className="text-sm text-[#009EC1] underline" to={back}>
+      <Link className="text-sm text-son-dark underline" to={back}>
         {manager ? "Hàng chờ duyệt cuối" : "Danh sách quyết định"}
       </Link>
-      <h1 className="text-2xl font-semibold text-[#073642]">{manager ? "Duyệt lần cuối" : "Ban hành quyết định"}</h1>
-      {error ? <p className="text-sm text-red-800">{error}</p> : null}
+      <h1 className="text-2xl font-semibold text-ink">{manager ? "Duyệt lần cuối" : "Ban hành quyết định"}</h1>
+      {error ? <p className="text-sm text-son-dark">{error}</p> : null}
       {preview.data ? (
         <Card>
           <CardHeader>
             <CardTitle>Mức đã được duyệt</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <p className="text-lg font-semibold text-[#073642]">{sanctionLabel(preview.data.sanction_type)}</p>
-            <p className="whitespace-pre-wrap text-[#355861]">{preview.data.decision_draft}</p>
+            <p className="text-lg font-semibold text-ink">{sanctionLabel(preview.data.sanction_type)}</p>
+            <p className="whitespace-pre-wrap text-ink-2">{preview.data.decision_draft}</p>
             <Input value={code} onChange={(event) => setCode(event.target.value)} placeholder="Mã quyết định" />
             <Textarea rows={4} value={summary} onChange={(event) => setSummary(event.target.value)} placeholder="Tóm tắt quyết định" />
             <Textarea rows={3} value={basis} onChange={(event) => setBasis(event.target.value)} placeholder="Căn cứ ban hành" />
             {confirmIssue ? (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <div className="rounded-lg border border-son-line bg-son-tint p-3">
                 <p>
               {manager ? "Duyệt lần cuối mức" : "Ban hành mức"} {sanctionLabel(sanction)}? Thao tác được ghi vào lịch sử hồ sơ.
             </p>
@@ -156,7 +156,7 @@ export function SignerPage() {
             <p>Sau khi duyệt cuối, hồ sơ có thể đóng. Tiền lệ do người ký ghi.</p>
           )}
           {confirmClose ? (
-            <div className="rounded-lg border border-[#d5e8ed] p-3">
+            <div className="rounded-lg border border-rule p-3">
               <p>Đóng hồ sơ? Sau khi đóng, hồ sơ không nhận thêm tình tiết.</p>
               <div className="mt-2 flex gap-2">
                 <Button variant="secondary" onClick={() => setConfirmClose(false)}>Hủy</Button>

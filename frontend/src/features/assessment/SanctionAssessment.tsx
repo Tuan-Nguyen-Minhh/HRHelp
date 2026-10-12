@@ -40,7 +40,7 @@ export function SanctionAssessment() {
       </CardHeader>
       <CardContent className="space-y-4">
         {view === "collecting" ? (
-          <p className="text-sm text-neutral-700">
+          <p className="text-sm text-ink-2">
             Chưa có mức kỷ luật để hiển thị. Trợ lý hỏi phần còn thiếu trong hội thoại, rồi backend mới lưu đánh giá.
           </p>
         ) : null}
@@ -66,18 +66,18 @@ export function SanctionAssessment() {
 
         {view === "review" ? (
           <div className="flex items-start gap-2">
-            <Scale className="mt-0.5 h-4 w-4 shrink-0 text-red-800" aria-hidden="true" />
+            <Scale className="mt-0.5 h-4 w-4 shrink-0 text-son-dark" aria-hidden="true" />
             <div>
-              <p className="font-medium text-red-950">{reviewTitle(caseView.status)}</p>
-              <p className="text-sm text-neutral-700">{ticket?.reason || "Phiếu đã rời khỏi bước soạn của nhân sự."}</p>
+              <p className="font-medium text-son-dark">{reviewTitle(caseView.status)}</p>
+              <p className="text-sm text-ink-2">{ticket?.reason || "Phiếu đã rời khỏi bước soạn của nhân sự."}</p>
             </div>
           </div>
         ) : null}
 
         {view === "supported" ? (
           <div className="flex items-start gap-2">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-800" aria-hidden="true" />
-            <p className="text-sm text-neutral-700">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-ink-2" aria-hidden="true" />
+            <p className="text-sm text-ink-2">
               {ticket?.disposition === "PREVIEW"
                 ? "Báo cáo đã lưu một mức kèm đoạn luật hoặc nội quy. Phiếu đang ở bước xem trước."
                 : "Báo cáo đã lưu một mức kèm đoạn luật hoặc nội quy."}
@@ -87,15 +87,15 @@ export function SanctionAssessment() {
 
         {level ? (
           <div>
-            <p className="text-xs text-neutral-500">Mức kỷ luật đã lưu</p>
+            <p className="text-xs text-ink-3">Mức kỷ luật đã lưu</p>
             <p className="text-lg font-semibold">{sanctionLabel(level)}</p>
-            <p className="text-xs text-neutral-500">{level}</p>
+            <p className="text-xs text-ink-3">{level}</p>
           </div>
         ) : null}
 
         {answer && view !== "collecting" ? (
           <div>
-            <p className="text-xs text-neutral-500">Rủi ro căn cứ</p>
+            <p className="text-xs text-ink-3">Rủi ro căn cứ</p>
             <p className="text-sm font-medium">
               {riskLabel(answer.risk_level)}
               {answer.risk_level ? ` (${answer.risk_level})` : ""}
@@ -105,25 +105,25 @@ export function SanctionAssessment() {
 
         {answer && view !== "collecting" ? (
           <div>
-            <p className="text-xs text-neutral-500">Lý do đã ghi</p>
-            <p className="whitespace-pre-wrap text-sm leading-6 text-neutral-800">{answer.rationale || "Chưa có lý do."}</p>
+            <p className="text-xs text-ink-3">Lý do đã ghi</p>
+            <p className="whitespace-pre-wrap text-sm leading-6 text-ink">{answer.rationale || "Chưa có lý do."}</p>
           </div>
         ) : null}
 
         {answer?.standard?.rule && view !== "collecting" ? (
-          <p className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-800">{answer.standard.rule}</p>
+          <p className="rounded-md border border-rule bg-paper-2 px-3 py-2 text-sm text-ink">{answer.standard.rule}</p>
         ) : null}
 
         {level && support.length > 0 ? (
           <div>
-            <p className="text-xs font-medium text-neutral-500">Căn cứ của mức đã lưu</p>
+            <p className="text-xs font-medium text-ink-3">Căn cứ của mức đã lưu</p>
             <ol className="mt-2 space-y-3">
               {support.map((item, index) => (
-                <li key={item.id} className="rounded-md border border-neutral-200 px-3 py-2">
+                <li key={item.id} className="rounded-md border border-rule px-3 py-2">
                   <p className="text-sm font-medium">
                     [{index + 1}] {item.policyName || item.policyCode} {placeLabel(item.article, item.clause, item.point)}
                   </p>
-                  <p className="mt-1 line-clamp-3 text-sm text-neutral-700">{item.content}</p>
+                  <p className="mt-1 line-clamp-3 text-sm text-ink-2">{item.content}</p>
                   <Button className="mt-1 px-0" variant="ghost" size="sm" onClick={() => setSelected(item)}>
                     Xem nguồn
                   </Button>
@@ -164,21 +164,21 @@ export function SanctionAssessment() {
 function Notice({ title, body, detail }: { title: string; body: string; detail?: string }) {
   return (
     <div className="flex items-start gap-2">
-      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-800" aria-hidden="true" />
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-son-dark" aria-hidden="true" />
       <div>
-        <p className="font-medium text-amber-950">{title}</p>
-        <p className="text-sm text-neutral-700">{body}</p>
-        {detail ? <p className="mt-1 text-xs text-neutral-600">{detail}</p> : null}
+        <p className="font-medium text-son-dark">{title}</p>
+        <p className="text-sm text-ink-2">{body}</p>
+        {detail ? <p className="mt-1 text-xs text-ink-2">{detail}</p> : null}
       </div>
     </div>
   );
 }
 
 function cardClass(view: AssessmentView): string {
-  if (view === "review") return "border-red-300";
-  if (view === "supported") return "border-emerald-300";
+  if (view === "review") return "border-son-line";
+  if (view === "supported") return "border-leather";
   if (view === "collecting") return "";
-  return "border-amber-300";
+  return "border-son-line";
 }
 
 function viewLabel(view: AssessmentView, status: string): string {

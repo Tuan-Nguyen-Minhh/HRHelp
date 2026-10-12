@@ -55,26 +55,26 @@ export function LegalTicketCard({ canSend, waitForMinutes = false }: { canSend: 
   });
 
   return (
-    <section id="legal-ticket" className="scroll-mt-4 rounded-xl border border-[#d5e8ed] bg-white px-4 py-4">
-      <p className="text-xs font-semibold tracking-[0.14em] text-[#009EC1]">PHIẾU PHÁP CHẾ</p>
-      <h2 className="mt-1 text-lg font-semibold text-[#073642]">Xác nhận phiếu và chọn email pháp chế</h2>
+    <section id="legal-ticket" className="scroll-mt-4 rounded-xl border border-rule bg-white px-4 py-4">
+      <p className="text-xs font-semibold tracking-[0.14em] text-son-dark">PHIẾU PHÁP CHẾ</p>
+      <h2 className="mt-1 text-lg font-semibold text-ink">Xác nhận phiếu và chọn email pháp chế</h2>
       <ol className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
         <Step done={!waitForMinutes} label="1. Xác nhận biên bản" />
         <Step done={sent} label="2. Chọn email pháp chế" />
         <Step done={sent} label="3. Gửi cho pháp chế" />
       </ol>
       {ticket ? (
-        <p className="mt-3 text-sm text-[#073642]">
+        <p className="mt-3 text-sm text-ink">
           {TICKET_LABEL[ticket.disposition] ?? ticket.disposition}. {ticket.reason}
           {ticket.hold_code ? ` ${HOLD_LABEL[ticket.hold_code] ?? ticket.hold_code}.` : ""}
         </p>
       ) : (
-        <p className="mt-3 text-sm text-[#4d7380]">Chưa có phiếu xem trước. Sub-agent soạn phiếu khi báo cáo đã đủ căn cứ.</p>
+        <p className="mt-3 text-sm text-ink-3">Chưa có phiếu xem trước. Sub-agent soạn phiếu khi báo cáo đã đủ căn cứ.</p>
       )}
       {sent ? (
-        <p className="mt-3 text-sm text-[#073642]">
+        <p className="mt-3 text-sm text-ink">
           Phiếu đã gửi pháp chế.{" "}
-          <Link className="font-medium text-[#009EC1] underline" to={`/cases/${caseId}/legal-review`}>
+          <Link className="font-medium text-son-dark underline" to={`/cases/${caseId}/legal-review`}>
             Xem phiếu đã gửi
           </Link>
         </p>
@@ -91,7 +91,7 @@ export function LegalTicketCard({ canSend, waitForMinutes = false }: { canSend: 
             {choices.length ? (
               <select
                 id="legal-code"
-                className="flex h-9 w-full rounded-md border border-[#d5e8ed] bg-white px-3 text-sm text-[#073642]"
+                className="flex h-10 w-full rounded-md border border-rule bg-white px-3 text-sm text-ink"
                 {...form.register("legal_code")}
               >
                 <option value="">Chọn email pháp chế</option>
@@ -104,12 +104,12 @@ export function LegalTicketCard({ canSend, waitForMinutes = false }: { canSend: 
             ) : (
               <Input id="legal-code" type="email" maxLength={255} placeholder="legal.demo@vinuni.edu.vn" autoComplete="email" {...form.register("legal_code")} />
             )}
-            {form.formState.errors.legal_code ? <p className="text-xs text-red-700">{form.formState.errors.legal_code.message}</p> : null}
+            {form.formState.errors.legal_code ? <p className="text-xs text-son-dark">{form.formState.errors.legal_code.message}</p> : null}
           </div>
-          <p className="text-sm text-[#4d7380]">{hint(allowSend, waitForMinutes, caseView.status, ticket)}</p>
-          {error ? <p className="text-sm text-red-800">{error}</p> : null}
+          <p className="text-sm text-ink-3">{hint(allowSend, waitForMinutes, caseView.status, ticket)}</p>
+          {error ? <p className="text-sm text-son-dark">{error}</p> : null}
           {pendingCode && allowSend ? (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+            <div className="rounded-lg border border-son-line bg-son-tint p-3 text-sm text-son-dark">
               <p>Gửi phiếu cho pháp chế {pendingCode}? Hồ sơ sẽ khóa để pháp chế xem xét.</p>
               <div className="mt-2 flex gap-2">
                 <Button variant="secondary" onClick={() => setPendingCode(null)}>
@@ -144,7 +144,7 @@ export function LegalTicketCard({ canSend, waitForMinutes = false }: { canSend: 
             </div>
           )}
           {confirmDirect && allowSend ? (
-            <div className="rounded-lg border border-[#d5e8ed] bg-[#f4fafb] p-3 text-sm text-[#073642]">
+            <div className="rounded-lg border border-rule bg-paper-2 p-3 text-sm text-ink">
               <p>Không gửi pháp chế. Chuyển hồ sơ cho quản lý duyệt lần cuối?</p>
               <div className="mt-2 flex gap-2">
                 <Button variant="secondary" onClick={() => setConfirmDirect(false)}>
@@ -164,7 +164,7 @@ export function LegalTicketCard({ canSend, waitForMinutes = false }: { canSend: 
 
 function Step({ done, label }: { done: boolean; label: string }) {
   return (
-    <li className={`rounded-md border px-3 py-2 ${done ? "border-emerald-200 bg-emerald-50 text-emerald-950" : "border-[#d5e8ed] text-[#073642]"}`}>
+    <li className={`rounded-md border px-3 py-2 ${done ? "border-leather bg-paper-2 text-ink" : "border-rule text-ink"}`}>
       {label}
     </li>
   );

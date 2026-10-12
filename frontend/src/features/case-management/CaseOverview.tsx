@@ -17,9 +17,9 @@ export function CaseOverview() {
           <Info label="Ngày xảy ra" value={formatDate(caseView.incident_date)} />
           <Info label="Nhóm tình tiết" value={familyLabel(facts?.family)} />
         </div>
-        <div className="rounded-xl border border-[#d8e9ee] bg-[#f7fbfd] p-3">
-          <p className="text-xs text-neutral-500">Mô tả</p>
-          <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-neutral-800">{caseView.description || "—"}</p>
+        <div className="rounded-xl border border-rule bg-paper-2 p-3">
+          <p className="text-xs text-ink-3">Mô tả</p>
+          <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-ink">{caseView.description || "—"}</p>
         </div>
       </CardContent>
     </Card>
@@ -28,9 +28,9 @@ export function CaseOverview() {
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-100 bg-white px-3 py-2">
-      <p className="text-xs text-neutral-500">{label}</p>
-      <p className="font-medium text-neutral-900">{value}</p>
+    <div className="rounded-xl border border-rule bg-white px-3 py-2">
+      <p className="text-xs text-ink-3">{label}</p>
+      <p className="font-medium text-ink">{value}</p>
     </div>
   );
 }
