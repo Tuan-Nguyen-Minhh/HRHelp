@@ -1,0 +1,432 @@
+{
+  "version": 1,
+  "task": "case_assessment",
+  "sample_count": 5,
+  "evaluation_scope": "Direct incomplete-case assessment; production chat must clarify missing required facts first",
+  "reference_status": "draft_pending_expert_review",
+  "ragas_schema_source": "https://docs.ragas.io/en/latest/references/evaluation_schema/",
+  "policy_snapshot": "policy_snapshot.json",
+  "case_ids_in_row_order": [
+    "CA01",
+    "CA02",
+    "CA03",
+    "CA04",
+    "CA05"
+  ],
+  "cases": [
+    {
+      "case_id": "CA01",
+      "row_index": 0,
+      "source_file": "tested_golden_dataset/01_Bien_ban_nghi_khong_phep.docx",
+      "source_sha256": "afaaf104ff6dfd2d96ecef20332874c7e2d74c2058eaf259cf84735d8c05e081",
+      "source_paragraphs": [
+        "CÔNG TY TNHH AN PHÁTCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+        "Số: 01/2026/BB-APĐộc lập - Tự do - Hạnh phúc",
+        "Hà Nội, ngày 12 tháng 10 năm 2026",
+        "BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT",
+        "Biên bản xem xét xử lý vi phạm kỷ luật lao động đối với:",
+        "Ông/Bà: NGUYỄN VĂN ANMã số nhân viên: EMP-005",
+        "Chức vụ/Chức danh: Kỹ sư phần mềmPhòng ban: Kỹ thuật",
+        "Vào lúc: 09 giờ 00 phút, ngày 12 tháng 10 năm 2026.",
+        "Tại: Phòng họp Công ty TNHH An Phát, số 25 phố Hòa Bình, Hà Nội.",
+        "I. THÀNH PHẦN THAM DỰ",
+        "- Đại diện Ban lãnh đạo: Ông Nguyễn Đức Thành; Chức vụ: Giám đốc.",
+        "- Đại diện nhân sự: Bà Trần Ngọc Lan; Chức vụ: Trưởng phòng Nhân sự.",
+        "- Người bị lập biên bản: NGUYỄN VĂN AN; Chức vụ: Kỹ sư phần mềm.",
+        "Phòng ban: Kỹ thuật; Mã nhân viên: EMP-005.",
+        "- Người làm chứng: Lê Quốc Huy; Chức vụ: Trưởng nhóm kỹ thuật; Phòng ban: Kỹ thuật.",
+        "II. NỘI DUNG",
+        "- Thời gian, địa điểm xảy ra sự việc: Từ ngày 05 đến ngày 09 tháng 10 năm 2026 tại bộ phận Kỹ thuật.",
+        "- Diễn biến sự việc: Nhân viên tự ý nghỉ 5 ngày làm việc không phép.",
+        "• Không có mặt tại công ty trong các ngày 05, 06, 07, 08 và 09/10/2026.",
+        "• Không gửi đơn xin nghỉ hoặc thông báo cho quản lý trước khi vắng mặt.",
+        "• Hồ sơ ghi nhận gồm bảng chấm công và thư liên hệ của quản lý.",
+        "- Đối chiếu quy định: Nội quy Công ty TNHH An Phát, mục Thời giờ làm việc và thủ tục xin nghỉ; đối chiếu hồ sơ ghi nhận nêu trên.",
+        "- Thiệt hại của công ty: Nhóm phải phân công lại công việc; chưa xác định thiệt hại bằng tiền.",
+        "- Ý kiến của người bị lập biên bản: Tôi xác nhận đã vắng mặt do việc gia đình và không thông báo kịp thời; tôi sẽ bổ sung giải trình và tài liệu liên quan.",
+        "- Kết quả đánh giá: Cần kiểm tra lý do vắng mặt và tài liệu bổ sung trước khi kết luận.",
+        "- Hình thức xử lý đề xuất của Ban lãnh đạo: Chuyển hồ sơ cho Nhân sự xác minh; chưa đề xuất hình thức kỷ luật.",
+        "- Ý kiến của người làm chứng và đại diện nhân sự: Quản lý xác nhận việc vắng mặt; Nhân sự đề nghị nhận giải trình bổ sung trước ngày 15/10/2026.",
+        "Biên bản kết thúc lúc 10 giờ 00 phút cùng ngày, được đọc lại cho các bên nghe và lập thành 02 bản có nội dung như nhau.",
+        "Đại diện Ban lãnh đạoNgười bị lập biên bản",
+        "(Ký tên, ghi họ tên và đóng dấu)(Ký tên, ghi rõ họ tên)",
+        "Nguyễn Đức ThànhNguyễn Văn An"
+      ],
+      "source_conclusion": [
+        "- Kết quả đánh giá: Cần kiểm tra lý do vắng mặt và tài liệu bổ sung trước khi kết luận.",
+        "- Hình thức xử lý đề xuất của Ban lãnh đạo: Chuyển hồ sơ cho Nhân sự xác minh; chưa đề xuất hình thức kỷ luật."
+      ],
+      "model_description": "Nhân viên: NGUYỄN VĂN AN; mã: EMP-005; chức danh: Kỹ sư phần mềm; bộ phận: Kỹ thuật.\n- Thời gian, địa điểm xảy ra sự việc: Từ ngày 05 đến ngày 09 tháng 10 năm 2026 tại bộ phận Kỹ thuật.\n- Diễn biến sự việc: Nhân viên tự ý nghỉ 5 ngày làm việc không phép.\n• Không có mặt tại công ty trong các ngày 05, 06, 07, 08 và 09/10/2026.\n• Không gửi đơn xin nghỉ hoặc thông báo cho quản lý trước khi vắng mặt.\n• Hồ sơ ghi nhận gồm bảng chấm công và thư liên hệ của quản lý.\n- Thiệt hại của công ty: Nhóm phải phân công lại công việc; chưa xác định thiệt hại bằng tiền.\n- Ý kiến của người bị lập biên bản: Tôi xác nhận đã vắng mặt do việc gia đình và không thông báo kịp thời; tôi sẽ bổ sung giải trình và tài liệu liên quan.\n- Ý kiến của người làm chứng và đại diện nhân sự: Quản lý xác nhận việc vắng mặt.",
+      "family": "UNAUTHORIZED_ABSENCE",
+      "incident_date": "2026-10-05",
+      "incident_end_date": "2026-10-09",
+      "minutes_date": "2026-10-12",
+      "source_known_facts": {
+        "absence_days": "5 ngày làm việc trong 30 ngày (05–09/10/2026)",
+        "notice_form": "không báo",
+        "minutes_made": "true"
+      },
+      "unknown_facts": [
+        "contract_type",
+        "explanation_requested",
+        "justified_absence_reason"
+      ],
+      "normal_workflow_ready": false,
+      "normal_workflow_blocker": "contract_type missing; remaining required facts must be explicitly confirmed",
+      "reference_status": "draft_pending_expert_review",
+      "reference_origin": "Assistant-authored condition analysis from extracted source and frozen corpus; not verbatim source assessment",
+      "expected_assessment_status_with_reference_contexts": "NEED_MORE_FACTS",
+      "expected_sanction_type": null,
+      "expected_checks": [
+        "Nhận diện 5 ngày trong 30 ngày",
+        "Không suy diễn việc gia đình thành lý do hợp lệ hoặc không hợp lệ",
+        "Không đề xuất sa thải vô điều kiện"
+      ],
+      "reference_evidence_ids": [
+        "5f3cd296-055a-430f-92a9-e9885cc6078f",
+        "52e33d20-472b-45a9-97bd-3f0bc2d2d6de",
+        "0812add5-c466-47fc-87cf-2c085cda1b87",
+        "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+        "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+        "779013cd-822a-4a5d-9bbc-4d5294019406"
+      ],
+      "normalization_notes": [
+        "Event start selected as incident_date; full interval retained.",
+        "minutes_made=true is valid only in the declared post-minutes simulation.",
+        "Source statements are observations/test facts, not externally verified evidence.",
+        "An Phát-to-HRCorp alias is a declared fixture assumption, not a source fact."
+      ]
+    },
+    {
+      "case_id": "CA02",
+      "row_index": 1,
+      "source_file": "tested_golden_dataset/02_Bien_ban_di_muon.docx",
+      "source_sha256": "a936f86764fc78a6473ae5a3191532fdd7ab6324ab3a8da81db9f837e3aaac24",
+      "source_paragraphs": [
+        "CÔNG TY TNHH AN PHÁTCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+        "Số: 02/2026/BB-APĐộc lập - Tự do - Hạnh phúc",
+        "Hà Nội, ngày 13 tháng 10 năm 2026",
+        "BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT",
+        "Biên bản xem xét xử lý vi phạm kỷ luật lao động đối với:",
+        "Ông/Bà: TRẦN THỊ BÌNHMã số nhân viên: EMP-012",
+        "Chức vụ/Chức danh: Chuyên viên kinh doanhPhòng ban: Kinh doanh",
+        "Vào lúc: 14 giờ 00 phút, ngày 13 tháng 10 năm 2026.",
+        "Tại: Phòng họp Công ty TNHH An Phát, số 25 phố Hòa Bình, Hà Nội.",
+        "I. THÀNH PHẦN THAM DỰ",
+        "- Đại diện Ban lãnh đạo: Ông Nguyễn Đức Thành; Chức vụ: Giám đốc.",
+        "- Đại diện nhân sự: Bà Trần Ngọc Lan; Chức vụ: Trưởng phòng Nhân sự.",
+        "- Người bị lập biên bản: TRẦN THỊ BÌNH; Chức vụ: Chuyên viên kinh doanh.",
+        "Phòng ban: Kinh doanh; Mã nhân viên: EMP-012.",
+        "- Người làm chứng: Phạm Thu Hà; Chức vụ: Trưởng nhóm kinh doanh; Phòng ban: Kinh doanh.",
+        "II. NỘI DUNG",
+        "- Thời gian, địa điểm xảy ra sự việc: Các ngày 05, 06, 08 và 12 tháng 10 năm 2026 tại văn phòng công ty.",
+        "- Diễn biến sự việc: Nhân viên đi làm muộn 4 lần trong tháng.",
+        "• Giờ bắt đầu làm việc theo lịch của bộ phận là 08 giờ 30 phút.",
+        "• Giờ có mặt lần lượt là 08:50, 08:45, 09:00 và 08:55; tổng cộng muộn 90 phút.",
+        "• Dữ liệu chấm công đã được đối chiếu với lịch làm việc và quản lý trực tiếp.",
+        "- Đối chiếu quy định: Nội quy Công ty TNHH An Phát, mục Chấm công và tuân thủ giờ làm việc; đối chiếu hồ sơ ghi nhận nêu trên.",
+        "- Thiệt hại của công ty: Hai cuộc họp đầu ngày bắt đầu chậm; chưa xác định thiệt hại bằng tiền.",
+        "- Ý kiến của người bị lập biên bản: Tôi xác nhận các lần đi muộn do sắp xếp việc cá nhân chưa phù hợp; từ ngày 14/10 tôi sẽ chủ động đi sớm hơn.",
+        "- Kết quả đánh giá: Dữ liệu chấm công ghi nhận việc đi muộn; cần đối chiếu quy định áp dụng.",
+        "- Hình thức xử lý đề xuất của Ban lãnh đạo: Ghi nhận cam kết khắc phục và chuyển Nhân sự rà soát; chưa ban hành quyết định kỷ luật.",
+        "- Ý kiến của người làm chứng và đại diện nhân sự: Trưởng nhóm xác nhận thời gian có mặt; Nhân sự theo dõi việc chấp hành trong hai tuần tiếp theo.",
+        "Biên bản kết thúc lúc 15 giờ 00 phút cùng ngày, được đọc lại cho các bên nghe và lập thành 02 bản có nội dung như nhau.",
+        "Đại diện Ban lãnh đạoNgười bị lập biên bản",
+        "(Ký tên, ghi họ tên và đóng dấu)(Ký tên, ghi rõ họ tên)",
+        "Nguyễn Đức ThànhTrần Thị Bình"
+      ],
+      "source_conclusion": [
+        "- Kết quả đánh giá: Dữ liệu chấm công ghi nhận việc đi muộn; cần đối chiếu quy định áp dụng.",
+        "- Hình thức xử lý đề xuất của Ban lãnh đạo: Ghi nhận cam kết khắc phục và chuyển Nhân sự rà soát; chưa ban hành quyết định kỷ luật."
+      ],
+      "model_description": "Nhân viên: TRẦN THỊ BÌNH; mã: EMP-012; chức danh: Chuyên viên kinh doanh; bộ phận: Kinh doanh.\n- Thời gian, địa điểm xảy ra sự việc: Các ngày 05, 06, 08 và 12 tháng 10 năm 2026 tại văn phòng công ty.\n- Diễn biến sự việc: Nhân viên đi làm muộn 4 lần trong tháng.\n• Giờ bắt đầu làm việc theo lịch của bộ phận là 08 giờ 30 phút.\n• Giờ có mặt lần lượt là 08:50, 08:45, 09:00 và 08:55; tổng cộng muộn 90 phút.\n• Dữ liệu chấm công đã được đối chiếu với lịch làm việc và quản lý trực tiếp.\n- Thiệt hại của công ty: Hai cuộc họp đầu ngày bắt đầu chậm; chưa xác định thiệt hại bằng tiền.\n- Ý kiến của người bị lập biên bản: Tôi xác nhận các lần đi muộn do sắp xếp việc cá nhân chưa phù hợp; từ ngày 14/10 tôi sẽ chủ động đi sớm hơn.\n- Ý kiến của người làm chứng và đại diện nhân sự: Trưởng nhóm xác nhận thời gian có mặt.",
+      "family": "LATE",
+      "incident_date": "2026-10-05",
+      "incident_end_date": "2026-10-12",
+      "minutes_date": "2026-10-13",
+      "source_known_facts": {
+        "late_days": "4 lần trong tháng 10/2026",
+        "minutes_made": "true"
+      },
+      "unknown_facts": [
+        "contract_type",
+        "explanation_requested",
+        "first_offense",
+        "justified_lateness_reason"
+      ],
+      "normal_workflow_ready": false,
+      "normal_workflow_blocker": "contract_type missing; remaining required facts must be explicitly confirmed",
+      "reference_status": "draft_pending_expert_review",
+      "reference_origin": "Assistant-authored condition analysis from extracted source and frozen corpus; not verbatim source assessment",
+      "expected_assessment_status_with_reference_contexts": "NEED_MORE_FACTS",
+      "expected_sanction_type": null,
+      "expected_checks": [
+        "Tính đúng 20 + 15 + 30 + 25 = 90 phút",
+        "Dùng ngưỡng quá 3 lần của snapshot, không dùng ngưỡng 7 lần của Markdown cũ",
+        "Không tự điền first_offense"
+      ],
+      "reference_evidence_ids": [
+        "5f3cd296-055a-430f-92a9-e9885cc6078f",
+        "4209ec08-1cfe-42db-bc10-4abdbdd82cdc",
+        "dbbb3ca2-4003-408b-a50f-6a85e737cd5a",
+        "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+        "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+        "779013cd-822a-4a5d-9bbc-4d5294019406"
+      ],
+      "normalization_notes": [
+        "Event start selected as incident_date; full interval retained.",
+        "minutes_made=true is valid only in the declared post-minutes simulation.",
+        "Source statements are observations/test facts, not externally verified evidence.",
+        "An Phát-to-HRCorp alias is a declared fixture assumption, not a source fact."
+      ]
+    },
+    {
+      "case_id": "CA03",
+      "row_index": 2,
+      "source_file": "tested_golden_dataset/03_Bien_ban_cham_nop_bao_cao.docx",
+      "source_sha256": "1cb91028156bbcc90a737f6f4e69a2bd0ed0d74032dd3cf3677f3377d8ed85ce",
+      "source_paragraphs": [
+        "CÔNG TY TNHH AN PHÁTCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+        "Số: 03/2026/BB-APĐộc lập - Tự do - Hạnh phúc",
+        "Hà Nội, ngày 14 tháng 10 năm 2026",
+        "BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT",
+        "Biên bản xem xét xử lý vi phạm kỷ luật lao động đối với:",
+        "Ông/Bà: LÊ VĂN CƯỜNGMã số nhân viên: EMP-021",
+        "Chức vụ/Chức danh: Chuyên viên kế toánPhòng ban: Tài chính Kế toán",
+        "Vào lúc: 10 giờ 00 phút, ngày 14 tháng 10 năm 2026.",
+        "Tại: Phòng họp Công ty TNHH An Phát, số 25 phố Hòa Bình, Hà Nội.",
+        "I. THÀNH PHẦN THAM DỰ",
+        "- Đại diện Ban lãnh đạo: Ông Nguyễn Đức Thành; Chức vụ: Giám đốc.",
+        "- Đại diện nhân sự: Bà Trần Ngọc Lan; Chức vụ: Trưởng phòng Nhân sự.",
+        "- Người bị lập biên bản: LÊ VĂN CƯỜNG; Chức vụ: Chuyên viên kế toán.",
+        "Phòng ban: Tài chính Kế toán; Mã nhân viên: EMP-021.",
+        "- Người làm chứng: Đỗ Thị Mai; Chức vụ: Kế toán trưởng; Phòng ban: Tài chính Kế toán.",
+        "II. NỘI DUNG",
+        "- Thời gian, địa điểm xảy ra sự việc: Từ ngày 09 đến ngày 13 tháng 10 năm 2026 tại phòng Tài chính Kế toán.",
+        "- Diễn biến sự việc: Nhân viên nộp báo cáo công việc trễ hạn.",
+        "• Báo cáo đối soát tháng 9 được giao ngày 01/10, hạn nộp lúc 17 giờ ngày 09/10/2026.",
+        "• Báo cáo được gửi lúc 10 giờ ngày 13/10/2026; chưa có đề nghị gia hạn trước hạn nộp.",
+        "• Hồ sơ gồm thư giao việc, thư nhắc hạn và thời điểm gửi báo cáo.",
+        "- Đối chiếu quy định: Nội quy Công ty TNHH An Phát, mục Thực hiện nhiệm vụ và báo cáo tiến độ; đối chiếu hồ sơ ghi nhận nêu trên.",
+        "- Thiệt hại của công ty: Bộ phận phải điều chỉnh lịch tổng hợp; chưa ghi nhận tổn thất bằng tiền.",
+        "- Ý kiến của người bị lập biên bản: Tôi chưa tổng hợp kịp chứng từ và chưa báo cáo vướng mắc đúng lúc; tôi sẽ cập nhật tiến độ hằng ngày để tránh lặp lại.",
+        "- Kết quả đánh giá: Cần xác minh thời điểm cung cấp chứng từ và trách nhiệm của các bên liên quan.",
+        "- Hình thức xử lý đề xuất của Ban lãnh đạo: Yêu cầu bổ sung giải trình về tiến độ; chưa đề xuất hình thức kỷ luật.",
+        "- Ý kiến của người làm chứng và đại diện nhân sự: Kế toán trưởng xác nhận báo cáo đã được nhận; Nhân sự đề nghị làm rõ nguyên nhân chậm nộp trước ngày 16/10/2026.",
+        "Biên bản kết thúc lúc 11 giờ 00 phút cùng ngày, được đọc lại cho các bên nghe và lập thành 02 bản có nội dung như nhau.",
+        "Đại diện Ban lãnh đạoNgười bị lập biên bản",
+        "(Ký tên, ghi họ tên và đóng dấu)(Ký tên, ghi rõ họ tên)",
+        "Nguyễn Đức ThànhLê Văn Cường"
+      ],
+      "source_conclusion": [
+        "- Kết quả đánh giá: Cần xác minh thời điểm cung cấp chứng từ và trách nhiệm của các bên liên quan.",
+        "- Hình thức xử lý đề xuất của Ban lãnh đạo: Yêu cầu bổ sung giải trình về tiến độ; chưa đề xuất hình thức kỷ luật."
+      ],
+      "model_description": "Nhân viên: LÊ VĂN CƯỜNG; mã: EMP-021; chức danh: Chuyên viên kế toán; bộ phận: Tài chính Kế toán.\n- Thời gian, địa điểm xảy ra sự việc: Từ ngày 09 đến ngày 13 tháng 10 năm 2026 tại phòng Tài chính Kế toán.\n- Diễn biến sự việc: Nhân viên nộp báo cáo công việc trễ hạn.\n• Báo cáo đối soát tháng 9 được giao ngày 01/10, hạn nộp lúc 17 giờ ngày 09/10/2026.\n• Báo cáo được gửi lúc 10 giờ ngày 13/10/2026; chưa có đề nghị gia hạn trước hạn nộp.\n• Hồ sơ gồm thư giao việc, thư nhắc hạn và thời điểm gửi báo cáo.\n- Thiệt hại của công ty: Bộ phận phải điều chỉnh lịch tổng hợp; chưa ghi nhận tổn thất bằng tiền.\n- Ý kiến của người bị lập biên bản: Tôi chưa tổng hợp kịp chứng từ và chưa báo cáo vướng mắc đúng lúc; tôi sẽ cập nhật tiến độ hằng ngày để tránh lặp lại.\n- Ý kiến của người làm chứng và đại diện nhân sự: Kế toán trưởng xác nhận báo cáo đã được nhận.",
+      "family": "GENERAL",
+      "incident_date": "2026-10-09",
+      "incident_end_date": "2026-10-13",
+      "minutes_date": "2026-10-14",
+      "source_known_facts": {
+        "violation_summary": "Nộp báo cáo đối soát tháng 9 sau hạn 17:00 ngày 09/10/2026, gửi lúc 10:00 ngày 13/10/2026; chưa đề nghị gia hạn trước hạn.",
+        "minutes_made": "true"
+      },
+      "unknown_facts": [
+        "contract_type",
+        "explanation_requested",
+        "first_offense",
+        "subjective_fault",
+        "supporting_document_availability"
+      ],
+      "normal_workflow_ready": false,
+      "normal_workflow_blocker": "contract_type missing; remaining required facts must be explicitly confirmed",
+      "reference_status": "draft_pending_expert_review",
+      "reference_origin": "Assistant-authored condition analysis from extracted source and frozen corpus; not verbatim source assessment",
+      "expected_assessment_status_with_reference_contexts": "NEED_MORE_FACTS",
+      "expected_sanction_type": null,
+      "expected_checks": [
+        "Không đồng nhất chậm nộp với lỗi chủ quan",
+        "Giữ đúng hạn và thời điểm gửi",
+        "Không bịa chính sách báo cáo riêng"
+      ],
+      "reference_evidence_ids": [
+        "5f3cd296-055a-430f-92a9-e9885cc6078f",
+        "4209ec08-1cfe-42db-bc10-4abdbdd82cdc",
+        "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+        "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+        "779013cd-822a-4a5d-9bbc-4d5294019406"
+      ],
+      "normalization_notes": [
+        "Event start selected as incident_date; full interval retained.",
+        "minutes_made=true is valid only in the declared post-minutes simulation.",
+        "Source statements are observations/test facts, not externally verified evidence.",
+        "An Phát-to-HRCorp alias is a declared fixture assumption, not a source fact."
+      ]
+    },
+    {
+      "case_id": "CA04",
+      "row_index": 3,
+      "source_file": "tested_golden_dataset/04_Bien_ban_roi_vi_tri_lam_viec.docx",
+      "source_sha256": "2610dab36ab0b210400d06e84d242a23dbef527f1700af9cac4bddbc5dfe87b0",
+      "source_paragraphs": [
+        "CÔNG TY TNHH AN PHÁTCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+        "Số: 04/2026/BB-APĐộc lập - Tự do - Hạnh phúc",
+        "Hà Nội, ngày 15 tháng 10 năm 2026",
+        "BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT",
+        "Biên bản xem xét xử lý vi phạm kỷ luật lao động đối với:",
+        "Ông/Bà: PHẠM THỊ DUNGMã số nhân viên: EMP-034",
+        "Chức vụ/Chức danh: Nhân viên chăm sóc khách hàngPhòng ban: Chăm sóc khách hàng",
+        "Vào lúc: 09 giờ 30 phút, ngày 15 tháng 10 năm 2026.",
+        "Tại: Phòng họp Công ty TNHH An Phát, số 25 phố Hòa Bình, Hà Nội.",
+        "I. THÀNH PHẦN THAM DỰ",
+        "- Đại diện Ban lãnh đạo: Ông Nguyễn Đức Thành; Chức vụ: Giám đốc.",
+        "- Đại diện nhân sự: Bà Trần Ngọc Lan; Chức vụ: Trưởng phòng Nhân sự.",
+        "- Người bị lập biên bản: PHẠM THỊ DUNG; Chức vụ: Nhân viên chăm sóc khách hàng.",
+        "Phòng ban: Chăm sóc khách hàng; Mã nhân viên: EMP-034.",
+        "- Người làm chứng: Vũ Đức Long; Chức vụ: Trưởng ca; Phòng ban: Chăm sóc khách hàng.",
+        "II. NỘI DUNG",
+        "- Thời gian, địa điểm xảy ra sự việc: Từ 14 giờ 00 đến 15 giờ 10 ngày 14 tháng 10 năm 2026 tại quầy hỗ trợ.",
+        "- Diễn biến sự việc: Nhân viên rời vị trí làm việc khi chưa bàn giao.",
+        "• Nhân viên rời quầy trong thời gian ca làm việc và chưa thông báo cho trưởng ca.",
+        "• Chưa bàn giao các yêu cầu đang xử lý cho người trực thay trước khi rời quầy.",
+        "• Trưởng ca bố trí người thay thế; hồ sơ gồm nhật ký ca và bản tường trình.",
+        "- Đối chiếu quy định: Nội quy Công ty TNHH An Phát, mục Bàn giao ca và thông báo khi rời vị trí; đối chiếu hồ sơ ghi nhận nêu trên.",
+        "- Thiệt hại của công ty: Ba yêu cầu hỗ trợ bị chậm xử lý; chưa ghi nhận thiệt hại bằng tiền.",
+        "- Ý kiến của người bị lập biên bản: Tôi rời quầy để giải quyết việc cá nhân nhưng chưa xin phép và bàn giao; tôi xác nhận sẽ tuân thủ quy trình từ ca tiếp theo.",
+        "- Kết quả đánh giá: Cần đối chiếu lịch nghỉ giữa ca và giải trình để xác định đầy đủ sự việc.",
+        "- Hình thức xử lý đề xuất của Ban lãnh đạo: Ghi nhận cam kết bàn giao đúng quy trình; chuyển Nhân sự rà soát hồ sơ.",
+        "- Ý kiến của người làm chứng và đại diện nhân sự: Trưởng ca xác nhận thời gian rời quầy; Nhân sự đề nghị lưu nhật ký xử lý các yêu cầu bị chậm.",
+        "Biên bản kết thúc lúc 10 giờ 30 phút cùng ngày, được đọc lại cho các bên nghe và lập thành 02 bản có nội dung như nhau.",
+        "Đại diện Ban lãnh đạoNgười bị lập biên bản",
+        "(Ký tên, ghi họ tên và đóng dấu)(Ký tên, ghi rõ họ tên)",
+        "Nguyễn Đức ThànhPhạm Thị Dung"
+      ],
+      "source_conclusion": [
+        "- Kết quả đánh giá: Cần đối chiếu lịch nghỉ giữa ca và giải trình để xác định đầy đủ sự việc.",
+        "- Hình thức xử lý đề xuất của Ban lãnh đạo: Ghi nhận cam kết bàn giao đúng quy trình; chuyển Nhân sự rà soát hồ sơ."
+      ],
+      "model_description": "Nhân viên: PHẠM THỊ DUNG; mã: EMP-034; chức danh: Nhân viên chăm sóc khách hàng; bộ phận: Chăm sóc khách hàng.\n- Thời gian, địa điểm xảy ra sự việc: Từ 14 giờ 00 đến 15 giờ 10 ngày 14 tháng 10 năm 2026 tại quầy hỗ trợ.\n- Diễn biến sự việc: Nhân viên rời vị trí làm việc khi chưa bàn giao.\n• Nhân viên rời quầy trong thời gian ca làm việc và chưa thông báo cho trưởng ca.\n• Chưa bàn giao các yêu cầu đang xử lý cho người trực thay trước khi rời quầy.\n• Trưởng ca bố trí người thay thế; hồ sơ gồm nhật ký ca và bản tường trình.\n- Thiệt hại của công ty: Ba yêu cầu hỗ trợ bị chậm xử lý; chưa ghi nhận thiệt hại bằng tiền.\n- Ý kiến của người bị lập biên bản: Tôi rời quầy để giải quyết việc cá nhân nhưng chưa xin phép và bàn giao; tôi xác nhận sẽ tuân thủ quy trình từ ca tiếp theo.\n- Ý kiến của người làm chứng và đại diện nhân sự: Trưởng ca xác nhận thời gian rời quầy.",
+      "family": "GENERAL",
+      "incident_date": "2026-10-14",
+      "incident_end_date": "2026-10-14",
+      "minutes_date": "2026-10-15",
+      "source_known_facts": {
+        "violation_summary": "Rời quầy hỗ trợ từ 14:00 đến 15:10 ngày 14/10/2026, chưa xin phép, thông báo hoặc bàn giao; lịch nghỉ giữa ca cần xác minh.",
+        "minutes_made": "true"
+      },
+      "unknown_facts": [
+        "contract_type",
+        "explanation_requested",
+        "first_offense",
+        "break_schedule"
+      ],
+      "normal_workflow_ready": false,
+      "normal_workflow_blocker": "contract_type missing; remaining required facts must be explicitly confirmed",
+      "reference_status": "draft_pending_expert_review",
+      "reference_origin": "Assistant-authored condition analysis from extracted source and frozen corpus; not verbatim source assessment",
+      "expected_assessment_status_with_reference_contexts": "NEED_MORE_FACTS",
+      "expected_sanction_type": null,
+      "expected_checks": [
+        "Tính đúng 70 phút",
+        "Đối chiếu ngưỡng quá 60 phút",
+        "Không bịa lịch nghỉ hoặc lịch sử vi phạm"
+      ],
+      "reference_evidence_ids": [
+        "5f3cd296-055a-430f-92a9-e9885cc6078f",
+        "4209ec08-1cfe-42db-bc10-4abdbdd82cdc",
+        "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+        "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+        "779013cd-822a-4a5d-9bbc-4d5294019406"
+      ],
+      "normalization_notes": [
+        "Event start selected as incident_date; full interval retained.",
+        "minutes_made=true is valid only in the declared post-minutes simulation.",
+        "Source statements are observations/test facts, not externally verified evidence.",
+        "An Phát-to-HRCorp alias is a declared fixture assumption, not a source fact."
+      ]
+    },
+    {
+      "case_id": "CA05",
+      "row_index": 4,
+      "source_file": "tested_golden_dataset/05_Bien_ban_khong_tuan_thu_an_toan.docx",
+      "source_sha256": "2f6d9e8311a712579a2f2278512ecff1bb70a787dbef4da25f49185a77cc152b",
+      "source_paragraphs": [
+        "CÔNG TY TNHH AN PHÁTCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+        "Số: 05/2026/BB-APĐộc lập - Tự do - Hạnh phúc",
+        "Hà Nội, ngày 16 tháng 10 năm 2026",
+        "BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT",
+        "Biên bản xem xét xử lý vi phạm kỷ luật lao động đối với:",
+        "Ông/Bà: HOÀNG VĂN EMMã số nhân viên: EMP-047",
+        "Chức vụ/Chức danh: Nhân viên khoPhòng ban: Kho vận",
+        "Vào lúc: 15 giờ 00 phút, ngày 16 tháng 10 năm 2026.",
+        "Tại: Phòng họp Công ty TNHH An Phát, số 25 phố Hòa Bình, Hà Nội.",
+        "I. THÀNH PHẦN THAM DỰ",
+        "- Đại diện Ban lãnh đạo: Ông Nguyễn Đức Thành; Chức vụ: Giám đốc.",
+        "- Đại diện nhân sự: Bà Trần Ngọc Lan; Chức vụ: Trưởng phòng Nhân sự.",
+        "- Người bị lập biên bản: HOÀNG VĂN EM; Chức vụ: Nhân viên kho.",
+        "Phòng ban: Kho vận; Mã nhân viên: EMP-047.",
+        "- Người làm chứng: Bùi Văn Khánh; Chức vụ: Giám sát kho; Phòng ban: Kho vận.",
+        "II. NỘI DUNG",
+        "- Thời gian, địa điểm xảy ra sự việc: Lúc 09 giờ 15 phút ngày 15 tháng 10 năm 2026 tại khu vực nhập hàng.",
+        "- Diễn biến sự việc: Nhân viên không sử dụng đầy đủ trang bị bảo hộ theo quy trình.",
+        "• Nhân viên vào khu vực nhập hàng khi chưa mang giày bảo hộ được cấp.",
+        "• Giám sát yêu cầu dừng công việc; nhân viên đã bổ sung trang bị trước khi tiếp tục.",
+        "• Hồ sơ gồm phiếu cấp phát bảo hộ, biên bản ghi nhận và xác nhận của giám sát.",
+        "- Đối chiếu quy định: Nội quy Công ty TNHH An Phát, mục Trang bị bảo hộ và an toàn tại khu vực kho; đối chiếu hồ sơ ghi nhận nêu trên.",
+        "- Thiệt hại của công ty: Không ghi nhận tai nạn hoặc hư hỏng tài sản tại thời điểm lập biên bản.",
+        "- Ý kiến của người bị lập biên bản: Tôi xác nhận đã chưa mang giày bảo hộ khi vào khu vực nhập hàng; tôi sẽ kiểm tra đầy đủ trang bị trước mỗi ca.",
+        "- Kết quả đánh giá: Cần kiểm tra hồ sơ hướng dẫn an toàn và tình trạng trang bị được cấp.",
+        "- Hình thức xử lý đề xuất của Ban lãnh đạo: Yêu cầu hoàn thành buổi hướng dẫn lại về an toàn; chưa ban hành quyết định kỷ luật.",
+        "- Ý kiến của người làm chứng và đại diện nhân sự: Giám sát xác nhận nhân viên đã khắc phục tại chỗ; Nhân sự lưu hồ sơ và theo dõi việc sử dụng bảo hộ.",
+        "Biên bản kết thúc lúc 16 giờ 00 phút cùng ngày, được đọc lại cho các bên nghe và lập thành 02 bản có nội dung như nhau.",
+        "Đại diện Ban lãnh đạoNgười bị lập biên bản",
+        "(Ký tên, ghi họ tên và đóng dấu)(Ký tên, ghi rõ họ tên)",
+        "Nguyễn Đức ThànhHoàng Văn Em"
+      ],
+      "source_conclusion": [
+        "- Kết quả đánh giá: Cần kiểm tra hồ sơ hướng dẫn an toàn và tình trạng trang bị được cấp.",
+        "- Hình thức xử lý đề xuất của Ban lãnh đạo: Yêu cầu hoàn thành buổi hướng dẫn lại về an toàn; chưa ban hành quyết định kỷ luật."
+      ],
+      "model_description": "Nhân viên: HOÀNG VĂN EM; mã: EMP-047; chức danh: Nhân viên kho; bộ phận: Kho vận.\n- Thời gian, địa điểm xảy ra sự việc: Lúc 09 giờ 15 phút ngày 15 tháng 10 năm 2026 tại khu vực nhập hàng.\n- Diễn biến sự việc: Nhân viên không sử dụng đầy đủ trang bị bảo hộ theo quy trình.\n• Nhân viên vào khu vực nhập hàng khi chưa mang giày bảo hộ được cấp.\n• Giám sát yêu cầu dừng công việc; nhân viên đã bổ sung trang bị trước khi tiếp tục.\n• Hồ sơ gồm phiếu cấp phát bảo hộ, biên bản ghi nhận và xác nhận của giám sát.\n- Thiệt hại của công ty: Không ghi nhận tai nạn hoặc hư hỏng tài sản tại thời điểm lập biên bản.\n- Ý kiến của người bị lập biên bản: Tôi xác nhận đã chưa mang giày bảo hộ khi vào khu vực nhập hàng; tôi sẽ kiểm tra đầy đủ trang bị trước mỗi ca.\n- Ý kiến của người làm chứng và đại diện nhân sự: Giám sát xác nhận nhân viên đã khắc phục tại chỗ.",
+      "family": "GENERAL",
+      "incident_date": "2026-10-15",
+      "incident_end_date": "2026-10-15",
+      "minutes_date": "2026-10-16",
+      "source_known_facts": {
+        "violation_summary": "Vào khu vực nhập hàng lúc 09:15 ngày 15/10/2026 khi chưa mang giày bảo hộ đã cấp; bổ sung trang bị sau yêu cầu dừng của giám sát, trước khi tiếp tục.",
+        "minutes_made": "true"
+      },
+      "unknown_facts": [
+        "contract_type",
+        "explanation_requested",
+        "safety_training_record",
+        "applicable_sanction_mapping"
+      ],
+      "normal_workflow_ready": false,
+      "normal_workflow_blocker": "contract_type missing; remaining required facts must be explicitly confirmed",
+      "reference_status": "draft_pending_expert_review",
+      "reference_origin": "Assistant-authored condition analysis from extracted source and frozen corpus; not verbatim source assessment",
+      "expected_assessment_status_with_reference_contexts": "NOT_SUPPORTED",
+      "expected_sanction_type": null,
+      "expected_checks": [
+        "Phân biệt nghĩa vụ PPE với căn cứ chọn mức",
+        "Không coi đã khắc phục là chưa từng vi phạm",
+        "Không bịa mức xử lý hoặc thủ tục đào tạo bắt buộc"
+      ],
+      "reference_evidence_ids": [
+        "5f3cd296-055a-430f-92a9-e9885cc6078f",
+        "4209ec08-1cfe-42db-bc10-4abdbdd82cdc",
+        "5a647271-68ce-453f-bd35-a862e4d14d08",
+        "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+        "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+        "779013cd-822a-4a5d-9bbc-4d5294019406"
+      ],
+      "normalization_notes": [
+        "Event start selected as incident_date; full interval retained.",
+        "minutes_made=true is valid only in the declared post-minutes simulation.",
+        "Source statements are observations/test facts, not externally verified evidence.",
+        "An Phát-to-HRCorp alias is a declared fixture assumption, not a source fact."
+      ]
+    }
+  ]
+}

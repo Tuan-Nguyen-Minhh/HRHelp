@@ -5,6 +5,17 @@ from uuid import UUID
 
 
 @dataclass(frozen=True)
+class GraphEdge:
+    """The directed citation traversed from a retrieval seed, in either direction."""
+
+    seed_chunk_id: UUID
+    source_chunk_id: UUID
+    target_chunk_id: UUID
+    rule: str
+    confidence: str
+
+
+@dataclass(frozen=True)
 class Passage:
     """A chunk that survived the in-force filter, before it is placed in a layer."""
 
@@ -19,3 +30,4 @@ class Passage:
     policy_code: str
     policy_name: str
     origin: str = "hybrid"
+    graph_edges: tuple[GraphEdge, ...] = ()

@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
 import src.common.orm  # noqa: F401
-from src.features.cite.model.passage import Passage
+from src.features.cite.model.passage import GraphEdge, Passage
+from src.models.chunk_references import ChunkReference
 from src.models.document_chunks import DocumentChunk
 from src.models.documents import Document
 from src.models.policies import Policy
@@ -64,24 +65,72 @@ async def fetch_in_force(session: AsyncSession, incident_date: date, limit: int)
     return [_hit(row) for row in rows]
 
 
+def graph_edge_stmt(seed_chunk_ids: list[UUID], *, incoming: bool, min_confidence: str = "HIGH"):
+    """Indexed forward/reverse edge reads; ambiguous and external edges are excluded."""
+    seed_column = ChunkReference.target_chunk_id if incoming else ChunkReference.source_chunk_id
+    return (
+        select(
+            ChunkReference.source_chunk_id,
+            ChunkReference.target_chunk_id,
+            ChunkReference.rule,
+            ChunkReference.confidence,
+        )
+        .where(
+            seed_column.in_(seed_chunk_ids),
+            ChunkReference.target_chunk_id.is_not(None),
+            ChunkReference.confidence == min_confidence,
+            ChunkReference.needs_review.is_(False),
+        )
+        .order_by(ChunkReference.source_chunk_id, ChunkReference.target_chunk_id, ChunkReference.ref_id)
+    )
+
+
+async def fetch_graph_neighbors(
+    session: AsyncSession,
+    incident_date: date,
+    seed_chunk_ids: list[UUID],
+    limit: int,
+    *,
+    min_confidence: str = "HIGH",
+    exclude_chunk_ids: list[UUID] | tuple[UUID, ...] = (),
+) -> list[Passage]:
+    """Read both directions once, then hydrate distinct in-force neighbors with provenance."""
+    if not seed_chunk_ids or limit <= 0:
+        return []
+    edges: dict[UUID, list[GraphEdge]] = {}
+    excluded = set(seed_chunk_ids) | set(exclude_chunk_ids)
+    for incoming in (False, True):
+        rows = (
+            await session.execute(graph_edge_stmt(seed_chunk_ids, incoming=incoming, min_confidence=min_confidence))
+        ).all()
+        for row in rows:
+            seed = row.target_chunk_id if incoming else row.source_chunk_id
+            neighbor = row.source_chunk_id if incoming else row.target_chunk_id
+            if neighbor in excluded:
+                continue
+            edge = GraphEdge(seed, row.source_chunk_id, row.target_chunk_id, row.rule, row.confidence)
+            provenance = edges.setdefault(neighbor, [])
+            if edge not in provenance:
+                provenance.append(edge)
+    if not edges:
+        return []
+    # Apply the limit after eligibility filtering and deduplication, not to raw edges.
+    stmt = _candidate_stmt(incident_date).where(DocumentChunk.id.in_(edges)).order_by(DocumentChunk.id).limit(limit)
+    rows = (await session.execute(stmt)).all()
+    return [replace(to_passage(_hit(row)), origin="graph", graph_edges=tuple(edges[row.chunk_id])) for row in rows]
+
+
 async def fetch_by_similarity(
     session: AsyncSession, incident_date: date, embedding: list[float], limit: int
 ) -> list[ChunkHit]:
     """Return the nearest in-force chunks. ``embedding`` must already match the column dimension."""
     distance = DocumentChunk.embedding.cosine_distance(embedding)
-    stmt = (
-        _candidate_stmt(incident_date)
-        .where(DocumentChunk.embedding.is_not(None))
-        .order_by(distance)
-        .limit(limit)
-    )
+    stmt = _candidate_stmt(incident_date).where(DocumentChunk.embedding.is_not(None)).order_by(distance).limit(limit)
     rows = (await session.execute(stmt)).all()
     return [_hit(row) for row in rows]
 
 
-async def fetch_by_bm25(
-    session: AsyncSession, incident_date: date, terms: list[str], limit: int
-) -> list[Passage]:
+async def fetch_by_bm25(session: AsyncSession, incident_date: date, terms: list[str], limit: int) -> list[Passage]:
     """Rank every in-force chunk with ``ts_rank`` on ``document_chunks.search_tsv``.
 
     The column is the generated ``simple`` tsvector of ``section_title`` and
@@ -112,9 +161,7 @@ def bm25_stmt(incident_date: date, limit: int):
 
 async def _or_tsquery(session: AsyncSession, terms: list[str]) -> str:
     """Lexemes of ``terms`` joined with OR. Postgres quotes each lexeme."""
-    found = (
-        await session.execute(_OR_TSQUERY, {"cfg": _TS_CONFIG, "q": " ".join(terms)})
-    ).scalar_one()
+    found = (await session.execute(_OR_TSQUERY, {"cfg": _TS_CONFIG, "q": " ".join(terms)})).scalar_one()
     return found or ""
 
 

@@ -32,7 +32,7 @@ Kho legal là bốn bảng riêng, khóa dạng chuỗi (`BLLD:…`):
 | `legal_documents` | Một văn bản: Bộ luật Lao động, Nghị định 145/2020, Nghị định 283/2026 |
 | `legal_chunks` | Chunk điều, khoản, điểm |
 | `legal_chunk_embeddings` | Vector `mistral-embed` 1024 chiều |
-| `legal_chunk_references` | Cạnh dẫn chiếu. Search không đọc bảng này |
+| `legal_chunk_references` | Cạnh dẫn chiếu build-time; ETL sang `chunk_references`, được node `expand` đọc hop-1 trong retrieval thật |
 
 `hybrid_search` trong `src/services/hybrid_search.py` chỉ join `legal_chunk_embeddings` với `legal_chunks`. Trong code ứng dụng không có chỗ nào gọi hàm này. Người gọi duy nhất là `scripts/eval_retrieval.py`.
 

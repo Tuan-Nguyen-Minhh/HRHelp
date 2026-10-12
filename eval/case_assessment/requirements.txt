@@ -1,0 +1,6 @@
+# Evaluation dependencies; application dependencies are in the root requirements.txt.
+ragas==0.4.3
+python-dotenv>=1.0.0
+langchain-mistralai>=0.2.0
+langchain-openai>=0.3.0
+langchain-google-genai>=4.4.0,<5
