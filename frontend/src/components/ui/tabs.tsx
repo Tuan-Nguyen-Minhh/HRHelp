@@ -8,7 +8,7 @@ export const Tabs = TabsPrimitive.Root;
 export function TabsList({ className, ...props }: ComponentPropsWithoutRef<typeof TabsPrimitive.List>) {
   return (
     <TabsPrimitive.List
-      className={cn("flex gap-0.5 overflow-x-auto border-b border-slate-200", className)}
+      className={cn("flex gap-0.5 overflow-x-auto border-b border-rule", className)}
       {...props}
     />
   );
@@ -18,7 +18,7 @@ export function TabsTrigger({ className, ...props }: ComponentPropsWithoutRef<ty
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        "inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 hover:text-brand-600 transition-colors data-[state=active]:border-brand-600 data-[state=active]:text-brand-700 data-[state=active]:font-semibold",
+        "inline-flex shrink-0 cursor-pointer items-center gap-2 border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-ink-3 hover:text-ink transition-colors data-[state=active]:border-son data-[state=active]:text-son-dark data-[state=active]:font-semibold",
         className,
       )}
       {...props}

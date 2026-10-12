@@ -24,14 +24,14 @@ export function EvidencePanel() {
       <CardHeader>
         <div>
           <CardTitle>Căn cứ đã lấy</CardTitle>
-          <p className="mt-1 text-xs text-[#4d7380]">
+          <p className="mt-1 text-xs text-ink-3">
             Phân loại theo lớp backend đã trả. Xử phạt hành chính là rủi ro thanh tra, không phải mức kỷ luật của người lao động.
           </p>
         </div>
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
-          <p className="text-sm text-neutral-600">Chưa có đoạn căn cứ.</p>
+          <p className="text-sm text-ink-2">Chưa có đoạn căn cứ.</p>
         ) : (
           <Tabs defaultValue="ALL">
             <TabsList>
@@ -41,7 +41,7 @@ export function EvidencePanel() {
                 return (
                   <TabsTrigger key={tab} value={tab}>
                     {label}
-                    <span className="text-neutral-400">{count}</span>
+                    <span className="text-ink-4">{count}</span>
                   </TabsTrigger>
                 );
               })}
@@ -51,7 +51,7 @@ export function EvidencePanel() {
               return (
                 <TabsContent key={tab} value={tab}>
                   {rows.length === 0 ? (
-                    <p className="text-sm text-neutral-600">Không có đoạn trong nhóm này.</p>
+                    <p className="text-sm text-ink-2">Không có đoạn trong nhóm này.</p>
                   ) : (
                     <div className="grid gap-3 xl:grid-cols-2">
                       {rows.map((item) => (

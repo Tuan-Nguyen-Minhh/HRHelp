@@ -25,7 +25,7 @@ export function MessageInput() {
 
   if (!open) {
     return (
-      <p className="border-t border-[#d8e9ee] bg-white px-4 py-3 text-sm text-[#4d7380]">
+      <p className="border-t border-rule bg-paper px-4 py-3 text-sm text-ink-3">
         Hồ sơ đang ở trạng thái {workspace.caseView.status} nên không nhận thêm tình tiết.
       </p>
     );
@@ -33,7 +33,7 @@ export function MessageInput() {
 
   return (
     <form
-      className="border-t border-[#d8e9ee] bg-white p-3 md:p-4"
+      className="border-t border-rule bg-paper p-3 md:p-4"
       onSubmit={form.handleSubmit(async (values) => {
         try {
           await workspace.send(values.content);
@@ -51,7 +51,7 @@ export function MessageInput() {
         rows={3}
         placeholder="Nhập tình tiết hoặc câu trả lời…"
         disabled={workspace.sending}
-        className="w-full resize-none rounded-2xl border border-[#cfe5ec] bg-[#f8fbfd] px-4 py-3 text-sm leading-6 text-[#073642] shadow-inner shadow-slate-200/40 placeholder:text-[#7b96a0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009ec1]/30 disabled:bg-neutral-100"
+        className="w-full resize-none rounded-xl border border-rule bg-paper-2 px-4 py-3 text-sm leading-6 text-ink shadow-inner placeholder:text-ink-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-son/30 disabled:bg-paper-3"
         {...field}
         ref={(node) => {
           field.ref(node);
@@ -72,7 +72,7 @@ export function MessageInput() {
         }}
       />
       <div className="mt-2 flex items-center justify-between gap-2">
-        <p className="text-xs text-[#607d88]">{form.formState.errors.content?.message || "Enter để gửi. Shift+Enter để xuống dòng."}</p>
+        <p className="text-xs text-ink-3">{form.formState.errors.content?.message || "Enter để gửi. Shift+Enter để xuống dòng."}</p>
         <div className="flex gap-2">
           {workspace.failedDraft ? (
             <Button

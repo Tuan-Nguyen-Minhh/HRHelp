@@ -35,9 +35,9 @@ export function LegalCasePage() {
   if (pack.isLoading) return <p className="text-sm">Đang tải gói duyệt…</p>;
   if (pack.isError || !pack.data) {
     return (
-      <div className="space-y-2 text-sm text-red-800">
+      <div className="space-y-2 text-sm text-son-dark">
         <p>{errorMessage(pack.error)}</p>
-        <Link className="text-[#009EC1] underline" to="/legal-review">
+        <Link className="text-son-dark underline" to="/legal-review">
           Về hàng chờ
         </Link>
       </div>
@@ -50,15 +50,15 @@ export function LegalCasePage() {
   return (
     <div className="mx-auto max-w-6xl space-y-4">
       <div>
-        <Link className="text-sm text-[#009EC1] underline" to="/legal-review">
+        <Link className="text-sm text-son-dark underline" to="/legal-review">
           Hàng chờ
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold text-[#073642]">{pack.data.case_code}</h1>
-        <p className="text-sm text-[#4d7380]">
+        <h1 className="mt-2 text-2xl font-semibold text-ink">{pack.data.case_code}</h1>
+        <p className="text-sm text-ink-3">
           {pack.data.employee_name} · {pack.data.status}. Pháp chế không sửa tình tiết, mức hay trích dẫn.
         </p>
         {answerRisk(pack.data.answer.risk_level) ? (
-          <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          <p className="mt-3 rounded-lg border border-son-line bg-son-tint px-3 py-2 text-sm text-son-dark">
             Cần thận trọng. Rủi ro {pack.data.answer.risk_level}. Rủi ro không tự quyết mức kỷ luật.
           </p>
         ) : null}
@@ -71,7 +71,7 @@ export function LegalCasePage() {
               <a
                 key={item.id}
                 href={`#${item.id}`}
-                className="block shrink-0 rounded-md px-3 py-1.5 text-sm text-[#073642] hover:bg-[#e7f6f9]"
+                className="block shrink-0 rounded-md px-3 py-1.5 text-sm text-ink hover:bg-paper-2"
               >
                 {item.label}
               </a>
@@ -98,7 +98,7 @@ export function LegalCasePage() {
           <CardHeader>
             <CardTitle>Biên bản</CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-[#4d7380]">
+          <CardContent className="text-sm text-ink-3">
             Hồ sơ này chưa có biên bản đã xác nhận. Vui lòng yêu cầu HR lập và xác nhận biên bản trước khi pháp chế duyệt.
           </CardContent>
         </Card>
@@ -109,8 +109,8 @@ export function LegalCasePage() {
           <CardTitle>Quyết định của pháp chế</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {done ? <p className="rounded-md bg-[#e7f6f9] px-3 py-2 text-sm">Hồ sơ chuyển sang {done}.</p> : null}
-          {error ? <p className="text-sm text-red-800">{error}</p> : null}
+          {done ? <p className="rounded-md bg-paper-2 px-3 py-2 text-sm">Hồ sơ chuyển sang {done}.</p> : null}
+          {error ? <p className="text-sm text-son-dark">{error}</p> : null}
           <fieldset className="space-y-2 text-sm" disabled={locked || submit.isPending}>
             <legend className="font-medium">Kết luận của pháp chế</legend>
             <label className="flex gap-2">
@@ -130,10 +130,10 @@ export function LegalCasePage() {
           <Button disabled={locked || submit.isPending || (decision === "REJECT" && !comment.trim())} onClick={() => submit.mutate()}>
             {submit.isPending ? "Đang ghi…" : "Gửi kết luận"}
           </Button>
-          <p className="text-xs text-[#4d7380]">
+          <p className="text-xs text-ink-3">
             Duyệt chuyển hồ sơ sang quản lý. Yêu cầu xử lý lại trả hồ sơ cho HR và bắt buộc có ghi chú.
           </p>
-          {locked ? <p className="text-xs text-[#4d7380]">Hồ sơ không còn ở hàng chờ nên không nhận thêm kết luận.</p> : null}
+          {locked ? <p className="text-xs text-ink-3">Hồ sơ không còn ở hàng chờ nên không nhận thêm kết luận.</p> : null}
         </CardContent>
       </Card>
       <Sheet open={selected !== null} onOpenChange={(open) => { if (!open) setSelected(null); }} title="Đoạn căn cứ">

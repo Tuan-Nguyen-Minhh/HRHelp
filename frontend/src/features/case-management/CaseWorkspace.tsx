@@ -222,13 +222,13 @@ export function CaseWorkspace() {
   }, [messageQuery.data, messageQuery.dataUpdatedAt, sendMutation.isPending, confirmMutation.isPending, caseId]);
 
   if (caseQuery.isLoading) {
-    return <p className="rounded-xl border border-[#d5e8ed] bg-white px-4 py-6 text-sm text-[#4d7380]">Đang tải hồ sơ…</p>;
+    return <div className="space-y-2" role="status" aria-label="Đang tải hồ sơ"><div className="skeleton h-24" aria-hidden="true" /><div className="skeleton h-40" aria-hidden="true" /></div>;
   }
   if (caseQuery.isError || !caseQuery.data) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-900">
+      <div className="rounded-xl border border-son-line bg-son-tint px-4 py-4 text-sm text-son-dark">
         <p>{errorMessage(caseQuery.error)}</p>
-        <Link className="mt-2 inline-block font-medium text-[#009EC1] underline" to="/cases">
+        <Link className="mt-2 inline-block font-medium text-son-dark underline" to="/cases">
           Về danh sách
         </Link>
       </div>
@@ -288,14 +288,14 @@ export function CaseWorkspace() {
       <div className="space-y-4">
         <CaseHeader />
         {answerQuery.data?.risk_level === "HIGH" || answerQuery.data?.risk_level === "CRITICAL" ? (
-          <p className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="rounded-xl border border-son-line bg-son-tint px-4 py-3 text-sm text-son-dark">
             Cần thận trọng. Vụ việc có mức rủi ro cao. Hãy kiểm tra căn cứ và chứng cứ trước khi xử lý. Mức rủi ro không tự quyết hình thức kỷ luật.
           </p>
         ) : null}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <AgentStatus agent={agent} />
           {error ? (
-            <p className="text-sm text-red-800" role="alert">
+            <p className="text-sm text-son-dark" role="alert">
               {error}
             </p>
           ) : null}

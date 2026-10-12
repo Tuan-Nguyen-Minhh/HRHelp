@@ -43,11 +43,11 @@ export function DocumentsPage() {
         <CardTitle>Văn bản xem trước</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-sm text-[#4d7380]">
+        <p className="text-sm text-ink-3">
           Biên bản đánh giá, yêu cầu giải trình, dự thảo quyết định và phiếu chuyển pháp chế. Chỉ hiện bản backend đã lưu.
         </p>
-        {answerLoading ? <p className="text-sm text-[#4d7380]">Đang tải văn bản…</p> : null}
-        {answerError ? <p className="text-sm text-red-800">{answerError}</p> : null}
+        {answerLoading ? <p className="text-sm text-ink-3">Đang tải văn bản…</p> : null}
+        {answerError ? <p className="text-sm text-son-dark">{answerError}</p> : null}
         <DraftList drafts={answer?.drafts ?? []} />
       </CardContent>
     </Card>

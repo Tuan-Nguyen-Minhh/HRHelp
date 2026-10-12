@@ -36,22 +36,22 @@ export function DecisionPage() {
             <Item label="Bước thủ tục" value={String(answer?.process_steps.length ?? 0)} />
           </dl>
           {answer?.sanction_type && !level ? (
-            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-950">
+            <p className="rounded-md border border-son-line bg-son-tint px-3 py-2 text-son-dark">
               {answer.sanction_type === "TERMINATION"
                 ? "Giá trị đã lưu là chấm dứt hợp đồng. Màn hình không trình bày giá trị đó như mức kỷ luật."
                 : "Báo cáo có mức đã lưu nhưng không kèm đoạn luật hoặc nội quy. Mức không được trình bày như đề xuất."}
             </p>
           ) : null}
           {ticket ? (
-            <div className="rounded-md border border-neutral-200 px-3 py-2">
-              <p className="text-xs font-semibold tracking-wide text-neutral-500">{TICKET_LABEL[ticket.disposition] ?? ticket.disposition}</p>
+            <div className="rounded-md border border-rule px-3 py-2">
+              <p className="text-xs font-semibold tracking-wide text-ink-3">{TICKET_LABEL[ticket.disposition] ?? ticket.disposition}</p>
               <p className="mt-1">{ticket.reason}</p>
-              {ticket.hold_code ? <p className="mt-1 text-xs text-neutral-500">{HOLD_LABEL[ticket.hold_code] ?? ticket.hold_code}</p> : null}
+              {ticket.hold_code ? <p className="mt-1 text-xs text-ink-3">{HOLD_LABEL[ticket.hold_code] ?? ticket.hold_code}</p> : null}
             </div>
           ) : (
-            <p className="text-neutral-600">Chưa có trạng thái phiếu. Nút đẩy chỉ hiện khi backend trả PREVIEW.</p>
+            <p className="text-ink-2">Chưa có trạng thái phiếu. Nút đẩy chỉ hiện khi backend trả PREVIEW.</p>
           )}
-          {assessment.isLoading ? <p className="text-neutral-600">Đang kiểm tra biên bản đã xác nhận…</p> : null}
+          {assessment.isLoading ? (<div className="skeleton h-12" role="status" aria-label="Đang kiểm tra biên bản" />) : null}
           <LegalTicketCard
             canSend={canSend}
             waitForMinutes={!assessment.isLoading && !formConfirmed && (ticket?.disposition === "PREVIEW" || ticket?.disposition === "HOLD")}
@@ -83,7 +83,7 @@ export function DecisionPage() {
 function Item({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs text-neutral-500">{label}</dt>
+      <dt className="text-xs text-ink-3">{label}</dt>
       <dd className="whitespace-pre-wrap font-medium">{value}</dd>
     </div>
   );

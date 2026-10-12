@@ -80,11 +80,11 @@ export function DocumentSections({
   const evidence = basisCards.map((item) => item.citation_label || item.title).join("; ");
   return (
     <div className="space-y-4">
-      <section id="minutes" className="scroll-mt-4 rounded-xl border border-[#d5e8ed] bg-white">
-        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-[#d5e8ed] px-4 py-3">
+      <section id="minutes" className="scroll-mt-4 rounded-xl border border-rule bg-white">
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-rule px-4 py-3">
           <div>
-            <h2 className="text-sm font-semibold tracking-wide text-[#073642]">Biên bản xử lý vi phạm kỷ luật</h2>
-            <p className="text-xs text-[#4d7380]">Mẫu xem trước đúng cấu trúc Word. HR sửa các ô cần thiết rồi xuất DOCX.</p>
+            <h2 className="text-sm font-semibold tracking-wide text-ink">Biên bản xử lý vi phạm kỷ luật</h2>
+            <p className="text-xs text-ink-3">Mẫu xem trước đúng cấu trúc Word. HR sửa các ô cần thiết rồi xuất DOCX.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {canEdit ? (
@@ -119,7 +119,7 @@ export function DocumentSections({
           </div>
         </header>
 
-        <div className="overflow-x-auto bg-[#f6fbfd] px-3 py-4">
+        <div className="overflow-x-auto bg-paper-2 px-3 py-4">
           <article className="mx-auto min-h-[68rem] w-full max-w-[52rem] bg-white px-8 py-8 font-serif text-[15px] leading-7 text-black shadow-sm sm:px-12">
             <div className="grid grid-cols-2 gap-8 text-center">
               <div className="text-left">
@@ -243,18 +243,18 @@ export function DocumentSections({
 
       <Section id="evidence" title="V. Căn cứ và tài liệu">
         {sections.evidence_reviewed.length === 0 ? (
-          <p className="text-sm text-[#4d7380]">Chưa có đoạn căn cứ trên báo cáo đã lưu.</p>
+          <p className="text-sm text-ink-3">Chưa có đoạn căn cứ trên báo cáo đã lưu.</p>
         ) : (
           <div className="grid gap-3">
             {sections.evidence_reviewed.map((card) => (
-              <article key={card.evidence_id} className="rounded-lg border border-[#d5e8ed] bg-[#f4fafb] px-3 py-3">
+              <article key={card.evidence_id} className="rounded-lg border border-rule bg-paper-2 px-3 py-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone="neutral">Căn cứ đã truy xuất</Badge>
                   <Badge tone="info">{card.policy_type || LAYER_LABEL[card.layer] || card.layer}</Badge>
                 </div>
-                <h3 className="mt-2 text-sm font-semibold text-[#073642]">{card.title}</h3>
-                <p className="text-xs text-[#4d7380]">{card.citation_label}</p>
-                <blockquote className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#073642]">“{clip(card.quote, 360)}”</blockquote>
+                <h3 className="mt-2 text-sm font-semibold text-ink">{card.title}</h3>
+                <p className="text-xs text-ink-3">{card.citation_label}</p>
+                <blockquote className="mt-2 whitespace-pre-wrap text-sm leading-6 text-ink">“{clip(card.quote, 360)}”</blockquote>
                 <Button className="mt-2" size="sm" variant="secondary" onClick={() => onOpen(card)}>
                   Xem đoạn
                 </Button>
@@ -271,7 +271,7 @@ export function EvidenceDetail({ card }: { card: EvidenceCard }) {
   return (
     <div className="space-y-3 text-sm">
       <Badge tone="neutral">Căn cứ đã truy xuất</Badge>
-      <h3 className="text-base font-semibold text-[#073642]">{card.title}</h3>
+      <h3 className="text-base font-semibold text-ink">{card.title}</h3>
       <dl className="space-y-2">
         <Row label="Nhãn" value={card.citation_label} />
         <Row label="Loại" value={card.policy_type || "—"} />
@@ -279,7 +279,7 @@ export function EvidenceDetail({ card }: { card: EvidenceCard }) {
         <Row label="Vị trí" value={placeLabel(card.article, card.clause, card.point) || "—"} />
         <Row label="Mã văn bản" value={card.document_id || "Đoạn đã lưu không có mã văn bản riêng."} />
       </dl>
-      <blockquote className="whitespace-pre-wrap rounded-md border border-[#d5e8ed] bg-[#f4fafb] px-3 py-3 leading-6 text-[#073642]">
+      <blockquote className="whitespace-pre-wrap rounded-md border border-rule bg-paper-2 px-3 py-3 leading-6 text-ink">
         {card.quote || "Đoạn không có nội dung trích."}
       </blockquote>
     </div>
@@ -490,9 +490,9 @@ function Section({
   onSave?: () => void;
 }) {
   return (
-    <section id={id} className="scroll-mt-4 rounded-xl border border-[#d5e8ed] bg-white">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-[#d5e8ed] px-4 py-3">
-        <h2 className="text-sm font-semibold tracking-wide text-[#073642]">{title}</h2>
+    <section id={id} className="scroll-mt-4 rounded-xl border border-rule bg-white">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-rule px-4 py-3">
+        <h2 className="text-sm font-semibold tracking-wide text-ink">{title}</h2>
         <div className="flex items-center gap-2">
           {extra}
           {canEdit && onEdit ? (
@@ -521,8 +521,8 @@ function Section({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs text-[#4d7380]">{label}</dt>
-      <dd className="text-[#073642]">{value}</dd>
+      <dt className="text-xs text-ink-3">{label}</dt>
+      <dd className="text-ink">{value}</dd>
     </div>
   );
 }

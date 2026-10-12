@@ -48,7 +48,7 @@ function useRole(): { role: string; loading: boolean } {
 
 function RequireRole({ roles, children }: { roles: string[]; children: ReactNode }) {
   const { role, loading } = useRole();
-  if (loading) return <p className="text-sm text-[#4d7380]">Đang kiểm tra quyền…</p>;
+  if (loading) return <p className="text-sm text-ink-3">Đang kiểm tra quyền…</p>;
   if (!roles.includes(role)) return <Navigate to="/dashboard" replace />;
   return children;
 }

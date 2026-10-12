@@ -96,8 +96,8 @@ export function StaffAccounts() {
     <section className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-[#073642]">Tài khoản HR và pháp chế</h2>
-          <p className="mt-1 max-w-2xl text-sm text-[#4d7380]">
+          <h2 className="text-xl font-semibold text-ink">Tài khoản HR và pháp chế</h2>
+          <p className="mt-1 max-w-2xl text-sm text-ink-3">
             Quản lý tạo, sửa và xóa hai vai trò này. Tài khoản quản lý, người ký và quản trị không nằm ở đây.
           </p>
         </div>
@@ -113,9 +113,9 @@ export function StaffAccounts() {
           Thêm tài khoản
         </Button>
       </div>
-      {error ? <p className="text-sm text-red-800">{error}</p> : null}
-      {query.isLoading ? <p className="text-sm text-[#4d7380]">Đang tải tài khoản…</p> : null}
-      {query.isError ? <p className="text-sm text-red-800">{errorMessage(query.error)}</p> : null}
+      {error ? <p className="text-sm text-son-dark">{error}</p> : null}
+      {query.isLoading ? (<div className="space-y-2" role="status" aria-label="Đang tải tài khoản">{Array.from({ length: 3 }).map((_, i) => (<div key={i} className="skeleton h-12" aria-hidden="true" />))}</div>) : null}
+      {query.isError ? <p className="text-sm text-son-dark">{errorMessage(query.error)}</p> : null}
       {creating ? (
         <AccountForm
           draft={draft}
@@ -128,17 +128,17 @@ export function StaffAccounts() {
         />
       ) : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-[#9fd0db] bg-white px-4 py-8 text-sm text-[#4d7380]">
+        <p className="rounded-xl border border-dashed border-rule-2 bg-white px-4 py-8 text-sm text-ink-3">
           Chưa có tài khoản HR hoặc pháp chế.
         </p>
       ) : null}
       <ul className="space-y-2">
         {rows.map((row) => (
-          <li key={row.user_id} className="rounded-xl border border-[#d5e8ed] bg-white px-4 py-3">
+          <li key={row.user_id} className="rounded-xl border border-rule bg-white px-4 py-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="font-medium text-[#073642]">{row.full_name || row.email}</p>
-                <p className="text-sm text-[#4d7380]">
+                <p className="font-medium text-ink">{row.full_name || row.email}</p>
+                <p className="text-sm text-ink-3">
                   {row.email} · {ROLE_LABEL[row.role] ?? row.role}
                   {row.is_active ? "" : " · Đang khóa"}
                 </p>
@@ -165,7 +165,7 @@ export function StaffAccounts() {
               </div>
             ) : null}
             {removing === row.user_id ? (
-              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
+              <div className="mt-3 rounded-lg border border-son-line bg-son-tint p-3 text-sm">
                 <p>Xóa {row.email}? Người này không đăng nhập được nữa. Hồ sơ đã tạo vẫn giữ nguyên.</p>
                 <div className="mt-2 flex gap-2">
                   <Button variant="secondary" onClick={() => setRemoving(null)}>
@@ -204,7 +204,7 @@ function AccountForm({
   const passwordOk = !passwordRequired || draft.password.trim().length >= 8;
   return (
     <form
-      className="space-y-3 rounded-xl border border-[#d5e8ed] bg-white p-4"
+      className="space-y-3 rounded-xl border border-rule bg-white p-4"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit();
@@ -223,7 +223,7 @@ function AccountForm({
           <Label htmlFor="staff-role">Vai trò</Label>
           <select
             id="staff-role"
-            className="h-9 w-full rounded-md border border-[#d5e8ed] bg-white px-3 text-sm text-[#073642]"
+            className="h-9 w-full rounded-md border border-rule bg-white px-3 text-sm text-ink"
             value={draft.role}
             onChange={(event) => setDraft({ ...draft, role: event.target.value as Role })}
           >
@@ -246,7 +246,7 @@ function AccountForm({
         </div>
       </div>
       {passwordRequired ? null : (
-        <label className="flex items-center gap-2 text-sm text-[#073642]">
+        <label className="flex items-center gap-2 text-sm text-ink">
           <input type="checkbox" checked={draft.is_active} onChange={(event) => setDraft({ ...draft, is_active: event.target.checked })} />
           Đang được đăng nhập
         </label>

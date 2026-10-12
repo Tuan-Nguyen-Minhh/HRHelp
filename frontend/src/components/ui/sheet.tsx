@@ -16,12 +16,12 @@ export function Sheet({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-dark-900/40 backdrop-blur-sm" />
-        <Dialog.Content className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-slate-200/50 bg-white/95 backdrop-blur-md shadow-2xl animate-slide-in-right">
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-            <Dialog.Title className="font-display text-base font-bold text-dark-900">{title}</Dialog.Title>
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/40" />
+        <Dialog.Content className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-rule bg-paper shadow-2xl animate-slide-in-right">
+          <div className="flex items-center justify-between border-b border-rule px-5 py-4">
+            <Dialog.Title className="font-ui text-base font-semibold text-ink">{title}</Dialog.Title>
             <Dialog.Description className="sr-only">Nội dung đoạn căn cứ đã lấy cho hồ sơ.</Dialog.Description>
-            <Dialog.Close className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-700">
+            <Dialog.Close className="inline-flex h-9 cursor-pointer items-center gap-1 rounded-md px-2 text-sm text-ink-3 hover:bg-paper-2 hover:text-ink">
               <X className="h-4 w-4" aria-hidden="true" />
               Đóng
             </Dialog.Close>

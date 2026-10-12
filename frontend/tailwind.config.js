@@ -6,8 +6,12 @@ export default {
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
         display: ['"Space Grotesk"', "ui-sans-serif", "system-ui", "sans-serif"],
+        ui: ['"Public Sans"', "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        doc: ["Literata", "Georgia", "serif"],
       },
       colors: {
+        /* Tailwind default palette (slate/neutral/brand-cyan) is deprecated.
+           Use linen/ink/son tokens below — see design-system/hr-help/MASTER.md */
         brand: {
           50: "#f0f9ff",
           100: "#e0f2fe",
@@ -24,6 +28,35 @@ export default {
           700: "#334155",
           800: "#1e293b",
           900: "#0f172a",
+        },
+        linen: {
+          DEFAULT: "#DCD8CC",
+          2: "#E7E3D9",
+          3: "#CFCABB",
+        },
+        paper: {
+          DEFAULT: "#FBFAF7",
+          2: "#F4F1EA",
+          3: "#EFEBE1",
+        },
+        ink: {
+          DEFAULT: "#332C22",
+          2: "#5C554A",
+          3: "#756F63",
+          4: "#A29B8D",
+        },
+        rule: {
+          DEFAULT: "#D8D1C3",
+          2: "#B8AE9C",
+        },
+        son: {
+          DEFAULT: "#8C2B2B",
+          dark: "#722222",
+          tint: "#F6EAE7",
+          line: "#E2C4C0",
+        },
+        leather: {
+          DEFAULT: "#4A3F30",
         },
       },
       animation: {
