@@ -8,7 +8,7 @@ import json
 import logging
 
 import httpx
-from langchain_mistralai import ChatMistralAI
+from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
 from src.core.config import settings
@@ -50,13 +50,13 @@ async def answer_policy_question(question: str, passages: list[Passage], descrip
     """Return a smooth RAG answer, or a clear no-answer message when retrieval missed."""
     if not passages:
         return NO_ANSWER
-    if not settings.MISTRAL_API_KEY:
+    if not settings.DEEPSEEK_API_KEY:
         return _fallback_answer(passages)
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": _payload(question, passages, description)},
     ]
-    model_names = settings.mistral_chat_models()
+    model_names = settings.chat_models()
     last_error = "invalid_policy_answer"
     for attempt in range(MAX_RETRIES + 1):
         for model_name in model_names:
@@ -79,13 +79,14 @@ async def _complete(messages: list[dict[str, str]], attempt: int, model_name: st
                 "content": "Bản trước không đúng schema hoặc chưa đủ bám căn cứ. Trả một policy answer hợp lệ.",
             }
         )
-    model = ChatMistralAI(
-        **settings.mistral_chat_kwargs(model_name),
+    model = ChatOpenAI(
+        **settings.chat_kwargs(model_name),
         temperature=0,
         timeout=30,
         max_retries=2,
     )
-    structured = model.with_structured_output(PolicyAnswer)
+    prompt.append({"role": "system", "content": "Return only a JSON object matching this JSON schema: " + json.dumps(PolicyAnswer.model_json_schema(), ensure_ascii=False)})
+    structured = model.with_structured_output(PolicyAnswer, method="json_mode")
     parsed = await structured.ainvoke(prompt)
     if isinstance(parsed, PolicyAnswer):
         return parsed

@@ -15,7 +15,7 @@ import logging
 from uuid import UUID
 
 import httpx
-from langchain_mistralai import ChatMistralAI
+from langchain_openai import ChatOpenAI
 
 from src.agents.handoff import CaseHandoff
 from src.core.config import settings
@@ -193,13 +193,13 @@ def unavailable_assessment(facts: dict[str, str], reason: str) -> Assessment:
 
 async def synthesize(message: CaseHandoff, layered: LayeredBasis) -> Assessment:
     """Read one handoff. A missing key or a bad payload leaves the level unset."""
-    if not settings.MISTRAL_API_KEY:
+    if not settings.DEEPSEEK_API_KEY:
         return unavailable_assessment(message.facts, "Chưa có mô hình tổng hợp. Mức xử lý đề xuất: chưa xác định.")
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": _payload(message, layered)},
     ]
-    model_names = settings.mistral_chat_models()
+    model_names = settings.chat_models()
     last_error = "invalid_assessment"
     for attempt in range(MAX_RETRIES + 1):
         for model_name in model_names:
@@ -421,13 +421,14 @@ async def _complete(messages: list[dict[str, str]], attempt: int, model_name: st
                 ),
             }
         )
-    model = ChatMistralAI(
-        **settings.mistral_chat_kwargs(model_name),
+    model = ChatOpenAI(
+        **settings.chat_kwargs(model_name),
         temperature=0,
         timeout=45,
         max_retries=2,
     )
-    structured = model.with_structured_output(Assessment)
+    prompt.append({"role": "system", "content": "Return only a JSON object matching this JSON schema: " + json.dumps(Assessment.model_json_schema(), ensure_ascii=False)})
+    structured = model.with_structured_output(Assessment, method="json_mode")
     parsed = await structured.ainvoke(prompt)
     if isinstance(parsed, Assessment):
         return parsed

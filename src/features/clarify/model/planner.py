@@ -1,11 +1,12 @@
 """Call the clarify planner. A failed call becomes a clarification decision, never retrieval."""
 
+import json
 import logging
 import time
 from dataclasses import dataclass
 
 import httpx
-from langchain_mistralai import ChatMistralAI
+from langchain_openai import ChatOpenAI
 
 from src.core.config import settings
 from src.features.clarify.model.decision import (
@@ -51,9 +52,9 @@ def fallback_decision() -> ClarifyDecision:
 
 async def plan_turn(state: dict) -> PlannerResult:
     """Read one narrative. Timeout, invalid JSON, and schema errors fall back after one retry."""
-    model_names = settings.mistral_chat_models()
+    model_names = settings.chat_models()
     primary_model = model_names[0]
-    if not settings.MISTRAL_API_KEY:
+    if not settings.DEEPSEEK_API_KEY:
         return PlannerResult(fallback_decision(), True, "missing_api_key", 0, primary_model)
     messages = _messages(state)
     started = time.perf_counter()
@@ -98,13 +99,14 @@ async def _complete(messages: list[dict[str, str]], attempt: int, model_name: st
                 "content": "The previous response did not match the schema. Return one valid decision.",
             }
         )
-    model = ChatMistralAI(
-        **settings.mistral_chat_kwargs(model_name),
+    model = ChatOpenAI(
+        **settings.chat_kwargs(model_name),
         temperature=0,
         timeout=30,
         max_retries=2,
     )
-    structured = model.with_structured_output(ClarifyDecision)
+    prompt.append({"role": "system", "content": "Return only a JSON object matching this JSON schema: " + json.dumps(ClarifyDecision.model_json_schema(), ensure_ascii=False)})
+    structured = model.with_structured_output(ClarifyDecision, method="json_mode")
     parsed = await structured.ainvoke(prompt)
     if isinstance(parsed, ClarifyDecision):
         return parsed

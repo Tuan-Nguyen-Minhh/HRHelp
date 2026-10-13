@@ -550,7 +550,7 @@ def test_should_synthesize_reads_law_or_internal_rule_and_skips_page_index():
 
 @pytest.mark.asyncio
 async def test_missing_synthesis_key_does_not_call_the_model(monkeypatch):
-    monkeypatch.setattr(settings, "MISTRAL_API_KEY", "")
+    monkeypatch.setattr(settings, "DEEPSEEK_API_KEY", "")
 
     async def boom(*_args, **_kwargs):
         raise AssertionError("synthesis model was called")

@@ -10,7 +10,7 @@ async def readiness(session: AsyncSession) -> tuple[bool, dict]:
     """Return whether required dependencies answer. Values are booleans, not secrets."""
     database = await _database(session)
     vector = await _vector(session) if database else False
-    llm = bool(settings.MISTRAL_API_KEY)
+    llm = bool(settings.DEEPSEEK_API_KEY)
     embedding = bool(settings.MISTRAL_API_KEY) and settings.EMBEDDING_MODEL == "mistral-embed"
     checks = {
         "database": database,

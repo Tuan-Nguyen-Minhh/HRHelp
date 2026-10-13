@@ -266,7 +266,7 @@ async def test_policy_answer_uses_llm_formatter_when_configured(monkeypatch):
         seen["model_name"] = model_name
         return PolicyAnswer(answer="Theo nội quy, hành vi đi muộn có thể bị khiển trách [1].")
 
-    monkeypatch.setattr("src.features.cite.model.policy_answer.settings.MISTRAL_API_KEY", "test-key")
+    monkeypatch.setattr("src.features.cite.model.policy_answer.settings.DEEPSEEK_API_KEY", "test-key")
     monkeypatch.setattr("src.features.cite.model.policy_answer.settings.MODEL_NAME", "model-a")
     monkeypatch.setattr("src.features.cite.model.policy_answer.settings.FALLBACK_MODEL_NAME", "model-a")
     monkeypatch.setattr("src.features.cite.model.policy_answer._complete", complete)
