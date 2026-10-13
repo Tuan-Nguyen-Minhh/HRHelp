@@ -37,6 +37,7 @@ async def extract_node(state: dict) -> dict:
         state.get("stored") or {},
         result.decision,
         fallback=result.fallback,
+        locked_keys=set(state.get("locked_fact_keys") or []),
     )
     _log_decision(state, plan, result)
     return _project(plan)
@@ -46,8 +47,13 @@ def ask_node(state: dict) -> dict:
     """Write the one question HR still has to answer. No sanction is proposed here."""
     conflicts = list(state.get("conflicts") or [])
     if conflicts:
-        return {"question": conflict_question(state.get("family", ""), conflicts)}
-    question = build_question(state["family"], state.get("missing_keys", []), state.get("merged") or {})
+        return {"question": conflict_question(state.get("family", ""), conflicts, tuple(state.get("specs") or ()))}
+    question = build_question(
+        state["family"],
+        state.get("missing_keys", []),
+        state.get("merged") or {},
+        tuple(state.get("specs") or ()),
+    )
     return {"question": question}
 
 
@@ -93,15 +99,21 @@ def _project(plan: ClarifyPlan) -> dict:
         "ambiguities": list(plan.ambiguities),
         "validation": plan.validation,
         "accepted_keys": list(plan.accepted_keys),
+        "specs": list(plan.specs),
     }
     if plan.locked:
-        facts = {spec.key: plan.merged[spec.key].value for spec in required_specs(plan.family)}
+        specs = plan.specs or required_specs(plan.family)
+        facts = {
+            spec.key: plan.merged[spec.key].value
+            for spec in specs
+            if spec.key in plan.merged and plan.merged[spec.key].confirmed and plan.merged[spec.key].value
+        }
         for key in OPTIONAL_FACT_KEYS:
             item = plan.merged.get(key)
             if item is not None and item.confirmed and item.value:
                 facts[key] = item.value
         found["facts"] = facts
-        found["fact_lines"] = fact_lines(plan.family, facts)
+        found["fact_lines"] = fact_lines(plan.family, facts, tuple(specs))
     return found
 
 

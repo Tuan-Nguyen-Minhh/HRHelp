@@ -4,6 +4,9 @@ The graph runs three search arms, then RRF, hop-1 graph expansion, and rerank.
 An empty rerank walks the article outline before the handoff is packed.
 """
 
+import logging
+import time
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.agents.runs import RetrievalHit, begin_search, complete_search, save_retrievals
@@ -13,10 +16,21 @@ from src.features.cite.model.pipeline import build_retrieval_graph
 from src.features.cite.model.query import SearchQuery
 from src.features.cite.model.terms import search_terms
 
+logger = logging.getLogger(__name__)
+
 
 async def search_policies(session: AsyncSession, query: SearchQuery) -> list[Passage]:
     """Run the retrieval sub-agent and return the passages the handoff may carry."""
+    started = time.perf_counter()
     terms = search_terms(query.family, query.fact_lines, query.description)
+    logger.info(
+        "agent_stage start stage=retrieval run_id=%s family=%s incident_date=%s query_chars=%s terms=%s",
+        query.agent_run_id,
+        query.family,
+        query.incident_date,
+        len(query.text or ""),
+        len(terms),
+    )
     tool = await begin_search(
         session,
         query.agent_run_id,
@@ -36,6 +50,14 @@ async def search_policies(session: AsyncSession, query: SearchQuery) -> list[Pas
         session,
         query.agent_run_id,
         [RetrievalHit(passage.chunk_id, passage.score, passage.origin or "hybrid") for passage in ranked],
+    )
+    logger.info(
+        "agent_stage end stage=retrieval run_id=%s latency_ms=%s hits=%s mode=%s graph_hits=%s",
+        query.agent_run_id,
+        int((time.perf_counter() - started) * 1000),
+        len(ranked),
+        retrieval_mode(ranked),
+        sum(1 for passage in ranked if passage.origin == "graph"),
     )
     return ranked
 

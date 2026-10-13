@@ -1,6 +1,7 @@
 """Clarify a case in chat, then cite once HR confirms the facts."""
 
 import logging
+import time
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,7 +22,7 @@ from src.features.answer.schema import AnswerView
 from src.features.cite.model.search import search_policies
 from src.features.clarify.model.assess import ClarifyPlan, FactConflict, StoredFact, build_question
 from src.features.clarify.model.catalog import OPTIONAL_FACT_KEYS, required_specs
-from src.features.clarify.model.memory import build_turn_context, update_memory
+from src.features.clarify.model.memory import build_turn_context, get_memory, update_memory
 from src.features.clarify.model.multi_agent import run_dispatch_gate, run_downstream_agents, run_recommendation_agent
 from src.features.clarify.model.store import (
     FactWrite,
@@ -55,7 +56,7 @@ _LOCKED = (
     "Muốn sửa một fact, hãy gửi giá trị mới qua xác nhận tình tiết."
 )
 _NEED_PUBLISH = "Đã đủ tình tiết nhưng hồ sơ chưa có ngày xảy ra việc nên chưa đối chiếu được."
-_DIRECT_ACTIONS = {"answer_policy_question", "unsupported"}
+_DIRECT_ACTIONS = {"answer_policy_question", "external_research", "capability_gap", "unsupported"}
 
 
 async def handle_message(
@@ -71,7 +72,7 @@ async def handle_message(
     run = await start_run(session, conversation.id, message.id, _PIPELINE)
     await session.commit()
     try:
-        return await _clarify(session, case, conversation, run, message.id, actor.id)
+        return await _clarify(session, case, conversation, run, message.id, actor.id, payload.content)
     except Exception as exc:
         await _fail(session, run.id, exc)
         if isinstance(exc, AppError):
@@ -110,12 +111,12 @@ async def list_facts(session: AsyncSession, actor: User, case_id: UUID) -> FactL
     case = await require_case(session, case_id, actor)
     conversation = await active_conversation(session, case.id)
     conversation_id = conversation.id if conversation else None
-    plan, _handoff = await _plan(session, case, conversation_id)
+    plan, _handoff = await _plan(session, case, conversation_id, semantic=True)
     return FactListResponse(
         case_id=case.id,
         case_status=case.status,
         family=plan.family,
-        facts=present_facts(plan.family, plan.merged),
+        facts=present_facts(plan.family, plan.merged, plan.specs),
         missing_fact_keys=plan.missing_keys,
         facts_locked=plan.locked,
     )
@@ -128,15 +129,50 @@ async def _clarify(
     run: AgentRun,
     source_id: UUID,
     actor_id: UUID,
+    latest_user_message: str,
 ) -> TurnResponse:
+    started = time.perf_counter()
+    logger.info(
+        "agent_stage start stage=clarify_plan case_id=%s conversation_id=%s run_id=%s message_chars=%s",
+        case.id,
+        conversation.id,
+        run.id,
+        len(latest_user_message or ""),
+    )
     plan, handoff = await _planned(
-        session, case, conversation.id, source_id, semantic=True, actor_id=actor_id, run_id=run.id
+        session,
+        case,
+        conversation.id,
+        source_id,
+        semantic=True,
+        actor_id=actor_id,
+        run_id=run.id,
+        latest_user_message=latest_user_message,
+    )
+    logger.info(
+        "agent_stage end stage=clarify_plan case_id=%s run_id=%s latency_ms=%s family=%s locked=%s missing=%s action=%s handoff=%s",
+        case.id,
+        run.id,
+        _elapsed_ms(started),
+        plan.family,
+        plan.locked,
+        len(plan.missing_keys),
+        plan.requested_action or "",
+        handoff is not None,
     )
     if handoff is not None:
         note = _cited_text(handoff)
         assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff"}))
         finish_run(run, assistant.id)
+        downstream_started = time.perf_counter()
         downstream = await run_downstream_agents(session, case, conversation, handoff, assistant.id)
+        logger.info(
+            "agent_stage end stage=downstream case_id=%s source_run_id=%s downstream_run_id=%s latency_ms=%s",
+            case.id,
+            run.id,
+            downstream.agent_run_id,
+            _elapsed_ms(downstream_started),
+        )
         await update_memory(session, conversation.id, plan, downstream.assistant_text)
         await session.commit()
         return _turn(
@@ -175,9 +211,9 @@ async def _confirm(
     conversation: Conversation,
     items: list[FactConfirmItem],
 ) -> TurnResponse:
-    plan, _handoff = await _plan(session, case, conversation.id)
+    plan, _handoff = await _plan(session, case, conversation.id, semantic=True)
     stored = await _stored(session, case.id)
-    _check_keys(plan.family, items)
+    _check_keys(plan, items)
     if not _changed(stored, plan.merged, items):
         return await _unchanged(session, case, conversation, plan)
     await _apply(session, actor.id, case.id, stored, plan.merged, items)
@@ -214,12 +250,24 @@ async def _cite(session: AsyncSession, case: Case, conversation: Conversation, p
     )
     run = await start_run(session, conversation.id, system.id, "hr-help-retrieval")
     graph = build_case_graph(lambda query: search_policies(session, query))
+    started = time.perf_counter()
+    logger.info(
+        "agent_stage start stage=cite_graph case_id=%s conversation_id=%s run_id=%s facts=%s transcript_chars=%s",
+        case.id,
+        conversation.id,
+        run.id,
+        len(facts),
+        len(text),
+    )
     state = await graph.ainvoke(
         {
             "step": "cite",
             "text": text,
+            "turn_context": text,
+            "latest_user_message": "",
             "stored": {key: StoredFact(value, True) for key, value in facts.items()},
             "description": case.description or "",
+            "case_code": case.case_code,
             "incident_date": case.incident_date,
             "employee_name": case.employee_name,
             "employee_code": case.employee_code,
@@ -227,13 +275,29 @@ async def _cite(session: AsyncSession, case: Case, conversation: Conversation, p
             "case_id": case.id,
         }
     )
+    logger.info(
+        "agent_stage end stage=cite_graph case_id=%s run_id=%s latency_ms=%s hits=%s handoff=%s",
+        case.id,
+        run.id,
+        _elapsed_ms(started),
+        len(state.get("hits") or []),
+        isinstance(state.get("handoff"), CaseHandoff),
+    )
     message = state.get("handoff")
     if not isinstance(message, CaseHandoff):
         raise AppError(422, "Tình tiết chưa khóa nên chưa đối chiếu văn bản.")
     note = _cited_text(message)
     assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff"}))
     finish_run(run, assistant.id)
+    downstream_started = time.perf_counter()
     downstream = await run_downstream_agents(session, case, conversation, message, assistant.id)
+    logger.info(
+        "agent_stage end stage=downstream case_id=%s source_run_id=%s downstream_run_id=%s latency_ms=%s",
+        case.id,
+        run.id,
+        downstream.agent_run_id,
+        _elapsed_ms(downstream_started),
+    )
     await update_memory(session, conversation.id, plan, downstream.assistant_text)
     return _turn(
         case,
@@ -343,9 +407,17 @@ async def _planned(
     semantic: bool = False,
     actor_id: UUID | None = None,
     run_id: UUID | None = None,
+    latest_user_message: str = "",
 ) -> tuple[ClarifyPlan, CaseHandoff | None]:
     """Extract, then persist new unconfirmed values before the caller commits."""
-    plan, handoff = await _plan(session, case, conversation_id, semantic=semantic, run_id=run_id)
+    plan, handoff = await _plan(
+        session,
+        case,
+        conversation_id,
+        semantic=semantic,
+        run_id=run_id,
+        latest_user_message=latest_user_message,
+    )
     stored = await _stored(session, case.id)
     await _persist_extracted(session, case.id, stored, plan.merged, source_id, actor_id)
     return plan, handoff
@@ -358,23 +430,53 @@ async def _plan(
     *,
     semantic: bool = False,
     run_id: UUID | None = None,
+    latest_user_message: str = "",
 ) -> tuple[ClarifyPlan, CaseHandoff | None]:
+    started = time.perf_counter()
     stored = await _stored(session, case.id)
-    text = await _transcript(session, case, conversation_id, stored)
+    turn_context = await _transcript(session, case, conversation_id, stored)
+    locked_fact_keys = await _locked_fact_keys(session, conversation_id, stored)
+    logger.info(
+        "agent_stage start stage=case_graph case_id=%s conversation_id=%s semantic=%s run_id=%s stored=%s locked_keys=%s turn_context_chars=%s latest_chars=%s",
+        case.id,
+        conversation_id,
+        semantic,
+        run_id,
+        len(stored),
+        len(locked_fact_keys),
+        len(turn_context),
+        len(latest_user_message or ""),
+    )
     graph = build_case_graph(lambda query: search_policies(session, query))
     state = await graph.ainvoke(
         {
             "step": "clarify",
-            "text": text,
+            "text": turn_context,
+            "turn_context": turn_context,
+            "latest_user_message": latest_user_message,
             "stored": stored,
             "description": case.description or "",
+            "case_code": case.case_code,
             "semantic": semantic,
+            "locked_fact_keys": locked_fact_keys,
             "incident_date": case.incident_date,
             "employee_name": case.employee_name,
             "employee_code": case.employee_code,
             "agent_run_id": run_id,
             "case_id": case.id,
         }
+    )
+    logger.info(
+        "agent_stage end stage=case_graph case_id=%s run_id=%s latency_ms=%s family=%s locked=%s missing=%s action=%s hits=%s handoff=%s",
+        case.id,
+        run_id,
+        _elapsed_ms(started),
+        state.get("family") or "",
+        state.get("facts_locked"),
+        len(state.get("missing_keys") or []),
+        state.get("requested_action") or "",
+        len(state.get("hits") or []),
+        isinstance(state.get("handoff"), CaseHandoff),
     )
     message = state.get("handoff")
     handoff = message if isinstance(message, CaseHandoff) else None
@@ -391,8 +493,13 @@ async def _plan(
         tuple(state.get("ambiguities") or []),
         state.get("validation") or "ok",
         tuple(state.get("accepted_keys") or []),
+        tuple(state.get("specs") or ()),
     )
     return plan, handoff
+
+
+def _elapsed_ms(started: float) -> int:
+    return int((time.perf_counter() - started) * 1000)
 
 
 def _turn(
@@ -410,7 +517,7 @@ def _turn(
         conversation_id=conversation_id,
         family=plan.family,
         assistant_message=assistant_text,
-        facts=present_facts(plan.family, plan.merged),
+        facts=present_facts(plan.family, plan.merged, plan.specs),
         missing_fact_keys=plan.missing_keys,
         facts_locked=plan.locked,
         answer=answer,
@@ -425,7 +532,7 @@ def _question(plan: ClarifyPlan) -> str:
     """Use the ask node's text. Rebuild it only when that node did not run."""
     if plan.question:
         return plan.question
-    return build_question(plan.family, plan.missing_keys, plan.merged)
+    return build_question(plan.family, plan.missing_keys, plan.merged, plan.specs)
 
 
 def _cited_text(message: CaseHandoff) -> str:
@@ -559,15 +666,19 @@ def _value(item: FactConfirmItem, stored: dict[str, StoredFact], projected: dict
     return None
 
 
-def _check_keys(family: str, items: list[FactConfirmItem]) -> None:
-    allowed = {spec.key for spec in required_specs(family)} | set(OPTIONAL_FACT_KEYS)
+def _check_keys(plan: ClarifyPlan, items: list[FactConfirmItem]) -> None:
+    allowed = {spec.key for spec in (plan.specs or required_specs(plan.family))} | set(OPTIONAL_FACT_KEYS)
     for item in items:
         if item.fact_key not in allowed:
             raise AppError(422, "Tình tiết không thuộc bộ fact của vụ này.", code="FACT_NOT_ALLOWED")
 
 
 def _locked_facts(plan: ClarifyPlan) -> dict[str, str]:
-    facts = {spec.key: plan.merged[spec.key].value for spec in required_specs(plan.family)}
+    facts = {
+        spec.key: plan.merged[spec.key].value
+        for spec in (plan.specs or required_specs(plan.family))
+        if spec.required and spec.key in plan.merged and plan.merged[spec.key].confirmed and plan.merged[spec.key].value
+    }
     for key in OPTIONAL_FACT_KEYS:
         item = plan.merged.get(key)
         if item is not None and item.confirmed and item.value:
@@ -593,7 +704,16 @@ async def _transcript(
     conversation_id: UUID | None,
     stored: dict[str, StoredFact] | None = None,
 ) -> str:
-    context = await build_turn_context(session, conversation_id, case.description or "", stored or {})
+    context = await build_turn_context(
+        session,
+        conversation_id,
+        case.description or "",
+        stored or {},
+        case_code=case.case_code,
+        employee_code=case.employee_code,
+        employee_name=case.employee_name,
+        incident_date=case.incident_date,
+    )
     if context:
         return context
     spoken = await list_user_text(session, conversation_id) if conversation_id else ""
@@ -607,6 +727,21 @@ async def _stored(session: AsyncSession, case_id: UUID) -> dict[str, StoredFact]
         if row.fact_value:
             stored[row.fact_key] = StoredFact(value=row.fact_value, confirmed=bool(row.confirmed))
     return stored
+
+
+async def _locked_fact_keys(
+    session: AsyncSession,
+    conversation_id: UUID | None,
+    stored: dict[str, StoredFact],
+) -> list[str]:
+    """Freeze the current working schema while HR is answering open questions."""
+    memory = await get_memory(session, conversation_id) if conversation_id else None
+    pending = getattr(memory, "pending_fact_keys", None) if memory is not None else None
+    if not isinstance(pending, list) or not pending:
+        return []
+    keys = {key for key in pending if isinstance(key, str) and key}
+    keys.update(stored.keys())
+    return sorted(keys)
 
 
 async def _fail(session: AsyncSession, run_id: UUID, exc: Exception) -> None:

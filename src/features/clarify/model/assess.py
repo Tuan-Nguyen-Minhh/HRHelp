@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from src.features.clarify.model.catalog import detect_family, required_specs
+from src.features.clarify.model.catalog import FactSpec, default_dynamic_specs, detect_family, required_specs
 from src.features.clarify.model.extract import extract_facts
 
 
@@ -40,20 +40,27 @@ class ClarifyPlan:
     ambiguities: tuple[str, ...] = ()
     validation: str = "ok"
     accepted_keys: tuple[str, ...] = ()
+    specs: tuple[FactSpec, ...] = ()
 
 
 def assess(text: str, stored: dict[str, StoredFact]) -> ClarifyPlan:
     """Merge newly read values into stored facts. A confirmed value is left as it is."""
     family = detect_family(text)
     merged = _merge(stored, extract_facts(family, text))
-    missing = _missing(family, merged)
-    locked = not missing and _all_confirmed(family, merged)
-    return ClarifyPlan(family=family, merged=merged, missing_keys=missing, locked=locked)
+    specs = default_dynamic_specs(family, set(stored))
+    missing = _missing(family, merged, specs)
+    locked = not missing and _all_confirmed(family, merged, specs)
+    return ClarifyPlan(family=family, merged=merged, missing_keys=missing, locked=locked, specs=specs)
 
 
-def build_question(family: str, missing: list[str], merged: dict[str, StoredFact]) -> str:
+def build_question(
+    family: str,
+    missing: list[str],
+    merged: dict[str, StoredFact],
+    specs: tuple[FactSpec, ...] | None = None,
+) -> str:
     """Ask once for every fact that is still empty."""
-    specs = required_specs(family)
+    specs = specs or required_specs(family)
     if missing:
         wanted = set(missing)
         lines = [f"- {spec.question}" for spec in specs if spec.key in wanted]
@@ -78,22 +85,33 @@ def _merge(stored: dict[str, StoredFact], found: dict[str, str]) -> dict[str, St
     return merged
 
 
-def _missing(family: str, merged: dict[str, StoredFact]) -> list[str]:
+def _missing(
+    family: str,
+    merged: dict[str, StoredFact],
+    specs: tuple[FactSpec, ...] | None = None,
+) -> list[str]:
     missing = []
-    for spec in required_specs(family):
+    for spec in specs or required_specs(family):
+        if not spec.required:
+            continue
         item = merged.get(spec.key)
         if item is None or not item.value.strip():
             missing.append(spec.key)
     return missing
 
 
-def _all_confirmed(family: str, merged: dict[str, StoredFact]) -> bool:
-    return all(merged[spec.key].confirmed for spec in required_specs(family))
+def _all_confirmed(
+    family: str,
+    merged: dict[str, StoredFact],
+    specs: tuple[FactSpec, ...] | None = None,
+) -> bool:
+    required = [spec for spec in (specs or required_specs(family)) if spec.required]
+    return all(spec.key in merged and merged[spec.key].confirmed for spec in required)
 
 
-def conflict_question(family: str, conflicts: list[dict]) -> str:
+def conflict_question(family: str, conflicts: list[dict], specs: tuple[FactSpec, ...] | None = None) -> str:
     """Ask HR which confirmed value stands. The stored value is left unchanged."""
-    labels = {spec.key: spec.label for spec in required_specs(family)}
+    labels = {spec.key: spec.label for spec in (specs or required_specs(family))}
     lines = []
     for item in conflicts:
         label = labels.get(item["key"], item["key"])

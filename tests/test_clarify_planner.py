@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from src.agents.case_graph import build_case_graph
+from src.agents.case_graph import build_case_graph, route_after_intent
 from src.core.config import settings
 from src.features.cite.model.query import SearchQuery
 from src.features.clarify.model.assess import StoredFact
@@ -19,9 +19,21 @@ from src.features.clarify.model.decision import (
     UserIntent,
 )
 from src.features.clarify.model.graph import route_after_extract
+from src.features.clarify.model.intent import (
+    IntentDecision,
+    IntentFallback,
+    IntentResult,
+    IntentTarget,
+    Route,
+    render_intent_prompt,
+    route_turn,
+)
+from src.features.clarify.model.memory import build_turn_context
 from src.features.clarify.model.planner import plan_turn
 from src.features.clarify.model.policy import apply_decision
 from src.features.clarify.model.prompt import PROMPT_VERSION, SYSTEM_PROMPT, render_case_prompt
+from src.features.external_research.model.answer import EXTERNAL_RESEARCH_DISCLAIMER
+from src.features.external_research.model.tool import ExternalResearchQuery, ExternalResearchResult, ExternalSource
 
 _ABSENCE_STORED = {
     "contract_type": StoredFact("xác định thời hạn", True),
@@ -69,14 +81,144 @@ def _state(plan, **extra) -> dict:
 
 
 def test_prompt_keeps_the_planner_off_the_graph_edge():
-    assert PROMPT_VERSION == "clarify-planner-v3"
+    assert PROMPT_VERSION == "clarify-planner-v4-dynamic-facts"
     assert "Never invent missing facts" in SYSTEM_PROMPT
     assert "LangGraph" in SYSTEM_PROMPT
     assert "lập biên bản" in SYSTEM_PROMPT
+    assert "fact_requirements" in SYSTEM_PROMPT
     rendered = render_case_prompt("nghỉ 5 ngày", ["absence_days = 5 ngày [pending]"])
     assert "absence_days" in rendered
     assert "UNAUTHORIZED_ABSENCE" in rendered
+    assert "DYNAMIC FACT SCHEMA RULES" in rendered
     assert "CURRENT STORED FACTS" in rendered
+
+
+def test_intent_prompt_separates_latest_message_from_turn_context():
+    rendered = render_intent_prompt(
+        {
+            "latest_user_message": "nhân viên này vi phạm gì",
+            "turn_context": "CASE DESCRIPTION\nVi phạm: tự ý nhận hoa hồng của khách",
+            "stored": {},
+        }
+    )
+    assert "LATEST_USER_MESSAGE\nnhân viên này vi phạm gì" in rendered
+    assert "TURN_CONTEXT\nCASE DESCRIPTION" in rendered
+
+
+@pytest.mark.asyncio
+async def test_intent_router_schema_failure_asks_for_clarification(monkeypatch):
+    async def invalid_output(_messages, _attempt, _model_name):
+        raise ValueError("route outside schema")
+
+    monkeypatch.setattr(settings, "DEEPSEEK_API_KEY", "test-key")
+    monkeypatch.setattr("src.features.clarify.model.intent._complete", invalid_output)
+    result = await route_turn({"text": "làm một việc lạ chưa có node", "stored": {}})
+    assert result.fallback_kind is IntentFallback.SEMANTIC
+    assert result.decision.route is Route.CLARIFY
+    assert result.decision.intent_label == "unroutable_intent"
+
+
+def test_dynamic_fact_schema_accepts_uncovered_case_requirements():
+    plan = apply_decision(
+        "Có khiếu nại quấy rối xảy ra ngày 10/10, nhân chứng là chị Lan.",
+        {},
+        _decision(
+            family="harassment",
+            fact_requirements=[
+                {
+                    "key": "incident_time",
+                    "label": "Thời điểm xảy ra",
+                    "question": "Vụ việc xảy ra khi nào?",
+                    "required": True,
+                },
+                {
+                    "key": "witnesses",
+                    "label": "Nhân chứng",
+                    "question": "Ai chứng kiến vụ việc?",
+                    "required": True,
+                },
+            ],
+            extracted_facts=[
+                _fact("incident_time", "ngày 10/10", "ngày 10/10"),
+                _fact("witnesses", "chị Lan", "nhân chứng là chị Lan"),
+            ],
+        ),
+    )
+    assert plan.family == "harassment"
+    assert [spec.key for spec in plan.specs] == ["incident_time", "witnesses"]
+    assert plan.missing_keys == []
+    assert plan.locked is True
+
+
+def test_locked_dynamic_schema_ignores_new_requirements_on_followup():
+    plan = apply_decision(
+        "Nhân chứng là chị Lan. Ngoài ra planner thử đòi thêm camera.",
+        {"incident_time": StoredFact("ngày 10/10", True)},
+        _decision(
+            family="harassment",
+            fact_requirements=[
+                {
+                    "key": "incident_time",
+                    "label": "Thời điểm xảy ra",
+                    "question": "Vụ việc xảy ra khi nào?",
+                    "required": True,
+                },
+                {
+                    "key": "witnesses",
+                    "label": "Nhân chứng",
+                    "question": "Ai chứng kiến vụ việc?",
+                    "required": True,
+                },
+                {
+                    "key": "camera_footage",
+                    "label": "Camera",
+                    "question": "Có camera không?",
+                    "required": True,
+                },
+            ],
+            extracted_facts=[
+                _fact("witnesses", "chị Lan", "Nhân chứng là chị Lan"),
+                _fact("camera_footage", "có", "camera"),
+            ],
+        ),
+        locked_keys={"incident_time", "witnesses"},
+    )
+    assert [spec.key for spec in plan.specs] == ["incident_time", "witnesses"]
+    assert "camera_footage" not in plan.merged
+    assert plan.missing_keys == []
+    assert plan.locked is True
+
+
+def test_locked_dynamic_schema_requires_human_confirmation_for_critical_amendment():
+    plan = apply_decision(
+        "Người này vi phạm cách đây 20 hôm trước.",
+        {"witnesses": StoredFact("chị Lan", True)},
+        _decision(
+            family="harassment",
+            fact_requirements=[
+                {
+                    "key": "witnesses",
+                    "label": "Nhân chứng",
+                    "question": "Ai chứng kiến vụ việc?",
+                    "required": True,
+                },
+                {
+                    "key": "violation_date",
+                    "label": "Thời điểm vi phạm",
+                    "question": "Người này vi phạm khi nào?",
+                    "required": True,
+                },
+            ],
+            extracted_facts=[
+                _fact("violation_date", "cách đây 20 hôm trước", "vi phạm cách đây 20 hôm trước"),
+            ],
+        ),
+        locked_keys={"witnesses"},
+    )
+    assert [spec.key for spec in plan.specs] == ["witnesses", "violation_date"]
+    assert plan.merged["violation_date"] == StoredFact("cách đây 20 hôm trước", False)
+    assert plan.missing_keys == []
+    assert plan.locked is False
 
 
 def test_minutes_request_keeps_draft_action_even_when_facts_are_missing():
@@ -88,6 +230,88 @@ def test_minutes_request_keeps_draft_action_even_when_facts_are_missing():
     assert plan.requested_action == "draft_minutes"
     assert plan.locked is False
     assert route_after_extract(_state(plan, incident_date=date(2026, 3, 1), agent_run_id=uuid4())) == "ask"
+
+
+def test_route_after_intent_uses_python_policy():
+    assert (
+        route_after_intent(
+            {
+                "intent_decision": IntentDecision(
+                    route=Route.CASE_QA,
+                    intent_label="ask_case_profile",
+                    target=IntentTarget.CASE_PROFILE,
+                    confidence=0.9,
+                )
+            }
+        )
+        == "case_qa"
+    )
+    assert (
+        route_after_intent(
+            {
+                "intent_decision": IntentDecision(
+                    route=Route.POLICY_QA,
+                    intent_label="ask_internal_policy",
+                    target=IntentTarget.INTERNAL_POLICY,
+                    confidence=0.9,
+                    requires_internal_retrieval=True,
+                )
+            }
+        )
+        == "action"
+    )
+    assert (
+        route_after_intent(
+            {
+                "intent_decision": IntentDecision(
+                    route=Route.CASE_QA,
+                    intent_label="ask_case_profile",
+                    target=IntentTarget.CASE_PROFILE,
+                    confidence=0.2,
+                )
+            }
+        )
+        == "disambiguate"
+    )
+
+
+def test_route_after_intent_keeps_open_labels_behind_closed_routes():
+    assert (
+        route_after_intent(
+            {
+                "intent_decision": IntentDecision(
+                    route=Route.CAPABILITY_GAP,
+                    intent_label="calculate_litigation_probability",
+                    raw_intent_label="estimate lawsuit risk",
+                    capability_needed="legal_risk_calculator",
+                    confidence=0.88,
+                )
+            }
+        )
+        == "action"
+    )
+    assert route_after_intent({"intent_router_fallback_kind": IntentFallback.SEMANTIC.value}) == "disambiguate"
+    assert route_after_intent({"intent_router_fallback_kind": IntentFallback.TECHNICAL.value}) == "extract"
+
+
+@pytest.mark.asyncio
+async def test_turn_context_includes_case_profile_for_planner_memory():
+    context = await build_turn_context(
+        object(),
+        None,
+        "Nhân viên bị tố cáo tiết lộ dữ liệu khách hàng.",
+        {},
+        case_code="CASE-001",
+        employee_name="Nguyễn Văn A",
+        employee_code="E001",
+        incident_date=date(2026, 3, 1),
+    )
+    assert "CASE PROFILE" in context
+    assert "case_code: CASE-001" in context
+    assert "employee_name: Nguyễn Văn A" in context
+    assert "employee_code: E001" in context
+    assert "incident_date: 2026-03-01" in context
+    assert "CASE DESCRIPTION" in context
 
 
 def test_direct_fact_does_not_fill_the_rest_of_the_catalog():
@@ -399,6 +623,269 @@ async def test_missing_api_key_does_not_call_the_model(monkeypatch):
     result = await plan_turn({"text": "nghỉ 5 ngày", "stored": {}})
     assert result.fallback is True
     assert result.reason == "missing_api_key"
+
+
+@pytest.mark.asyncio
+async def test_graph_routes_case_question_before_fact_planning(monkeypatch):
+    async def search(_query: SearchQuery):
+        raise AssertionError("case profile questions must not retrieve")
+
+    async def fake_intent(_state):
+        return IntentResult(
+            IntentDecision(
+                route=Route.CASE_QA,
+                intent_label="ask_case_profile",
+                target=IntentTarget.CASE_PROFILE,
+                confidence=0.94,
+                requires_fact_planner=False,
+                requires_internal_retrieval=False,
+            ),
+            IntentFallback.NONE,
+            None,
+            1,
+            "router-test",
+        )
+
+    async def fail_plan(_state):
+        raise AssertionError("case profile questions must not run fact planner")
+
+    monkeypatch.setattr("src.agents.case_graph.route_turn", fake_intent)
+    monkeypatch.setattr("src.features.clarify.model.graph.plan_turn", fail_plan)
+    monkeypatch.setattr(settings, "DEEPSEEK_API_KEY", "")
+    state = await build_case_graph(search).ainvoke(
+        {
+            "semantic": True,
+            "text": "latest user turn asks about current case profile",
+            "stored": {},
+            "case_code": "CASE-001",
+            "employee_name": "Nguyễn Văn A",
+            "employee_code": "E001",
+        }
+    )
+    assert "Nguyễn Văn A" in state["question"]
+    assert "E001" in state["question"]
+    assert state.get("handoff") is None
+
+
+@pytest.mark.asyncio
+async def test_graph_case_question_answers_from_description(monkeypatch):
+    async def search(_query: SearchQuery):
+        raise AssertionError("case memory questions must not retrieve")
+
+    async def fake_intent(_state):
+        return IntentResult(
+            IntentDecision(
+                route=Route.CASE_QA,
+                intent_label="ask_case_violation",
+                target=IntentTarget.CASE_FACTS,
+                confidence=0.93,
+            ),
+            IntentFallback.NONE,
+            None,
+            1,
+            "router-test",
+        )
+
+    async def fail_plan(_state):
+        raise AssertionError("case memory questions must not run fact planner")
+
+    monkeypatch.setattr("src.agents.case_graph.route_turn", fake_intent)
+    monkeypatch.setattr("src.features.clarify.model.graph.plan_turn", fail_plan)
+    monkeypatch.setattr(settings, "DEEPSEEK_API_KEY", "")
+    state = await build_case_graph(search).ainvoke(
+        {
+            "semantic": True,
+            "text": "nhân viên này vi phạm gì",
+            "stored": {},
+            "case_code": "CASE30",
+            "employee_name": "nGUYỄN Văn K",
+            "employee_code": "EMP-09",
+            "description": "Phòng ban: ENGINEER\nChức danh: SE\nVi phạm: tự ý nhận hoa hồng của khách",
+        }
+    )
+    assert "Mô tả" in state["question"]
+    assert "tự ý nhận hoa hồng của khách" in state["question"]
+    assert state.get("handoff") is None
+
+
+@pytest.mark.asyncio
+async def test_graph_routes_policy_question_to_action(monkeypatch):
+    seen = {"calls": 0}
+
+    async def search(_query: SearchQuery):
+        seen["calls"] += 1
+        return []
+
+    async def fake_intent(_state):
+        return IntentResult(
+            IntentDecision(
+                route=Route.POLICY_QA,
+                intent_label="ask_internal_policy",
+                target=IntentTarget.INTERNAL_POLICY,
+                confidence=0.9,
+                requires_fact_planner=False,
+                requires_internal_retrieval=True,
+                requested_action="answer_policy_question",
+            ),
+            IntentFallback.NONE,
+            None,
+            1,
+            "router-test",
+        )
+
+    async def fail_plan(_state):
+        raise AssertionError("policy questions must not run fact planner first")
+
+    async def fake_policy_answer(_question, _hits, description=""):
+        return "policy answer"
+
+    monkeypatch.setattr("src.agents.case_graph.route_turn", fake_intent)
+    monkeypatch.setattr("src.features.clarify.model.graph.plan_turn", fail_plan)
+    monkeypatch.setattr("src.agents.case_graph.answer_policy_question", fake_policy_answer)
+    state = await build_case_graph(search).ainvoke(
+        {
+            "semantic": True,
+            "text": "hỏi quy định xử lý theo nội quy",
+            "stored": _ABSENCE_STORED,
+            "description": "nghỉ không phép",
+            "incident_date": date(2026, 3, 1),
+            "agent_run_id": uuid4(),
+            "employee_name": "An",
+        }
+    )
+    assert seen["calls"] == 1
+    assert state["requested_action"] == "answer_policy_question"
+    assert state["question"] == "policy answer"
+
+
+@pytest.mark.asyncio
+async def test_graph_does_not_extract_after_semantic_router_failure(monkeypatch):
+    async def search(_query: SearchQuery):
+        raise AssertionError("unclear turns must not retrieve")
+
+    async def fake_intent(_state):
+        return IntentResult(
+            IntentDecision(
+                route=Route.CLARIFY,
+                intent_label="unroutable_intent",
+                confidence=0,
+                reason="invalid route from model",
+            ),
+            IntentFallback.SEMANTIC,
+            "invalid route from model",
+            1,
+            "router-test",
+        )
+
+    async def fail_plan(_state):
+        raise AssertionError("semantic router failures must not run fact planner")
+
+    monkeypatch.setattr("src.agents.case_graph.route_turn", fake_intent)
+    monkeypatch.setattr("src.features.clarify.model.graph.plan_turn", fail_plan)
+    state = await build_case_graph(search).ainvoke(
+        {
+            "semantic": True,
+            "text": "một intent lạ chưa biết xử lý",
+            "stored": {},
+            "case_code": "CASE-001",
+        }
+    )
+    assert "chưa chắc" in state["question"]
+    assert state.get("handoff") is None
+
+
+@pytest.mark.asyncio
+async def test_graph_external_research_requires_disclaimer_and_no_extract(monkeypatch):
+    async def search(_query: SearchQuery):
+        raise AssertionError("external research must not use internal retrieval")
+
+    seen = {"calls": 0}
+
+    async def fake_external(query: ExternalResearchQuery):
+        seen["calls"] += 1
+        assert "bị kiện" in query.question
+        return ExternalResearchResult(
+            query=query.question,
+            provider="mcp_http",
+            sources=[
+                ExternalSource(
+                    title="Nguồn external mẫu",
+                    url="https://molisa.gov.vn/example",
+                    snippet="Doanh nghiệp cần chuẩn bị hồ sơ, chứng cứ và quy trình làm việc liên quan.",
+                )
+            ],
+        )
+
+    async def fake_intent(_state):
+        return IntentResult(
+            IntentDecision(
+                route=Route.EXTERNAL_RESEARCH,
+                intent_label="research_public_litigation_guidance",
+                confidence=0.86,
+                requires_external_research=True,
+            ),
+            IntentFallback.NONE,
+            None,
+            1,
+            "router-test",
+        )
+
+    async def fail_plan(_state):
+        raise AssertionError("external research turns must not run fact planner")
+
+    monkeypatch.setattr("src.agents.case_graph.route_turn", fake_intent)
+    monkeypatch.setattr("src.features.clarify.model.graph.plan_turn", fail_plan)
+    monkeypatch.setattr(settings, "DEEPSEEK_API_KEY", "")
+    state = await build_case_graph(search, external_research=fake_external).ainvoke(
+        {
+            "semantic": True,
+            "text": "nếu bị kiện thì công ty cần chuẩn bị gì theo thông tin mới nhất?",
+            "stored": {},
+            "case_code": "CASE-001",
+        }
+    )
+    assert seen["calls"] == 1
+    assert state["requested_action"] == "external_research"
+    assert "Nguồn external mẫu" in state["question"]
+    assert EXTERNAL_RESEARCH_DISCLAIMER in state["question"]
+    assert state.get("handoff") is None
+
+
+@pytest.mark.asyncio
+async def test_graph_unsupported_action_does_not_enter_workflow_or_extract(monkeypatch):
+    async def search(_query: SearchQuery):
+        raise AssertionError("unsupported actions must not retrieve")
+
+    async def fake_intent(_state):
+        return IntentResult(
+            IntentDecision(
+                route=Route.UNSUPPORTED,
+                intent_label="approve_and_close_case",
+                confidence=0.95,
+                requested_action="unsupported",
+            ),
+            IntentFallback.NONE,
+            None,
+            1,
+            "router-test",
+        )
+
+    async def fail_plan(_state):
+        raise AssertionError("unsupported actions must not run fact planner")
+
+    monkeypatch.setattr("src.agents.case_graph.route_turn", fake_intent)
+    monkeypatch.setattr("src.features.clarify.model.graph.plan_turn", fail_plan)
+    state = await build_case_graph(search).ainvoke(
+        {
+            "semantic": True,
+            "text": "duyệt và đóng hồ sơ luôn",
+            "stored": {},
+            "case_code": "CASE-001",
+        }
+    )
+    assert state["requested_action"] == "unsupported"
+    assert "không thể thực hiện" in state["question"]
+    assert state.get("handoff") is None
 
 
 @pytest.mark.asyncio

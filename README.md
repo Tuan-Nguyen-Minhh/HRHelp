@@ -64,7 +64,8 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Mở `.env` và điền `MISTRAL_API_KEY`. Riêng `AI_LOG_API_KEY`, mỗi thành viên tự
+Mở `.env` và điền `DEEPSEEK_API_KEY` cho chat/agent và `MISTRAL_API_KEY` cho
+embedding `mistral-embed`. Riêng `AI_LOG_API_KEY`, mỗi thành viên tự
 tạo key riêng tại [dashboard Phoenix](https://phoenix.note.transformerlabs.ai/api-keys)
 rồi thay vào chỗ `<get-your-api-key-from-dashboard-phoenix>` — giá trị trong
 `.env.example` chỉ là placeholder, để nguyên thì log không vào được hệ thống chấm.
@@ -159,10 +160,48 @@ bằng bất kỳ markdown viewer nào.
 |---|---|
 | Agent | LangGraph + LangChain 0.3 |
 | Backend | FastAPI 0.115 + Uvicorn |
-| LLM | Mistral, mặc định `ministral-8b-2512`, fallback `ministral-3b-2512` (đổi `MODEL_NAME` / `FALLBACK_MODEL_NAME` trong `.env`) |
+| LLM | DeepSeek qua OpenAI-compatible API, mặc định `deepseek-flash` (đổi `MODEL_NAME` / `FALLBACK_MODEL_NAME` trong `.env`) |
+| Embedding | Mistral `mistral-embed` 1024 chiều cho vector retrieval |
 | Giao diện | Next.js hoặc Streamlit (đội tự chọn, hướng dẫn ở chương 6) |
 | Lint / test | ruff + pytest 8 |
 | DevOps | Docker + GitHub Actions |
+
+## Chạy Docker trên desktop để xem log agent
+
+Khi debug latency/timeout agent, chạy backend bằng compose desktop:
+
+```bash
+make compose-desktop
+```
+
+Target này luôn gọi:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.desktop.yml up --build --force-recreate --remove-orphans
+```
+
+Vì vậy mỗi lần code đổi, image backend được build lại và container được recreate theo code mới. Log backend in trực tiếp ra terminal với `LOG_LEVEL=DEBUG`.
+
+Nếu đã chạy container nền và chỉ muốn xem log:
+
+```bash
+make compose-desktop-logs
+```
+
+Tắt stack:
+
+```bash
+make compose-desktop-down
+```
+
+Các log quan trọng có prefix `agent_stage`, ví dụ:
+
+```text
+agent_stage start stage=case_graph ...
+agent_stage end stage=retrieval latency_ms=...
+agent_stage start stage=synthesis prompt_chars=... passages=... base_url_host=...
+agent_stage error stage=synthesis_llm model=... latency_ms=... error=OpenAITimeoutError
+```
 
 ## AI usage logging
 
