@@ -30,8 +30,9 @@ class Settings(BaseSettings):
     # -------------------------
     # LLM
     # -------------------------
-    # DeepSeek chat; Mistral credentials below remain dedicated to embeddings.
-    MODEL_NAME: str = "deepseek-flash"
+    # Text generation provider; embeddings always use Mistral.
+    LLM_PROVIDER: Literal["deepseek", "mistral"] = "deepseek"
+    MODEL_NAME: str = ""
     FALLBACK_MODEL_NAME: str = ""
     MISTRAL_BASE_URL: str = ""
     DEEPSEEK_API_KEY: str = ""
@@ -86,18 +87,26 @@ class Settings(BaseSettings):
     # variable names and are read from alembic/env.py, src/db/session.py,
     # src/services/vector_store.py and the scripts/ helpers. Renaming them
     # would break those call sites.
+    @property
+    def chat_api_key(self) -> str:
+        """Credentials for the selected text provider, independent of embeddings."""
+        key = self.DEEPSEEK_API_KEY if self.LLM_PROVIDER == "deepseek" else self.MISTRAL_API_KEY
+        return key.strip()
+
     def chat_kwargs(self, model_name: str | None = None) -> dict[str, str]:
-        """DeepSeek model, key, and OpenAI-compatible host."""
-        model = (model_name or self.MODEL_NAME).strip() or "deepseek-flash"
-        base = self.DEEPSEEK_BASE_URL.strip() or "https://api.deepseek.com"
-        kwargs = {"model": model, "api_key": self.DEEPSEEK_API_KEY}
-        if base:
-            kwargs["base_url"] = base
+        """Model, credentials, and optional endpoint for the selected provider."""
+        model = (model_name or self.MODEL_NAME).strip() or self.chat_models()[0]
+        kwargs = {"model": model, "api_key": self.chat_api_key}
+        if self.LLM_PROVIDER == "deepseek":
+            kwargs["base_url"] = self.DEEPSEEK_BASE_URL.strip() or "https://api.deepseek.com"
+        elif self.MISTRAL_BASE_URL.strip():
+            kwargs["base_url"] = self.MISTRAL_BASE_URL.strip()
         return kwargs
 
     def chat_models(self) -> tuple[str, ...]:
-        """Primary model first, then an optional fallback without duplicates."""
-        primary = self.MODEL_NAME.strip() or "deepseek-flash"
+        """Primary model first, then an optional fallback within the same provider."""
+        default = "deepseek-flash" if self.LLM_PROVIDER == "deepseek" else "ministral-8b-2512"
+        primary = self.MODEL_NAME.strip() or default
         fallback = self.FALLBACK_MODEL_NAME.strip()
         if fallback and fallback != primary:
             return (primary, fallback)

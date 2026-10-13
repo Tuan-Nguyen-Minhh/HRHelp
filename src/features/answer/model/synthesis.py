@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 from uuid import UUID
 
 import httpx
-from langchain_openai import ChatOpenAI
+from src.services.chat_client import create_chat_model
 
 from src.agents.handoff import CaseHandoff
 from src.core.config import settings
@@ -195,7 +195,7 @@ def unavailable_assessment(facts: dict[str, str], reason: str) -> Assessment:
 
 async def synthesize(message: CaseHandoff, layered: LayeredBasis) -> Assessment:
     """Read one handoff. A missing key or a bad payload leaves the level unset."""
-    if not settings.DEEPSEEK_API_KEY:
+    if not settings.chat_api_key:
         return unavailable_assessment(message.facts, "Chưa có mô hình tổng hợp. Mức xử lý đề xuất: chưa xác định.")
     payload = _payload(message, layered)
     messages = [
@@ -462,8 +462,8 @@ async def _complete(messages: list[dict[str, str]], attempt: int, model_name: st
                 ),
             }
         )
-    model = ChatOpenAI(
-        **settings.chat_kwargs(model_name),
+    model = create_chat_model(
+        model_name,
         temperature=0,
         timeout=45,
         max_retries=2,
@@ -491,5 +491,5 @@ def _elapsed_ms(started: float) -> int:
 
 
 def _base_url_host() -> str:
-    base = settings.DEEPSEEK_BASE_URL.strip() or "https://api.deepseek.com"
+    base = settings.chat_kwargs().get("base_url", "https://api.mistral.ai/v1")
     return urlparse(base).netloc or base

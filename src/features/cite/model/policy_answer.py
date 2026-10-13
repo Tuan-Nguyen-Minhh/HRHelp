@@ -8,7 +8,7 @@ import json
 import logging
 
 import httpx
-from langchain_openai import ChatOpenAI
+from src.services.chat_client import create_chat_model
 from pydantic import BaseModel, Field
 
 from src.core.config import settings
@@ -50,7 +50,7 @@ async def answer_policy_question(question: str, passages: list[Passage], descrip
     """Return a smooth RAG answer, or a clear no-answer message when retrieval missed."""
     if not passages:
         return NO_ANSWER
-    if not settings.DEEPSEEK_API_KEY:
+    if not settings.chat_api_key:
         return _fallback_answer(passages)
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -79,8 +79,8 @@ async def _complete(messages: list[dict[str, str]], attempt: int, model_name: st
                 "content": "Bản trước không đúng schema hoặc chưa đủ bám căn cứ. Trả một policy answer hợp lệ.",
             }
         )
-    model = ChatOpenAI(
-        **settings.chat_kwargs(model_name),
+    model = create_chat_model(
+        model_name,
         temperature=0,
         timeout=30,
         max_retries=2,

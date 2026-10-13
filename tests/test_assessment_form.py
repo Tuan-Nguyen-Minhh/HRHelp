@@ -99,6 +99,7 @@ def test_a_generic_narrative_keeps_the_stored_family():
 
 
 def test_deepseek_chat_kwargs_use_the_deepseek_key(monkeypatch):
+    monkeypatch.setattr(settings, "LLM_PROVIDER", "deepseek")
     monkeypatch.setattr(settings, "DEEPSEEK_API_KEY", "deepseek-test")
     monkeypatch.setattr(settings, "DEEPSEEK_BASE_URL", "")
     monkeypatch.setattr(settings, "MODEL_NAME", "deepseek-flash")

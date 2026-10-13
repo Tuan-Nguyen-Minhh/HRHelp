@@ -4,7 +4,7 @@ import json
 import logging
 
 import httpx
-from langchain_openai import ChatOpenAI
+from src.services.chat_client import create_chat_model
 from pydantic import BaseModel, Field
 
 from src.core.config import settings
@@ -46,7 +46,7 @@ async def answer_external_research(question: str, result: ExternalResearchResult
     """Return an external research answer with mandatory disclaimer."""
     if result.disabled or result.error or not result.sources:
         return NO_EXTERNAL_RESEARCH
-    if not settings.DEEPSEEK_API_KEY:
+    if not settings.chat_api_key:
         return _fallback_answer(result.sources)
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -70,8 +70,8 @@ async def _complete(messages: list[dict[str, str]], attempt: int, model_name: st
     prompt = list(messages)
     if attempt:
         prompt.append({"role": "user", "content": "Trả một external research answer hợp lệ, có disclaimer."})
-    model = ChatOpenAI(
-        **settings.chat_kwargs(model_name),
+    model = create_chat_model(
+        model_name,
         temperature=0,
         timeout=30,
         max_retries=2,

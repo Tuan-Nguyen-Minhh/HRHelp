@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass
 
 import httpx
-from langchain_openai import ChatOpenAI
+from src.services.chat_client import create_chat_model
 
 from src.core.config import settings
 from src.features.clarify.model.decision import (
@@ -54,7 +54,7 @@ async def plan_turn(state: dict) -> PlannerResult:
     """Read one narrative. Timeout, invalid JSON, and schema errors fall back after one retry."""
     model_names = settings.chat_models()
     primary_model = model_names[0]
-    if not settings.DEEPSEEK_API_KEY:
+    if not settings.chat_api_key:
         return PlannerResult(fallback_decision(), True, "missing_api_key", 0, primary_model)
     messages = _messages(state)
     started = time.perf_counter()
@@ -99,8 +99,8 @@ async def _complete(messages: list[dict[str, str]], attempt: int, model_name: st
                 "content": "The previous response did not match the schema. Return one valid decision.",
             }
         )
-    model = ChatOpenAI(
-        **settings.chat_kwargs(model_name),
+    model = create_chat_model(
+        model_name,
         temperature=0,
         timeout=30,
         max_retries=2,
