@@ -4,7 +4,7 @@ import json
 import logging
 
 import httpx
-from langchain_openai import ChatOpenAI
+from src.services.chat_client import create_chat_model
 from pydantic import BaseModel, Field
 
 from src.core.config import settings
@@ -38,7 +38,7 @@ async def answer_case_question(question: str, state: dict) -> str:
     turn_context = (state.get("turn_context") or state.get("text") or "").strip()
     if not context and not turn_context:
         return "Hồ sơ hiện chưa có thông tin đã lưu để trả lời câu hỏi này."
-    if not settings.DEEPSEEK_API_KEY:
+    if not settings.chat_api_key:
         return _fallback_answer(context, turn_context)
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -92,8 +92,8 @@ async def _complete(messages: list[dict[str, str]], attempt: int, model_name: st
     prompt = list(messages)
     if attempt:
         prompt.append({"role": "user", "content": "Trả một CaseMemoryAnswer hợp lệ, chỉ dựa trên case_context."})
-    model = ChatOpenAI(
-        **settings.chat_kwargs(model_name),
+    model = create_chat_model(
+        model_name,
         temperature=0,
         timeout=20,
         max_retries=2,

@@ -12,7 +12,7 @@ from enum import StrEnum
 import json
 
 import httpx
-from langchain_openai import ChatOpenAI
+from src.services.chat_client import create_chat_model
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.core.config import settings
@@ -123,7 +123,7 @@ async def route_turn(state: dict) -> IntentResult:
     """
     model_names = settings.chat_models()
     primary_model = model_names[0]
-    if not settings.DEEPSEEK_API_KEY:
+    if not settings.chat_api_key:
         return IntentResult(
             technical_fallback_intent(),
             IntentFallback.TECHNICAL,
@@ -210,8 +210,8 @@ async def _complete(messages: list[dict[str, str]], attempt: int, model_name: st
     prompt = list(messages)
     if attempt:
         prompt.append({"role": "user", "content": "Return one valid IntentDecision JSON object."})
-    model = ChatOpenAI(
-        **settings.chat_kwargs(model_name),
+    model = create_chat_model(
+        model_name,
         temperature=0,
         timeout=20,
         max_retries=2,

@@ -64,8 +64,11 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Mở `.env` và điền `DEEPSEEK_API_KEY` cho chat/agent và `MISTRAL_API_KEY` cho
-embedding `mistral-embed`. Riêng `AI_LOG_API_KEY`, mỗi thành viên tự
+Chọn `LLM_PROVIDER=deepseek` hoặc `LLM_PROVIDER=mistral` trong `.env`.
+Điền API key tương ứng (`DEEPSEEK_API_KEY` hoặc `MISTRAL_API_KEY`) cho chat/agent.
+Để trống `MODEL_NAME` để dùng model mặc định theo provider; hoặc đặt tên model
+và `FALLBACK_MODEL_NAME` thuộc cùng provider. Khi đổi provider, cập nhật hoặc
+xóa tên model cũ. Embedding `mistral-embed` luôn dùng `MISTRAL_API_KEY`. Riêng `AI_LOG_API_KEY`, mỗi thành viên tự
 tạo key riêng tại [dashboard Phoenix](https://phoenix.note.transformerlabs.ai/api-keys)
 rồi thay vào chỗ `<get-your-api-key-from-dashboard-phoenix>` — giá trị trong
 `.env.example` chỉ là placeholder, để nguyên thì log không vào được hệ thống chấm.
