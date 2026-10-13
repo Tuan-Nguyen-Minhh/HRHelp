@@ -28,8 +28,7 @@ export function EvidenceCard({ item, onOpen }: { item: EvidenceItem; onOpen: (it
       {item.retrievedBecause ? (
         <p className="px-3 pb-3 text-xs text-ink-3">Đối chiếu theo: {clip(item.retrievedBecause, 180)}</p>
       ) : null}
-      <footer className="flex items-center justify-between gap-3 border-t border-rule px-3 py-2 text-xs text-ink-3">
-        <span>Mã đoạn: {item.chunkId || "—"}</span>
+      <footer className="flex items-center justify-end gap-3 border-t border-rule px-3 py-2 text-xs text-ink-3">
         <Button variant="ghost" size="sm" onClick={() => onOpen(item)}>
           Xem nguồn
         </Button>

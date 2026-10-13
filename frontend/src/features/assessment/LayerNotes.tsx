@@ -57,8 +57,6 @@ function ReferenceList({ items, empty }: { items: EvidenceItem[]; empty: string 
             <p className="font-medium">{item.policyName || item.policyCode || "Văn bản"}</p>
             <p className="text-xs text-ink-3">
               {placeLabel(item.article, item.clause, item.point) || "Không có vị trí điều khoản"}
-              {" · "}
-              {item.chunkId || "không có mã đoạn"}
             </p>
             <Button className="mt-1 px-0" variant="ghost" size="sm" onClick={() => setSelected(item)}>
               Xem nguồn

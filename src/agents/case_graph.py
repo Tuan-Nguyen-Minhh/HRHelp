@@ -30,7 +30,15 @@ from src.features.clarify.model.assess import StoredFact
 from src.features.clarify.model.case_qa import answer_case_question
 from src.features.clarify.model.catalog import FactSpec, default_dynamic_specs
 from src.features.clarify.model.graph import ask_node, extract_node, route_after_extract
-from src.features.clarify.model.intent import MIN_ROUTE_CONFIDENCE, IntentDecision, IntentFallback, Route, route_turn
+from src.features.clarify.model.intent import (
+    MIN_ROUTE_CONFIDENCE,
+    IntentDecision,
+    IntentFallback,
+    IntentSignals,
+    Route,
+    infer_turn_signals,
+    route_turn,
+)
 from src.features.external_research.model.answer import answer_external_research
 from src.features.external_research.model.tool import ExternalResearchFn, ExternalResearchQuery, research_external
 
@@ -72,6 +80,10 @@ class CaseState(TypedDict, total=False):
     intent_decision: IntentDecision
     intent_router_fallback: bool
     intent_router_fallback_kind: str
+    selected_route: Route
+    route_trace: dict
+    external_sources: list[dict]
+    external_research_provider: str
     facts: dict[str, str]
     fact_lines: list[str]
     question: str
@@ -97,6 +109,7 @@ def build_case_graph(
     async def intent_node(state: CaseState) -> dict:
         result = await route_turn(state)
         decision = result.decision
+        route, requested_action, trace = _decide_intent_route(state, decision, result.fallback_kind)
         baseline = _baseline_state(state)
         updates = {
             **baseline,
@@ -105,14 +118,22 @@ def build_case_graph(
             "intent_router_fallback_kind": result.fallback_kind.value,
             "user_intent": decision.intent_label,
             "planner_fallback": result.fallback_kind == IntentFallback.TECHNICAL,
+            "selected_route": route,
+            "requested_action": requested_action,
+            "route_trace": trace,
         }
-        if decision.route == Route.POLICY_QA:
-            updates["requested_action"] = "answer_policy_question"
-        elif decision.route == Route.WORKFLOW_ACTION:
-            updates["requested_action"] = decision.requested_action
-        elif decision.route == Route.EXTERNAL_RESEARCH:
-            updates["requested_action"] = "external_research"
-        elif decision.route == Route.CAPABILITY_GAP:
+        logger.info(
+            "orchestrator_route_trace case_id=%s route=%s action=%s rule=%s llm_route=%s confidence=%s signals=%s candidates=%s",
+            state.get("case_id"),
+            route.value,
+            requested_action,
+            trace.get("decision_rule"),
+            decision.route.value,
+            decision.confidence,
+            trace.get("signals"),
+            trace.get("candidates"),
+        )
+        if route == Route.CAPABILITY_GAP:
             logger.info(
                 "case_graph capability_gap intent=%s capability=%s confidence=%s case_id=%s",
                 decision.intent_label,
@@ -120,9 +141,6 @@ def build_case_graph(
                 decision.confidence,
                 state.get("case_id"),
             )
-            updates["requested_action"] = "capability_gap"
-        elif decision.route == Route.UNSUPPORTED:
-            updates["requested_action"] = "unsupported"
         return updates
 
     async def retrieve_node(state: CaseState) -> dict:
@@ -151,21 +169,24 @@ def build_case_graph(
             suffix = f" Chức năng cần thêm: {capability}." if capability else ""
             return {
                 "question": (
-                    "Yêu cầu này hợp lý nhưng hệ thống hiện chưa có capability an toàn để xử lý trong luồng chat."
+                    "Mình hiểu nhu cầu này là hợp lý trong bối cảnh xử lý hồ sơ, nhưng hiện hệ thống chưa có "
+                    "capability đủ an toàn để thực hiện trực tiếp trong luồng chat."
                     f"{suffix}"
                 )
             }
         if action == "show_assessment":
             return {
                 "question": (
-                    "Nếu hồ sơ đã có báo cáo, hệ thống sẽ đọc báo cáo hiện tại từ bước trả lời. "
-                    "Nếu chưa có báo cáo, hãy yêu cầu lập biên bản hoặc đối chiếu quy định sau khi đủ tình tiết."
+                    "Nếu hồ sơ đã có báo cáo đánh giá, mình sẽ ưu tiên đọc và tóm tắt phần đang lưu để bạn đối chiếu. "
+                    "Nếu hồ sơ chưa có báo cáo, bước phù hợp là hoàn thiện tình tiết trước, rồi yêu cầu lập biên bản "
+                    "hoặc đối chiếu quy định áp dụng."
                 )
             }
         return {
             "question": (
-                "Yêu cầu này không thể thực hiện trong chat. Agent chỉ làm rõ tình tiết, "
-                "đối chiếu căn cứ, lập báo cáo/preview phiếu và giữ bước duyệt cho người có thẩm quyền."
+                "Yêu cầu này không thể thực hiện trong chat vì thuộc thẩm quyền phê duyệt hoặc quyết định chính thức. "
+                "Mình có thể hỗ trợ làm rõ tình tiết, đối chiếu căn cứ, chuẩn bị báo cáo hoặc preview phiếu để "
+                "người có thẩm quyền xem xét."
             )
         }
 
@@ -176,8 +197,8 @@ def build_case_graph(
     async def disambiguate_node(state: CaseState) -> dict:
         return {
             "question": (
-                "Mình chưa chắc bạn muốn hỏi thông tin đang lưu trong hồ sơ, bổ sung tình tiết, "
-                "hay tra quy định áp dụng. Bạn hãy nói rõ mục tiêu của lượt này."
+                "Mình chưa chắc mục tiêu chính của lượt này là xem thông tin đang lưu trong hồ sơ, bổ sung tình tiết, "
+                "hay tra quy định áp dụng. Bạn nói rõ thêm một chút mục tiêu cần xử lý, mình sẽ đi đúng nhánh hơn."
             )
         }
 
@@ -227,24 +248,115 @@ def route_after_intent(state: CaseState) -> str:
         return "extract"
     if state.get("intent_router_fallback_kind") == IntentFallback.SEMANTIC.value:
         return "disambiguate"
-    decision = state.get("intent_decision")
-    if not isinstance(decision, IntentDecision):
+    route = state.get("selected_route")
+    if not isinstance(route, Route):
+        decision = state.get("intent_decision")
+        if isinstance(decision, IntentDecision):
+            route, _, _ = _decide_intent_route(state, decision, IntentFallback.NONE)
+    if not isinstance(route, Route):
         return "disambiguate"
-    if decision.confidence < MIN_ROUTE_CONFIDENCE:
-        return "disambiguate"
-    if decision.route == Route.CASE_QA:
+    if route == Route.CASE_QA:
         return "case_qa"
-    if decision.route == Route.POLICY_QA:
+    if route == Route.POLICY_QA:
         return "action"
-    if decision.route == Route.FACT_PLANNER:
+    if route == Route.FACT_PLANNER:
         return "extract"
-    if decision.route == Route.WORKFLOW_ACTION:
+    if route == Route.WORKFLOW_ACTION:
+        decision = state.get("intent_decision")
+        if not isinstance(decision, IntentDecision):
+            return "disambiguate"
         return "extract" if decision.requires_fact_planner else "action"
-    if decision.route in {Route.EXTERNAL_RESEARCH, Route.UNSUPPORTED, Route.CAPABILITY_GAP}:
+    if route in {Route.EXTERNAL_RESEARCH, Route.UNSUPPORTED, Route.CAPABILITY_GAP}:
         return "action"
-    if decision.route == Route.CLARIFY:
+    if route == Route.CLARIFY:
         return "disambiguate"
     return "disambiguate"
+
+
+def _decide_intent_route(
+    state: CaseState,
+    decision: IntentDecision,
+    fallback_kind: IntentFallback,
+) -> tuple[Route, str, dict]:
+    """Select the final route with deterministic priority rules."""
+    signals = _merge_signals(decision.signals, infer_turn_signals(state))
+    candidates = [
+        {"route": item.route.value, "score": item.score, "evidence": item.evidence}
+        for item in decision.candidates
+    ]
+    selected = Route.CLARIFY
+    requested_action = ""
+    rule = "default_clarify"
+    rejected: list[dict[str, str]] = []
+
+    if fallback_kind == IntentFallback.TECHNICAL:
+        selected = Route.FACT_PLANNER
+        rule = "technical_fallback_to_fact_planner"
+    elif fallback_kind == IntentFallback.SEMANTIC:
+        selected = Route.CLARIFY
+        rule = "semantic_fallback_to_clarify"
+    elif signals.asks_prohibited_action or decision.route == Route.UNSUPPORTED:
+        selected = Route.UNSUPPORTED
+        requested_action = "unsupported"
+        rule = "prohibited_action_priority"
+    elif signals.asks_external_public_source or signals.asks_latest_info or decision.requires_external_research:
+        selected = Route.EXTERNAL_RESEARCH
+        requested_action = "external_research"
+        rule = "external_public_latest_priority"
+        if decision.route != Route.EXTERNAL_RESEARCH:
+            rejected.append({"route": decision.route.value, "reason": "external/latest signal has higher priority"})
+    elif decision.confidence < MIN_ROUTE_CONFIDENCE:
+        selected = Route.CLARIFY
+        rule = "low_confidence_clarify"
+    elif decision.route == Route.CAPABILITY_GAP:
+        selected = Route.CAPABILITY_GAP
+        requested_action = "capability_gap"
+        rule = "capability_gap_from_llm"
+    elif signals.asks_workflow_action or decision.route == Route.WORKFLOW_ACTION:
+        selected = Route.WORKFLOW_ACTION
+        requested_action = decision.requested_action
+        rule = "workflow_action_priority"
+    elif signals.updates_case_fact or decision.route == Route.FACT_PLANNER:
+        selected = Route.FACT_PLANNER
+        rule = "case_fact_update_priority"
+    elif signals.asks_internal_policy or decision.requires_internal_retrieval or decision.route == Route.POLICY_QA:
+        selected = Route.POLICY_QA
+        requested_action = "answer_policy_question"
+        rule = "internal_policy_priority"
+    elif signals.asks_case_memory or decision.route == Route.CASE_QA:
+        selected = Route.CASE_QA
+        rule = "case_memory_priority"
+    elif decision.route == Route.CLARIFY:
+        selected = Route.CLARIFY
+        rule = "llm_clarify"
+    else:
+        selected = decision.route
+        rule = "llm_route_fallback"
+
+    trace = {
+        "llm_route": decision.route.value,
+        "selected_route": selected.value,
+        "requested_action": requested_action,
+        "decision_rule": rule,
+        "confidence": decision.confidence,
+        "intent_label": decision.intent_label,
+        "signals": signals.model_dump(),
+        "candidates": candidates,
+        "rejected_routes": rejected,
+    }
+    return selected, requested_action, trace
+
+
+def _merge_signals(left: IntentSignals, right: IntentSignals) -> IntentSignals:
+    return IntentSignals(
+        asks_external_public_source=left.asks_external_public_source or right.asks_external_public_source,
+        asks_latest_info=left.asks_latest_info or right.asks_latest_info,
+        asks_internal_policy=left.asks_internal_policy or right.asks_internal_policy,
+        updates_case_fact=left.updates_case_fact or right.updates_case_fact,
+        asks_workflow_action=left.asks_workflow_action or right.asks_workflow_action,
+        asks_case_memory=left.asks_case_memory or right.asks_case_memory,
+        asks_prohibited_action=left.asks_prohibited_action or right.asks_prohibited_action,
+    )
 
 
 async def _policy_answer_node(state: CaseState, retrieve: SearchFn) -> dict:
@@ -270,8 +382,9 @@ async def _policy_answer_node(state: CaseState, retrieve: SearchFn) -> dict:
 async def _external_research_node(state: CaseState, external_research: ExternalResearchFn) -> dict:
     """Call the configured external research MCP/search tool."""
     question = state.get("latest_user_message") or state.get("text") or state.get("description") or ""
+    research_question = _external_research_question(state, question)
     query = ExternalResearchQuery(
-        question=question,
+        question=research_question,
         description=state.get("description") or "",
     )
     result = await external_research(query)
@@ -282,6 +395,26 @@ async def _external_research_node(state: CaseState, external_research: ExternalR
         "external_sources": [source.model_dump() for source in result.sources],
         "external_research_provider": result.provider,
     }
+
+
+def _external_research_question(state: CaseState, question: str) -> str:
+    """Build a scoped public-source query instead of sending a vague chat turn."""
+    description = (state.get("description") or "").strip()
+    fact_lines = [str(item).strip() for item in state.get("fact_lines") or [] if str(item).strip()]
+    context_parts = []
+    if description:
+        context_parts.append(f"Mô tả hồ sơ: {description}")
+    if fact_lines:
+        context_parts.append("Tình tiết đã xác nhận: " + "; ".join(fact_lines[:8]))
+    context = "\n".join(context_parts)
+    return (
+        "Tra cứu nguồn công khai chính thống của Việt Nam về pháp luật lao động và quy trình xử lý kỷ luật lao động.\n"
+        f"Câu hỏi HR: {question.strip() or '(không có câu hỏi cụ thể)'}\n"
+        f"{context}\n"
+        "Tập trung vào: Bộ luật Lao động, nghị định hướng dẫn, trình tự xử lý kỷ luật lao động, "
+        "hồ sơ/chứng cứ, biên bản, yêu cầu giải trình, bảo mật thông tin khách hàng hoặc hành vi vi phạm liên quan. "
+        "Loại bỏ kết quả không liên quan đến lao động, kỷ luật lao động, tranh chấp lao động hoặc quy trình HR."
+    )
 
 
 def _baseline_state(state: CaseState) -> dict:

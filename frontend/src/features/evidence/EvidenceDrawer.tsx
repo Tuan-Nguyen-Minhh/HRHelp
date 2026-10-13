@@ -21,10 +21,6 @@ export function EvidenceDrawer({ item, onClose }: { item: EvidenceItem | null; o
             <p className="text-xs text-ink-3">Đoạn đã lấy</p>
             <p className="mt-1 whitespace-pre-wrap leading-6">{item.content}</p>
           </div>
-          <div>
-            <p className="text-xs text-ink-3">Mã đoạn</p>
-            <p className="break-all">{item.chunkId || "—"}</p>
-          </div>
           {item.caseCode ? (
             <div>
               <p className="text-xs text-ink-3">Hồ sơ</p>

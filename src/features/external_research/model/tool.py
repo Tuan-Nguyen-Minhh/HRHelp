@@ -92,7 +92,7 @@ async def _search_brave(query: str, domains: list[str], max_results: int) -> Ext
         for item in web.get("results") or []
         if item.get("url")
     ]
-    return ExternalResearchResult(query=query, provider="brave", sources=_filter_sources(sources, domains, max_results))
+    return ExternalResearchResult(query=query, provider="brave", sources=_filter_sources(sources, domains, max_results, query))
 
 
 async def _search_tavily(query: str, domains: list[str], max_results: int) -> ExternalResearchResult:
@@ -103,6 +103,7 @@ async def _search_tavily(query: str, domains: list[str], max_results: int) -> Ex
         "query": query,
         "max_results": max_results,
         "include_answer": False,
+        "search_depth": "advanced",
     }
     if domains:
         payload["include_domains"] = domains
@@ -118,7 +119,7 @@ async def _search_tavily(query: str, domains: list[str], max_results: int) -> Ex
         for item in response.json().get("results") or []
         if item.get("url")
     ]
-    return ExternalResearchResult(query=query, provider="tavily", sources=_filter_sources(sources, domains, max_results))
+    return ExternalResearchResult(query=query, provider="tavily", sources=_filter_sources(sources, domains, max_results, query))
 
 
 async def _search_mcp_http(query: str, domains: list[str], max_results: int) -> ExternalResearchResult:
@@ -133,7 +134,7 @@ async def _search_mcp_http(query: str, domains: list[str], max_results: int) -> 
         response = await client.post(f"{base_url}/tools/call", json=payload)
         response.raise_for_status()
     sources = _sources_from_mcp_payload(response.json())
-    return ExternalResearchResult(query=query, provider="mcp_http", sources=_filter_sources(sources, domains, max_results))
+    return ExternalResearchResult(query=query, provider="mcp_http", sources=_filter_sources(sources, domains, max_results, query))
 
 
 def _sources_from_mcp_payload(payload: Any) -> list[ExternalSource]:
@@ -169,8 +170,17 @@ def _domain_query(query: str, domains: list[str]) -> str:
     return f"({domain_filter}) {query}"
 
 
-def _filter_sources(sources: list[ExternalSource], domains: list[str], max_results: int) -> list[ExternalSource]:
-    filtered = [source for source in sources if source.url and _domain_allowed(source.url, domains)]
+def _filter_sources(
+    sources: list[ExternalSource],
+    domains: list[str],
+    max_results: int,
+    query: str = "",
+) -> list[ExternalSource]:
+    filtered = [
+        source
+        for source in sources
+        if source.url and _domain_allowed(source.url, domains) and _relevant_to_hr_labor(source, query)
+    ]
     return filtered[:max_results]
 
 
@@ -179,3 +189,144 @@ def _domain_allowed(url: str, domains: list[str]) -> bool:
         return True
     host = (urlparse(url).hostname or "").lower()
     return any(host == domain or host.endswith(f".{domain}") for domain in domains)
+
+
+def _relevant_to_hr_labor(source: ExternalSource, query: str) -> bool:
+    """Reject official but off-topic pages that broad search often returns."""
+    haystack = _fold(" ".join((source.title, source.snippet, source.url)))
+    if not haystack:
+        return False
+    labor_terms = (
+        "lao dong",
+        "nguoi lao dong",
+        "nguoi su dung lao dong",
+        "ky luat lao dong",
+        "xu ly ky luat",
+        "noi quy lao dong",
+        "tranh chap lao dong",
+        "bo luat lao dong",
+        "hop dong lao dong",
+        "giai trinh",
+        "bien ban",
+        "sa thai",
+        "bao mat thong tin",
+        "thong tin khach hang",
+    )
+    if any(term in haystack for term in labor_terms):
+        return True
+
+    # Keep a narrow fallback for pages whose snippets omit labor phrasing but
+    # still overlap with a specific case phrase. Generic words such as "quy
+    # trinh" or "quy dinh" are intentionally ignored.
+    query_terms = _query_terms(query)
+    overlap = sum(1 for term in query_terms if term in haystack)
+    return overlap >= 2
+
+
+def _query_terms(query: str) -> set[str]:
+    folded = _fold(query)
+    blocked = {
+        "research",
+        "external",
+        "nguon",
+        "cong khai",
+        "chinh thong",
+        "viet nam",
+        "quy trinh",
+        "quy dinh",
+        "thong tin",
+        "ho so",
+        "can cu",
+        "phap luat",
+        "tra cuu",
+    }
+    phrases = {
+        "bao mat thong tin",
+        "thong tin khach hang",
+        "khach hang",
+        "chung cu",
+        "bien ban",
+        "giai trinh",
+        "tranh chap",
+        "khoi kien",
+        "ky luat",
+        "sa thai",
+        "nghi khong phep",
+        "di muon",
+    }
+    return {phrase for phrase in phrases if phrase in folded and phrase not in blocked}
+
+
+def _fold(text: str) -> str:
+    table = str.maketrans(
+        {
+            "à": "a",
+            "á": "a",
+            "ả": "a",
+            "ã": "a",
+            "ạ": "a",
+            "ă": "a",
+            "ằ": "a",
+            "ắ": "a",
+            "ẳ": "a",
+            "ẵ": "a",
+            "ặ": "a",
+            "â": "a",
+            "ầ": "a",
+            "ấ": "a",
+            "ẩ": "a",
+            "ẫ": "a",
+            "ậ": "a",
+            "è": "e",
+            "é": "e",
+            "ẻ": "e",
+            "ẽ": "e",
+            "ẹ": "e",
+            "ê": "e",
+            "ề": "e",
+            "ế": "e",
+            "ể": "e",
+            "ễ": "e",
+            "ệ": "e",
+            "ì": "i",
+            "í": "i",
+            "ỉ": "i",
+            "ĩ": "i",
+            "ị": "i",
+            "ò": "o",
+            "ó": "o",
+            "ỏ": "o",
+            "õ": "o",
+            "ọ": "o",
+            "ô": "o",
+            "ồ": "o",
+            "ố": "o",
+            "ổ": "o",
+            "ỗ": "o",
+            "ộ": "o",
+            "ơ": "o",
+            "ờ": "o",
+            "ớ": "o",
+            "ở": "o",
+            "ỡ": "o",
+            "ợ": "o",
+            "ù": "u",
+            "ú": "u",
+            "ủ": "u",
+            "ũ": "u",
+            "ụ": "u",
+            "ư": "u",
+            "ừ": "u",
+            "ứ": "u",
+            "ử": "u",
+            "ữ": "u",
+            "ự": "u",
+            "ỳ": "y",
+            "ý": "y",
+            "ỷ": "y",
+            "ỹ": "y",
+            "ỵ": "y",
+            "đ": "d",
+        }
+    )
+    return text.casefold().translate(table)
