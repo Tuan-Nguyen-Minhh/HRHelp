@@ -1,5 +1,6 @@
 """Required facts for each kind of case the chat knows how to clarify."""
 
+import re
 from dataclasses import dataclass
 
 ABSENCE = "UNAUTHORIZED_ABSENCE"
@@ -17,6 +18,8 @@ class FactSpec:
     key: str
     label: str
     question: str
+    required: bool = True
+    source: str = "catalog"
 
 
 _ABSENCE = (
@@ -106,6 +109,31 @@ def required_specs(family: str) -> tuple[FactSpec, ...]:
     return _SPECS.get(family, _SPECS[GENERAL])
 
 
+def normalize_dynamic_key(value: str) -> str:
+    """Return a safe snake_case key for AI-proposed facts."""
+    key = re.sub(r"[^a-z0-9_]+", "_", value.casefold().strip())
+    key = re.sub(r"_+", "_", key).strip("_")
+    return key[:80]
+
+
+def safe_dynamic_key(value: str) -> bool:
+    """Dynamic fact keys are data identifiers, not instructions or prose."""
+    key = normalize_dynamic_key(value)
+    return bool(key) and bool(re.fullmatch(r"[a-z][a-z0-9_]{1,79}", key))
+
+
+def default_dynamic_specs(family: str, stored_keys: set[str] | None = None) -> tuple[FactSpec, ...]:
+    """Catalog specs plus any stored custom facts so older cases remain readable."""
+    specs = list(required_specs(family))
+    known = {spec.key for spec in specs}
+    for key in sorted(stored_keys or set()):
+        if key in known or key in OPTIONAL_FACT_KEYS or not safe_dynamic_key(key):
+            continue
+        specs.append(FactSpec(key=key, label=fact_label(key), question=f"Hãy bổ sung tình tiết {fact_label(key)}?"))
+        known.add(key)
+    return tuple(specs)
+
+
 def catalog_keys() -> set[str]:
     """Every fact key a family can require. The planner may not invent keys outside this set."""
     keys: set[str] = set()
@@ -115,14 +143,21 @@ def catalog_keys() -> set[str]:
     return keys
 
 
-def fact_lines(family: str, facts: dict[str, str]) -> list[str]:
+def fact_lines(family: str, facts: dict[str, str], specs: tuple[FactSpec, ...] | None = None) -> list[str]:
     """Label confirmed values in catalog order for the answer and the search text."""
     lines = []
-    for spec in required_specs(family):
+    used = set()
+    for spec in specs or required_specs(family):
         value = facts.get(spec.key)
         if value:
             lines.append(f"{spec.label}: {value}")
+            used.add(spec.key)
     prior = facts.get("prior_sanction_count")
     if prior:
         lines.append(f"Số lần đã bị xử lý trước: {prior}")
+        used.add("prior_sanction_count")
+    for key, value in sorted(facts.items()):
+        if key in used or not value:
+            continue
+        lines.append(f"{fact_label(key)}: {value}")
     return lines

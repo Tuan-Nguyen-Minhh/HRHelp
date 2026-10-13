@@ -36,6 +36,17 @@ from src.features.timeline.controller import router as timeline_router
 
 logger = logging.getLogger("src.main")
 
+
+def _configure_logging() -> None:
+    logging.basicConfig(
+        level=getattr(logging, settings.LOG_LEVEL, logging.INFO),
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+        force=True,
+    )
+
+
+_configure_logging()
+
 _HTTP_CODES = {
     401: "AUTH_REQUIRED",
     403: "FORBIDDEN",

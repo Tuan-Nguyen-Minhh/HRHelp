@@ -99,15 +99,15 @@ def test_a_generic_narrative_keeps_the_stored_family():
 
 
 def test_deepseek_chat_kwargs_use_the_deepseek_key(monkeypatch):
-    monkeypatch.setattr(settings, "DEEPSEEK_API_KEY", "mistral-test")
+    monkeypatch.setattr(settings, "DEEPSEEK_API_KEY", "deepseek-test")
     monkeypatch.setattr(settings, "DEEPSEEK_BASE_URL", "")
-    monkeypatch.setattr(settings, "MODEL_NAME", "ministral-8b-2512")
-    monkeypatch.setattr(settings, "FALLBACK_MODEL_NAME", "ministral-3b-2512")
-    kwargs = settings.chat_kwargs("ministral-3b-2512")
+    monkeypatch.setattr(settings, "MODEL_NAME", "deepseek-flash")
+    monkeypatch.setattr(settings, "FALLBACK_MODEL_NAME", "deepseek-chat")
+    kwargs = settings.chat_kwargs("deepseek-chat")
     assert kwargs["base_url"] == "https://api.deepseek.com"
-    assert kwargs["model"] == "ministral-3b-2512"
-    assert kwargs["api_key"] == "mistral-test"
-    assert settings.chat_models() == ("ministral-8b-2512", "ministral-3b-2512")
+    assert kwargs["model"] == "deepseek-chat"
+    assert kwargs["api_key"] == "deepseek-test"
+    assert settings.chat_models() == ("deepseek-flash", "deepseek-chat")
 
 
 def test_hr_cannot_send_a_citation_or_a_sanction_code():

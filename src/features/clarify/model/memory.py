@@ -24,11 +24,24 @@ async def build_turn_context(
     conversation_id: UUID | None,
     case_description: str,
     stored: dict[str, StoredFact],
+    *,
+    case_code: str | None = None,
+    employee_code: str | None = None,
+    employee_name: str | None = None,
+    incident_date: object | None = None,
 ) -> str:
     """Return compact context for the planner instead of a raw full transcript."""
     memory = await get_memory(session, conversation_id) if conversation_id else None
     live_recent = await _recent_messages(session, conversation_id) if conversation_id else []
     parts = []
+    profile = _case_profile(
+        case_code=case_code,
+        employee_code=employee_code,
+        employee_name=employee_name,
+        incident_date=incident_date,
+    )
+    if profile:
+        parts.append("CASE PROFILE\n" + profile)
     if case_description:
         parts.append(f"CASE DESCRIPTION\n{case_description}")
     if stored:
@@ -60,7 +73,7 @@ async def update_memory(
     memory = await ensure_memory(session, conversation_id)
     if memory is None:
         return
-    memory.pending_fact_keys = list(plan.missing_keys)
+    memory.pending_fact_keys = _pending_keys(plan)
     memory.open_questions = _open_questions(plan)
     memory.pending_action = plan.requested_action or None
     memory.last_user_intent = plan.user_intent or None
@@ -95,6 +108,28 @@ def _fact_line(key: str, item: StoredFact) -> str:
     return f"- {key} ({fact_label(key)}): {item.value} [{status}]"
 
 
+def _case_profile(
+    *,
+    case_code: str | None,
+    employee_code: str | None,
+    employee_name: str | None,
+    incident_date: object | None,
+) -> str:
+    lines = []
+    if case_code:
+        lines.append(f"- case_code: {case_code}")
+    if employee_name:
+        lines.append(f"- employee_name: {employee_name}")
+    if employee_code:
+        lines.append(f"- employee_code: {employee_code}")
+    isoformat = getattr(incident_date, "isoformat", None)
+    if callable(isoformat):
+        lines.append(f"- incident_date: {isoformat()}")
+    elif incident_date:
+        lines.append(f"- incident_date: {incident_date}")
+    return "\n".join(lines)
+
+
 def _open_questions(plan: ClarifyPlan) -> list[str]:
     if plan.conflicts:
         return [f"{item.key}: chọn giữa '{item.confirmed_value}' và '{item.proposed_value}'" for item in plan.conflicts]
@@ -103,6 +138,14 @@ def _open_questions(plan: ClarifyPlan) -> list[str]:
     if plan.locked:
         return []
     return [f"{key}: cần xác nhận" for key, item in plan.merged.items() if item.value and not item.confirmed]
+
+
+def _pending_keys(plan: ClarifyPlan) -> list[str]:
+    keys = list(plan.missing_keys)
+    for key, item in plan.merged.items():
+        if item.value and not item.confirmed and key not in keys:
+            keys.append(key)
+    return keys
 
 
 async def _recent_messages(session: AsyncSession, conversation_id: UUID) -> list[dict[str, str]]:

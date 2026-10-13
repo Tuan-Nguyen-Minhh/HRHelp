@@ -37,7 +37,7 @@ class FactConfirmItem(BaseModel):
 
     model_config = ConfigDict(str_strip_whitespace=True)
 
-    fact_key: str = Field(min_length=1, max_length=100, pattern=r"^[a-z_]+$")
+    fact_key: str = Field(min_length=1, max_length=100, pattern=r"^[a-z][a-z0-9_]*$")
     fact_value: str | None = Field(default=None, max_length=4000)
     confirmed: bool = True
 

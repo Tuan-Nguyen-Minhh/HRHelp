@@ -7,7 +7,18 @@ import re
 from dataclasses import dataclass
 
 from src.features.clarify.model.assess import ClarifyPlan, FactConflict, StoredFact, _all_confirmed, _missing
-from src.features.clarify.model.catalog import ABSENCE, GENERAL, LATE, catalog_keys, detect_family, required_specs
+from src.features.clarify.model.catalog import (
+    ABSENCE,
+    GENERAL,
+    LATE,
+    FactSpec,
+    catalog_keys,
+    default_dynamic_specs,
+    detect_family,
+    fact_label,
+    normalize_dynamic_key,
+    safe_dynamic_key,
+)
 from src.features.clarify.model.decision import ClarifyDecision, ExtractedFact, RequestedAction, UserIntent
 from src.features.clarify.model.extract import _flag, explicit_facts, extract_facts
 
@@ -16,6 +27,23 @@ _MIN_FAMILY_CONFIDENCE = 0.6
 _CONFIRMING = frozenset({UserIntent.CONFIRM_FACTS, UserIntent.CORRECT_FACTS})
 _FLAG_KEYS = frozenset({"minutes_made", "explanation_requested"})
 _COUNT_KEYS = frozenset({"absence_days", "late_days"})
+_CRITICAL_AMENDMENT_KEYS = frozenset(
+    {
+        "incident_date",
+        "incident_time",
+        "violation_date",
+        "violation_time",
+        "discovery_date",
+        "discovery_time",
+        "employee_role",
+        "evidence_available",
+        "evidence_docs",
+        "witnesses",
+    }
+)
+_BLOCKED_DYNAMIC_WORDS = re.compile(
+    r"(guilty|liable|liability|dismiss|dismissal|terminate|termination|sanction|penalty|valid|illegal|legal|fault|culpable|ket_luan|co_loi|sa_thai|cham_dut|ky_luat)"
+)
 _NONE = re.compile(r"(?<![a-z])none(?![a-z])")
 _CONTRACTS = (
     ("không xác định thời hạn", "không xác định thời hạn"),
@@ -62,6 +90,7 @@ class _Read:
     key: str
     value: str
     evidence: str
+    confirmed: bool = True
 
 
 def apply_decision(
@@ -70,21 +99,32 @@ def apply_decision(
     decision: ClarifyDecision,
     *,
     fallback: bool = False,
+    locked_keys: set[str] | None = None,
 ) -> ClarifyPlan:
     """Merge a validated decision. Confirmed values stay until the user accepts a replacement."""
     ignored: list[str] = []
     ambiguous: list[str] = []
-    reads = _reads(decision, ignored, ambiguous)
+    locked_keys = {normalize_dynamic_key(key) for key in (locked_keys or set()) if safe_dynamic_key(key)}
+    initial_keys = {normalize_dynamic_key(item.key) for item in decision.fact_requirements}
+    initial_keys.update(key for key in stored if safe_dynamic_key(key))
+    initial_keys.update(locked_keys)
+    initial_keys.update(catalog_keys())
+    reads = _reads(decision, ignored, ambiguous, initial_keys, locked_keys)
     reads.extend(_explicit_reads(text))
     if fallback:
         reads.extend(_rule_reads(text, {item.key for item in reads}))
     family = _family(stored, decision, [item.key for item in reads])
-    allowed = {spec.key for spec in required_specs(family)}
+    specs = _schema_specs(family, decision, stored, reads, ignored, locked_keys)
+    allowed = {spec.key for spec in specs}
     merged = dict(stored)
     conflicts: list[FactConflict] = []
     accepted: list[str] = []
     allow_confirm = decision.user_intent in _CONFIRMING
-    confirmed_keys = {item.key for item in decision.confirmation_updates if item.confirmed and item.key in allowed}
+    confirmed_keys = {
+        normalize_dynamic_key(item.key)
+        for item in decision.confirmation_updates
+        if item.confirmed and normalize_dynamic_key(item.key) in allowed
+    }
     for item in reads:
         if item.key not in allowed:
             ignored.append(item.key)
@@ -93,9 +133,9 @@ def apply_decision(
         accepted.append(item.key)
     if allow_confirm:
         _confirm_stored(merged, stored, conflicts, confirmed_keys)
-    _accept_present(family, merged, conflicts)
-    missing = _missing(family, merged)
-    locked = not missing and _all_confirmed(family, merged) and not conflicts
+    _accept_present(family, merged, conflicts, specs)
+    missing = _missing(family, merged, specs)
+    locked = not missing and _all_confirmed(family, merged, specs) and not conflicts
     requested_action = _guard_requested_action(text, decision.requested_action)
     return ClarifyPlan(
         family=family,
@@ -109,6 +149,7 @@ def apply_decision(
         ambiguities=tuple(dict.fromkeys(ambiguous)),
         validation=_validation(ignored, ambiguous),
         accepted_keys=tuple(dict.fromkeys(accepted)),
+        specs=specs,
     )
 
 
@@ -221,31 +262,45 @@ def _fold(text: str) -> str:
     return text.casefold().translate(table)
 
 
-def _reads(decision: ClarifyDecision, ignored: list[str], ambiguous: list[str]) -> list[_Read]:
+def _reads(
+    decision: ClarifyDecision,
+    ignored: list[str],
+    ambiguous: list[str],
+    allowed_keys: set[str],
+    locked_keys: set[str],
+) -> list[_Read]:
     corrected = {item.key for item in decision.corrections}
     reads = []
     for item in (*decision.corrections, *decision.extracted_facts):
         if item.key in corrected and item not in decision.corrections:
             continue
-        read = _read(item, ignored, ambiguous)
+        read = _read(item, ignored, ambiguous, allowed_keys, locked_keys)
         if read is not None:
             reads.append(read)
     return reads
 
 
-def _read(item: ExtractedFact, ignored: list[str], ambiguous: list[str]) -> _Read | None:
-    if item.key not in catalog_keys():
-        if item.key:
-            ignored.append(item.key)
+def _read(
+    item: ExtractedFact,
+    ignored: list[str],
+    ambiguous: list[str],
+    allowed_keys: set[str],
+    locked_keys: set[str],
+) -> _Read | None:
+    key = normalize_dynamic_key(item.key)
+    amendment = bool(locked_keys and key not in locked_keys and key in _CRITICAL_AMENDMENT_KEYS)
+    if not safe_dynamic_key(key) or _blocked_dynamic_key(key) or (key not in allowed_keys and not amendment):
+        if key:
+            ignored.append(key)
         return None
     if item.ambiguous or item.confidence < _MIN_FACT_CONFIDENCE:
-        ambiguous.append(item.key)
+        ambiguous.append(key)
         return None
-    value = canonicalize(item.key, item.value, item.evidence)
+    value = canonicalize(key, item.value, item.evidence)
     if value is None:
-        ambiguous.append(item.key)
+        ambiguous.append(key)
         return None
-    return _Read(item.key, value, item.evidence.strip())
+    return _Read(key, value, item.evidence.strip(), confirmed=not amendment)
 
 
 def _rule_reads(text: str, taken: set[str]) -> list[_Read]:
@@ -276,14 +331,23 @@ def _place(
     item: _Read,
     _accept_replacement: bool,
 ) -> None:
-    merged[item.key] = StoredFact(item.value, True)
+    merged[item.key] = StoredFact(item.value, item.confirmed)
     conflicts[:] = [conflict for conflict in conflicts if conflict.key != item.key]
 
 
-def _accept_present(family: str, merged: dict[str, StoredFact], conflicts: list[FactConflict]) -> None:
+def _accept_present(
+    family: str,
+    merged: dict[str, StoredFact],
+    conflicts: list[FactConflict],
+    specs: tuple[FactSpec, ...],
+) -> None:
     """A filled fact is the working value. The chat does not wait for a separate confirmation."""
     blocked = {conflict.key for conflict in conflicts}
-    for spec in required_specs(family):
+    for spec in specs:
+        if not spec.required:
+            continue
+        if spec.source == "amendment":
+            continue
         if spec.key in blocked:
             continue
         item = merged.get(spec.key)
@@ -317,8 +381,107 @@ def _family(stored: dict[str, StoredFact], decision: ClarifyDecision, keys: list
         if implied:
             return implied
     if decision.family_confidence >= _MIN_FAMILY_CONFIDENCE:
-        return decision.family.value
+        family = _family_value(decision.family)
+        return family if safe_dynamic_key(family) else GENERAL
     return _implied_keys(keys) or _implied(stored) or GENERAL
+
+
+def _family_value(value: object) -> str:
+    raw = getattr(value, "value", value)
+    if not isinstance(raw, str):
+        return GENERAL
+    key = normalize_dynamic_key(raw)
+    catalog = {ABSENCE, LATE, GENERAL}
+    return raw if raw in catalog else key or GENERAL
+
+
+def _schema_specs(
+    family: str,
+    decision: ClarifyDecision,
+    stored: dict[str, StoredFact],
+    reads: list[_Read],
+    ignored: list[str],
+    locked_keys: set[str],
+) -> tuple[FactSpec, ...]:
+    """Validate AI-proposed requirements and preserve catalog fallback behavior."""
+    specs: list[FactSpec] = []
+    seen: set[str] = set()
+    for item in decision.fact_requirements:
+        key = normalize_dynamic_key(item.key)
+        if not safe_dynamic_key(key) or _blocked_dynamic_key(key):
+            if key:
+                ignored.append(key)
+            continue
+        if locked_keys and key not in locked_keys and key not in _CRITICAL_AMENDMENT_KEYS:
+            ignored.append(key)
+            continue
+        label = _clean_label(item.label) or fact_label(key)
+        question = _clean_question(item.question, label)
+        source = "amendment" if locked_keys and key not in locked_keys else item.source or "ai_generated"
+        specs.append(
+            FactSpec(
+                key=key,
+                label=label,
+                question=question,
+                required=bool(item.required),
+                source=source,
+            )
+        )
+        seen.add(key)
+    for key in sorted(locked_keys):
+        if key in seen:
+            continue
+        specs.append(
+            FactSpec(
+                key=key,
+                label=fact_label(key),
+                question=f"Hãy bổ sung tình tiết {fact_label(key)}?",
+                required=True,
+                source="memory",
+            )
+        )
+        seen.add(key)
+    if not specs:
+        specs.extend(default_dynamic_specs(family, set(stored)))
+        seen.update(spec.key for spec in specs)
+    for key in [*stored.keys(), *(item.key for item in reads)]:
+        if key in seen or key in catalog_keys() or key == "":
+            continue
+        if locked_keys and key not in locked_keys:
+            ignored.append(key)
+            continue
+        if not safe_dynamic_key(key) or _blocked_dynamic_key(key):
+            ignored.append(key)
+            continue
+        specs.append(
+            FactSpec(
+                key=key,
+                label=fact_label(key),
+                question=f"Hãy bổ sung tình tiết {fact_label(key)}?",
+                required=key in _CRITICAL_AMENDMENT_KEYS,
+                source="amendment" if key in _CRITICAL_AMENDMENT_KEYS else "stored",
+            )
+        )
+        seen.add(key)
+    return tuple(specs)
+
+
+def _blocked_dynamic_key(key: str) -> bool:
+    return bool(_BLOCKED_DYNAMIC_WORDS.search(key))
+
+
+def _clean_label(value: str) -> str:
+    label = " ".join((value or "").split())
+    if not label or len(label) > 80 or "\n" in label:
+        return ""
+    return label
+
+
+def _clean_question(value: str, label: str) -> str:
+    question = " ".join((value or "").split())
+    if len(question) < 8 or len(question) > 240:
+        return f"Hãy bổ sung {label}?"
+    return question
 
 
 def _implied(stored: dict[str, StoredFact]) -> str | None:
@@ -365,7 +528,9 @@ def canonicalize(key: str, value: str, evidence: str, *, explicit: bool = False)
         if raw.casefold() not in proof.casefold() and proof.casefold() not in raw.casefold():
             return None
         return raw[:180]
-    return None
+    if len(raw) < 1 or len(raw) > 800:
+        return None
+    return raw
 
 
 def _count(key: str, value: str, proof: str) -> str | None:
