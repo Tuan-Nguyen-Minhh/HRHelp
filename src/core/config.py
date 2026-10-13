@@ -67,6 +67,21 @@ class Settings(BaseSettings):
     EMBEDDING_DIMENSIONS: int = 1024
     EMBEDDING_MAX_TOKENS: int = 1000
 
+    # -------------------------
+    # External research tools
+    # -------------------------
+    # Disabled by default. When enabled, the case graph may call an external
+    # search/MCP bridge only for turns routed to external_research.
+    EXTERNAL_RESEARCH_ENABLED: bool = False
+    EXTERNAL_RESEARCH_PROVIDER: Literal["disabled", "brave", "tavily", "mcp_http"] = "disabled"
+    EXTERNAL_RESEARCH_ALLOWED_DOMAINS: str = "chinhphu.vn,molisa.gov.vn,vbpl.vn"
+    EXTERNAL_RESEARCH_MAX_RESULTS: int = Field(default=5, ge=1, le=10)
+    EXTERNAL_RESEARCH_TIMEOUT_SECONDS: float = Field(default=12.0, ge=1.0, le=60.0)
+    BRAVE_SEARCH_API_KEY: str = ""
+    TAVILY_API_KEY: str = ""
+    EXTERNAL_RESEARCH_MCP_URL: str = ""
+    EXTERNAL_RESEARCH_MCP_TOOL_NAME: str = "web_search"
+
     # Uppercase on purpose: these property names mirror environment
     # variable names and are read from alembic/env.py, src/db/session.py,
     # src/services/vector_store.py and the scripts/ helpers. Renaming them

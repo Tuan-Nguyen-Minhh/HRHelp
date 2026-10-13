@@ -1,286 +1,363 @@
-# P-029 — Flowchart (bản Markdown/Mermaid)
+# P-029 — Current Agent Flowchart
 
-Bản dựng lại từ `P029-flowchart.png` (6744×7406). Mục tiêu: chữ đọc được, sửa được, render trên GitHub / VS Code (cần extension Mermaid Preview).
+Bản này phản ánh repo hiện tại sau refactor orchestrator:
 
-> Vài cạnh vòng (loop-back) trong ảnh gốc bị rối dây nên ở đây lược giản. Cấu trúc node & luồng chính giữ nguyên.
+- Memory/context được build một lần ở đầu turn: `latest_user_message` + `turn_context`.
+- Clarify graph đi qua `intent` router trước khi vào `extract`.
+- Router dùng open intent label + closed route enum, Python `route_after_intent` quyết định edge.
+- `case_qa`, `policy_qa`, `external_research`, `capability_gap`, `unsupported`, `fact_planner` là các route chính.
+- Fact planner hỗ trợ dynamic fact schema và schema lock.
+- External research là nhánh optional, gọi MCP/search adapter khi được bật bằng env.
 
-## Đọc nhanh 4 làn
+## Đọc Nhanh
 
-- **Làn trái — Intake & Clarify:** API vào → mở case, nhận tin nhắn, xác nhận facts → extract → hỏi thêm (ask) hoặc hành động (action) → trả `TurnResponse` về UI.
-- **Làn giữa — Retrieval → Handoff → Recommendation:** 3 retriever song song → RRF → rerank → (có hit?) → đóng gói `CaseHandoff` → Recommendation Agent chạy `precedent → recommend → draft` → `ProposalHandoff` → Dispatch Gate.
-- **Làn phải trên — Draft & dispatch:** `draft node` sinh 4 loại tài liệu (minutes / explanation / decision draft / legal ticket preview) → preview → HR xác nhận gửi.
-- **Làn phải dưới — Legal review & Decision:** Legal duyệt/từ chối → hàng đợi Manager/Signer → ra quyết định → CLOSED → export.
+```text
+POST /cases/{id}/messages
+  -> build turn_context + latest_user_message
+  -> LangGraph Case Graph
+     -> intent router
+     -> route_after_intent
+        -> case_qa / action / extract / disambiguate
+```
 
-## Sơ đồ
+`POST /cases/{id}/facts/confirm` là endpoint riêng cho thao tác xác nhận fact từ UI/form. Một tin nhắn chat bình thường không đi vào endpoint này.
+
+`text` vẫn được giữ bằng `turn_context` để tương thích với planner cũ, nhưng node mới nên đọc rõ:
+
+```text
+latest_user_message = câu user vừa nhập
+turn_context        = CASE PROFILE + CASE DESCRIPTION + WORKING FACTS + MEMORY + RECENT_TURNS
+```
+
+## Main Flow
 
 ```mermaid
 flowchart TD
 
-  %% ================= INTAKE & CLARIFY =================
-  subgraph INTAKE["Case intake & clarify — làn trái"]
-    EA["Entry API"]
-    CGO["Case Graph: open"]
-    CC["Create case"]
-    CCONV["Create conversation"]
-    RCCI["Return case and conversation ids"]
-    SUM["Store USER message"]
-    CARR["Create agent run: hr-help-rules"]
-    CGC["Case Graph: clarify"]
-    EX["extract node"]
-    CF["Confirm facts"]
-    RFP["Recompute fact plan"]
-    FL{"Facts locked?"}
-    RAE{"Route after extract"}
+  %% ================= API / ENTRY =================
+  subgraph API["FastAPI entrypoints"]
+    POST_CASE["POST /cases"]
+    POST_MSG["POST /cases/{id}/messages"]
+    POST_CONFIRM["POST /cases/{id}/facts/confirm<br/>explicit UI confirm action"]
+    LIST_FACTS["GET /cases/{id}/facts"]
+    FACTS_VIEW["Return FactListResponse<br/>read-only, no agent turn"]
+    OPEN_GRAPH["Case Graph: open"]
+    CREATE_CASE["Create case"]
+    CREATE_CONV["Create conversation"]
+    RETURN_CASE["Return case + conversation ids"]
+  end
+
+  %% ================= MESSAGE TURN SETUP =================
+  subgraph TURN["Clarify turn setup"]
+    STORE_USER["Store USER message"]
+    START_RULES_RUN["Create agent run: hr-help-rules"]
+    LOAD_CASE["Load mutable case + active conversation"]
+    LOAD_FACTS["Load stored facts"]
+    BUILD_CONTEXT["build_turn_context once"]
+    STATE_CONTRACT["Graph state contract<br/>latest_user_message<br/>turn_context<br/>text = turn_context<br/>case profile<br/>description<br/>stored facts<br/>locked_fact_keys"]
+  end
+
+  %% ================= CASE GRAPH =================
+  subgraph CASE_GRAPH["LangGraph Case Graph — clarify"]
+    START["START"]
+    ROUTE_ENTRY{"_route_entry"}
+    INTENT["intent node<br/>LLM structured IntentDecision"]
+    ROUTE_INTENT{"route_after_intent<br/>Python policy gate"}
+    CASE_QA["case_qa node<br/>Case Memory QA"]
+    DISAMBIG["disambiguate node"]
+    EXTRACT["extract node<br/>Fact planner / dynamic schema"]
     ASK["ask node"]
-    SACQ["Store ASSISTANT clarify question"]
-    AN["action node"]
-    AT{"Action type"}
-    URAG["Use retrieval as RAG answer"]
-    LEA["Load existing assessment"]
-    RBM["Return boundary message"]
-    SAM["Store ASSISTANT message"]
-    RCS["Return current state"]
-    RTR["Return TurnResponse"]
-    HRU["HR / User"]
-    RUI["React UI"]
-    FAR["FastAPI Backend"]
-    CARRET["Create agent run: hr-help-retrieval"]
-    RETRL["Retrieval"]
+    ACTION["action node"]
+    ROUTE_EXTRACT{"route_after_extract"}
+    DONE["END / current state"]
+  end
+
+  %% ================= INTENT ROUTES =================
+  subgraph ROUTES["Closed route enum"]
+    R_CASE_QA["case_qa"]
+    R_FACT["fact_planner"]
+    R_POLICY["policy_qa"]
+    R_WORKFLOW["workflow_action"]
+    R_EXTERNAL["external_research"]
+    R_CLARIFY["clarify"]
+    R_UNSUPPORTED["unsupported"]
+    R_GAP["capability_gap"]
+  end
+
+  %% ================= CASE QA =================
+  subgraph CASEQA["Case QA path"]
+    QA_CONTEXT["Use same turn_context<br/>+ structured case snapshot"]
+    QA_ANSWER["answer_case_question<br/>no retrieval, no fact extraction"]
+    QA_STORE["Store ASSISTANT case answer"]
+    QA_RETURN["Return TurnResponse"]
+  end
+
+  %% ================= ACTIONS =================
+  subgraph ACTIONS["Action path"]
+    ACTION_TYPE{"requested_action"}
+    POLICY_QA["answer_policy_question"]
+    SHOW_ASSESS["show_assessment"]
+    EXTERNAL_RESEARCH["external_research"]
+    CAP_GAP["capability_gap"]
+    UNSUPPORTED["unsupported"]
+    ACTION_STORE["Store ASSISTANT message"]
+    ACTION_RETURN["Return TurnResponse"]
+  end
+
+  %% ================= POLICY QA =================
+  subgraph POLICY["Internal Policy QA"]
+    POLICY_QUERY["Build SearchQuery from latest_user_message<br/>+ description + facts"]
+    POLICY_RETRIEVE["search_policies"]
+    POLICY_ANSWER["answer_policy_question<br/>grounded in internal passages"]
+  end
+
+  %% ================= EXTERNAL RESEARCH =================
+  subgraph EXT["External Research / MCP"]
+    EXT_QUERY["ExternalResearchQuery<br/>question = latest_user_message"]
+    EXT_TOOL{"Configured provider?"}
+    MCP["mcp_http bridge<br/>POST /tools/call"]
+    BRAVE["Brave Search API"]
+    TAVILY["Tavily API"]
+    EXT_DISABLED["disabled / missing config<br/>fail closed"]
+    EXT_ANSWER["answer_external_research<br/>mandatory disclaimer<br/>source refs [E1]"]
+  end
+
+  %% ================= FACT PLANNER =================
+  subgraph FACTS["Fact planning path"]
+    PLAN_TURN["plan_turn<br/>LLM dynamic fact schema"]
+    APPLY_POLICY["apply_decision<br/>Python validation<br/>schema lock<br/>critical amendment"]
+    PROJECT_PLAN["Project ClarifyPlan"]
+    STORE_EXTRACTED["Persist extracted facts<br/>pending or confirmed"]
+    STORE_QUESTION["Store ASSISTANT clarify question"]
+    FACT_RETURN["Return TurnResponse"]
+  end
+
+  %% ================= CONFIRM FACTS =================
+  subgraph CONFIRM["Explicit confirm facts path"]
+    CONFIRM_FACTS["Confirm facts request"]
+    RECOMPUTE["Recompute fact plan"]
+    CHECK_KEYS["Validate keys against dynamic specs"]
+    APPLY_CONFIRM["Write confirmed/pending facts"]
+    CONF_LOCKED{"Facts locked?"}
   end
 
   %% ================= RETRIEVAL =================
-  subgraph RET["Retrieval sub-graph — làn giữa"]
-    RG["Retrieval Graph"]
+  subgraph RET["Internal Retrieval Graph"]
+    CREATE_RETR_RUN["Create agent run: hr-help-retrieval"]
+    RET_GRAPH["Retrieval Graph"]
     SIM["Similarity retriever"]
-    BM["BM25 retriever"]
+    BM25["BM25 retriever"]
     LEX["Lexical retriever"]
     RRF["RRF fusion"]
-
-    subgraph EXPN["expand — duyệt đồ thị dẫn chiếu, hop-1"]
-      K1["(1) seed_selector<br/>5 chunk đầu của fused"]
-      K2["(2) edge_reader<br/>2 chiều, 2 index"]
-      K3["(3) edge_filter<br/>bỏ NULL target / LOW / needs_review"]
-      K4["(4) neighbor_hydrate<br/>lấy nội dung + lọc còn hiệu lực<br/>theo incident_date"]
-      K5["(5) score_merge<br/>decay x0.6, dedup, cap 12"]
-      K6["(6) Provenance<br/>origin = graph + thông tin cạnh"]
-    end
-
-    RR["Rerank"]
-    HF{"Hits found?"}
-    HYB["retrieval = hybrid"]
-    PI["Page index fallback"]
-    AHF{"Article hits found?"}
-    RPI["retrieval = page_index"]
-    REM["retrieval = empty"]
+    EXPAND["Graph expand<br/>citation neighbors, in-force filter"]
+    RERANK["Rerank"]
+    HITS{"Hits found?"}
+    PAGE_INDEX["Page index fallback"]
+    ARTICLE_HITS{"Article hits found?"}
+    RET_HYBRID["retrieval = hybrid"]
+    RET_PAGE["retrieval = page_index"]
+    RET_EMPTY["retrieval = empty"]
+    SAVE_RETR["Save tool calls + retrieval logs"]
+    HANDOFF_NODE["handoff node"]
+    CASE_HANDOFF["Create CaseHandoff"]
   end
 
-  %% ================= HANDOFF =================
-  subgraph HND["Handoff — làn giữa"]
-    STL["Save tool calls and retrieval logs"]
-    HN["handoff node"]
-    CH["Create CaseHandoff"]
-    SAMH["Store ASSISTANT handoff message"]
-    DPW["Downstream parent workflow"]
+  %% ================= DOWNSTREAM =================
+  subgraph DOWNSTREAM["Downstream recommendation + dispatch"]
+    STORE_HANDOFF["Store ASSISTANT handoff message"]
+    REC_AGENT["Recommendation Agent"]
+    PRECEDENT["precedent node"]
+    RECOMMEND["recommend node"]
+    DRAFT_ANSWER["Synthesize + draft answer"]
+    STORE_DRAFT["Store recommendation DRAFT"]
+    STORE_CITES["Store citations"]
+    LINK_VIOLATIONS["Link case violations"]
+    ANALYZED["Set case status ANALYZED"]
+    PROPOSAL["Create ProposalHandoff"]
+    DISPATCH["Dispatch Gate Agent"]
+    GATE["gate node"]
+    HOLD_CHECK{"Hold condition?"}
+    HOLD["HOLD<br/>store hold reason"]
+    DRAFT_NODE["draft node"]
   end
 
-  %% ================= RECOMMENDATION =================
-  subgraph REC["Recommendation & Dispatch Gate — làn giữa"]
-    RA["Recommendation Agent"]
-    PN["precedent node"]
-    RN["recommend node"]
-    SDA["Synthesize and draft answer"]
-    SRD["Store recommendation DRAFT"]
-    SC["Store citations"]
-    LCV["Link case violations"]
-    SSA["Set case status ANALYZED"]
-    CPH["Create ProposalHandoff"]
-    DGA["Dispatch Gate Agent"]
-    GN["gate node"]
-    HC{"Hold condition?"}
-    HOLD["HOLD"]
-    BHR["Build hold reason"]
-    SDHM["Store dispatch hold message"]
-    RAWH["Return AnswerView with hold"]
-  end
-
-  %% ================= DRAFT & DISPATCH =================
-  subgraph DRAFT["Draft & dispatch — làn phải trên"]
-    DR["draft node"]
-    CRM["Create review minutes"]
-    CER["Create explanation request"]
-    CDD["Create decision draft"]
-    CLTP["Create legal ticket preview"]
-    SDPM["Store dispatch preview message"]
-    RAVP["Return AnswerView with preview"]
-    HCS["HR confirms send"]
-  end
-
-  %% ================= LEGAL & DECISION =================
-  subgraph LEGAL["Legal review & decision — làn phải dưới"]
-    LRW["Legal Review Workflow"]
-    LA{"Legal approves?"}
-    REJ["Set case status REJECTED"]
-    HRO["HR reopens or revises facts"]
-    MSQ["Manager or Signer Queue"]
-    SID{"Signer issues decision?"}
-    RP["Remain pending"]
-    CDEC["Create disciplinary decision"]
+  %% ================= DRAFT / LEGAL / DECISION =================
+  subgraph LEGAL["Draft, legal review, decision"]
+    MINUTES["Create review minutes"]
+    EXPLANATION["Create explanation request"]
+    DECISION_DRAFT["Create decision draft"]
+    LEGAL_TICKET["Create legal ticket preview"]
+    PREVIEW["Store dispatch preview message"]
+    HR_SEND["HR confirms send"]
+    LEGAL_REVIEW["Legal Review Workflow"]
+    LEGAL_APPROVES{"Legal approves?"}
+    REJECTED["Set case status REJECTED"]
+    MANAGER_QUEUE["Manager / Signer queue"]
+    SIGNER_DECIDES{"Signer issues decision?"}
+    PENDING["Remain pending"]
+    DISCIPLINARY_DECISION["Create disciplinary decision"]
     CLOSED["Set case status CLOSED"]
-    ETA["Export, timeline, audit"]
+    EXPORT["Export, timeline, audit"]
   end
 
-  %% ----- Intake edges -----
-  EA -->|"POST cases"| CGO
-  EA -->|"POST case messages"| SUM
-  EA -->|"POST confirm facts"| CF
-  CGO --> CC --> CCONV --> RCCI
-  SUM --> CARR --> CGC
-  CF --> RFP --> FL
-  CGC --> EX
-  EX --> FL
-  EX --> RAE
-  FL -->|"No"| ASK
-  FL -->|"Yes"| RETRL
-  RAE -->|"Ready to retrieve"| RETRL
-  RAE -->|"Missing facts or conflict"| ASK
-  RAE -->|"Special action"| AN
-  RAE -->|"Done, no handoff"| RCS
-  AN --> AT
-  AT -->|"Policy question"| URAG
-  AT -->|"Show assessment"| LEA
-  AT -->|"Unsupported"| RBM
-  ASK --> SACQ --> RTR
-  URAG --> SAM
-  LEA --> SAM
-  RBM --> SAM
-  RCS --> SAM
-  SAM --> RTR
-  RTR --> HRU --> RUI
-  RUI --> FAR
-  FAR --> EA
-  RETRL --> CARRET
-  CARRET --> FAR
+  %% ================= API EDGES =================
+  POST_CASE --> OPEN_GRAPH --> CREATE_CASE --> CREATE_CONV --> RETURN_CASE
+  POST_MSG --> STORE_USER --> START_RULES_RUN --> LOAD_CASE --> LOAD_FACTS --> BUILD_CONTEXT --> STATE_CONTRACT --> START
+  LIST_FACTS --> FACTS_VIEW
+  POST_CONFIRM --> CONFIRM_FACTS
 
-  %% ----- Retrieval edges -----
-  RETRL --> RG
-  RG --> SIM
-  RG --> BM
-  RG --> LEX
-  SIM --> RRF
-  BM --> RRF
-  LEX --> RRF
-  RRF --> K1
-  K1 --> K2 --> K3 --> K4 --> K5 --> K6
-  K6 --> RR
-  RR --> HF
-  HF -->|"Yes"| HYB
-  HF -->|"No"| PI --> AHF
-  AHF -->|"Yes"| RPI
-  AHF -->|"No"| REM
-  HYB --> STL
-  RPI --> STL
-  REM --> STL
+  %% ================= CASE GRAPH EDGES =================
+  START --> ROUTE_ENTRY
+  ROUTE_ENTRY -->|"step=open"| OPEN_GRAPH
+  ROUTE_ENTRY -->|"step=cite / advance / non-semantic"| EXTRACT
+  ROUTE_ENTRY -->|"semantic clarify"| INTENT
+  INTENT --> ROUTE_INTENT
 
-  %% ----- Handoff edges -----
-  STL --> HN --> CH --> SAMH --> DPW --> RA
+  ROUTE_INTENT -->|"case_qa"| R_CASE_QA --> CASE_QA
+  ROUTE_INTENT -->|"fact_planner"| R_FACT --> EXTRACT
+  ROUTE_INTENT -->|"policy_qa"| R_POLICY --> ACTION
+  ROUTE_INTENT -->|"workflow_action"| R_WORKFLOW --> ACTION
+  ROUTE_INTENT -->|"external_research"| R_EXTERNAL --> ACTION
+  ROUTE_INTENT -->|"clarify / low confidence / semantic fallback"| R_CLARIFY --> DISAMBIG
+  ROUTE_INTENT -->|"unsupported"| R_UNSUPPORTED --> ACTION
+  ROUTE_INTENT -->|"capability_gap"| R_GAP --> ACTION
 
-  %% ----- Recommendation edges -----
-  RA --> PN --> RN --> SDA --> SRD --> SC --> LCV --> SSA --> CPH --> DGA --> GN --> HC
-  HC -->|"Yes"| HOLD --> BHR --> SDHM --> RAWH --> HRO
-  HC -->|"No"| DR
+  DISAMBIG --> ACTION_STORE
+  CASE_QA --> QA_CONTEXT --> QA_ANSWER --> QA_STORE --> QA_RETURN
 
-  %% ----- Draft & dispatch edges -----
-  DR --> CRM
-  DR --> CER
-  DR --> CDD
-  DR --> CLTP
-  CRM --> SDPM
-  CER --> SDPM
-  CDD --> SDPM
-  CLTP --> SDPM
-  SDPM --> RAVP --> HCS --> LRW
+  %% ================= ACTION EDGES =================
+  ACTION --> ACTION_TYPE
+  ACTION_TYPE -->|"answer_policy_question"| POLICY_QA
+  ACTION_TYPE -->|"show_assessment"| SHOW_ASSESS --> ACTION_STORE
+  ACTION_TYPE -->|"external_research"| EXTERNAL_RESEARCH
+  ACTION_TYPE -->|"capability_gap"| CAP_GAP --> ACTION_STORE
+  ACTION_TYPE -->|"unsupported"| UNSUPPORTED --> ACTION_STORE
+  ACTION_STORE --> ACTION_RETURN
 
-  %% ----- Legal & decision edges -----
-  LRW --> LA
-  LA -->|"Reject"| REJ --> HRO
-  LA -->|"Approve"| MSQ --> SID
-  SID -->|"No"| RP
-  SID -->|"Yes"| CDEC --> CLOSED --> ETA
+  POLICY_QA --> POLICY_QUERY --> POLICY_RETRIEVE --> POLICY_ANSWER --> ACTION_STORE
+  EXTERNAL_RESEARCH --> EXT_QUERY --> EXT_TOOL
+  EXT_TOOL -->|"mcp_http"| MCP --> EXT_ANSWER
+  EXT_TOOL -->|"brave"| BRAVE --> EXT_ANSWER
+  EXT_TOOL -->|"tavily"| TAVILY --> EXT_ANSWER
+  EXT_TOOL -->|"disabled/missing"| EXT_DISABLED --> EXT_ANSWER
+  EXT_ANSWER --> ACTION_STORE
 
-  %% ----- Loop-back (lược giản) -----
-  HRO -.->|"làm lại"| CGC
-  RP -.->|"chờ"| MSQ
+  %% ================= FACT EDGES =================
+  EXTRACT --> PLAN_TURN --> APPLY_POLICY --> PROJECT_PLAN --> STORE_EXTRACTED --> ROUTE_EXTRACT
+  ROUTE_EXTRACT -->|"conflict / missing / unlocked"| ASK
+  ROUTE_EXTRACT -->|"direct action"| ACTION
+  ROUTE_EXTRACT -->|"ready to retrieve"| CREATE_RETR_RUN
+  ROUTE_EXTRACT -->|"done"| DONE
+  ASK --> STORE_QUESTION --> FACT_RETURN
+
+  %% ================= CONFIRM EDGES =================
+  CONFIRM_FACTS --> RECOMPUTE --> CHECK_KEYS --> APPLY_CONFIRM --> CONF_LOCKED
+  CONF_LOCKED -->|"No"| ASK
+  CONF_LOCKED -->|"Yes"| CREATE_RETR_RUN
+
+  %% ================= RETRIEVAL EDGES =================
+  CREATE_RETR_RUN --> RET_GRAPH
+  RET_GRAPH --> SIM --> RRF
+  RET_GRAPH --> BM25 --> RRF
+  RET_GRAPH --> LEX --> RRF
+  RRF --> EXPAND --> RERANK --> HITS
+  HITS -->|"Yes"| RET_HYBRID --> SAVE_RETR
+  HITS -->|"No"| PAGE_INDEX --> ARTICLE_HITS
+  ARTICLE_HITS -->|"Yes"| RET_PAGE --> SAVE_RETR
+  ARTICLE_HITS -->|"No"| RET_EMPTY --> SAVE_RETR
+  SAVE_RETR --> HANDOFF_NODE --> CASE_HANDOFF --> STORE_HANDOFF --> REC_AGENT
+
+  %% ================= DOWNSTREAM EDGES =================
+  REC_AGENT --> PRECEDENT --> RECOMMEND --> DRAFT_ANSWER --> STORE_DRAFT --> STORE_CITES --> LINK_VIOLATIONS --> ANALYZED --> PROPOSAL --> DISPATCH --> GATE --> HOLD_CHECK
+  HOLD_CHECK -->|"Yes"| HOLD --> ACTION_RETURN
+  HOLD_CHECK -->|"No"| DRAFT_NODE
+
+  %% ================= LEGAL EDGES =================
+  DRAFT_NODE --> MINUTES --> PREVIEW
+  DRAFT_NODE --> EXPLANATION --> PREVIEW
+  DRAFT_NODE --> DECISION_DRAFT --> PREVIEW
+  DRAFT_NODE --> LEGAL_TICKET --> PREVIEW
+  PREVIEW --> HR_SEND --> LEGAL_REVIEW --> LEGAL_APPROVES
+  LEGAL_APPROVES -->|"Reject"| REJECTED --> BUILD_CONTEXT
+  LEGAL_APPROVES -->|"Approve"| MANAGER_QUEUE --> SIGNER_DECIDES
+  SIGNER_DECIDES -->|"No"| PENDING
+  SIGNER_DECIDES -->|"Yes"| DISCIPLINARY_DECISION --> CLOSED --> EXPORT
 ```
 
-## Chú thích
+## Memory / State Contract
 
-- Node **hình thoi `{}`** = điểm quyết định (trong ảnh gốc vẽ nét đứt).
-- Nhãn trên mũi tên (`POST cases`, `Yes`, `No`, `Ready to retrieve`, `Reject`, `Approve`…) = điều kiện rẽ nhánh.
-- Cạnh nét đứt (`.->`) = vòng lặp/làm lại, đã lược giản so với ảnh gốc.
-
-## GraphRAG — kiến trúc mở rộng (đã vẽ thẳng vào sơ đồ trên)
-
-Sơ đồ lớn ở trên đã tính cả **node `expand`** ngay trong sub-graph Retrieval, nằm giữa
-`RRF fusion` và `Rerank` — đó là cách đồ thị dẫn chiếu (`chunk_references`, 599 cạnh,
-hiện chưa runtime nào đọc) được đưa vào đường retrieval thật. Bên trong `expand` là 6
-khối, cũng vẽ ngay trong sơ đồ đó (sub-graph `expand`).
-
-**Vì sao đặt ở đây (không phải sau Rerank):** Rerank là bước sắp xếp cuối và chốt
-danh sách trả ra. Expand chạy sau Rerank thì neighbor mới bị append thô, không được
-sắp lại và rơi ngoài top-k đã cắt. Đặt trước Rerank để neighbor được trộn rồi sắp
-chung một lượt. Cũng **không làm retriever thứ 4 chạy song song** — graph không có
-query riêng, nó phải có kết quả của 3 nhánh kia làm hạt giống.
-
-### Ý tưởng (nói bằng lời)
-
-Text search chỉ tìm chunk có chữ giống câu hỏi. Văn bản luật thì có tính **viện dẫn**:
-Nội quy viện dẫn Điều 125 BLLD, hoặc Điều 125 nói "theo khoản 2 Điều 34". Search có
-thể tìm ra Nội quy nhưng không bao giờ tìm ra Điều 125 nếu câu hỏi không nhắc tới nó —
-trong khi đó lại chính là "căn cứ bắt buộc". Đồ thị đã ghi sẵn 599 quan hệ viện dẫn,
-việc còn lại là **đọc nó lúc truy vấn**: tìm được chunk nào liên quan thì lần theo
-các mũi tên viện dẫn để kéo thêm điều mà nó dẫn tới.
-
-### Kiến trúc nội bộ khối `expand` (6 khối)
-
-6 khối `(1)…(6)` đã vẽ trong sơ đồ lớn ở trên (sub-graph `expand`). Tóm tắt:
-
-**Mô hình đồ thị:** node = chunk trong `document_chunks`; cạnh = dòng `chunk_references`,
-**có hướng** (A viện dẫn B) và **có nhãn** (`rule`, `confidence`). 1377 node / 599 cạnh
-→ đồ thị rất thưa (degree ra trung bình < 0.5), hop-1 chỉ thêm vài node, không bùng nổ.
-Trừ 63 cạnh external (target NULL), phần duyệt được là ~536 cạnh nội bộ giữa 4 văn bản.
-
-| Khối | Làm gì | Chi tiết đáng chú ý |
+| Field | Nội dung | Dùng bởi |
 |---|---|---|
-| (1) seed_selector | Lấy 5 chunk đầu của `fused` làm hạt giống (id + điểm) | Không lấy nhiều: seed rác kéo neighbor rác |
-| (2) edge_reader | 2 truy vấn SQL: xuôi `source_chunk_id = ANY(seeds)`, ngược `target_chunk_id = ANY(seeds)` | Dùng index `uq_chunk_references` / `ix_chunk_references_target_source`. **Đọc thẳng SQL**, không cache đồ thị vào RAM — để lọc in-force cùng câu truy vấn và tránh cache trỏ sai sau khi corpus rebuild (UUID sinh mới) |
-| (3) edge_filter | Bỏ cạnh `target_chunk_id IS NULL`, `confidence='LOW'`, `needs_review=true` | Lọc tại tầng cạnh là rẻ nhất |
-| (4) neighbor_hydrate | Lấy nội dung neighbor, JOIN qua `_candidate_stmt` + `in_force_filter(incident_date)` | **Văn bản được viện dẫn có thể đã hết hiệu lực** tại ngày vi phạm (vd NĐ 145 hết hiệu lực 09/09/2026) → không kéo vào. Đây là lý do graph phải nằm trong pipeline retrieval, không phải công cụ tra cứu riêng |
-| (5) score_merge | Gộp cạnh/seed trùng; điểm = `max(điểm seed) × 0.6`; dedup; cap 12; sort ổn định | Hệ số 0.6 = "tin nhưng tin ít hơn kết quả search trực tiếp" → chunk tìm bằng text vẫn thắng khi hòa điểm |
-| (6) Provenance | Gắn `origin="graph"` + giữ thông tin cạnh (được điều nào viện dẫn) | Phục vụ audit ledger; `retrieval` mode vẫn là `"hybrid"` |
+| `latest_user_message` | Tin nhắn user vừa gửi | `intent`, `case_qa`, `policy_qa`, `external_research` |
+| `turn_context` | Context compact build một lần từ DB/memory | `intent`, `case_qa`, planner context |
+| `text` | Tạm thời bằng `turn_context` để tương thích node cũ | `extract_node`, planner fallback |
+| `description` | Mô tả gốc của case | QA, retrieval, answer synthesis |
+| `stored` | Stored facts hiện tại | router prompt, fact planner, case QA |
+| `locked_fact_keys` | Fact schema đang bị khóa trong lượt pending | dynamic schema guard |
 
-**Fail-isolation:** lỗi graph → trả `fused` nguyên vẹn. Retrieval không bao giờ chết vì graph.
+`turn_context` gồm:
 
-### Giới hạn hiện tại & hướng phát triển tương lai
+```text
+CASE PROFILE
+CASE DESCRIPTION
+WORKING FACTS
+SHORT_TERM_MEMORY
+PENDING_FACT_KEYS
+PENDING_ACTION
+LAST_USER_INTENT
+RECENT_TURNS
+```
 
-**Giới hạn của v1 (cố ý, không phải bug):**
-- Đồ thị chỉ có **1 loại cạnh: "viện dẫn"**. Quan hệ "sửa đổi/thay thế/kế thừa" đang ở cấp văn bản (`legal_documents.amended_by`), chưa thành cạnh chunk.
-- Chỉ **1 hop**.
-- Cạnh `confidence='LOW'` bị **bỏ hẳn**.
-- `GRAPH_EDGE_DECAY=0.6`, `GRAPH_SEED_K=5`, `GRAPH_MAX_EXPANSION=12` là số **tune tay**, chưa có cơ sở đo.
-- Seed cố định top-5, chưa lọc theo ngưỡng điểm hay đa dạng nguồn.
-- 63 cạnh external (target NULL) **không duyệt được** — chưa có chunk cho văn bản ngoài corpus (Luật BHXH, Công đoàn…).
-- Rerank vẫn pass-through → neighbor chưa được chấm lại ngữ nghĩa.
-- **Chưa có eval (B8)** để so baseline vs graph.
+## Orchestrator Policy
 
-**Hướng phát triển:**
-- Mở rộng **loại cạnh** (sửa đổi/thay thế/kế thừa) hoặc dẫn xuất từ `amended_by` → đồ thị giàu ngữ nghĩa hơn.
-- **Hop-2 có kiểm soát** / personalized PageRank khi corpus lớn hơn.
-- Đưa cạnh **LOW vào với hệ số phạt** thay vì loại bỏ.
-- **Tune tham số bằng eval** thay vì đoán (decay, seed_k, cap).
-- Gắn **cross-encoder rerank thật** → neighbor được chấm lại, giảm phụ thuộc vào decay.
-- **Seed theo ngưỡng/đa dạng** thay vì top-5 cứng.
-- Bổ sung chunk cho **văn bản ngoài corpus** để nối các cạnh external.
-- **Cache đồ thị** nếu corpus lớn (đánh đổi với độ tươi của dữ liệu).
-- Xa hơn: **community detection / global GraphRAG** cho câu hỏi tổng hợp.
+`intent_node` chỉ gọi LLM để trả `IntentDecision` có cấu trúc:
 
-> Chi tiết triển khai (thay đổi theo file, tests, verification): `plans/graphrag-hop1-retrieval.md`.
+```text
+route: closed enum
+intent_label: open label
+confidence
+capability_needed
+requested_action
+```
+
+`route_after_intent` mới là nơi quyết định edge:
+
+| Route | Node tiếp theo |
+|---|---|
+| `case_qa` | `case_qa_node` |
+| `fact_planner` | `extract_node` |
+| `policy_qa` | `action_node -> answer_policy_question` |
+| `workflow_action` | `action_node` hoặc `extract_node` nếu cần fact |
+| `external_research` | `action_node -> external_research` |
+| `clarify` | `disambiguate_node` |
+| `unsupported` | `action_node -> boundary message` |
+| `capability_gap` | `action_node -> capability gap message + log` |
+
+Fallback:
+
+- Technical fallback, ví dụ missing API/timeout: route về `extract` để giữ compatibility.
+- Semantic/schema fallback: route `disambiguate`, không chạy fact planner bừa.
+
+## External Research Config
+
+External research mặc định tắt. Bật bằng `.env`:
+
+```env
+EXTERNAL_RESEARCH_ENABLED=true
+EXTERNAL_RESEARCH_PROVIDER=mcp_http
+EXTERNAL_RESEARCH_MCP_URL=http://localhost:xxxx
+EXTERNAL_RESEARCH_MCP_TOOL_NAME=web_search
+EXTERNAL_RESEARCH_ALLOWED_DOMAINS=chinhphu.vn,molisa.gov.vn,vbpl.vn
+```
+
+Hoặc dùng direct provider:
+
+```env
+EXTERNAL_RESEARCH_PROVIDER=brave
+BRAVE_SEARCH_API_KEY=...
+
+EXTERNAL_RESEARCH_PROVIDER=tavily
+TAVILY_API_KEY=...
+```
+
+Mọi câu trả lời external phải có disclaimer rằng đây là nguồn ngoài, chỉ tham khảo, không chắc chắn 100%, không thay thế tư vấn pháp lý/chuyên môn.

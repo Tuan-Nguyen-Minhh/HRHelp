@@ -1,0 +1,23 @@
+services:
+  backend:
+    image: p029-backend-desktop
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      LOG_LEVEL: DEBUG
+      PYTHONUNBUFFERED: "1"
+      DB_HOST: db
+    command:
+      - uvicorn
+      - src.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --log-level
+      - debug
+    restart: "no"
+
+  db:
+    restart: "no"

@@ -12,6 +12,8 @@ the employee sanction. Python does not choose a harsher or lighter level.
 
 import json
 import logging
+import time
+from urllib.parse import urlparse
 from uuid import UUID
 
 import httpx
@@ -195,21 +197,60 @@ async def synthesize(message: CaseHandoff, layered: LayeredBasis) -> Assessment:
     """Read one handoff. A missing key or a bad payload leaves the level unset."""
     if not settings.DEEPSEEK_API_KEY:
         return unavailable_assessment(message.facts, "Chưa có mô hình tổng hợp. Mức xử lý đề xuất: chưa xác định.")
+    payload = _payload(message, layered)
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": _payload(message, layered)},
+        {"role": "user", "content": payload},
     ]
     model_names = settings.chat_models()
     last_error = "invalid_assessment"
+    total_started = time.perf_counter()
+    logger.info(
+        "agent_stage start stage=synthesis total_models=%s prompt_chars=%s schema_chars=%s passages=%s law=%s decree=%s internal_rule=%s precedent=%s admin_penalty=%s retrieval=%s base_url_host=%s",
+        len(model_names),
+        len(SYSTEM_PROMPT) + len(payload),
+        len(json.dumps(Assessment.model_json_schema(), ensure_ascii=False)),
+        len(_passages(layered)),
+        sum(1 for item in layered.legal_basis if item.policy_type == "LAW"),
+        sum(1 for item in layered.legal_basis if item.policy_type != "LAW"),
+        len(layered.internal_rule),
+        len(layered.precedent),
+        len(layered.inspection_risk),
+        message.retrieval,
+        _base_url_host(),
+    )
     for attempt in range(MAX_RETRIES + 1):
         for model_name in model_names:
             try:
+                call_started = time.perf_counter()
                 parsed = await _complete(messages, attempt, model_name)
+                logger.info(
+                    "agent_stage end stage=synthesis_llm model=%s attempt=%s latency_ms=%s",
+                    model_name,
+                    attempt + 1,
+                    _elapsed_ms(call_started),
+                )
+                logger.info(
+                    "agent_stage end stage=synthesis total_latency_ms=%s model=%s",
+                    _elapsed_ms(total_started),
+                    model_name,
+                )
                 return guard(parsed, _passages(layered))
             except Exception as exc:
                 last_error = f"{model_name}: {_error_name(exc)}"
-                logger.warning("evidence synthesis attempt %s failed: %s", attempt + 1, last_error)
+                logger.warning(
+                    "agent_stage error stage=synthesis_llm model=%s attempt=%s latency_ms=%s error=%s",
+                    model_name,
+                    attempt + 1,
+                    _elapsed_ms(call_started),
+                    _error_name(exc),
+                )
     reason = f"Không đọc được bản tổng hợp ({last_error}). Mức xử lý đề xuất: chưa xác định."
+    logger.warning(
+        "agent_stage end stage=synthesis fallback=true total_latency_ms=%s error=%s",
+        _elapsed_ms(total_started),
+        last_error,
+    )
     return unavailable_assessment(message.facts, reason)
 
 
@@ -443,3 +484,12 @@ def _error_name(exc: Exception) -> str:
         body = response.text.replace("\n", " ")[:500]
         return f"HTTP {response.status_code}: {body}"
     return type(exc).__name__
+
+
+def _elapsed_ms(started: float) -> int:
+    return int((time.perf_counter() - started) * 1000)
+
+
+def _base_url_host() -> str:
+    base = settings.DEEPSEEK_BASE_URL.strip() or "https://api.deepseek.com"
+    return urlparse(base).netloc or base
