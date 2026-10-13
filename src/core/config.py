@@ -30,12 +30,12 @@ class Settings(BaseSettings):
     # -------------------------
     # LLM
     # -------------------------
-    # Clarify and sanction synthesis. An empty key keeps chat on the rule
-    # extractor and leaves the sanction level unset. The same Mistral key is
-    # also used by the legal embedding client below.
-    MODEL_NAME: str = "ministral-8b-2512"
-    FALLBACK_MODEL_NAME: str = "ministral-3b-2512"
+    # DeepSeek chat; Mistral credentials below remain dedicated to embeddings.
+    MODEL_NAME: str = "deepseek-flash"
+    FALLBACK_MODEL_NAME: str = ""
     MISTRAL_BASE_URL: str = ""
+    DEEPSEEK_API_KEY: str = ""
+    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
     LLM_TEMPERATURE: float = Field(default=0.7, ge=0.0, le=2.0)
     # Unused by the case agents. Left so an old env file still loads.
     XAI_API_KEY: str = ""
@@ -71,18 +71,18 @@ class Settings(BaseSettings):
     # variable names and are read from alembic/env.py, src/db/session.py,
     # src/services/vector_store.py and the scripts/ helpers. Renaming them
     # would break those call sites.
-    def mistral_chat_kwargs(self, model_name: str | None = None) -> dict[str, str]:
-        """Model, key, and optional host for ChatMistralAI."""
-        model = (model_name or self.MODEL_NAME).strip() or "ministral-8b-2512"
-        base = self.MISTRAL_BASE_URL.strip()
-        kwargs = {"model": model, "api_key": self.MISTRAL_API_KEY}
+    def chat_kwargs(self, model_name: str | None = None) -> dict[str, str]:
+        """DeepSeek model, key, and OpenAI-compatible host."""
+        model = (model_name or self.MODEL_NAME).strip() or "deepseek-flash"
+        base = self.DEEPSEEK_BASE_URL.strip() or "https://api.deepseek.com"
+        kwargs = {"model": model, "api_key": self.DEEPSEEK_API_KEY}
         if base:
             kwargs["base_url"] = base
         return kwargs
 
-    def mistral_chat_models(self) -> tuple[str, ...]:
+    def chat_models(self) -> tuple[str, ...]:
         """Primary model first, then an optional fallback without duplicates."""
-        primary = self.MODEL_NAME.strip() or "ministral-8b-2512"
+        primary = self.MODEL_NAME.strip() or "deepseek-flash"
         fallback = self.FALLBACK_MODEL_NAME.strip()
         if fallback and fallback != primary:
             return (primary, fallback)

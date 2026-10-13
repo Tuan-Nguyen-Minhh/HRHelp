@@ -12,6 +12,7 @@ _SECRET_KEYS = {
     "jwt",
     "secret",
     "mistral_api_key",
+    "deepseek_api_key",
     "openai_api_key",
 }
 
