@@ -32,8 +32,13 @@ from src.features.clarify.model.memory import build_turn_context
 from src.features.clarify.model.planner import plan_turn
 from src.features.clarify.model.policy import apply_decision
 from src.features.clarify.model.prompt import PROMPT_VERSION, SYSTEM_PROMPT, render_case_prompt
-from src.features.external_research.model.answer import EXTERNAL_RESEARCH_DISCLAIMER
-from src.features.external_research.model.tool import ExternalResearchQuery, ExternalResearchResult, ExternalSource
+from src.features.external_research.model.answer import EXTERNAL_RESEARCH_DISCLAIMER, _fallback_answer, _payload
+from src.features.external_research.model.tool import (
+    ExternalResearchQuery,
+    ExternalResearchResult,
+    ExternalSource,
+    _filter_sources,
+)
 
 _ABSENCE_STORED = {
     "contract_type": StoredFact("xác định thời hạn", True),
@@ -292,6 +297,24 @@ def test_route_after_intent_keeps_open_labels_behind_closed_routes():
     )
     assert route_after_intent({"intent_router_fallback_kind": IntentFallback.SEMANTIC.value}) == "disambiguate"
     assert route_after_intent({"intent_router_fallback_kind": IntentFallback.TECHNICAL.value}) == "extract"
+
+
+def test_intent_prompt_contains_production_route_contracts():
+    prompt = render_intent_prompt(
+        {
+            "latest_user_message": "lập biên bản vi phạm theo quy định hiện nay",
+            "turn_context": "CASE PROFILE\ncase_code: CASE-001",
+            "case_code": "CASE-001",
+            "stored": _ABSENCE_STORED,
+            "locked_fact_keys": ["absence_days"],
+        }
+    )
+    assert "ROUTE CONTRACTS" in prompt
+    assert "Do not convert \"lập biên bản vi phạm\" into policy_qa" in prompt
+    assert "Do not use for ordinary internal policy questions unless the user explicitly requests outside/current/public sources" in prompt
+    assert "approve, reject, sign, close, delete, bypass review" in prompt
+    assert "capability_needed" in prompt
+    assert "LATEST_USER_MESSAGE" in prompt
 
 
 @pytest.mark.asyncio
@@ -795,6 +818,69 @@ async def test_graph_does_not_extract_after_semantic_router_failure(monkeypatch)
 
 
 @pytest.mark.asyncio
+async def test_graph_decide_overrides_llm_clarify_for_explicit_external_signal(monkeypatch):
+    async def search(_query: SearchQuery):
+        raise AssertionError("explicit external research must not use internal retrieval")
+
+    seen = {"calls": 0}
+
+    async def fake_external(query: ExternalResearchQuery):
+        seen["calls"] += 1
+        assert "nguồn bên ngoài" in query.question
+        return ExternalResearchResult(
+            query=query.question,
+            provider="tavily",
+            sources=[
+                ExternalSource(
+                    title="Nguồn công khai mẫu",
+                    url="https://molisa.gov.vn/example",
+                    snippet="Doanh nghiệp cần chuẩn bị hồ sơ, chứng cứ và quy trình làm việc liên quan.",
+                )
+            ],
+        )
+
+    async def fake_intent(_state):
+        return IntentResult(
+            IntentDecision(
+                route=Route.CLARIFY,
+                intent_label="ambiguous_legal_question",
+                confidence=0.72,
+                reason="Model was unsure whether this asks internal or external information.",
+            ),
+            IntentFallback.NONE,
+            None,
+            1,
+            "router-test",
+        )
+
+    async def fail_plan(_state):
+        raise AssertionError("external research turns must not run fact planner")
+
+    monkeypatch.setattr("src.agents.case_graph.route_turn", fake_intent)
+    monkeypatch.setattr("src.features.clarify.model.graph.plan_turn", fail_plan)
+    state = await build_case_graph(search, external_research=fake_external).ainvoke(
+        {
+            "semantic": True,
+            "text": (
+                "Tra cứu nguồn bên ngoài/cập nhật mới nhất giúp tôi: nếu doanh nghiệp bị "
+                "người lao động khởi kiện tranh chấp lao động thì cần chuẩn bị những hồ sơ, "
+                "chứng cứ và bước thủ tục nào? Ưu tiên nguồn công khai từ molisa.gov.vn, "
+                "chinhphu.vn, vbpl.vn. Đây không phải câu hỏi từ dữ liệu nội bộ của hồ sơ."
+            ),
+            "stored": {},
+            "case_code": "CASE-001",
+        }
+    )
+    assert seen["calls"] == 1
+    assert state["requested_action"] == "external_research"
+    assert state["selected_route"] == Route.EXTERNAL_RESEARCH
+    assert state["route_trace"]["decision_rule"] == "external_public_latest_priority"
+    assert state["route_trace"]["llm_route"] == "clarify"
+    assert state["external_research_provider"] == "tavily"
+    assert EXTERNAL_RESEARCH_DISCLAIMER in state["question"]
+
+
+@pytest.mark.asyncio
 async def test_graph_external_research_requires_disclaimer_and_no_extract(monkeypatch):
     async def search(_query: SearchQuery):
         raise AssertionError("external research must not use internal retrieval")
@@ -849,6 +935,103 @@ async def test_graph_external_research_requires_disclaimer_and_no_extract(monkey
     assert "Nguồn external mẫu" in state["question"]
     assert EXTERNAL_RESEARCH_DISCLAIMER in state["question"]
     assert state.get("handoff") is None
+
+
+@pytest.mark.asyncio
+async def test_external_research_query_is_scoped_to_labor_context(monkeypatch):
+    async def search(_query: SearchQuery):
+        raise AssertionError("external research must not use internal retrieval")
+
+    seen: dict[str, str] = {}
+
+    async def fake_external(query: ExternalResearchQuery):
+        seen["question"] = query.question
+        return ExternalResearchResult(
+            query=query.question,
+            provider="tavily",
+            sources=[
+                ExternalSource(
+                    title="Bộ luật Lao động",
+                    url="https://vbpl.vn/example",
+                    snippet="Quy định về xử lý kỷ luật lao động, trình tự, biên bản và quyền giải trình.",
+                )
+            ],
+        )
+
+    async def fake_intent(_state):
+        return IntentResult(
+            IntentDecision(
+                route=Route.EXTERNAL_RESEARCH,
+                intent_label="research_public_procedure",
+                confidence=0.9,
+                requires_external_research=True,
+            ),
+            IntentFallback.NONE,
+            None,
+            1,
+            "router-test",
+        )
+
+    monkeypatch.setattr("src.agents.case_graph.route_turn", fake_intent)
+    monkeypatch.setattr(settings, "DEEPSEEK_API_KEY", "")
+    state = await build_case_graph(search, external_research=fake_external).ainvoke(
+        {
+            "semantic": True,
+            "text": "bạn có thể research thêm thông tin ở ngoài để coi quy trình được không",
+            "description": "Nhân viên bị tố cáo tiết lộ thông tin khách hàng.",
+            "fact_lines": ["Hành vi: tiết lộ thông tin khách hàng", "Đã lập biên bản: chưa rõ"],
+            "stored": {},
+            "case_code": "CASE-001",
+        }
+    )
+    assert "pháp luật lao động" in seen["question"]
+    assert "quy trình xử lý kỷ luật lao động" in seen["question"]
+    assert "tiết lộ thông tin khách hàng" in seen["question"]
+    assert state["external_research_provider"] == "tavily"
+
+
+def test_external_research_filters_off_topic_official_sources():
+    sources = [
+        ExternalSource(
+            title="Luật Xuất bản số 19/2012/QH13",
+            url="https://vbpl.vn/example/xuat-ban",
+            snippet="Nội dung về ghi thông tin trên xuất bản phẩm, nộp xuất bản phẩm.",
+        ),
+        ExternalSource(
+            title="Chính sách mới có hiệu lực từ tháng 6/2026",
+            url="https://chinhphu.vn/example/xang-e10",
+            snippet="Quy định về phối trộn xăng E10 và tiêu chuẩn Halal.",
+        ),
+        ExternalSource(
+            title="Bộ luật Lao động - xử lý kỷ luật lao động",
+            url="https://vbpl.vn/example/lao-dong",
+            snippet="Quy định về trình tự xử lý kỷ luật lao động, biên bản, chứng cứ và quyền giải trình.",
+        ),
+    ]
+    filtered = _filter_sources(
+        sources,
+        ["vbpl.vn", "chinhphu.vn"],
+        5,
+        "quy trình xử lý kỷ luật lao động tiết lộ thông tin khách hàng",
+    )
+    assert [source.title for source in filtered] == ["Bộ luật Lao động - xử lý kỷ luật lao động"]
+
+
+def test_external_answer_uses_sources_without_visible_e_labels():
+    sources = [
+        ExternalSource(title=f"Nguồn {index}", url=f"https://vbpl.vn/{index}", snippet="xử lý kỷ luật lao động")
+        for index in range(1, 6)
+    ]
+    result = ExternalResearchResult(query="quy trình kỷ luật lao động", provider="tavily", sources=sources)
+    payload = _payload("research quy trình", result, "mô tả hồ sơ")
+    fallback = _fallback_answer(sources)
+
+    assert '"ref": "E3"' in payload
+    assert '"ref": "E4"' not in payload
+    assert "[E1]" not in fallback
+    assert "[E3]" not in fallback
+    assert "[E4]" not in fallback
+    assert "nguồn bên ngoài" in fallback
 
 
 @pytest.mark.asyncio
