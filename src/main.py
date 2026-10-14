@@ -27,6 +27,7 @@ from src.features.decision.controller import manager_router
 from src.features.decision.controller import router as decision_router
 from src.features.export.controller import router as export_router
 from src.features.health.model import readiness
+from src.features.ingestion.controller import router as ingestion_router
 from src.features.knowledge.controller import router as knowledge_router
 from src.features.legal_review.controller import router as legal_router
 from src.features.notification.controller import router as notification_router
@@ -98,6 +99,7 @@ app.include_router(timeline_router, prefix="/api/v1")
 app.include_router(recidivism_router, prefix="/api/v1")
 app.include_router(export_router, prefix="/api/v1")
 app.include_router(knowledge_router, prefix="/api/v1")
+app.include_router(ingestion_router, prefix="/api/v1")
 app.include_router(notification_router, prefix="/api/v1")
 app.include_router(dashboard_router, prefix="/api/v1")
 app.include_router(template_router, prefix="/api/v1")

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Bot, FileSearch, Gavel, LayoutDashboard, LogOut, Scale, ScrollText, ShieldCheck } from "lucide-react";
+import { Bell, Bot, FileSearch, Gavel, LayoutDashboard, LogOut, Scale, ScrollText, ShieldCheck, Upload } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { useAuth, useMe } from "@/app/providers";
@@ -22,6 +22,7 @@ const NAV: NavItem[] = [
   { to: "/manager", label: "Duyệt cuối", icon: Gavel, roles: ["MANAGER"] },
   { to: "/decisions", label: "Quyết định", icon: Gavel, roles: ["SIGNER", "ADMIN"] },
   { to: "/notifications", label: "Thông báo", icon: Bell, roles: ["HR", "MANAGER", "LEGAL", "SIGNER", "ADMIN"] },
+  { to: "/admin/ingestion", label: "Nạp văn bản", icon: Upload, roles: ["ADMIN"] },
   { to: "/audit", label: "Nhật ký", icon: ScrollText, roles: ["ADMIN"] },
 ];
 

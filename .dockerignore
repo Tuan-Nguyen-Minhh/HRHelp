@@ -22,7 +22,6 @@ frontend/
 handoff/
 plans/
 gateG1-chotdetai/
-data_pipeline_steps/
 *.md
 !requirements.txt
 .dockerignore

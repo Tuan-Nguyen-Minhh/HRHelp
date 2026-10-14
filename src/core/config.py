@@ -126,6 +126,13 @@ class Settings(BaseSettings):
         return f"postgresql+psycopg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     # -------------------------
+    # Admin document ingestion
+    # -------------------------
+    # Upper bound on an uploaded source file. The bytes are processed in memory
+    # and never written to disk, so this guards request memory, not storage.
+    MAX_UPLOAD_MB: int = 25
+
+    # -------------------------
     # JWT
     # -------------------------
     JWT_SECRET: str = "change-me-in-env-before-you-share"

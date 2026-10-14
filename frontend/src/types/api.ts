@@ -53,6 +53,22 @@ export interface StaffWrite {
   is_active?: boolean;
 }
 
+export interface IngestionDocument {
+  document_id: string;
+  file_name: string;
+  ingest_status: string;
+  policy_code: string | null;
+  policy_name: string | null;
+  chunk_count: number;
+  embedded_chunk_count: number;
+  error: string | null;
+  created_at: string;
+}
+
+export interface IngestionDocumentList {
+  documents: IngestionDocument[];
+}
+
 export interface MeResponse {
   user_id: string;
   email: string;
