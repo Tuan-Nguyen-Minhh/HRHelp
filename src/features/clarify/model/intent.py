@@ -19,7 +19,7 @@ from src.services.chat_client import create_chat_model
 
 logger = logging.getLogger(__name__)
 
-PROMPT_VERSION = "intent-router-v2-open-label-closed-route"
+PROMPT_VERSION = "intent-router-v3-semantic-minutes"
 MAX_RETRIES = 1
 MIN_ROUTE_CONFIDENCE = 0.6
 
@@ -49,6 +49,10 @@ workflow_action
 Purpose: draft, show, prepare, preview, or continue supported workflow artifacts while keeping approval and final authority outside chat.
 Use for supported commands: draft_minutes, create_ticket_preview, show_assessment, send_to_legal.
 Examples: "lập biên bản", "soạn biên bản vi phạm", "tạo phiếu pháp chế", "preview phiếu", "xem đánh giá hiện tại", "gửi pháp chế".
+For draft_minutes, recognize the meaning of preparing a written record/assessment of this case, regardless of the exact wording, word order, shorthand, or spelling. Examples include "lập hồ sơ biên bản xử lý vi phạm của người này", "ghi nhận sự việc này thành biên bản giúp tôi", and "soạn cho tôi bản ghi nhận vụ việc để HR xem". These examples illustrate the intent; they are not a list of required keywords.
+Preparing or saving draft minutes is a supported preparation action, even when the record concerns disciplinary handling. It does not approve a sanction, sign a decision, or close a case. Mark unsupported only if the latest user actually requests such a final-authority operation.
+For a minutes preparation request, choose workflow_action with requested_action=draft_minutes and requires_fact_planner=true, whether working facts appear complete or incomplete. The extract node validates the actual fact requirements. Missing facts do not change this preparation intent to unsupported, capability_gap, or policy_qa.
+Distinguish preparation from factual reports ("đã lập biên bản", "chưa có biên bản" -> fact_planner), procedural questions ("lập biên bản cần những bước nào?" -> policy_qa), and questions about a saved record ("biên bản đang lưu có gì?" -> case_qa). Do not revive a drafting request from history when the latest turn asks something else.
 Do not use for approval/sign/close/delete/bypass requests; those are unsupported. Do not convert "lập biên bản vi phạm" into policy_qa merely because it contains "vi phạm".
 Signals: asks_workflow_action=true. target=workflow. requested_action must be one of draft_minutes, create_ticket_preview, show_assessment, send_to_legal. Set requires_fact_planner=true when required facts are missing before the artifact can be produced.
 
@@ -146,7 +150,10 @@ class IntentDecision(BaseModel):
     capability_needed: str = Field(default="", max_length=120)
     target: IntentTarget = IntentTarget.UNKNOWN
     confidence: float = Field(ge=0, le=1)
-    requires_fact_planner: bool = False
+    requires_fact_planner: bool = Field(
+        default=False,
+        description="True for fact updates or workflow actions requiring fact validation/completion. Always true for draft_minutes, even if stored facts appear complete.",
+    )
     requires_internal_retrieval: bool = False
     requires_external_research: bool = False
     requested_action: str = ""
@@ -315,8 +322,6 @@ def infer_turn_signals(state: dict) -> IntentSignals:
     )
     question_markers = ("?", " gì", " nào", " không", " chưa", " sao", " vì sao", "tại sao")
     workflow_markers = (
-        "lập biên bản",
-        "soạn biên bản",
         "tạo phiếu",
         "gửi pháp chế",
         "xem đánh giá",
@@ -382,7 +387,13 @@ async def _complete(messages: list[dict[str, str]], attempt: int, model_name: st
         timeout=20,
         max_retries=2,
     )
-    prompt.append({"role": "system", "content": "Return only a JSON object matching this JSON schema: " + json.dumps(IntentDecision.model_json_schema(), ensure_ascii=False)})
+    prompt.append(
+        {
+            "role": "system",
+            "content": "Return only a JSON object matching this JSON schema: "
+            + json.dumps(IntentDecision.model_json_schema(), ensure_ascii=False),
+        }
+    )
     structured = model.with_structured_output(IntentDecision, method="json_mode")
     parsed = await structured.ainvoke(prompt)
     if isinstance(parsed, IntentDecision):
@@ -433,11 +444,12 @@ Routing rules:
 - Explicit requests for outside/public/current/latest sources are external_research, even when the topic is legal or HR.
 - If the user supplies values that answer pending fact keys, use fact_planner.
 - Requests to draft minutes, create/preview a legal ticket, show the current assessment, or send to legal are workflow_action, not policy_qa.
+- Interpret minutes preparation semantically, including indirect requests and paraphrases. Choose draft_minutes and requires_fact_planner=true so the existing extract node checks facts. Treat a draft about a violation as preparation; do not infer a request to approve punishment from the subject matter.
 - Requests to approve, reject, sign, close, delete, or bypass review are unsupported, not workflow_action.
 - If confidence is low, use clarify.
 - If the request is novel, set a descriptive intent_label but still choose the safest closed route.
 - Use capability_gap when the request is valid but no listed route can safely perform it.
-- Set requires_fact_planner only for fact updates or workflow actions that need fact completion.
+- Set requires_fact_planner for fact updates or workflow actions that need fact completion/validation. Minutes preparation always requires the extract node to validate case facts.
 - Set requires_internal_retrieval for policy_qa or requests to evaluate handling under internal rules.
 - Set requires_external_research only for external_research.
 - requested_action may be one of: answer_policy_question, show_assessment, draft_minutes, create_ticket_preview, send_to_legal, unsupported, or empty.

@@ -13,11 +13,13 @@ from src.common.clock import utc_now
 from src.common.errors import AppError
 from src.features.answer.model.agent import build_recommend_agent
 from src.features.answer.model.assessment import (
+    ApplicableRule,
     Assessment,
     CaseSummary,
     DownstreamHandoff,
     EvidenceRef,
     RiskAssessment,
+    RuleCondition,
     SanctionAssessment,
 )
 from src.features.answer.model.dispatch import build_dispatch_agent, hold_code, ready_to_dispatch
@@ -379,11 +381,18 @@ async def test_locked_dismissal_from_feature_6_is_submitted(monkeypatch):
                 recommended_sanction="DISMISSAL",
                 reason="Đoạn luật và nội quy đã lấy nêu sa thải.",
                 evidence=[
-                    EvidenceRef(chunk_id=str(law.chunk_id), quote="05 ngày cộng dồn trong thời hạn 30 ngày"),
+                    EvidenceRef(chunk_id=str(law.chunk_id), quote=law.content),
                     EvidenceRef(chunk_id=str(rule.chunk_id), quote=rule.content),
                 ],
             ),
             risk_assessment=RiskAssessment(level="LOW", reasons=["Đủ trích dẫn."]),
+            applicable_rules=[ApplicableRule(
+                rule_id=str(item.chunk_id), document_type=item.policy_type, description="Điều khoản fixture",
+                supports_sanction="DISMISSAL", evidence=[EvidenceRef(chunk_id=str(item.chunk_id), quote=item.content)],
+                conditions=[RuleCondition(fact="absence_days", fact_value=_READY["absence_days"],
+                            required="Điều kiện fixture", result="SATISFIED",
+                            evidence=[EvidenceRef(chunk_id=str(item.chunk_id), quote=item.content)])],
+            ) for item in (law, rule)],
             downstream_handoff=DownstreamHandoff(can_recommend=True),
         )
         return guard(raw, [law, rule])

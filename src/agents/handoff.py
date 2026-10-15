@@ -27,6 +27,10 @@ class CitedPassage(BaseModel):
     policy_code: str
     policy_name: str
     origin: str = "hybrid"
+    section_title: str = ""
+    rerank_score: float | None = None
+    retrieval_status: str = "UNASSESSED"
+    evidence_gaps: tuple[str, ...] = ()
 
 
 class CaseHandoff(BaseModel):

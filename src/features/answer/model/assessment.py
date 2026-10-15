@@ -17,7 +17,7 @@ DecisionStatus = Literal[
     "NEED_LEGAL_REVIEW",
 ]
 Relevance = Literal["RELEVANT", "PARTIALLY_RELEVANT", "IRRELEVANT"]
-ConditionResult = Literal["SATISFIED", "NOT_SATISFIED", "UNKNOWN"]
+ConditionResult = Literal["SATISFIED", "NOT_SATISFIED", "UNKNOWN", "CONFLICTED"]
 DocumentType = Literal["LAW", "DECREE", "INTERNAL_RULE"]
 ProcedureStatus = Literal["REQUIRED", "OPTIONAL", "UNKNOWN"]
 RiskLevel = Literal["LOW", "MEDIUM", "HIGH"]
@@ -26,6 +26,7 @@ RiskLevel = Literal["LOW", "MEDIUM", "HIGH"]
 class EvidenceRef(BaseModel):
     chunk_id: str
     quote: str
+    source: Literal["CONTENT", "HEADING"] = "CONTENT"
 
 
 class CaseSummary(BaseModel):
@@ -52,6 +53,12 @@ class RuleCondition(BaseModel):
     fact: str
     required: str
     result: ConditionResult
+    fact_value: str = ""
+    evidence: list[EvidenceRef] = Field(default_factory=list)
+    scope: Literal["SUBSTANTIVE", "ISSUANCE"] = "SUBSTANTIVE"
+    alternative_group: str = Field(
+        default="", description="Nonempty groups are alternative AND branches; empty = mandatory."
+    )
 
 
 class ApplicableRule(BaseModel):
@@ -60,6 +67,9 @@ class ApplicableRule(BaseModel):
     description: str
     conditions: list[RuleCondition] = Field(default_factory=list)
     evidence: list[EvidenceRef] = Field(default_factory=list)
+    supports_sanction: str | None = None
+    purpose: Literal["SANCTION", "CONTEXT", "PROCEDURE"] = "SANCTION"
+    selected: bool = True
 
 
 class SanctionItem(BaseModel):
@@ -103,6 +113,69 @@ class Conflict(BaseModel):
     topic: str
     sources: list[str] = Field(default_factory=list)
     description: str
+
+
+class SeverityAssessment(BaseModel):
+    """Descriptive seriousness, never a lookup table for a sanction."""
+
+    score: int | None = Field(default=None, ge=1, le=5)
+    reason: str = "Chưa đủ dữ kiện để đánh giá mức độ nghiêm trọng."
+    fact_keys: list[str] = Field(default_factory=list)
+    evidence: list[EvidenceRef] = Field(default_factory=list)
+
+
+class IssuanceCheck(BaseModel):
+    category: Literal["TIME_LIMIT", "PROTECTION", "PROCEDURE", "AUTHORITY", "SOURCE_VALIDITY"]
+    requirement: str
+    result: ConditionResult = "UNKNOWN"
+    effect: Literal["PROCEDURE", "TEMPORARY_BLOCK", "LEGAL_BLOCK"] = "PROCEDURE"
+    fact_values: dict[str, str] = Field(default_factory=dict)
+    evidence: list[EvidenceRef] = Field(default_factory=list)
+    next_action: str = ""
+
+
+class RubricReasoning(BaseModel):
+    severity: SeverityAssessment = Field(default_factory=SeverityAssessment)
+    issuance_checks: list[IssuanceCheck] = Field(default_factory=list)
+
+
+class SupportDimension(BaseModel):
+    key: str
+    score: int = Field(ge=0, le=100)
+    explanation: str
+
+
+class SourceSupport(BaseModel):
+    chunk_id: str
+    policy_version_id: str
+    document_role: str
+    content_sha256: str
+    heading_sha256: str
+    citation_integrity_score: int = Field(ge=0, le=100)
+    retrieval_status: str
+    note: str = "Điểm khớp trích dẫn, chưa phải độ đúng pháp lý của văn bản."
+
+
+class ConfidenceAssessment(BaseModel):
+    """Observable evidence support, not calibrated correctness probability."""
+
+    rubric_version: str = "hr-reasoning-v1"
+    score: int = Field(default=0, ge=0, le=100)
+    label: Literal["LOW", "MEDIUM", "HIGH", "UNASSESSED"] = "UNASSESSED"
+    score_kind: Literal["EVIDENCE_SUPPORT_INDEX"] = "EVIDENCE_SUPPORT_INDEX"
+    calibrated: bool = False
+    dimensions: list[SupportDimension] = Field(default_factory=list)
+    sources: list[SourceSupport] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+
+
+class IssuanceAssessment(BaseModel):
+    status: Literal[
+        "NEEDS_VERIFICATION", "NEEDS_PROCEDURE", "TEMPORARILY_BLOCKED", "LEGALLY_BLOCKED", "READY_FOR_HUMAN_REVIEW"
+    ] = "NEEDS_VERIFICATION"
+    checks: list[IssuanceCheck] = Field(default_factory=list)
+    next_actions: list[str] = Field(default_factory=list)
+    human_approval_required: bool = True
 
 
 class DownstreamHandoff(BaseModel):
@@ -152,3 +225,20 @@ class Assessment(BaseModel):
         ),
     )
     downstream_handoff: DownstreamHandoff = Field(default_factory=DownstreamHandoff)
+    operational_status: Literal["OK", "LLM_FAILED", "RERANK_FAILED"] = "OK"
+    rubric_reasoning: RubricReasoning = Field(default_factory=RubricReasoning)
+    confidence: ConfidenceAssessment = Field(default_factory=ConfidenceAssessment)
+    issuance: IssuanceAssessment = Field(default_factory=IssuanceAssessment)
+
+
+class SynthesisAssessment(BaseModel):
+    """Only the reasoning result is generated. Python renders report and handoff."""
+
+    case_summary: CaseSummary
+    applicable_rules: list[ApplicableRule] = Field(default_factory=list)
+    sanction_assessment: SanctionAssessment
+    procedure_assessment: ProcedureAssessment = Field(default_factory=ProcedureAssessment)
+    risk_assessment: RiskAssessment
+    evidence_gaps: list[EvidenceGap] = Field(default_factory=list)
+    conflicts: list[Conflict] = Field(default_factory=list)
+    rubric_reasoning: RubricReasoning = Field(default_factory=RubricReasoning)

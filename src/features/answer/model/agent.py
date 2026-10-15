@@ -97,4 +97,8 @@ def _passage(item: CitedPassage) -> Passage:
         policy_type=item.policy_type,
         policy_code=item.policy_code,
         policy_name=item.policy_name,
+        section_title=item.section_title,
+        rerank_score=item.rerank_score,
+        retrieval_status=item.retrieval_status,
+        evidence_gaps=item.evidence_gaps,
     )

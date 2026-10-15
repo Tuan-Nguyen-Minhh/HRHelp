@@ -49,7 +49,9 @@ async def get_assessment(session: AsyncSession, actor: User, case_id: UUID) -> A
     return await _present(session, actor, case, report, version)
 
 
-async def generate_assessment(session: AsyncSession, actor: User, case_id: UUID) -> AssessmentView:
+async def generate_assessment(
+    session: AsyncSession, actor: User, case_id: UUID, *, commit: bool = True
+) -> AssessmentView:
     """Create the next draft from the stored recommendation. The model does not confirm it."""
     case = await _editable(session, actor, case_id)
     sections, sources = await _compose_case(session, case)
@@ -59,7 +61,23 @@ async def generate_assessment(session: AsyncSession, actor: User, case_id: UUID)
         if previous is not None:
             old_sections, old_sources = _saved(previous)
             sections, sources = _carry(sections, sources, old_sections, old_sources)
-    return await _store_new(session, actor, case, sections, sources, "AI", report)
+    return await _store_new(session, actor, case, sections, sources, "AI", report, commit=commit)
+
+
+async def ensure_assessment(session: AsyncSession, actor: User, case_id: UUID) -> AssessmentView:
+    """Save a chat-requested draft in the caller's transaction; preserve HR edits."""
+    case = await _editable(session, actor, case_id)
+    report = await get_report(session, case.id)
+    if report is not None:
+        version = await current_version(session, report)
+        answer = await load(session, case)
+        if version is not None and (
+            version.status == "CONFIRMED"
+            or version.source == "HR"
+            or (answer is not None and report.recommendation_id == answer.recommendation_id)
+        ):
+            return await _present(session, actor, case, report, version)
+    return await generate_assessment(session, actor, case.id, commit=False)
 
 
 async def save_assessment(
@@ -177,6 +195,8 @@ async def _store_new(
     source: str,
     report: AssessmentReport | None = None,
     status: str = "DRAFT",
+    *,
+    commit: bool = True,
 ) -> AssessmentView:
     if report is None:
         report = await get_report(session, case.id)
@@ -197,7 +217,8 @@ async def _store_new(
             report.recommendation_id = answer.recommendation_id
     payload = {"sections": sections.model_dump(mode="json"), "sources": sources}
     version = await append_version(session, report, payload=payload, source=source, status=status, edited_by=actor.id)
-    await session.commit()
+    if commit:
+        await session.commit()
     return await _present(session, actor, case, report, version)
 
 

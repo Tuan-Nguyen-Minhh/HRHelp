@@ -190,5 +190,5 @@ async def test_health_and_me_error_shape(client):
     ready = await client.get("/ready")
     assert ready.status_code in {200, 503}
     checks = ready.json()["checks"]
-    assert set(checks) == {"database", "pgvector", "llm_configured", "embedding_configured"}
+    assert set(checks) == {"database", "pgvector", "llm_configured", "embedding_configured", "rerank_configured"}
     assert all(isinstance(value, bool) for value in checks.values())

@@ -2,6 +2,7 @@
 
 import logging
 import time
+from dataclasses import replace
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,10 +16,12 @@ from src.common.clock import utc_now
 from src.common.errors import AppError
 from src.common.notify import notify
 from src.features.answer.model.answers import attach_packet, load, withdraw
+from src.features.answer.model.conversation import answer_reply
 from src.features.answer.model.dispatch import DispatchResult, build_dispatch_agent, ready_to_dispatch
 from src.features.answer.model.proposal import close_proposal
 from src.features.answer.model.send import ask_to_send, with_preview
 from src.features.answer.schema import AnswerView
+from src.features.assessment.service import ensure_assessment
 from src.features.cite.model.search import search_policies
 from src.features.clarify.model.assess import ClarifyPlan, FactConflict, StoredFact, build_question
 from src.features.clarify.model.catalog import OPTIONAL_FACT_KEYS, required_specs
@@ -139,6 +142,7 @@ async def _clarify(
         run.id,
         len(latest_user_message or ""),
     )
+    stored_before = await _stored(session, case.id)
     plan, handoff = await _planned(
         session,
         case,
@@ -162,7 +166,9 @@ async def _clarify(
     )
     if handoff is not None:
         note = _cited_text(handoff)
-        assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff"}))
+        assistant = await add_message(
+            session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff", "internal": True})
+        )
         finish_run(run, assistant.id)
         downstream_started = time.perf_counter()
         downstream = await run_downstream_agents(session, case, conversation, handoff, assistant.id)
@@ -173,17 +179,27 @@ async def _clarify(
             downstream.agent_run_id,
             _elapsed_ms(downstream_started),
         )
-        await update_memory(session, conversation.id, plan, downstream.assistant_text)
-        await session.commit()
-        return _turn(
+        turn = await _finish_minutes(
+            session,
             case,
-            conversation.id,
+            conversation,
             plan,
-            downstream.assistant_text,
             downstream.answer,
-            handoff,
-            downstream.agent_run_id,
+            actor_id,
+            handoff=handoff,
+            run_id=downstream.agent_run_id,
         )
+        await session.commit()
+        return turn
+    if plan.requested_action == "draft_minutes" and plan.locked:
+        facts_changed = any(item.confirmed and stored_before.get(key) != item for key, item in plan.merged.items())
+        answer = None if facts_changed else await load(session, case)
+        if answer is None:
+            turn = await _cite(session, case, conversation, plan, actor_id=actor_id, request_run=run)
+        else:
+            turn = await _finish_minutes(session, case, conversation, plan, answer, actor_id, run=run)
+        await session.commit()
+        return turn
     if plan.requested_action == "show_assessment":
         answer = await load(session, case)
         text = answer.message if answer is not None else "Hồ sơ chưa có báo cáo đánh giá để hiển thị."
@@ -212,10 +228,13 @@ async def _confirm(
     items: list[FactConfirmItem],
 ) -> TurnResponse:
     plan, _handoff = await _plan(session, case, conversation.id, semantic=True)
+    memory = await get_memory(session, conversation.id)
+    if memory is not None and memory.pending_action == "draft_minutes":
+        plan = replace(plan, requested_action="draft_minutes")
     stored = await _stored(session, case.id)
     _check_keys(plan, items)
     if not _changed(stored, plan.merged, items):
-        return await _unchanged(session, case, conversation, plan)
+        return await _unchanged(session, case, conversation, plan, actor_id=actor.id)
     await _apply(session, actor.id, case.id, stored, plan.merged, items)
     plan, _handoff = await _planned(session, case, conversation.id, None)
     if not plan.locked:
@@ -224,10 +243,12 @@ async def _confirm(
         await add_message(session, NewMessage(conversation.id, "ASSISTANT", question, {"kind": "clarify"}))
         await update_memory(session, conversation.id, plan, question)
         return _turn(case, conversation.id, plan, question, None, None, None)
-    return await _cite(session, case, conversation, plan)
+    return await _cite(session, case, conversation, plan, actor_id=actor.id)
 
 
-async def _unchanged(session: AsyncSession, case: Case, conversation: Conversation, plan: ClarifyPlan) -> TurnResponse:
+async def _unchanged(
+    session: AsyncSession, case: Case, conversation: Conversation, plan: ClarifyPlan, *, actor_id: UUID
+) -> TurnResponse:
     if not plan.locked:
         question = _question(plan)
         return _turn(case, conversation.id, plan, question, None, None, None)
@@ -235,11 +256,21 @@ async def _unchanged(session: AsyncSession, case: Case, conversation: Conversati
     if existing is not None:
         current = await session.get(Recommendation, existing.recommendation_id)
         if current is not None and current.status == "DRAFT":
+            if plan.requested_action == "draft_minutes":
+                return await _finish_minutes(session, case, conversation, plan, existing, actor_id)
             return _turn(case, conversation.id, plan, _LOCKED, existing, None, existing.agent_run_id)
-    return await _cite(session, case, conversation, plan)
+    return await _cite(session, case, conversation, plan, actor_id=actor_id)
 
 
-async def _cite(session: AsyncSession, case: Case, conversation: Conversation, plan: ClarifyPlan) -> TurnResponse:
+async def _cite(
+    session: AsyncSession,
+    case: Case,
+    conversation: Conversation,
+    plan: ClarifyPlan,
+    *,
+    actor_id: UUID,
+    request_run: AgentRun | None = None,
+) -> TurnResponse:
     """Run cite, then pass its locked handoff to the recommendation agent."""
     if case.incident_date is None:
         raise AppError(422, "Hồ sơ chưa có ngày xảy ra việc nên chưa đối chiếu được văn bản.")
@@ -287,7 +318,9 @@ async def _cite(session: AsyncSession, case: Case, conversation: Conversation, p
     if not isinstance(message, CaseHandoff):
         raise AppError(422, "Tình tiết chưa khóa nên chưa đối chiếu văn bản.")
     note = _cited_text(message)
-    assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff"}))
+    assistant = await add_message(
+        session, NewMessage(conversation.id, "ASSISTANT", note, {"kind": "handoff", "internal": True})
+    )
     finish_run(run, assistant.id)
     downstream_started = time.perf_counter()
     downstream = await run_downstream_agents(session, case, conversation, message, assistant.id)
@@ -298,16 +331,51 @@ async def _cite(session: AsyncSession, case: Case, conversation: Conversation, p
         downstream.agent_run_id,
         _elapsed_ms(downstream_started),
     )
-    await update_memory(session, conversation.id, plan, downstream.assistant_text)
-    return _turn(
+    return await _finish_minutes(
+        session,
         case,
-        conversation.id,
+        conversation,
         plan,
-        downstream.assistant_text,
         downstream.answer,
-        message,
-        downstream.agent_run_id,
+        actor_id,
+        handoff=message,
+        run_id=downstream.agent_run_id,
+        run=request_run,
     )
+
+
+async def _finish_minutes(
+    session: AsyncSession,
+    case: Case,
+    conversation: Conversation,
+    plan: ClarifyPlan,
+    answer: AnswerView,
+    actor_id: UUID,
+    *,
+    handoff: CaseHandoff | None = None,
+    run_id: UUID | None = None,
+    run: AgentRun | None = None,
+) -> TurnResponse:
+    """Persist the form and chat message atomically before promising an openable draft."""
+    actor = await session.get(User, actor_id)
+    if actor is None:
+        raise AppError(401, "Không tìm thấy người dùng đang lập biên bản.")
+    form = await ensure_assessment(session, actor, case.id)
+    text = (
+        answer_reply(answer) + "\n\nTôi đã lưu biên bản. Bạn kéo xuống bên dưới và nhấn ‘Mở biên bản’ để xem chi tiết."
+    )
+    assistant = await add_message(
+        session,
+        NewMessage(
+            conversation.id, "ASSISTANT", text, {"kind": "minutes_ready", "assessment_id": str(form.assessment_id)}
+        ),
+    )
+    if run is not None:
+        finish_run(run, assistant.id)
+        run_id = run_id or run.id
+    await update_memory(session, conversation.id, plan, text, action_completed=True)
+    turn = _turn(case, conversation.id, plan, text, answer, handoff, run_id)
+    return turn.model_copy(update={"assessment_id": form.assessment_id})
 
 
 async def _recommend(
@@ -319,7 +387,9 @@ async def _recommend(
 ) -> tuple[AnswerView, UUID, str]:
     """Compatibility wrapper for the downstream recommendation workflow."""
     recommendation = await run_recommendation_agent(session, case, conversation, message, source_id)
-    dispatched = await run_dispatch_gate(session, case, conversation, message, recommendation.answer, recommendation.message_id)
+    dispatched = await run_dispatch_gate(
+        session, case, conversation, message, recommendation.answer, recommendation.message_id
+    )
     if dispatched is not None:
         return dispatched.answer, dispatched.agent_run_id, dispatched.assistant_text
     return recommendation.answer, recommendation.run_id, recommendation.answer.message
@@ -436,6 +506,7 @@ async def _plan(
     stored = await _stored(session, case.id)
     turn_context = await _transcript(session, case, conversation_id, stored)
     locked_fact_keys = await _locked_fact_keys(session, conversation_id, stored)
+    memory = await get_memory(session, conversation_id)
     logger.info(
         "agent_stage start stage=case_graph case_id=%s conversation_id=%s semantic=%s run_id=%s stored=%s locked_keys=%s turn_context_chars=%s latest_chars=%s",
         case.id,
@@ -455,6 +526,7 @@ async def _plan(
             "turn_context": turn_context,
             "latest_user_message": latest_user_message,
             "stored": stored,
+            "pending_action": memory.pending_action if memory is not None else "",
             "description": case.description or "",
             "case_code": case.case_code,
             "semantic": semantic,

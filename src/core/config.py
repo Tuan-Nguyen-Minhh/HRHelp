@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -67,6 +67,31 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "mistral-embed"
     EMBEDDING_DIMENSIONS: int = 1024
     EMBEDDING_MAX_TOKENS: int = 1000
+
+    # Retrieval pools are deliberately separate from the evidence sent to chat.
+    COHERE_API_KEY: str = ""
+    COHERE_RERANK_MODEL: str = "rerank-v4.0-pro"
+    COHERE_RERANK_TIMEOUT_SECONDS: float = Field(default=25, ge=1, le=120)
+    RETRIEVAL_CANDIDATE_K: int = Field(default=40, ge=8, le=200)
+    RETRIEVAL_FUSION_K: int = Field(default=100, ge=8, le=300)
+    RETRIEVAL_FINAL_K: int = Field(default=12, ge=4, le=40)
+    RETRIEVAL_BM25_MAX_CORPUS: int = Field(default=10000, ge=100, le=100000)
+    # No universal relevance threshold: set only after domain calibration.
+    RERANK_MIN_SCORE: float | None = Field(default=None, ge=0, le=1)
+    RETRIEVAL_GRAPH_INCOMING: bool = False
+    RETRIEVAL_EVIDENCE_MAX_BYTES: int = Field(default=40000, ge=1000, le=200000)
+    # Optional exact tokenizer.json for the deployed chat model (never downloaded implicitly).
+    SYNTHESIS_TOKENIZER_PATH: str = ""
+    RETRIEVAL_EVIDENCE_TOKEN_BUDGET: int = Field(default=8000, ge=500, le=32000)
+    SYNTHESIS_TIMEOUT_SECONDS: float = Field(default=300, ge=10, le=300)
+    SYNTHESIS_TOTAL_TIMEOUT_SECONDS: float = Field(default=300, ge=10, le=600)
+    SYNTHESIS_MAX_TOKENS: int = Field(default=12000, ge=1000, le=32000)
+    SYNTHESIS_REASONING_EFFORT: Literal["none", "low", "high", "max"] = "low"
+
+    @field_validator("RERANK_MIN_SCORE", mode="before")
+    @classmethod
+    def optional_rerank_threshold(cls, value):
+        return None if value == "" else value
 
     # -------------------------
     # External research tools

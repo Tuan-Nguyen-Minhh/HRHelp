@@ -6,6 +6,7 @@ facts are locked. The planner does not name an edge.
 """
 
 import logging
+from dataclasses import replace
 
 from src.features.clarify.model.assess import ClarifyPlan, assess, build_question, conflict_question
 from src.features.clarify.model.catalog import OPTIONAL_FACT_KEYS, fact_lines, required_specs
@@ -30,7 +31,10 @@ async def extract_node(state: dict) -> dict:
     """Read the narrative and merge it with facts already stored."""
     citing = state.get("step") == "cite" or bool(state.get("advance"))
     if citing or not state.get("semantic"):
-        return _project(assess(state.get("text", ""), state.get("stored") or {}))
+        plan = assess(state.get("text", ""), state.get("stored") or {})
+        if not citing and state.get("pending_action") == "draft_minutes":
+            plan = replace(plan, requested_action="draft_minutes")
+        return _project(plan)
     result = await plan_turn(state)
     plan = apply_decision(
         state.get("text") or "",
@@ -39,6 +43,11 @@ async def extract_node(state: dict) -> dict:
         fallback=result.fallback,
         locked_keys=set(state.get("locked_fact_keys") or []),
     )
+    if state.get("requested_action") == "draft_minutes" or (
+        state.get("pending_action") == "draft_minutes"
+        and plan.requested_action in {"", "need_clarification", "complete_facts", "request_retrieval", "draft_minutes"}
+    ):
+        plan = replace(plan, requested_action="draft_minutes")
     _log_decision(state, plan, result)
     return _project(plan)
 
@@ -54,6 +63,11 @@ def ask_node(state: dict) -> dict:
         state.get("merged") or {},
         tuple(state.get("specs") or ()),
     )
+    if state.get("requested_action") == "draft_minutes":
+        question = (
+            "Để lập biên bản, bạn hãy bổ sung hoặc xác nhận các tình tiết dưới đây ngay trong hội thoại. "
+            "Khi đủ thông tin, tôi sẽ tạo biên bản và hướng dẫn bạn mở để xem.\n\n" + question
+        )
     return {"question": question}
 
 
@@ -72,6 +86,10 @@ def route_after_extract(state: dict) -> str:
         return "ask"
     if state.get("step") == "cite" or bool(state.get("advance")):
         return "retrieve"
+    if action == "draft_minutes":
+        # The turn service reuses a stored answer or runs retrieval if needed,
+        # then saves the assessment form before reporting success.
+        return "done"
     ready = state.get("incident_date") is not None and state.get("agent_run_id") is not None
     if ready and (not action or action in _WORKFLOW_ACTIONS or action == "complete_facts"):
         return "retrieve"

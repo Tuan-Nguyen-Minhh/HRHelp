@@ -74,6 +74,7 @@ class TurnResponse(BaseModel):
     agent_run_id: UUID | None = None
     requested_action: str | None = None
     user_intent: str | None = None
+    assessment_id: UUID | None = None
 
 
 class FactListResponse(BaseModel):

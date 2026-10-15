@@ -74,6 +74,7 @@ class CaseState(TypedDict, total=False):
     locked_fact_keys: list[str]
     conflicts: list[dict]
     requested_action: str
+    pending_action: str
     planner_fallback: bool
     user_intent: str
     ambiguities: list[str]
@@ -281,8 +282,7 @@ def _decide_intent_route(
     """Select the final route with deterministic priority rules."""
     signals = _merge_signals(decision.signals, infer_turn_signals(state))
     candidates = [
-        {"route": item.route.value, "score": item.score, "evidence": item.evidence}
-        for item in decision.candidates
+        {"route": item.route.value, "score": item.score, "evidence": item.evidence} for item in decision.candidates
     ]
     selected = Route.CLARIFY
     requested_action = ""
@@ -434,5 +434,3 @@ def _baseline_state(state: CaseState) -> dict:
         "accepted_keys": [],
         "specs": list(default_dynamic_specs(family, set(stored))),
     }
-
-

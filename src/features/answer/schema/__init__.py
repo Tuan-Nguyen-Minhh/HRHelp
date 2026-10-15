@@ -5,6 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from src.features.answer.model.assessment import ConfidenceAssessment, IssuanceAssessment, SeverityAssessment
 from src.features.answer.model.layers import BasisLayer
 
 
@@ -128,6 +129,10 @@ class AnswerView(BaseModel):
     risk_level: str | None
     missing_internal_rule: bool
     message: str
+    chat_message: str | None = None
+    confidence: ConfidenceAssessment | None = None
+    severity: SeverityAssessment | None = None
+    issuance: IssuanceAssessment | None = None
     legal_basis: list[CitationView]
     internal_rule: list[CitationView]
     precedent: list[CitationView]

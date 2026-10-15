@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from src.features.answer.model.assessment import Assessment
+from src.features.answer.model.conversation import assessment_reply
 from src.features.answer.model.decide import DecisionInput, SanctionDecision, decide
 from src.features.answer.model.layers import LayeredBasis
 from src.features.answer.schema.render import RenderInput, render
@@ -15,6 +16,8 @@ class AnswerDraft:
 
     prose: str
     decision: SanctionDecision
+    chat_message: str = ""
+    assessment: Assessment | None = None
 
 
 @dataclass(frozen=True)
@@ -56,4 +59,9 @@ def draft_answer(data: AnswerInput, assessment: Assessment | None = None) -> Ans
             precedent_note=data.precedent_note,
         )
     )
-    return AnswerDraft(prose=prose, decision=decision)
+    return AnswerDraft(
+        prose=prose,
+        decision=decision,
+        chat_message=assessment_reply(assessment, decision, data.layered),
+        assessment=assessment,
+    )

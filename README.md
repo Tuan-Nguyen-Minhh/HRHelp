@@ -206,6 +206,19 @@ agent_stage start stage=synthesis prompt_chars=... passages=... base_url_host=..
 agent_stage error stage=synthesis_llm model=... latency_ms=... error=OpenAITimeoutError
 ```
 
+## Cohere retrieval và rerank
+
+Điền `COHERE_API_KEY` trong `.env`. Model mặc định là `COHERE_RERANK_MODEL=rerank-v4.0-pro`.
+Key trống hoặc API lỗi sẽ được ghi là trạng thái suy giảm; hệ thống chưa khóa mức xử lý.
+Readiness có check `rerank_configured` để phát hiện thiếu key, không gọi Cohere để kiểm tra key có hợp lệ hay không.
+
+Flow hiện tại: query ưu tiên hành vi → dense/Okapi BM25/lexical → RRF → rerank chọn seed → dẫn chiếu → rerank theo nhu cầu căn cứ → chọn evidence → tối đa một lượt tìm bù căn cứ còn thiếu.
+Các giới hạn ứng viên, context và thời gian chờ có trong `.env.example`; `RERANK_MIN_SCORE` để trống cho đến khi có dữ liệu hiệu chỉnh.
+
+DeepSeek trả assessment ngắn; Python dựng biên bản sau khi kiểm tra quote và mapping điều kiện với fact đã xác nhận. Timeout tổng hợp có giới hạn và không retry lặp lại một model bị timeout.
+
+Xem [hướng dẫn triển khai và kiểm chứng](docs/retrieval-rerank-implementation.md), [bộ đo retrieval](eval/retrieval/README.md).
+
 ## AI usage logging
 
 Mọi prompt được ghi vào `.ai-log/session.jsonl` và tự động gửi lên grading server

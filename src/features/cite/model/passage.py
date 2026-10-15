@@ -31,3 +31,8 @@ class Passage:
     policy_name: str
     origin: str = "hybrid"
     graph_edges: tuple[GraphEdge, ...] = ()
+    section_title: str = ""
+    rerank_score: float | None = None
+    facet_scores: tuple[tuple[str, float], ...] = ()
+    retrieval_status: str = "UNASSESSED"
+    evidence_gaps: tuple[str, ...] = ()

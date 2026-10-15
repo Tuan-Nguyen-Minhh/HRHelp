@@ -50,9 +50,11 @@ async def test_readiness_uses_selected_credentials(monkeypatch, provider):
     monkeypatch.setattr(settings, "DEEPSEEK_API_KEY", "")
     monkeypatch.setattr(settings, "MISTRAL_API_KEY", "embedding-key")
     monkeypatch.setattr(settings, "EMBEDDING_MODEL", "mistral-embed")
+    monkeypatch.setattr(settings, "COHERE_API_KEY", "cohere-test")
     session = AsyncMock()
     session.scalar.return_value = 1
     ready, checks = await readiness(session)
     assert checks["embedding_configured"] is True
+    assert checks["rerank_configured"] is True
     assert checks["llm_configured"] is (provider == "mistral")
     assert ready is (provider == "mistral")

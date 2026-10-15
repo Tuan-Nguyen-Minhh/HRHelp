@@ -60,10 +60,10 @@ def graph_db():
     engine = create_engine("sqlite://")
     with engine.connect() as connection:
         for ddl in (
-            "CREATE TABLE policies (id CHAR(32) PRIMARY KEY, code TEXT, name TEXT, policy_type TEXT, is_active BOOL)",
+            "CREATE TABLE policies (id CHAR(32) PRIMARY KEY, code TEXT, name TEXT, policy_type TEXT, is_active BOOL, deleted_at DATETIME)",
             "CREATE TABLE policy_versions (id CHAR(32) PRIMARY KEY, policy_id CHAR(32), status TEXT, effective_from DATE, effective_to DATE)",
-            "CREATE TABLE documents (id CHAR(32) PRIMARY KEY, policy_version_id CHAR(32), ingest_status TEXT)",
-            "CREATE TABLE document_chunks (id CHAR(32) PRIMARY KEY, document_id CHAR(32), content TEXT, article TEXT, clause TEXT, point TEXT)",
+            "CREATE TABLE documents (id CHAR(32) PRIMARY KEY, policy_version_id CHAR(32), ingest_status TEXT, deleted_at DATETIME)",
+            "CREATE TABLE document_chunks (id CHAR(32) PRIMARY KEY, document_id CHAR(32), content TEXT, article TEXT, clause TEXT, point TEXT, section_title TEXT, metadata JSON)",
             "CREATE TABLE chunk_references (ref_id INTEGER PRIMARY KEY, source_chunk_id CHAR(32), target_chunk_id CHAR(32), rule TEXT, confidence TEXT, needs_review BOOL)",
         ):
             connection.execute(text(ddl))
@@ -80,7 +80,7 @@ def graph_db():
             def chunk(self, *, start="2020-01-01", end=None, status="ACTIVE", active=True, ingest="EMBEDDED"):
                 policy_id, version_id, document_id, chunk_id = [uuid4() for _ in range(4)]
                 connection.execute(
-                    text("INSERT INTO policies VALUES (:id, 'LAW', 'Law', 'LAW', :active)"),
+                    text("INSERT INTO policies (id, code, name, policy_type, is_active) VALUES (:id, 'LAW', 'Law', 'LAW', :active)"),
                     {"id": policy_id.hex, "active": active},
                 )
                 connection.execute(
@@ -88,11 +88,11 @@ def graph_db():
                     {"id": version_id.hex, "policy": policy_id.hex, "status": status, "start": start, "end": end},
                 )
                 connection.execute(
-                    text("INSERT INTO documents VALUES (:id, :version, :ingest)"),
+                    text("INSERT INTO documents (id, policy_version_id, ingest_status) VALUES (:id, :version, :ingest)"),
                     {"id": document_id.hex, "version": version_id.hex, "ingest": ingest},
                 )
                 connection.execute(
-                    text("INSERT INTO document_chunks VALUES (:id, :doc, 'Evidence', '125', NULL, NULL)"),
+                    text("INSERT INTO document_chunks (id, document_id, content, article, clause, point) VALUES (:id, :doc, 'Evidence', '125', NULL, NULL)"),
                     {"id": chunk_id.hex, "doc": document_id.hex},
                 )
                 return chunk_id
@@ -202,7 +202,7 @@ async def test_node_selects_top_five_and_recovers_transaction_after_sql_error(gr
         await session.execute(text("SELECT * FROM missing_graph_table"))
 
     monkeypatch.setattr(graph_expand, "fetch_graph_neighbors", broken)
-    assert await expand_node(graph_db)({"query": query(), "fused": fused}) == {"expanded": fused}
+    assert await expand_node(graph_db)({"query": query(), "fused": fused}) == {"expanded": fused, "graph_status": "FAILED"}
     assert (await graph_db.execute(text("SELECT 1"))).scalar_one() == 1
     fetch.reset_mock()
     monkeypatch.setattr(graph_expand, "fetch_graph_neighbors", fetch)
@@ -223,25 +223,29 @@ async def test_pipeline_orders_expansion_before_rerank_and_preserves_fused(monke
         return node
 
     async def expand(state):
-        assert set(calls) == {"similarity", "bm25", "lexical"}
+        assert set(calls) == {"similarity", "bm25", "lexical", "seed_rerank"}
         assert state["fused"][0].chunk_id == original.chunk_id
         calls.append("expand")
         return {"expanded": expand_passages(state["fused"], [neighbor])}
 
-    def rerank(_query, hits):
-        assert calls[-1] == "expand"
-        calls.append("rerank")
-        assert len(hits) == 2
-        return hits
+    async def rerank(_query, hits):
+        from src.features.cite.model.rerank import RerankResult
+        if len(hits) == 1:
+            calls.append("seed_rerank")
+        else:
+            assert "expand" in calls
+            calls.append("rerank")
+            assert len(hits) == 2
+        return RerankResult(hits, "OK")
 
     monkeypatch.setattr(pipeline, "rerank", rerank)
     graph = pipeline.compile_retrieval(
         arm("similarity", [original]), arm("bm25", []), arm("lexical", []), expand=expand
     )
     state = await graph.ainvoke({"query": query(), "terms": []})
-    assert calls[-2:] == ["expand", "rerank"]
+    assert calls.index("seed_rerank") < calls.index("expand") < calls.index("rerank")
     assert len(state["fused"]) == 1
-    assert state["hits"] == state["expanded"]
+    assert [item.chunk_id for item in state["hits"]] == [item.chunk_id for item in state["expanded"]]
     assert state["retrieval"] == "hybrid"
 
 
@@ -259,7 +263,9 @@ async def test_pipeline_without_expansion_is_compatible():
         return {"lexical": []}
 
     state = await pipeline.compile_retrieval(similarity, bm25, lexical).ainvoke({"query": query(), "terms": []})
-    assert state["hits"] == state["expanded"] == state["fused"]
+    assert [item.chunk_id for item in state["hits"]] == [item.chunk_id for item in state["fused"]]
+    assert state["rerank_status"] == "MISSING_KEY"
+    assert state["hits"][0].retrieval_status == "DEGRADED"
 
 
 @pytest.mark.asyncio

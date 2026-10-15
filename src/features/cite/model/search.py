@@ -13,7 +13,7 @@ from src.agents.runs import RetrievalHit, begin_search, complete_search, save_re
 from src.features.cite.model.page_index import retrieval_mode
 from src.features.cite.model.passage import Passage
 from src.features.cite.model.pipeline import build_retrieval_graph
-from src.features.cite.model.query import SearchQuery
+from src.features.cite.model.query import SearchQuery, act_text, facet_queries
 from src.features.cite.model.terms import search_terms
 
 logger = logging.getLogger(__name__)
@@ -38,14 +38,23 @@ async def search_policies(session: AsyncSession, query: SearchQuery) -> list[Pas
             "query": query.text,
             "incident_date": query.incident_date.isoformat(),
             "terms": terms,
-            "retrievers": ["similarity", "bm25", "lexical", "page_index"],
+            "retrievers": ["similarity", "okapi_bm25", "phrase_lexical", "page_index"],
             "expansion": "graph_hop1",
+            "act_query": act_text(query),
+            "facet_queries": facet_queries(query),
         },
     )
     graph = build_retrieval_graph(session)
     state = await graph.ainvoke({"query": query, "terms": terms})
     ranked = list(state.get("hits") or [])
-    await complete_search(session, tool, _output(ranked))
+    output = _output(ranked)
+    output.update({key: state.get(key) for key in
+                   ("rerank_status", "graph_status", "arm_status", "evidence_gaps", "evidence_size", "evidence_size_unit", "supplemented", "trace")})
+    output["candidate_rankings"] = {
+        name: [{"chunk_id": str(item.chunk_id), "score": item.score} for item in state.get(name, [])]
+        for name in ("similarity", "bm25", "lexical", "fused")
+    }
+    await complete_search(session, tool, output)
     await save_retrievals(
         session,
         query.agent_run_id,
@@ -69,6 +78,9 @@ def _output(ranked: list[Passage]) -> dict:
         "chunk_ids": [str(passage.chunk_id) for passage in ranked],
         "policy_version_ids": sorted({str(passage.policy_version_id) for passage in ranked}),
         "missing_internal_rule": missing_internal,
+        "evidence": [{"chunk_id": str(item.chunk_id), "rerank_score": item.rerank_score,
+                      "facet_scores": dict(item.facet_scores), "quality": item.retrieval_status,
+                      "gaps": list(item.evidence_gaps)} for item in ranked],
         "retrieval": retrieval_mode(ranked),
         "graph_provenance": [
             {

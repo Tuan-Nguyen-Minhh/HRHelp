@@ -4,11 +4,13 @@ from dataclasses import dataclass, replace
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import bindparam, func, or_, select, text
+from sqlalchemy import bindparam, case, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
 import src.common.orm  # noqa: F401
+from src.core.config import settings
+from src.features.cite.model.bm25 import bm25_rank
 from src.features.cite.model.passage import GraphEdge, Passage
 from src.models.chunk_references import ChunkReference
 from src.models.document_chunks import DocumentChunk
@@ -93,13 +95,14 @@ async def fetch_graph_neighbors(
     *,
     min_confidence: str = "HIGH",
     exclude_chunk_ids: list[UUID] | tuple[UUID, ...] = (),
+    include_incoming: bool = True,
 ) -> list[Passage]:
     """Read both directions once, then hydrate distinct in-force neighbors with provenance."""
     if not seed_chunk_ids or limit <= 0:
         return []
     edges: dict[UUID, list[GraphEdge]] = {}
     excluded = set(seed_chunk_ids) | set(exclude_chunk_ids)
-    for incoming in (False, True):
+    for incoming in ((False, True) if include_incoming else (False,)):
         rows = (
             await session.execute(graph_edge_stmt(seed_chunk_ids, incoming=incoming, min_confidence=min_confidence))
         ).all()
@@ -115,8 +118,15 @@ async def fetch_graph_neighbors(
     if not edges:
         return []
     # Apply the limit after eligibility filtering and deduplication, not to raw edges.
-    stmt = _candidate_stmt(incident_date).where(DocumentChunk.id.in_(edges)).order_by(DocumentChunk.id).limit(limit)
+    stmt = _candidate_stmt(incident_date).where(DocumentChunk.id.in_(edges))
     rows = (await session.execute(stmt)).all()
+    seed_order = {chunk_id: order for order, chunk_id in enumerate(seed_chunk_ids)}
+    def priority(row):
+        links = edges[row.chunk_id]
+        return (min(seed_order[edge.seed_chunk_id] for edge in links),
+                min(0 if edge.source_chunk_id == edge.seed_chunk_id else 1 for edge in links),
+                -len({edge.seed_chunk_id for edge in links}), str(row.chunk_id))
+    rows = sorted(rows, key=priority)[:limit]
     return [replace(to_passage(_hit(row)), origin="graph", graph_edges=tuple(edges[row.chunk_id])) for row in rows]
 
 
@@ -130,7 +140,31 @@ async def fetch_by_similarity(
     return [_hit(row) for row in rows]
 
 
-async def fetch_by_bm25(session: AsyncSession, incident_date: date, terms: list[str], limit: int) -> list[Passage]:
+async def fetch_by_bm25(session: AsyncSession, incident_date: date, terms: list[str], limit: int,
+                        *, policy_types: tuple[str, ...] | None = None) -> list[Passage]:
+    """Okapi BM25 over the complete eligible corpus, not an arbitrary prefiltered sample.
+
+    The bounded small-corpus implementation is intentional. If the corpus grows
+    past the configured limit, fail this arm explicitly instead of corrupting IDF.
+    """
+    if not terms or limit <= 0:
+        return []
+    statement = _candidate_stmt(incident_date)
+    if policy_types:
+        statement = statement.where(Policy.policy_type.in_(policy_types))
+    rows = (await session.execute(
+        statement.order_by(DocumentChunk.id).limit(settings.RETRIEVAL_BM25_MAX_CORPUS + 1)
+    )).all()
+    if len(rows) > settings.RETRIEVAL_BM25_MAX_CORPUS:
+        raise ValueError("BM25 eligible corpus exceeds configured limit; use an indexed BM25 backend")
+    passages = [to_passage(_hit(row)) for row in rows]
+    contextual = [replace(item, content=f"{item.section_title}\n{item.content}") for item in passages]
+    ranked = bm25_rank(contextual, terms, limit)
+    originals = {item.chunk_id: item for item in passages}
+    return [replace(originals[item.chunk_id], score=item.score) for item in ranked]
+
+
+async def fetch_by_fts(session: AsyncSession, incident_date: date, terms: list[str], limit: int) -> list[Passage]:
     """Rank every in-force chunk with ``ts_rank`` on ``document_chunks.search_tsv``.
 
     The column is the generated ``simple`` tsvector of ``section_title`` and
@@ -169,7 +203,11 @@ async def fetch_candidates(session: AsyncSession, incident_date: date, terms: li
     """Return chunks whose version covers ``incident_date`` and whose text hits a term."""
     if not terms:
         return []
-    stmt = _candidate_stmt(incident_date).where(or_(*[_ilike(term) for term in terms])).limit(CANDIDATE_LIMIT)
+    # Rank before LIMIT. Multiword conduct phrases carry more than generic words.
+    matches = [_outline_ilike(term) for term in terms]
+    rank = sum(case((match, 3 if " " in term else 1), else_=0) for term, match in zip(terms, matches, strict=True))
+    stmt = (_candidate_stmt(incident_date).where(or_(*matches))
+            .order_by(rank.desc(), DocumentChunk.id).limit(settings.RETRIEVAL_CANDIDATE_K))
     rows = (await session.execute(stmt)).all()
     return [_hit(row) for row in rows]
 
@@ -189,9 +227,7 @@ def article_index_stmt(incident_date: date, phrases: list[str], limit: int):
     return (
         _candidate_stmt(incident_date)
         .add_columns(
-            DocumentChunk.section_title.label("section_title"),
             DocumentChunk.chunk_index.label("chunk_index"),
-            DocumentChunk.chunk_metadata.label("chunk_metadata"),
         )
         .where(or_(*[_outline_ilike(phrase) for phrase in phrases]))
         .distinct(PolicyVersion.id, DocumentChunk.article)
@@ -212,6 +248,8 @@ def _candidate_stmt(incident_date: date):
             Policy.policy_type,
             Policy.code.label("policy_code"),
             Policy.name.label("policy_name"),
+            DocumentChunk.section_title,
+            DocumentChunk.chunk_metadata.label("chunk_metadata"),
         )
         .join(Document, Document.id == DocumentChunk.document_id)
         .join(PolicyVersion, PolicyVersion.id == Document.policy_version_id)
@@ -219,6 +257,8 @@ def _candidate_stmt(incident_date: date):
         .where(
             in_force_filter(incident_date),
             Policy.is_active.is_(True),
+            Policy.deleted_at.is_(None),
+            Document.deleted_at.is_(None),
             Document.ingest_status.in_(_READABLE),
         )
     )
@@ -255,6 +295,7 @@ def to_passage(hit: ChunkHit) -> Passage:
         policy_type=hit.policy_type,
         policy_code=hit.policy_code,
         policy_name=hit.policy_name,
+        section_title=hit.section_title or hit.article_title or "",
     )
 
 

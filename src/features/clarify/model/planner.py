@@ -6,7 +6,6 @@ import time
 from dataclasses import dataclass
 
 import httpx
-from src.services.chat_client import create_chat_model
 
 from src.core.config import settings
 from src.features.clarify.model.decision import (
@@ -16,6 +15,7 @@ from src.features.clarify.model.decision import (
     UserIntent,
 )
 from src.features.clarify.model.prompt import PROMPT_VERSION, SYSTEM_PROMPT, render_case_prompt
+from src.services.chat_client import create_chat_model
 
 logger = logging.getLogger(__name__)
 
@@ -73,9 +73,14 @@ async def plan_turn(state: dict) -> PlannerResult:
 
 
 def _messages(state: dict) -> list[dict[str, str]]:
+    context = render_case_prompt(state.get("text") or "", _stored_lines(state))
+    if "latest_user_message" in state:
+        context += "\n\nLATEST_USER_MESSAGE\n" + (state.get("latest_user_message") or "(none)")
+    context += "\n\nORCHESTRATOR_ACTION\n" + (state.get("requested_action") or "(none)")
+    context += "\n\nPENDING_ACTION\n" + (state.get("pending_action") or "(none)")
     return [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": render_case_prompt(state.get("text") or "", _stored_lines(state))},
+        {"role": "user", "content": context},
     ]
 
 
@@ -105,7 +110,13 @@ async def _complete(messages: list[dict[str, str]], attempt: int, model_name: st
         timeout=30,
         max_retries=2,
     )
-    prompt.append({"role": "system", "content": "Return only a JSON object matching this JSON schema: " + json.dumps(ClarifyDecision.model_json_schema(), ensure_ascii=False)})
+    prompt.append(
+        {
+            "role": "system",
+            "content": "Return only a JSON object matching this JSON schema: "
+            + json.dumps(ClarifyDecision.model_json_schema(), ensure_ascii=False),
+        }
+    )
     structured = model.with_structured_output(ClarifyDecision, method="json_mode")
     parsed = await structured.ainvoke(prompt)
     if isinstance(parsed, ClarifyDecision):

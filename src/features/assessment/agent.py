@@ -9,6 +9,8 @@ import re
 from dataclasses import dataclass
 from datetime import date
 
+from src.features.answer.model.conversation import confidence_sentence
+from src.features.answer.model.rubric import ISSUANCE_LABELS
 from src.features.answer.schema import AnswerView, CitationView
 from src.features.assessment.schemas import (
     AssessmentResult,
@@ -88,6 +90,23 @@ def compose(source: ComposeInput) -> tuple[Sections, dict[str, str]]:
     report = _clean_minutes_text(source.answer.message or source.answer.rationale or "")
     case_meta = _case_description_meta(source.description)
     narrative = _incident_narrative(source, facts, report)
+    evaluation_notes = []
+    if source.answer.confidence is not None and source.answer.confidence.label != "UNASSESSED":
+        evaluation_notes.append(confidence_sentence(source.answer.confidence))
+    if source.answer.severity is not None and source.answer.severity.score is not None:
+        evaluation_notes.append(
+            f"Mức độ nghiêm trọng tham khảo: {source.answer.severity.score}/5. {source.answer.severity.reason}"
+        )
+    if source.answer.issuance is not None:
+        evaluation_notes.append(f"Trạng thái ban hành: {ISSUANCE_LABELS[source.answer.issuance.status]}.")
+    next_steps = _steps(blocked, bool(proposed))
+    if source.answer.issuance is not None:
+        next_steps = [
+            NextStep(order=index, text=text)
+            for index, text in enumerate(
+                [*source.answer.issuance.next_actions, *[step.text for step in next_steps]], start=1
+            )
+        ]
     sections = Sections(
         case_information=CaseInformation(
             case_code=source.case_code,
@@ -111,7 +130,9 @@ def compose(source: ComposeInput) -> tuple[Sections, dict[str, str]]:
         confirmed_facts=facts,
         evidence_reviewed=cards,
         assessment=AssessmentSection(
-            narrative=_clean_minutes_text(source.answer.rationale or report or narrative),
+            narrative=_clean_minutes_text(
+                " ".join([source.answer.rationale or report or narrative, *evaluation_notes])
+            ),
             applied_basis=[card.citation_label for card in cards if card.layer in {"legal_basis", "internal_rule"}],
             matches=[item.label for item in facts if item.status == "CONFIRMED"],
             gaps=gaps,
@@ -119,9 +140,15 @@ def compose(source: ComposeInput) -> tuple[Sections, dict[str, str]]:
         assessment_result=result,
         handling_proposal=HandlingProposal(
             proposed_actions=proposed,
-            confidence="MEDIUM" if proposed and risk in {"LOW", "MEDIUM"} else "LOW",
+            confidence=(
+                source.answer.confidence.label
+                if proposed and source.answer.confidence is not None and source.answer.confidence.label != "UNASSESSED"
+                else "MEDIUM"
+                if proposed and risk in {"LOW", "MEDIUM"}
+                else "LOW"
+            ),
             requires_legal_review=not proposed or risk in {"HIGH", "CRITICAL"},
-            rationale=_handling_summary(result, proposed, gaps),
+            rationale=" ".join([_handling_summary(result, proposed, gaps), *evaluation_notes]),
         ),
         risk_and_gaps=RiskAndGaps(
             risk_level=risk,
@@ -129,7 +156,7 @@ def compose(source: ComposeInput) -> tuple[Sections, dict[str, str]]:
             missing_information=missing,
             legal_review_required=True,
         ),
-        next_steps=_steps(blocked, bool(proposed)),
+        next_steps=next_steps,
         citations=cards,
     )
     sources = {
@@ -152,7 +179,11 @@ def _incident_narrative(source: ComposeInput, facts: list[ConfirmedFact], fallba
     if source.incident_date:
         items.append(f"Ngày xảy ra: {source.incident_date.isoformat()}")
     for fact in facts:
-        if fact.fact_key in _INCIDENT_FACT_KEYS and fact.value and fact.status in {"CONFIRMED", "UNCERTAIN", "HR_EDITED"}:
+        if (
+            fact.fact_key in _INCIDENT_FACT_KEYS
+            and fact.value
+            and fact.status in {"CONFIRMED", "UNCERTAIN", "HR_EDITED"}
+        ):
             items.append(f"{fact.label}: {fact.value}")
     if not items and fallback:
         items.append(fallback)
