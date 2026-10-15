@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from .schema import (
     ArticleNode, SectionNode, ChapterNode, DocumentTree,
@@ -342,11 +342,20 @@ def parse_footnote_defs(tail_text: str) -> Dict[int, Dict]:
     return out
 
 
-def parse_document(cleaned_text: str, filename_stem: str) -> DocumentTree:
-    """Parse full cleaned markdown -> DocumentTree."""
-    if filename_stem not in DOC_ID_MAP:
-        raise ValueError(f"Chua map document_id cho file: {filename_stem}")
-    info = DOC_ID_MAP[filename_stem]
+def parse_document(cleaned_text: str, filename_stem: str,
+                   doc_info: Optional[Dict[str, Any]] = None) -> DocumentTree:
+    """Parse full cleaned markdown -> DocumentTree.
+
+    ``doc_info`` overrides the static ``DOC_ID_MAP`` lookup so a document that
+    is not part of the committed corpus (e.g. an admin upload) can supply its
+    identity at call time instead of editing this module.
+    """
+    if doc_info is None:
+        if filename_stem not in DOC_ID_MAP:
+            raise ValueError(f"Chua map document_id cho file: {filename_stem}")
+        info = DOC_ID_MAP[filename_stem]
+    else:
+        info = doc_info
     tree = DocumentTree(document_id=info["document_id"],
                         document_type=info["document_type"],
                         document_form=info["document_form"],

@@ -22,6 +22,7 @@ import { ManagerQueuePage } from "@/features/decision/ManagerQueuePage";
 import { SignerPage } from "@/features/decision/SignerPage";
 import { SignerQueuePage } from "@/features/decision/SignerQueuePage";
 import { AuditPage } from "@/features/audit/AuditPage";
+import { AdminIngestionPage } from "@/features/admin-ingestion/AdminIngestionPage";
 import { LegalCasePage } from "@/features/legal-review/LegalCasePage";
 import { LegalQueuePage } from "@/features/legal-review/LegalQueuePage";
 import { LegalReviewPage } from "@/features/legal-review/LegalReviewPage";
@@ -148,6 +149,14 @@ export function AppRouter() {
           element={
             <RequireRole roles={["ADMIN"]}>
               <AuditPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/admin/ingestion"
+          element={
+            <RequireRole roles={["ADMIN"]}>
+              <AdminIngestionPage />
             </RequireRole>
           }
         />

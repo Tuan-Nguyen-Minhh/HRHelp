@@ -10,6 +10,8 @@ import type {
   DecisionView,
   ExportPayload,
   FactListResponse,
+  IngestionDocument,
+  IngestionDocumentList,
   MeResponse,
   MessageListResponse,
   NotificationList,
@@ -318,6 +320,25 @@ export const api = {
   },
   async exportCase(caseId: string, kind: "assessment" | "ticket" | "decision", format: "markdown" | "docx" = "markdown"): Promise<ExportPayload> {
     const response = await http.get<ExportPayload>(`/cases/${caseId}/export/${kind}`, { params: { format } });
+    return response.data;
+  },
+  async uploadIngestionDocument(file: File, effectiveFrom?: string): Promise<IngestionDocument> {
+    const form = new FormData();
+    form.append("file", file);
+    if (effectiveFrom) form.append("effective_from", effectiveFrom);
+    const response = await http.post<IngestionDocument>("/admin/ingestion/documents", form);
+    return response.data;
+  },
+  async listIngestionDocuments(): Promise<IngestionDocumentList> {
+    const response = await http.get<IngestionDocumentList>("/admin/ingestion/documents");
+    return response.data;
+  },
+  async getIngestionDocument(documentId: string): Promise<IngestionDocument> {
+    const response = await http.get<IngestionDocument>(`/admin/ingestion/documents/${documentId}`);
+    return response.data;
+  },
+  async retryIngestionDocument(documentId: string): Promise<IngestionDocument> {
+    const response = await http.post<IngestionDocument>(`/admin/ingestion/documents/${documentId}/retry`);
     return response.data;
   },
 };

@@ -48,3 +48,7 @@ python-docx>=1.1.0
 # Backend dem token Mistral that cho mistral-embed (offline sau pip)
 mistral-common>=1.12.0
 sentencepiece>=0.2.0
+
+# Admin upload: docx/pdf -> markdown. The [docx,pdf] extra pulls the format
+# converters so MarkItDown can read the office/PDF binaries in memory.
+markitdown[docx,pdf]>=0.1.0

@@ -677,15 +677,12 @@ def validate_articles(cleaned_text: str, metadata: Dict[str, Any], raw_text: str
     return validation_result
 
 
-def process_single_file(input_path: Path, output_dir: Path) -> Dict[str, Any]:
-    """
-    Xử lý trọn gói 1 file Markdown qua 5 bước logic
-    """
-    with open(input_path, "r", encoding="utf-8") as f:
-        raw_text = f.read()
+def process_text(raw_text: str, filename: str) -> Dict[str, Any]:
+    """Chay 5 buoc tren 1 chuoi Markdown, khong dung filesystem.
 
-    filename = input_path.name
-
+    Tach khoi ``process_single_file`` de luong upload cua admin co the xu ly
+    trong bo nho ma khong ghi file trung gian.
+    """
     # 1. Pre-cleaning
     cleaned_step1 = pre_clean_text(raw_text)
 
@@ -724,15 +721,31 @@ def process_single_file(input_path: Path, output_dir: Path) -> Dict[str, Any]:
     validation = validate_articles(final_content, metadata, raw_scope_text,
                                    full_raw_text=cleaned_step1)
 
-    # Lưu file đã làm sạch
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_file = output_dir / filename
-    with open(output_file, "w", encoding="utf-8") as f:
-        f.write(final_content)
-
     return {
         "metadata": metadata,
         "validation": validation,
+        "content": final_content,
+    }
+
+
+def process_single_file(input_path: Path, output_dir: Path) -> Dict[str, Any]:
+    """
+    Xử lý trọn gói 1 file Markdown qua 5 bước logic, lưu ra đĩa.
+    """
+    with open(input_path, "r", encoding="utf-8") as f:
+        raw_text = f.read()
+
+    result = process_text(raw_text, input_path.name)
+
+    # Lưu file đã làm sạch
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_file = output_dir / input_path.name
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(result["content"])
+
+    return {
+        "metadata": result["metadata"],
+        "validation": result["validation"],
         "output_file": str(output_file),
     }
 
