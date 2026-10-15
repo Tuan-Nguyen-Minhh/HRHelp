@@ -211,22 +211,25 @@ Main files:
 - `src/features/cite/model/page_index.py` — article-outline fallback
 - `src/agents/handoff.py` — `CaseHandoff` / `CitedPassage`
 
-The retrieval sub-graph is a LangGraph `StateGraph` that fans out three retrievers in parallel and fuses them:
+The retrieval sub-graph uses conduct-focused queries and separate candidate/final limits:
 
 ```text
-START ─┬─ similarity ──→ pgvector HNSW cosine          K=8  ─┐
-START ─┼─ bm25 ────────→ ts_rank on search_tsv          K=8  ─┼→ rrf (k=60) → expand → rerank ─┬→ END
-START ─┴─ lexical ─────→ ILIKE term + term-overlap rank K=8  ─┘                                   └→ page_index → END
+similarity (40) ─┐
+Okapi BM25 (40) ─┼→ RRF (100) → Cohere seed rerank → outgoing citation expansion
+phrase lexical ─┘                → Cohere facet rerank → evidence selection (12, byte/token budget)
+                                 → one targeted source-gap retry → rerank/selection
 ```
 
-Rules that matter when changing this code:
-
-- **Every arm goes through `_candidate_stmt()`** in `store.py`, so the in-force filter (`policy_versions.effective_from <= incident_date AND (effective_to IS NULL OR effective_to >= incident_date)`, `status='ACTIVE'`, `policy.is_active`, `ingest_status IN ('CHUNKED','EMBEDDED')`) can never be bypassed by adding a fourth arm.
-- **A failing arm degrades, it does not fail the turn.** `_arm()` catches per-retriever exceptions and returns an empty list; RRF then treats that arm as contributing no rank mass.
-- **Graph expansion runs after fusion.** The top five RRF hits seed one outgoing and one incoming edge read on `chunk_references`. Only HIGH-confidence, non-review edges with an internal target qualify. Neighbor hydration reuses `_candidate_stmt()`, preserving the incident-date and document eligibility filters. Existing fused hits retain their scores/origin; at most twelve new neighbors receive the best seed score × 0.6. The stable score sort keeps fused hits first on ties. `fused` stays available separately from `expanded` for debugging.
-- **Graph errors preserve the original fused result.** Reads use a savepoint so a failed SQL query cannot poison the request transaction. New hits carry `origin="graph"`, recorded as the ledger retrieval method; traversed seed/source/target IDs, rules, and confidence are recorded in `tool_calls.output.graph_provenance`. Retrieval mode remains `hybrid`.
-- **`page_index` is a fallback, not a second chance.** It runs only when all three ranked arms return nothing, and `retrieval` is then set to `page_index`, which makes the synthesis path abstain instead of guessing.
-- **`rerank` is currently a pass-through.** `cite/model/rerank.py` returns the expanded list unchanged; the node exists as the seam for a cross-encoder. The eight fused hits can be joined by up to twelve graph neighbors; expansion does not change rerank scoring or introduce another final top-8 cut.
+- All SQL arms reuse the incident-date/ACTIVE-version eligibility filter. Archived-version semantics are unchanged; historical source management must be verified by the corpus owner.
+- BM25 scores the complete eligible LAW/DECREE/CIRCULAR and INTERNAL_RULE cohorts with corpus IDF. It refuses to silently sample a cohort beyond `RETRIEVAL_BM25_MAX_CORPUS`. PostgreSQL `ts_rank` remains a separately named FTS baseline.
+- Lexical ranks SQL candidates before LIMIT. Conduct phrases precede background facts in the search query. The source cohorts prevent one document layer from crowding the other out.
+- SQL work on the request's shared AsyncSession is serialized and protected by savepoints. Individual arms record their status and can contribute no hits after failure.
+- `rerank-v4.0-pro` runs through Cohere's v2 API. Missing keys, timeout, bad scores or index mapping failures are explicit degraded states. RRF and rerank scores remain separate. Rerank scores are not probabilities that a legal conclusion is correct.
+- Five semantically ranked seeds expand outgoing HIGH-confidence non-review citations by default. Reverse traversal is opt-in. Hydrated neighbors are prioritized by seed/direction/shared dependencies, then reranked; UUID is only a tie-breaker.
+- Evidence selection reserves candidates for authority, internal rules, conditions and procedure, keeps complete text, and flags omitted graph dependencies/explicit exceptions. Administrative penalties and precedent remain in the audit pool outside the employee-sanction evidence packet. Presence of roles does not prove exhaustive legal coverage.
+- Coverage gaps can trigger one extra source-scoped BM25 search. A persistent gap or rerank/graph error prevents locking a company level. Empty retrieval retains the outline fallback and abstention behavior.
+- Exact evidence token counting is opt-in with a matching local `SYNTHESIS_TOKENIZER_PATH`; the default budget uses explicitly labelled UTF-8 bytes and never pretends to measure exact tokens.
+- Tool-call output captures queries, candidate ranks, source versions, graph provenance, facet scores, selected/omitted IDs, API statuses, coverage gaps and context size. These audit records use the existing access controls.
 
 `CaseHandoff` is the immutable contract passed to downstream agents. It contains case metadata, locked facts, fact lines, retrieved passages, and retrieval flags.
 

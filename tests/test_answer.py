@@ -11,11 +11,13 @@ from src.core.config import settings
 from src.features.answer.model import answers
 from src.features.answer.model.agent import build_recommend_agent
 from src.features.answer.model.assessment import (
+    ApplicableRule,
     Assessment,
     CaseSummary,
     DownstreamHandoff,
     EvidenceRef,
     RiskAssessment,
+    RuleCondition,
     SanctionAssessment,
 )
 from src.features.answer.model.case_tools import disciplinary_minutes_document, export_word_document
@@ -105,6 +107,13 @@ def _supported(level: str, law: Passage, rule: Passage, quote_law: str | None = 
             ],
         ),
         risk_assessment=RiskAssessment(level="LOW", reasons=["Đủ trích dẫn."]),
+        applicable_rules=[ApplicableRule(
+            rule_id=str(item.chunk_id), document_type=item.policy_type, description="Điều khoản thử nghiệm",
+            supports_sanction=level, evidence=[EvidenceRef(chunk_id=str(item.chunk_id), quote=quote)],
+            conditions=[RuleCondition(fact="absence_days", fact_value=_READY["absence_days"],
+                         required="Điều kiện trong fixture", result="SATISFIED",
+                         evidence=[EvidenceRef(chunk_id=str(item.chunk_id), quote=quote)])],
+        ) for item, quote in ((law, quote_law or law.content), (rule, quote_rule or rule.content))],
         downstream_handoff=DownstreamHandoff(can_recommend=True),
     )
     return guard(raw, [law, rule])
@@ -310,7 +319,7 @@ def test_dismissal_is_not_termination():
         "DISMISSAL",
         law,
         rule,
-        quote_law="Người lao động tự ý bỏ việc 05 ngày cộng dồn trong thời hạn 30 ngày",
+        quote_law=_ART_125,
     )
     decision = _decide(layered, description=_ABSENCE, assessment=assessment)
     assert decision.sanction_type == "DISMISSAL"
@@ -461,7 +470,7 @@ def test_need_more_facts_clears_a_filled_sanction():
 
 
 def test_synthesis_prompt_returns_a_level_when_the_passages_state_one():
-    assert PROMPT_VERSION == "evidence-synthesis-v3"
+    assert PROMPT_VERSION == "evidence-synthesis-v6-general-rubric"
     assert "status = SUPPORTED" in SYSTEM_PROMPT
     assert "BIÊN BẢN ĐÁNH GIÁ VỤ VIỆC" in SYSTEM_PROMPT
     assert "Chưa đủ căn cứ retrieval để xác định mức xử lý." in SYSTEM_PROMPT
@@ -654,7 +663,12 @@ async def test_publish_stores_a_draft_and_citations_from_the_handoff(monkeypatch
     monkeypatch.setattr(answers, "insert_recommendation", insert_recommendation)
     monkeypatch.setattr(answers, "insert_citations", insert_citations)
 
-    view = await answers.publish(object(), answers.PublishWork(case, handoff, uuid4()))
+    session = AsyncMock()
+    run = SimpleNamespace(run_metadata={})
+    session.get.return_value = run
+    view = await answers.publish(session, answers.PublishWork(case, handoff, uuid4()))
+    assert view.chat_message == run.run_metadata["chat_message"]
+    assert "synthesis_assessment" in run.run_metadata
 
     row = insert_recommendation.await_args.args[1]
     citation = insert_citations.await_args.args[2][0]

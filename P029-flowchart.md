@@ -144,22 +144,27 @@ flowchart TD
   %% ================= RETRIEVAL =================
   subgraph RET["Internal Retrieval Graph"]
     CREATE_RETR_RUN["Create agent run: hr-help-retrieval"]
-    RET_GRAPH["Retrieval Graph"]
+    RET_GRAPH["Retrieval Graph<br/>act query + source facets"]
     SIM["Similarity retriever"]
-    BM25["BM25 retriever"]
+    BM25["BM25 retriever<br/>internal / authority cohorts"]
     LEX["Lexical retriever"]
     RRF["RRF fusion"]
-    EXPAND["Graph expand<br/>citation neighbors, in-force filter"]
-    RERANK["Rerank"]
+    SEED_RERANK["Cohere rerank-v4.0-pro<br/>select up to 5 seeds"]
+    EXPAND["Graph expand: 1 hop<br/>citation neighbors, in-force filter<br/>keep fused pool + provenance"]
+    RERANK["Cohere rerank-v4.0-pro<br/>4 facets: internal / authority<br/>conditions / procedure"]
+    EVIDENCE_BUDGET["Select whole passages within budget<br/>quality: OK / INCOMPLETE / DEGRADED<br/>record evidence gaps"]
+    COVERAGE{"Missing authority/internal?<br/>rerank OK, not retried"}
+    SUPPLEMENT["Targeted BM25 for missing layer<br/>at most one retry"]
+    OUTLINE_CHECK{"No hits AND no fused candidates?"}
     HITS{"Hits found?"}
     PAGE_INDEX["Page index fallback"]
     ARTICLE_HITS{"Article hits found?"}
     RET_HYBRID["retrieval = hybrid"]
     RET_PAGE["retrieval = page_index"]
     RET_EMPTY["retrieval = empty"]
-    SAVE_RETR["Save tool calls + retrieval logs"]
+    SAVE_RETR["Save tool calls + retrieval logs<br/>rankings, provenance, quality, gaps"]
     HANDOFF_NODE["handoff node"]
-    CASE_HANDOFF["Create CaseHandoff"]
+    CASE_HANDOFF["Create CaseHandoff<br/>facts + passages + heading/version<br/>rerank score + quality + gaps"]
   end
 
   %% ================= DOWNSTREAM =================
@@ -168,8 +173,16 @@ flowchart TD
     REC_AGENT["Recommendation Agent"]
     PRECEDENT["precedent node"]
     RECOMMEND["recommend node"]
-    DRAFT_ANSWER["Synthesize + draft answer"]
-    STORE_DRAFT["Store recommendation DRAFT"]
+    SOURCE_LAYERS["Split source layers<br/>precedent/admin cannot set sanction"]
+    SYNTHESIS_GATE{"Law/internal content found?<br/>mode is not page_index"}
+    QUALITY_GATE{"Any DEGRADED passage?"}
+    SYNTHESIZE["DeepSeek structured synthesis<br/>general reasoning rubric<br/>300s request / total budget"]
+    SYNTHESIS_GUARD["Python evidence guard<br/>quote + heading/body + source type<br/>fact values, AND/OR, conflicts, gaps"]
+    RUBRIC_RESULT["Evidence support index 0–100<br/>guarded severity 1–5 or unknown<br/>issuance status + next actions"]
+    NO_SYNTHESIS["No content basis for synthesis<br/>no grounded sanction proposal"]
+    SYNTHESIS_ERROR["Operational failure: no sanction<br/>RERANK_FAILED / LLM_FAILED<br/>support index = 0"]
+    DRAFT_ANSWER["Draft report + chat in Python<br/>level only if can_recommend<br/>proposal separate from issuance"]
+    STORE_DRAFT["Store recommendation DRAFT<br/>+ guarded assessment metadata"]
     STORE_CITES["Store citations"]
     LINK_VIOLATIONS["Link case violations"]
     ANALYZED["Set case status ANALYZED"]
@@ -260,15 +273,26 @@ flowchart TD
   RET_GRAPH --> SIM --> RRF
   RET_GRAPH --> BM25 --> RRF
   RET_GRAPH --> LEX --> RRF
-  RRF --> EXPAND --> RERANK --> HITS
+  RRF --> SEED_RERANK --> EXPAND --> RERANK --> EVIDENCE_BUDGET --> COVERAGE
+  COVERAGE -->|"Yes"| SUPPLEMENT --> RERANK
+  COVERAGE -->|"No / already retried"| OUTLINE_CHECK
+  OUTLINE_CHECK -->|"Yes"| PAGE_INDEX --> ARTICLE_HITS
+  OUTLINE_CHECK -->|"No"| HITS
   HITS -->|"Yes"| RET_HYBRID --> SAVE_RETR
-  HITS -->|"No"| PAGE_INDEX --> ARTICLE_HITS
+  HITS -->|"No"| RET_EMPTY --> SAVE_RETR
   ARTICLE_HITS -->|"Yes"| RET_PAGE --> SAVE_RETR
-  ARTICLE_HITS -->|"No"| RET_EMPTY --> SAVE_RETR
+  ARTICLE_HITS -->|"No"| RET_EMPTY
   SAVE_RETR --> HANDOFF_NODE --> CASE_HANDOFF --> STORE_HANDOFF --> REC_AGENT
 
   %% ================= DOWNSTREAM EDGES =================
-  REC_AGENT --> PRECEDENT --> RECOMMEND --> DRAFT_ANSWER --> STORE_DRAFT --> STORE_CITES --> LINK_VIOLATIONS --> ANALYZED --> PROPOSAL --> DISPATCH --> GATE --> HOLD_CHECK
+  REC_AGENT --> PRECEDENT --> RECOMMEND --> SOURCE_LAYERS --> SYNTHESIS_GATE
+  SYNTHESIS_GATE -->|"No"| NO_SYNTHESIS --> DRAFT_ANSWER
+  SYNTHESIS_GATE -->|"Yes"| QUALITY_GATE
+  QUALITY_GATE -->|"Yes"| SYNTHESIS_ERROR --> DRAFT_ANSWER
+  QUALITY_GATE -->|"No; INCOMPLETE still checked"| SYNTHESIZE
+  SYNTHESIZE -->|"Valid structured response"| SYNTHESIS_GUARD --> RUBRIC_RESULT --> DRAFT_ANSWER
+  SYNTHESIZE -->|"Timeout / model or schema failure"| SYNTHESIS_ERROR
+  DRAFT_ANSWER --> STORE_DRAFT --> STORE_CITES --> LINK_VIOLATIONS --> ANALYZED --> PROPOSAL --> DISPATCH --> GATE --> HOLD_CHECK
   HOLD_CHECK -->|"Yes"| HOLD --> ACTION_RETURN
   HOLD_CHECK -->|"No"| DRAFT_NODE
 

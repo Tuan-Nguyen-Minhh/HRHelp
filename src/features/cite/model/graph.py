@@ -68,4 +68,8 @@ def _cited(hit: Passage) -> CitedPassage:
         policy_code=hit.policy_code,
         policy_name=hit.policy_name,
         origin=hit.origin,
+        section_title=hit.section_title,
+        rerank_score=hit.rerank_score,
+        retrieval_status=hit.retrieval_status,
+        evidence_gaps=hit.evidence_gaps,
     )

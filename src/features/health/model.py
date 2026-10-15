@@ -12,13 +12,15 @@ async def readiness(session: AsyncSession) -> tuple[bool, dict]:
     vector = await _vector(session) if database else False
     llm = bool(settings.chat_api_key)
     embedding = bool(settings.MISTRAL_API_KEY) and settings.EMBEDDING_MODEL == "mistral-embed"
+    rerank = bool(settings.COHERE_API_KEY.strip())
     checks = {
         "database": database,
         "pgvector": vector,
         "llm_configured": llm,
         "embedding_configured": embedding,
+        "rerank_configured": rerank,
     }
-    return database and vector and llm and embedding, checks
+    return database and vector and llm and embedding and rerank, checks
 
 
 async def _database(session: AsyncSession) -> bool:

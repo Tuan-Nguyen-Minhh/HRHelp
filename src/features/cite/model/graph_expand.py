@@ -3,6 +3,7 @@
 import logging
 from dataclasses import replace
 
+from src.core.config import settings
 from src.features.cite.model.passage import Passage
 from src.features.cite.model.store import fetch_graph_neighbors
 
@@ -39,20 +40,24 @@ def expand_node(session):
         fused = list(state.get("fused") or [])
         if not fused:
             return {"expanded": fused}
+        seeds = list(state.get("seeds", fused[:GRAPH_SEED_K]))
+        if not seeds:
+            return {"expanded": fused}
         try:
             # A database error must not poison the caller's transaction/audit writes.
             async with session.begin_nested():
                 neighbors = await fetch_graph_neighbors(
                     session,
                     state["query"].incident_date,
-                    [passage.chunk_id for passage in fused[:GRAPH_SEED_K]],
+                    [passage.chunk_id for passage in seeds[:GRAPH_SEED_K]],
                     GRAPH_MAX_EXPANSION,
                     min_confidence=GRAPH_MIN_CONFIDENCE,
                     exclude_chunk_ids=[passage.chunk_id for passage in fused],
+                    include_incoming=settings.RETRIEVAL_GRAPH_INCOMING,
                 )
             return {"expanded": expand_passages(fused, neighbors)}
         except Exception:
             logger.exception("graph expansion failed; preserving fused passages")
-            return {"expanded": fused}
+            return {"expanded": fused, "graph_status": "FAILED"}
 
     return expand

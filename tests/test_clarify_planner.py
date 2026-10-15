@@ -86,7 +86,7 @@ def _state(plan, **extra) -> dict:
 
 
 def test_prompt_keeps_the_planner_off_the_graph_edge():
-    assert PROMPT_VERSION == "clarify-planner-v4-dynamic-facts"
+    assert PROMPT_VERSION == "clarify-planner-v5-semantic-minutes"
     assert "Never invent missing facts" in SYSTEM_PROMPT
     assert "LangGraph" in SYSTEM_PROMPT
     assert "lập biên bản" in SYSTEM_PROMPT
@@ -230,7 +230,7 @@ def test_minutes_request_keeps_draft_action_even_when_facts_are_missing():
     plan = apply_decision(
         "lập biên bản vi phạm cho tôi",
         {},
-        _decision(requested_action=RequestedAction.ANSWER_POLICY_QUESTION),
+        _decision(requested_action=RequestedAction.DRAFT_MINUTES),
     )
     assert plan.requested_action == "draft_minutes"
     assert plan.locked is False
@@ -588,7 +588,8 @@ def test_planner_fallback_keeps_obvious_facts_and_still_asks():
     assert plan.merged["explanation_requested"].value == "false"
     assert plan.merged["absence_days"].confirmed is True
     assert plan.locked is True
-    assert route_after_extract(_state(plan, incident_date=date(2026, 3, 1), agent_run_id=uuid4())) == "retrieve"
+    assert plan.requested_action == "need_clarification"
+    assert route_after_extract(_state(plan, incident_date=date(2026, 3, 1), agent_run_id=uuid4())) == "done"
 
 
 def test_fallback_retrieves_when_the_required_facts_are_present():

@@ -23,6 +23,7 @@ from src.common.audit import write_audit
 from src.common.clock import utc_now
 from src.common.notify import notify
 from src.features.answer.model.answers import PublishWork, attach_packet, publish
+from src.features.answer.model.conversation import answer_reply
 from src.features.answer.model.dispatch import DispatchResult, build_dispatch_agent, ready_to_dispatch
 from src.features.answer.model.proposal import ProposalHandoff, close_proposal
 from src.features.answer.model.send import ask_to_send, with_preview
@@ -72,7 +73,7 @@ async def run_downstream_agents(
     )
     if dispatched is not None:
         return dispatched
-    return DownstreamAgentResult(assessed.answer, assessed.run_id, assessed.answer.message)
+    return DownstreamAgentResult(assessed.answer, assessed.run_id, answer_reply(assessed.answer))
 
 
 @dataclass(frozen=True)
@@ -104,7 +105,7 @@ async def run_recommendation_agent(
     answer = await publish(session, PublishWork(case=case, handoff=handoff, run_id=run.id))
     message = await add_message(
         session,
-        NewMessage(conversation.id, "ASSISTANT", answer.message, {"kind": "recommendation"}),
+        NewMessage(conversation.id, "ASSISTANT", answer_reply(answer), {"kind": "recommendation", "internal": True}),
     )
     finish_run(run, message.id)
     logger.info(
@@ -161,7 +162,12 @@ async def run_dispatch_gate(
 
     note = await add_message(
         session,
-        NewMessage(conversation.id, "ASSISTANT", result.reason, {"kind": "dispatch_hold", "hold_code": result.hold_code}),
+        NewMessage(
+            conversation.id,
+            "ASSISTANT",
+            result.reason,
+            {"kind": "dispatch_hold", "hold_code": result.hold_code, "internal": True},
+        ),
     )
     finish_run(run, note.id)
     logger.info(
@@ -199,7 +205,7 @@ async def _record_dispatch_preview(
     text = ask_to_send()
     note = await add_message(
         session,
-        NewMessage(conversation.id, "ASSISTANT", text, {"kind": "dispatch_preview"}),
+        NewMessage(conversation.id, "ASSISTANT", text, {"kind": "dispatch_preview", "internal": True}),
     )
     finish_run(run, note.id)
     await write_audit(

@@ -87,6 +87,7 @@ def test_later_turns_replace_and_complete_without_inventing_facts():
         "Không phải 5 ngày, là 6 ngày. Đã lập biên bản và đã yêu cầu giải trình.",
         second.merged,
         _decision(
+            requested_action=RequestedAction.COMPLETE_FACTS,
             extracted_facts=[
                 _fact("absence_days", "6 ngày", "là 6 ngày"),
                 _fact("minutes_made", "true", "Đã lập biên bản"),

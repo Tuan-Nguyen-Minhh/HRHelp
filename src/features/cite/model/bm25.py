@@ -1,8 +1,8 @@
 """In-process Okapi BM25 over chunk text.
 
-The cite request path ranks with ``ts_rank`` on ``document_chunks.search_tsv``.
-This scorer stays for tests and for a caller that already holds the passages.
-It does not see embeddings.
+The live cite path loads the complete eligible source cohort and ranks with
+this scorer. PostgreSQL full-text ts_rank remains available as a separate
+baseline. This scorer does not see embeddings.
 """
 
 import math

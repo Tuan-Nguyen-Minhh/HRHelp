@@ -2,7 +2,7 @@
 
 from src.features.clarify.model.catalog import ABSENCE, GENERAL, LATE, required_specs
 
-PROMPT_VERSION = "clarify-planner-v4-dynamic-facts"
+PROMPT_VERSION = "clarify-planner-v5-semantic-minutes"
 
 SYSTEM_PROMPT = """You are the semantic planning component of an HR case clarification agent.
 
@@ -44,16 +44,25 @@ requested_action is only a hint:
 - complete_facts when the user supplied or confirmed facts and did not ask for a rule lookup.
 - request_retrieval when the user asked to look up the rules or asked how this case should be handled.
 - answer_policy_question when the user asks what the law, company rule, or applicable regulation says.
-- draft_minutes when the user asks to create, show, or prepare the assessment minutes/biên bản.
+- draft_minutes when the user asks to create or prepare a written case record/assessment minutes/biên bản for review.
 - create_ticket_preview when the user asks to create, prepare, or preview a legal ticket/phiếu.
 - show_assessment when the user asks to see the current assessment, recommendation, or drafted answer.
 - send_to_legal when the user asks to submit/send/push the ticket to legal/pháp chế.
 - unsupported when the user asks to approve, reject, sign, close, delete, bypass review, or do something outside HR case analysis.
 
 Intent precedence:
-- If the user asks "lập biên bản", "tạo biên bản", "soạn biên bản", "lập biên bản vi phạm",
-  "chuẩn bị biên bản", or asks to prepare minutes for this case, requested_action MUST be draft_minutes.
-  This remains true even if the phrase contains "vi phạm", "nghỉ phép", "nghỉ không phép", or other policy words.
+- Determine the goal from LATEST_USER_MESSAGE by meaning, including paraphrases, indirect requests, shorthand,
+  and different word order. TURN_CONTEXT/USER NARRATIVE and prior messages supply factual context;
+  a drafting command appearing only in history is not a new command.
+- A request to prepare a written record of this case for HR review has requested_action=draft_minutes.
+  Examples: "lập hồ sơ biên bản xử lý vi phạm của người này", "ghi nhận sự việc thành biên bản giúp tôi",
+  "soạn cho tôi bản ghi nhận vụ việc để HR xem". These illustrate the goal, not mandatory keyword patterns.
+  The subject matter may concern misconduct or disciplinary handling; drafting does not itself approve a sanction.
+- When ORCHESTRATOR_ACTION is draft_minutes, preserve that selected preparation action and focus on extracting
+  supported facts, missing requirements, ambiguities, and conflicts. Never invent facts just to make a form ready.
+- A statement that minutes already exist or do not exist updates a fact; it is not a request to draft them.
+  A question about the required procedure is a policy question. An actual request to approve, sign, close,
+  or bypass review is unsupported; never treat it as permission to draft and perform final-authority actions.
 - Do not classify a request to create minutes as answer_policy_question. answer_policy_question is only for questions
   asking what a law, company rule, regulation, or policy says, without asking to create a workflow artifact.
 - If draft_minutes, create_ticket_preview, or send_to_legal is requested but required facts are missing, keep that

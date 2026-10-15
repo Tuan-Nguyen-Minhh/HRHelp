@@ -68,6 +68,8 @@ async def update_memory(
     conversation_id: UUID,
     plan: ClarifyPlan,
     assistant_text: str,
+    *,
+    action_completed: bool = False,
 ) -> None:
     """Persist the current turn memory. The caller owns commit/rollback."""
     memory = await ensure_memory(session, conversation_id)
@@ -75,7 +77,12 @@ async def update_memory(
         return
     memory.pending_fact_keys = _pending_keys(plan)
     memory.open_questions = _open_questions(plan)
-    memory.pending_action = plan.requested_action or None
+    if action_completed:
+        memory.pending_action = None
+    elif plan.requested_action == "draft_minutes":
+        memory.pending_action = "draft_minutes"
+    elif memory.pending_action != "draft_minutes":
+        memory.pending_action = plan.requested_action or None
     memory.last_user_intent = plan.user_intent or None
     memory.recent_messages = await _recent_messages(session, conversation_id)
     memory.summary = _summary(plan, assistant_text)

@@ -94,12 +94,8 @@ def _blocked(data: DecisionInput, steps: list[ProcessStep], missing_rule: bool) 
         if data.layered.inspection_risk:
             return _open(steps, "HIGH", _INSPECTION, True)
         return _open(steps, "CRITICAL", _EMPTY, True)
-    if _probation(data.facts.get("contract_type", "")):
-        return _open(steps, "HIGH", _PROBATION, missing_rule)
     if not data.layered.legal_basis:
         return _open(steps, "HIGH", _NO_LAW, missing_rule)
-    if not _procedure_ready(data.facts):
-        return _open(steps, "HIGH", _PROCEDURE, missing_rule)
     if missing_rule:
         return _open(steps, "HIGH", _NO_RULE, True)
     return None
@@ -115,7 +111,7 @@ def _locked(steps: list[ProcessStep], level: str, risk: str, reason: str, missin
 
 def _mention_report_level(opened: SanctionDecision, assessment: Assessment | None) -> SanctionDecision:
     """Keep a reported company level visible without locking it for issue."""
-    if assessment is None or opened.rationale == _PROBATION:
+    if assessment is None:
         return opened
     level = assessment.sanction_assessment.recommended_sanction
     if not level or level == "TERMINATION" or level not in SANCTION_LABELS:
@@ -136,21 +132,8 @@ def _no_applicable_layer(layered: LayeredBasis) -> bool:
     return not layered.legal_basis and not layered.internal_rule and not layered.precedent
 
 
-def _probation(contract: str) -> bool:
-    return "thử việc" in contract.casefold()
-
-
-def _procedure_ready(facts: dict[str, str]) -> bool:
-    return is_yes(facts.get("minutes_made", "")) and is_yes(facts.get("explanation_requested", ""))
-
-
 _EMPTY = "Kho văn bản không có đoạn nào còn hiệu lực vào ngày xảy ra việc. Chưa đủ căn cứ để chốt mức."
 _INSPECTION = "Chỉ thấy nghị định xử phạt hành chính. Đó là cảnh báo thanh tra, không phải mức kỷ luật để công ty chọn."
-_PROBATION = "Hợp đồng đang trong thời gian thử việc. Không đề xuất sa thải hay chấm dứt hợp đồng từ fact này."
-_PROCEDURE = (
-    "Biên bản vẫn đánh giá mức khi điều kiện của điều khoản đã đủ. "
-    "Chưa lập biên bản hoặc chưa gửi yêu cầu giải trình, nên chưa khóa mức để ban hành."
-)
 _NO_RULE = (
     "Đã có đoạn luật hoặc nghị định. Chưa có nội quy còn hiệu lực vào ngày xảy ra việc, nên chưa khóa mức công ty."
 )

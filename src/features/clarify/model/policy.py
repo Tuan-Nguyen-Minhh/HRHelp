@@ -156,27 +156,11 @@ def apply_decision(
 def _guard_requested_action(text: str, action: RequestedAction) -> RequestedAction:
     """Keep workflow artifact requests out of the policy-QA branch."""
     folded = _fold(text)
-    if _asks_for_minutes(folded):
-        return RequestedAction.DRAFT_MINUTES
     if _asks_for_ticket(folded):
         return RequestedAction.CREATE_TICKET_PREVIEW
     if _asks_to_send_legal(folded):
         return RequestedAction.SEND_TO_LEGAL
     return action
-
-
-def _asks_for_minutes(text: str) -> bool:
-    return any(
-        phrase in text
-        for phrase in (
-            "lap bien ban",
-            "tao bien ban",
-            "soan bien ban",
-            "chuan bi bien ban",
-            "bien ban vi pham",
-            "bien ban danh gia",
-        )
-    )
 
 
 def _asks_for_ticket(text: str) -> bool:

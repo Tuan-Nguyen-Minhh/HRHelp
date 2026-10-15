@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.agents.handoff import CaseHandoff, CitedPassage
 from src.common.text import clip_quote
 from src.features.answer.model.agent import build_recommend_agent
+from src.features.answer.model.assessment import Assessment
 from src.features.answer.model.draft import AnswerDraft
 from src.features.answer.model.store import (
     CitationDraft,
@@ -23,6 +24,7 @@ from src.features.answer.model.store import (
 from src.features.answer.schema import AnswerView
 from src.features.answer.schema.present import draft_view, to_answer_view, view_from_passage, view_from_row, with_packet
 from src.features.cite.model.passage import Passage
+from src.models.agent_runs import AgentRun
 from src.models.cases import Case
 from src.models.recommendations import Recommendation
 
@@ -48,7 +50,9 @@ async def publish(session: AsyncSession, work: PublishWork) -> AnswerView:
     await _link_violation(session, work, draft.decision.risk_level)
     recommendation, views = await _store(session, work, draft, hits)
     work.case.status = "ANALYZED"
-    return to_answer_view(recommendation, views, work.case.status)
+    return to_answer_view(recommendation, views, work.case.status).model_copy(
+        update={"chat_message": draft.chat_message, **evaluation_fields(draft.assessment)}
+    )
 
 
 async def load_stored(session: AsyncSession, case: Case) -> AnswerView | None:
@@ -58,7 +62,25 @@ async def load_stored(session: AsyncSession, case: Case) -> AnswerView | None:
         return None
     rows = await list_citation_rows(session, recommendation.id)
     view = to_answer_view(recommendation, [view_from_row(row) for row in rows], case.status)
+    if recommendation.agent_run_id is not None:
+        run = await session.get(AgentRun, recommendation.agent_run_id)
+        metadata = run.run_metadata if run is not None else None
+        if isinstance(metadata, dict) and isinstance(metadata.get("chat_message"), str):
+            view = view.model_copy(update={"chat_message": metadata["chat_message"]})
+        if isinstance(metadata, dict) and isinstance(metadata.get("synthesis_assessment"), dict):
+            assessment = Assessment.model_validate(metadata["synthesis_assessment"])
+            view = view.model_copy(update=evaluation_fields(assessment))
     return await attach_packet(session, view)
+
+
+def evaluation_fields(assessment: Assessment | None) -> dict:
+    if assessment is None:
+        return {}
+    return {
+        "confidence": assessment.confidence,
+        "severity": assessment.rubric_reasoning.severity,
+        "issuance": assessment.issuance,
+    }
 
 
 async def load(session: AsyncSession, case: Case) -> AnswerView | None:
@@ -104,6 +126,14 @@ async def _store(session: AsyncSession, work: PublishWork, draft: AnswerDraft, h
     recommendation = await insert_recommendation(session, _recommendation(work, draft))
     rows = await insert_citations(session, recommendation.id, [_citation(passage) for passage in hits])
     views = [view_from_passage(row.id, passage) for row, passage in zip(rows, hits, strict=True)]
+    run = await session.get(AgentRun, work.run_id)
+    if run is not None:
+        metadata = dict(run.run_metadata or {})
+        metadata["chat_message"] = draft.chat_message
+        if draft.assessment is not None:
+            metadata["synthesis_assessment"] = draft.assessment.model_dump(mode="json")
+        run.run_metadata = metadata
+        await session.flush()
     return recommendation, views
 
 
@@ -146,4 +176,7 @@ def _passage(item: CitedPassage) -> Passage:
         policy_code=item.policy_code,
         policy_name=item.policy_name,
         origin=item.origin,
+        section_title=item.section_title,
+        retrieval_status=item.retrieval_status,
+        evidence_gaps=item.evidence_gaps,
     )

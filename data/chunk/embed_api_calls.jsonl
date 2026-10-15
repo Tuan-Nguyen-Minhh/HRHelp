@@ -370,3 +370,4 @@
 {"chunk_ids": [], "epoch": 1791910578.203205, "model": "mistral-embed", "n_inputs": 1, "n_returned": 1, "prompt_tokens": 44, "purpose": "query", "run_id": "cite-20261013T165618-72ee", "status": "ok", "ts": "2026-10-13T16:56:18.203Z"}
 {"chunk_ids": [], "epoch": 1791912815.149098, "model": "mistral-embed", "n_inputs": 1, "n_returned": 1, "prompt_tokens": 98, "purpose": "query", "run_id": "cite-20261013T173335-e854", "status": "ok", "ts": "2026-10-13T17:33:35.149Z"}
 {"chunk_ids": [], "epoch": 1791914173.631249, "model": "mistral-embed", "n_inputs": 1, "n_returned": 1, "prompt_tokens": 44, "purpose": "query", "run_id": "cite-20261013T175613-04b8", "status": "ok", "ts": "2026-10-13T17:56:13.631Z"}
+{"chunk_ids": [], "epoch": 1792001380.173135, "model": "mistral-embed", "n_inputs": 1, "n_returned": 1, "prompt_tokens": 315, "purpose": "query", "run_id": "cite-20261014T180940-6376", "status": "ok", "ts": "2026-10-14T18:09:40.173Z"}
