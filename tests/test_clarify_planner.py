@@ -86,7 +86,7 @@ def _state(plan, **extra) -> dict:
 
 
 def test_prompt_keeps_the_planner_off_the_graph_edge():
-    assert PROMPT_VERSION == "clarify-planner-v5-semantic-minutes"
+    assert PROMPT_VERSION == "clarify-planner-v6-conversation-contract"
     assert "Never invent missing facts" in SYSTEM_PROMPT
     assert "LangGraph" in SYSTEM_PROMPT
     assert "lập biên bản" in SYSTEM_PROMPT
@@ -111,16 +111,16 @@ def test_intent_prompt_separates_latest_message_from_turn_context():
 
 
 @pytest.mark.asyncio
-async def test_intent_router_schema_failure_asks_for_clarification(monkeypatch):
+async def test_intent_router_schema_failure_is_a_processing_error(monkeypatch):
     async def invalid_output(_messages, _attempt, _model_name):
         raise ValueError("route outside schema")
 
     monkeypatch.setattr(settings, "DEEPSEEK_API_KEY", "test-key")
     monkeypatch.setattr("src.features.clarify.model.intent._complete", invalid_output)
     result = await route_turn({"text": "làm một việc lạ chưa có node", "stored": {}})
-    assert result.fallback_kind is IntentFallback.SEMANTIC
+    assert result.fallback_kind is IntentFallback.OUTPUT
     assert result.decision.route is Route.CLARIFY
-    assert result.decision.intent_label == "unroutable_intent"
+    assert result.decision.intent_label == "router_output_error"
 
 
 def test_dynamic_fact_schema_accepts_uncovered_case_requirements():

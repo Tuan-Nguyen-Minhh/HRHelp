@@ -6,8 +6,8 @@ facts are locked. The planner does not name an edge.
 """
 
 import logging
-from dataclasses import replace
 
+from src.agents.conversation import WORKFLOW_ACTIONS, reconcile_plan, snapshot_plan
 from src.features.clarify.model.assess import ClarifyPlan, assess, build_question, conflict_question
 from src.features.clarify.model.catalog import OPTIONAL_FACT_KEYS, fact_lines, required_specs
 from src.features.clarify.model.planner import plan_turn
@@ -16,14 +16,6 @@ from src.features.clarify.model.prompt import PROMPT_VERSION
 
 logger = logging.getLogger(__name__)
 
-_WORKFLOW_ACTIONS = frozenset(
-    {
-        "request_retrieval",
-        "draft_minutes",
-        "create_ticket_preview",
-        "send_to_legal",
-    }
-)
 _DIRECT_ACTIONS = frozenset({"answer_policy_question", "show_assessment", "unsupported"})
 
 
@@ -31,10 +23,12 @@ async def extract_node(state: dict) -> dict:
     """Read the narrative and merge it with facts already stored."""
     citing = state.get("step") == "cite" or bool(state.get("advance"))
     if citing or not state.get("semantic"):
-        plan = assess(state.get("text", ""), state.get("stored") or {})
-        if not citing and state.get("pending_action") == "draft_minutes":
-            plan = replace(plan, requested_action="draft_minutes")
-        return _project(plan)
+        plan = (
+            snapshot_plan(state)
+            if state.get("active_specs")
+            else assess(state.get("text", ""), state.get("stored") or {})
+        )
+        return _project(plan if citing else reconcile_plan(plan, state))
     result = await plan_turn(state)
     plan = apply_decision(
         state.get("text") or "",
@@ -42,12 +36,10 @@ async def extract_node(state: dict) -> dict:
         result.decision,
         fallback=result.fallback,
         locked_keys=set(state.get("locked_fact_keys") or []),
+        active_specs=tuple(state.get("active_specs") or ()),
+        active_family=state.get("family") or "",
     )
-    if state.get("requested_action") == "draft_minutes" or (
-        state.get("pending_action") == "draft_minutes"
-        and plan.requested_action in {"", "need_clarification", "complete_facts", "request_retrieval", "draft_minutes"}
-    ):
-        plan = replace(plan, requested_action="draft_minutes")
+    plan = reconcile_plan(plan, state)
     _log_decision(state, plan, result)
     return _project(plan)
 
@@ -91,7 +83,7 @@ def route_after_extract(state: dict) -> str:
         # then saves the assessment form before reporting success.
         return "done"
     ready = state.get("incident_date") is not None and state.get("agent_run_id") is not None
-    if ready and (not action or action in _WORKFLOW_ACTIONS or action == "complete_facts"):
+    if ready and (not action or action in WORKFLOW_ACTIONS or action == "complete_facts"):
         return "retrieve"
     return "done"
 
@@ -118,6 +110,8 @@ def _project(plan: ClarifyPlan) -> dict:
         "validation": plan.validation,
         "accepted_keys": list(plan.accepted_keys),
         "specs": list(plan.specs),
+        "state_update": plan.state_update,
+        "task_change": plan.task_change,
     }
     if plan.locked:
         specs = plan.specs or required_specs(plan.family)

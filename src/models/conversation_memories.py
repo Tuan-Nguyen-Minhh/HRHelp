@@ -23,3 +23,4 @@ class ConversationMemory(TimestampMixin, Base):
     last_user_intent = Column(String(80), nullable=True)
     pending_action = Column(String(80), nullable=True)
     recent_messages = Column(JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb"))
+    working_state = Column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))

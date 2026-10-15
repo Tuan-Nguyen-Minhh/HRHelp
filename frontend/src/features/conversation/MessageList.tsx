@@ -5,12 +5,13 @@ import { MessageBubble } from "@/features/conversation/MessageBubble";
 import type { ChatMessage } from "@/types/api";
 
 export function MessageList({ messages }: { messages: ChatMessage[] }) {
+  const visibleMessages = messages.filter((message) => message.role !== "system");
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
   }, [messages]);
 
-  if (!messages.length) {
+  if (!visibleMessages.length) {
     return (
       <div className="px-1">
         <div className="max-w-xl rounded-2xl border border-rule bg-paper p-5 text-left shadow-sm">
@@ -36,7 +37,7 @@ export function MessageList({ messages }: { messages: ChatMessage[] }) {
 
   return (
     <div className="space-y-3" aria-live="polite">
-      {messages.map((message) => (
+      {visibleMessages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}
       <div ref={endRef} />

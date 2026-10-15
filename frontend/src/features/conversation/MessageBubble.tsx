@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils";
 import { readableAssistantText } from "@/lib/report";
 import type { ChatMessage } from "@/types/api";
 
-const ROLE_LABEL = { user: "Nhân sự", assistant: "Trợ lý", system: "Trạng thái" };
+const ROLE_LABEL = { user: "Nhân sự", assistant: "Trợ lý" };
 
 export function MessageBubble({ message }: { message: ChatMessage }) {
+  if (message.role === "system") return null;
   const mine = message.role === "user";
   const text = message.role === "assistant" ? readableAssistantText(message.text) : message.text;
   return (
@@ -15,7 +16,6 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
           "max-w-[88%] rounded-2xl px-4 py-3 text-sm shadow-sm md:max-w-[78%]",
           mine && "rounded-br-md bg-leather text-paper",
           message.role === "assistant" && "rounded-bl-md border border-rule bg-paper text-ink",
-          message.role === "system" && "rounded-bl-md border border-rule bg-paper-2 text-ink-2",
         )}
       >
         <header className="mb-1 flex items-center justify-between gap-3 text-[11px] opacity-80">

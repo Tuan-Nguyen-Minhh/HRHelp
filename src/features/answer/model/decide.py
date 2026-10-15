@@ -37,9 +37,16 @@ class DecisionInput:
 
 
 def decide(data: DecisionInput, assessment: Assessment | None = None) -> SanctionDecision:
-    """Return the guarded assessment level, or leave the level open."""
+    """Publish the synthesis proposal; incomplete checks remain in risk and issuance."""
     steps = process_steps(data.facts)
     missing_rule = data.layered.missing_internal_rule
+    if should_synthesize(data) and assessment is not None and assessment.operational_status == "OK":
+        level = assessment.sanction_assessment.recommended_sanction
+        if level in {"WARNING", "WAGE_POSTPONEMENT", "DEMOTION", "DISMISSAL"}:
+            reason = assessment.sanction_assessment.reason
+            if level == "DISMISSAL" and "TERMINATION" not in reason:
+                reason = f"{reason} Không đề xuất chấm dứt hợp đồng (TERMINATION)."
+            return _locked(steps, level, assessment.risk_assessment.level, reason, missing_rule)
     opened = _blocked(data, steps, missing_rule)
     if opened is not None:
         return _mention_report_level(opened, assessment)
@@ -62,15 +69,10 @@ def blocked(data: DecisionInput) -> SanctionDecision | None:
 
 
 def should_synthesize(data: DecisionInput) -> bool:
-    """Ask the model when a law, guiding decree, or internal rule was retrieved.
-
-    A page-index hit, an empty corpus, or only an administrative-penalty passage
-    stays in Python. Missing minutes, a missing companion source, or probation
-    does not skip the report: those limits stay in the lock, not in the reading.
-    """
-    if data.retrieval == "page_index":
-        return False
-    return bool(data.layered.legal_basis or data.layered.internal_rule)
+    """Evaluate every nonempty retrieval; source limitations belong in the assessment."""
+    return bool(
+        data.layered.legal_basis or data.layered.internal_rule or data.layered.precedent or data.layered.inspection_risk
+    )
 
 
 def process_steps(facts: dict[str, str]) -> list[ProcessStep]:

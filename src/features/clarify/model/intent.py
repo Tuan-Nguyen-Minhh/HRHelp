@@ -14,12 +14,13 @@ from enum import StrEnum
 import httpx
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.agents.conversation import ORCHESTRATOR_RULES, TaskChange
 from src.core.config import settings
 from src.services.chat_client import create_chat_model
 
 logger = logging.getLogger(__name__)
 
-PROMPT_VERSION = "intent-router-v3-semantic-minutes"
+PROMPT_VERSION = "intent-router-v4-conversation-contract"
 MAX_RETRIES = 1
 MIN_ROUTE_CONFIDENCE = 0.6
 
@@ -113,6 +114,7 @@ class IntentFallback(StrEnum):
     NONE = "none"
     TECHNICAL = "technical"
     SEMANTIC = "semantic"
+    OUTPUT = "output"
 
 
 class IntentSignals(BaseModel):
@@ -157,6 +159,10 @@ class IntentDecision(BaseModel):
     requires_internal_retrieval: bool = False
     requires_external_research: bool = False
     requested_action: str = ""
+    task_change: TaskChange = Field(
+        default=TaskChange.KEEP,
+        description="keep for replies/side questions; replace for a new workflow goal; cancel only if the user explicitly cancels the active task.",
+    )
     risk_level: RiskLevel = RiskLevel.LOW
     reason: str = Field(default="", max_length=300)
     signals: IntentSignals = Field(default_factory=IntentSignals)
@@ -207,8 +213,8 @@ async def route_turn(state: dict) -> IntentResult:
     """Classify one turn.
 
     Technical failures fall back to the fact planner for compatibility.
-    Semantic/schema failures ask for clarification instead of pretending the
-    user supplied a fact.
+    Invalid output is a processing failure, separate from a genuinely unclear
+    user goal. The orchestrator chooses recovery from the pending state.
     """
     model_names = settings.chat_models()
     primary_model = model_names[0]
@@ -223,7 +229,7 @@ async def route_turn(state: dict) -> IntentResult:
     messages = _messages(state)
     started = time.perf_counter()
     last_error = "invalid_route"
-    last_fallback = IntentFallback.SEMANTIC
+    last_fallback = IntentFallback.OUTPUT
     for attempt in range(MAX_RETRIES + 1):
         for model_name in model_names:
             try:
@@ -242,12 +248,14 @@ async def route_turn(state: dict) -> IntentResult:
         else semantic_fallback_intent(last_error)
     )
     decision = enrich_intent_decision(state, decision)
+    if last_fallback is IntentFallback.OUTPUT:
+        decision = decision.model_copy(update={"intent_label": "router_output_error"})
     return IntentResult(decision, last_fallback, last_error, elapsed, primary_model)
 
 
 def _messages(state: dict) -> list[dict[str, str]]:
     return [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": SYSTEM_PROMPT + "\n\n" + ORCHESTRATOR_RULES},
         {"role": "user", "content": render_intent_prompt(state)},
     ]
 
@@ -277,7 +285,7 @@ def enrich_intent_decision(state: dict, decision: IntentDecision) -> IntentDecis
 
 def infer_turn_signals(state: dict) -> IntentSignals:
     """Infer deterministic routing signals from the latest user turn."""
-    latest = (state.get("latest_user_message") or state.get("text") or "").casefold()
+    latest = str(state.get("latest_user_message", state.get("text")) or "").casefold()
     if not latest:
         return IntentSignals()
 
@@ -344,8 +352,6 @@ def render_intent_prompt(state: dict) -> str:
     """Render state for routing with latest turn separated from memory."""
     latest = (state.get("latest_user_message") or "").strip()
     turn_context = (state.get("turn_context") or state.get("text") or "").strip() or "(empty)"
-    if len(turn_context) > 8000:
-        turn_context = turn_context[-8000:]
     profile = []
     for key in ("case_code", "employee_name", "employee_code", "incident_date"):
         value = state.get(key)
@@ -361,7 +367,9 @@ def render_intent_prompt(state: dict) -> str:
             continue
         mark = "confirmed" if getattr(item, "confirmed", False) else "pending"
         stored.append(f"- {key}: {value} [{mark}]")
-    pending = ", ".join(str(item) for item in state.get("locked_fact_keys") or []) or "(none)"
+    pending = (
+        ", ".join(str(item) for item in state.get("pending_fact_keys", state.get("locked_fact_keys")) or []) or "(none)"
+    )
     return (
         f"{ROUTE_CONTRACTS}\n\n"
         "CASE PROFILE\n"
@@ -370,6 +378,8 @@ def render_intent_prompt(state: dict) -> str:
         f"{chr(10).join(stored) if stored else '(none)'}\n\n"
         "PENDING FACT KEYS\n"
         f"{pending}\n\n"
+        "ACTIVE TASK\n"
+        f"{state.get('pending_action') or '(none)'}\n\n"
         "LATEST_USER_MESSAGE\n"
         f"{latest or '(none)'}\n\n"
         "TURN_CONTEXT\n"
@@ -415,7 +425,7 @@ def _fallback_kind(exc: Exception) -> IntentFallback:
     name = type(exc).__name__.lower()
     if isinstance(exc, httpx.HTTPError) or "timeout" in name or "connection" in name:
         return IntentFallback.TECHNICAL
-    return IntentFallback.SEMANTIC
+    return IntentFallback.OUTPUT
 
 
 SYSTEM_PROMPT = """You are the semantic intent analyzer for an HR/legal case assistant.
@@ -439,6 +449,10 @@ The candidates field should include plausible routes with evidence snippets; inc
 Apply the route contracts from the user input as authoritative business definitions.
 
 Routing rules:
+- Set task_change=keep for replies and side questions; use replace for an explicitly requested new workflow goal.
+- If the user explicitly cancels only the pending conversational task, set task_change=cancel, route=clarify,
+  and requested_action empty. Confidence may be high because this is a clear task-control request.
+  Cancelling pending work does not close/delete the case or approve a decision; those remain unsupported.
 - Questions about who/what/when/status/summary of the current case are case_qa, not fact_planner.
 - Questions asking what internal rule/law/policy says are policy_qa.
 - Explicit requests for outside/public/current/latest sources are external_research, even when the topic is legal or HR.

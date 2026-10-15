@@ -100,11 +100,14 @@ def apply_decision(
     *,
     fallback: bool = False,
     locked_keys: set[str] | None = None,
+    active_specs: tuple[FactSpec, ...] = (),
+    active_family: str = "",
 ) -> ClarifyPlan:
     """Merge a validated decision. Confirmed values stay until the user accepts a replacement."""
     ignored: list[str] = []
     ambiguous: list[str] = []
     locked_keys = {normalize_dynamic_key(key) for key in (locked_keys or set()) if safe_dynamic_key(key)}
+    locked_keys.update(spec.key for spec in active_specs)
     initial_keys = {normalize_dynamic_key(item.key) for item in decision.fact_requirements}
     initial_keys.update(key for key in stored if safe_dynamic_key(key))
     initial_keys.update(locked_keys)
@@ -113,8 +116,10 @@ def apply_decision(
     reads.extend(_explicit_reads(text))
     if fallback:
         reads.extend(_rule_reads(text, {item.key for item in reads}))
-    family = _family(stored, decision, [item.key for item in reads])
-    specs = _schema_specs(family, decision, stored, reads, ignored, locked_keys)
+    family = (
+        active_family if active_specs and active_family else _family(stored, decision, [item.key for item in reads])
+    )
+    specs = _schema_specs(family, decision, stored, reads, ignored, locked_keys, active_specs)
     allowed = {spec.key for spec in specs}
     merged = dict(stored)
     conflicts: list[FactConflict] = []
@@ -386,12 +391,15 @@ def _schema_specs(
     reads: list[_Read],
     ignored: list[str],
     locked_keys: set[str],
+    active_specs: tuple[FactSpec, ...] = (),
 ) -> tuple[FactSpec, ...]:
     """Validate AI-proposed requirements and preserve catalog fallback behavior."""
-    specs: list[FactSpec] = []
-    seen: set[str] = set()
+    specs: list[FactSpec] = list(active_specs)
+    seen: set[str] = {spec.key for spec in specs}
     for item in decision.fact_requirements:
         key = normalize_dynamic_key(item.key)
+        if key in seen:
+            continue
         if not safe_dynamic_key(key) or _blocked_dynamic_key(key):
             if key:
                 ignored.append(key)

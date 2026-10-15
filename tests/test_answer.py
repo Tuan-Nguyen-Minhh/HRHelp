@@ -396,7 +396,7 @@ def test_a_grounded_quote_can_lock_warning_and_an_invented_quote_cannot():
     assert _decide(layered, assessment=invented).sanction_type is None
 
 
-def test_multiple_supported_levels_are_not_reduced_to_one():
+def test_multiple_supported_levels_keep_the_model_choice_for_review():
     law = _passage("LAW", "BLLD", "Bộ luật Lao động", _ART_124)
     rule = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì khiển trách hoặc cách chức.")
     raw = Assessment(
@@ -414,9 +414,9 @@ def test_multiple_supported_levels_are_not_reduced_to_one():
     )
     accepted = guard(raw, [law, rule])
     decision = _decide(_layered(law, rule), assessment=accepted)
-    assert accepted.sanction_assessment.recommended_sanction is None
-    assert decision.sanction_type is None
-    assert decision.risk_level == "MEDIUM"
+    assert accepted.sanction_assessment.recommended_sanction == "DEMOTION"
+    assert decision.sanction_type == "DEMOTION"
+    assert decision.risk_level == "HIGH"
 
 
 def test_an_administrative_penalty_cannot_ground_a_company_sanction():
@@ -443,7 +443,7 @@ def test_an_administrative_penalty_cannot_ground_a_company_sanction():
     assert _decide(_layered(penalty, precedent, rule), assessment=accepted).sanction_type is None
 
 
-def test_need_more_facts_clears_a_filled_sanction():
+def test_need_more_facts_keeps_a_source_backed_proposal_at_high_risk():
     law = _passage("LAW", "BLLD", "Bộ luật Lao động", _ART_125)
     rule = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Người lao động tự ý bỏ việc không phép thì bị sa thải.")
     raw = Assessment(
@@ -463,17 +463,17 @@ def test_need_more_facts_clears_a_filled_sanction():
     accepted = guard(raw, [law, rule])
     facts = {**_READY, "absence_days": "5 ngày"}
     decision = _decide(_layered(law, rule), facts, assessment=accepted)
-    assert accepted.sanction_assessment.recommended_sanction is None
+    assert accepted.sanction_assessment.recommended_sanction == "DISMISSAL"
     assert accepted.sanction_assessment.status == "NEED_MORE_FACTS"
-    assert decision.sanction_type is None
+    assert decision.sanction_type == "DISMISSAL"
     assert decision.risk_level == "HIGH"
 
 
 def test_synthesis_prompt_returns_a_level_when_the_passages_state_one():
-    assert PROMPT_VERSION == "evidence-synthesis-v6-general-rubric"
+    assert PROMPT_VERSION == "evidence-synthesis-v9-coherent-reply"
     assert "status = SUPPORTED" in SYSTEM_PROMPT
     assert "BIÊN BẢN ĐÁNH GIÁ VỤ VIỆC" in SYSTEM_PROMPT
-    assert "Chưa đủ căn cứ retrieval để xác định mức xử lý." in SYSTEM_PROMPT
+    assert "Có dữ liệu truy xuất thì luôn đánh giá và ra quyết định xử lý" in SYSTEM_PROMPT
     assert "NEED_MORE_FACTS" in SYSTEM_PROMPT
     assert "Không chọn hình thức nặng nhất" in SYSTEM_PROMPT
     assert "TERMINATION" in SYSTEM_PROMPT
@@ -482,7 +482,7 @@ def test_synthesis_prompt_returns_a_level_when_the_passages_state_one():
     assert "UNKNOWN" in SYSTEM_PROMPT
 
 
-def test_internal_rule_level_stays_in_the_report_and_is_not_locked():
+def test_internal_rule_proposal_is_published_without_unlocking_issuance():
     rule = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Tự ý bỏ việc 01 ngày thì khiển trách.")
     raw = Assessment(
         case_summary=CaseSummary(violation="nghỉ không phép", facts={"absence_days": "1 ngày"}),
@@ -518,7 +518,7 @@ def test_internal_rule_level_stays_in_the_report_and_is_not_locked():
     assert accepted.downstream_handoff.needs_legal_review is True
     assert accepted.downstream_handoff.hr_decision_required is True
     assert "REJECT_ASSESSMENT" in accepted.downstream_handoff.next_allowed_actions
-    assert decision.sanction_type is None
+    assert decision.sanction_type == "WARNING"
     assert "khiển trách" in decision.rationale
     assert prose.startswith("BIÊN BẢN ĐÁNH GIÁ VỤ VIỆC")
 
@@ -543,18 +543,19 @@ def test_a_law_that_names_one_form_stays_in_the_report_until_an_internal_rule_is
     assert accepted.downstream_handoff.can_create_legal_ticket is False
     assert accepted.downstream_handoff.legal_basis_found is True
     assert accepted.downstream_handoff.internal_rule_found is False
-    assert _decide(_layered(law), assessment=accepted).sanction_type is None
+    assert _decide(_layered(law), assessment=accepted).sanction_type == "WARNING"
 
 
-def test_should_synthesize_reads_law_or_internal_rule_and_skips_page_index():
+def test_should_synthesize_evaluates_every_nonempty_retrieval():
     law = _passage("LAW", "BLLD", "Bộ luật Lao động", _ART_124)
     rule = _passage("INTERNAL_RULE", "NQ", "Nội quy", "Đi muộn lần đầu thì khiển trách.")
     penalty = _passage("DECREE", "283/2026/ND-CP", "Nghị định xử phạt", "Phạt tiền.")
     ready = DecisionInput(family=ABSENCE, facts=_READY, layered=_layered(law))
     assert should_synthesize(ready) is True
     assert should_synthesize(DecisionInput(family=ABSENCE, facts=_READY, layered=_layered(rule))) is True
-    assert should_synthesize(DecisionInput(family=ABSENCE, facts=_READY, layered=_layered(penalty))) is False
-    assert should_synthesize(DecisionInput(family=ABSENCE, facts=_READY, layered=_layered(law, rule), retrieval="page_index")) is False
+    assert should_synthesize(DecisionInput(family=ABSENCE, facts=_READY, layered=_layered(penalty))) is True
+    assert should_synthesize(DecisionInput(family=ABSENCE, facts=_READY, layered=_layered(law, rule), retrieval="page_index")) is True
+    assert not should_synthesize(DecisionInput(family=ABSENCE, facts=_READY, layered=_layered()))
 
 
 @pytest.mark.asyncio

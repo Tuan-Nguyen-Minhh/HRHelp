@@ -136,8 +136,10 @@ async def test_minutes_command_never_bypasses_or_overrides_semantic_router(monke
     planner.assert_not_awaited()
 
 
-@pytest.mark.parametrize("action", ["create_ticket_preview", "send_to_legal", "show_assessment"])
-def test_other_workflow_routes_keep_their_existing_fact_planner_flag(action):
+@pytest.mark.parametrize(
+    "action,edge", [("create_ticket_preview", "extract"), ("send_to_legal", "extract"), ("show_assessment", "action")]
+)
+def test_orchestrator_validates_preparation_actions_but_reads_saved_assessments_directly(action, edge):
     decision = IntentDecision(
         route=Route.WORKFLOW_ACTION,
         intent_label=action,
@@ -149,12 +151,12 @@ def test_other_workflow_routes_keep_their_existing_fact_planner_flag(action):
         route_after_intent(
             {"selected_route": Route.WORKFLOW_ACTION, "requested_action": action, "intent_decision": decision}
         )
-        == "action"
+        == edge
     )
 
 
-@pytest.mark.parametrize("requires_planner,edge", [(True, "extract"), (False, "action")])
-def test_minutes_use_the_existing_model_fact_planner_flag(requires_planner, edge):
+@pytest.mark.parametrize("requires_planner", [True, False])
+def test_preparing_minutes_cannot_bypass_validation_through_a_model_flag(requires_planner):
     decision = IntentDecision(
         route=Route.WORKFLOW_ACTION,
         intent_label="draft_minutes",
@@ -166,7 +168,7 @@ def test_minutes_use_the_existing_model_fact_planner_flag(requires_planner, edge
         route_after_intent(
             {"selected_route": Route.WORKFLOW_ACTION, "requested_action": "draft_minutes", "intent_decision": decision}
         )
-        == edge
+        == "extract"
     )
 
 
@@ -265,6 +267,19 @@ async def test_incomplete_chat_asks_and_does_not_create_form(monkeypatch):
     assert not result.facts_locked
     assert result.assessment_id is None
     assert result.missing_fact_keys
+    turns.ensure_assessment.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_side_answer_does_not_reopen_case_or_start_a_workflow(monkeypatch):
+    session, actor, case, conversation, run = _turn_setup(monkeypatch, locked=False)
+    plan = replace(
+        assess(_TEXT, {}), requested_action="", question="Thông tin đang lưu trong hồ sơ.", state_update="preserve"
+    )
+    turns._planned.return_value = (plan, None)
+    result = await turns._clarify(session, case, conversation, run, uuid4(), actor.id, "Hồ sơ có gì?")
+    assert result.assistant_message == plan.question
+    turns._reopen.assert_not_awaited()
     turns.ensure_assessment.assert_not_awaited()
 
 

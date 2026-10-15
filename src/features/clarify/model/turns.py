@@ -2,12 +2,12 @@
 
 import logging
 import time
-from dataclasses import replace
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.agents.case_graph import build_case_graph
+from src.agents.conversation import StateUpdate, reconcile_plan, snapshot_plan, working_specs
 from src.agents.handoff import CaseHandoff
 from src.agents.runs import finish_run, mark_run_failed, start_run
 from src.common.access import require_case, require_mutable_case
@@ -24,7 +24,7 @@ from src.features.answer.schema import AnswerView
 from src.features.assessment.service import ensure_assessment
 from src.features.cite.model.search import search_policies
 from src.features.clarify.model.assess import ClarifyPlan, FactConflict, StoredFact, build_question
-from src.features.clarify.model.catalog import OPTIONAL_FACT_KEYS, required_specs
+from src.features.clarify.model.catalog import OPTIONAL_FACT_KEYS, FactSpec, detect_family, fact_label, required_specs
 from src.features.clarify.model.memory import build_turn_context, get_memory, update_memory
 from src.features.clarify.model.multi_agent import run_dispatch_gate, run_downstream_agents, run_recommendation_agent
 from src.features.clarify.model.store import (
@@ -203,7 +203,7 @@ async def _clarify(
     if plan.requested_action == "show_assessment":
         answer = await load(session, case)
         text = answer.message if answer is not None else "Hồ sơ chưa có báo cáo đánh giá để hiển thị."
-    elif plan.requested_action in _DIRECT_ACTIONS and plan.question:
+    elif (plan.state_update == StateUpdate.PRESERVE or plan.requested_action in _DIRECT_ACTIONS) and plan.question:
         answer = None
         text = plan.question
     elif plan.locked:
@@ -229,8 +229,8 @@ async def _confirm(
 ) -> TurnResponse:
     plan, _handoff = await _plan(session, case, conversation.id, semantic=True)
     memory = await get_memory(session, conversation.id)
-    if memory is not None and memory.pending_action == "draft_minutes":
-        plan = replace(plan, requested_action="draft_minutes")
+    if memory is not None:
+        plan = reconcile_plan(plan, {"pending_action": memory.pending_action, "semantic": False})
     stored = await _stored(session, case.id)
     _check_keys(plan, items)
     if not _changed(stored, plan.merged, items):
@@ -277,7 +277,8 @@ async def _cite(
     facts = _locked_facts(plan)
     text = await _transcript(session, case, conversation.id)
     system = await add_message(
-        session, NewMessage(conversation.id, "SYSTEM", _confirmed_text(facts), {"kind": "facts_confirmed"})
+        session,
+        NewMessage(conversation.id, "SYSTEM", _confirmed_text(facts), {"kind": "facts_confirmed", "internal": True}),
     )
     run = await start_run(session, conversation.id, system.id, "hr-help-retrieval")
     graph = build_case_graph(lambda query: search_policies(session, query))
@@ -297,6 +298,8 @@ async def _cite(
             "turn_context": text,
             "latest_user_message": "",
             "stored": {key: StoredFact(value, True) for key, value in facts.items()},
+            "active_specs": list(plan.specs or required_specs(plan.family)),
+            "family": plan.family,
             "description": case.description or "",
             "case_code": case.case_code,
             "incident_date": case.incident_date,
@@ -507,6 +510,16 @@ async def _plan(
     turn_context = await _transcript(session, case, conversation_id, stored)
     locked_fact_keys = await _locked_fact_keys(session, conversation_id, stored)
     memory = await get_memory(session, conversation_id)
+    working_state = getattr(memory, "working_state", None)
+    active_specs = working_specs(working_state)
+    family = working_state.get("family") if isinstance(working_state, dict) else None
+    family = family or detect_family(case.description or "")
+    if semantic and not latest_user_message:
+        # Read endpoints and confirmation previews must not re-route old commands.
+        specs = active_specs or tuple(
+            FactSpec(key, fact_label(key), f"Hãy bổ sung tình tiết {fact_label(key)}?") for key in locked_fact_keys
+        )
+        return snapshot_plan({"stored": stored, "family": family, "active_specs": specs}), None
     logger.info(
         "agent_stage start stage=case_graph case_id=%s conversation_id=%s semantic=%s run_id=%s stored=%s locked_keys=%s turn_context_chars=%s latest_chars=%s",
         case.id,
@@ -527,6 +540,9 @@ async def _plan(
             "latest_user_message": latest_user_message,
             "stored": stored,
             "pending_action": memory.pending_action if memory is not None else "",
+            "pending_fact_keys": list(getattr(memory, "pending_fact_keys", None) or []),
+            "active_specs": list(active_specs),
+            "family": family,
             "description": case.description or "",
             "case_code": case.case_code,
             "semantic": semantic,
@@ -566,6 +582,8 @@ async def _plan(
         state.get("validation") or "ok",
         tuple(state.get("accepted_keys") or []),
         tuple(state.get("specs") or ()),
+        state.get("state_update") or "preserve",
+        state.get("task_change") or "keep",
     )
     return plan, handoff
 
@@ -749,7 +767,7 @@ def _locked_facts(plan: ClarifyPlan) -> dict[str, str]:
     facts = {
         spec.key: plan.merged[spec.key].value
         for spec in (plan.specs or required_specs(plan.family))
-        if spec.required and spec.key in plan.merged and plan.merged[spec.key].confirmed and plan.merged[spec.key].value
+        if spec.key in plan.merged and plan.merged[spec.key].confirmed and plan.merged[spec.key].value
     }
     for key in OPTIONAL_FACT_KEYS:
         item = plan.merged.get(key)
@@ -808,6 +826,9 @@ async def _locked_fact_keys(
 ) -> list[str]:
     """Freeze the current working schema while HR is answering open questions."""
     memory = await get_memory(session, conversation_id) if conversation_id else None
+    specs = working_specs(getattr(memory, "working_state", None))
+    if specs:
+        return sorted({spec.key for spec in specs} | set(stored))
     pending = getattr(memory, "pending_fact_keys", None) if memory is not None else None
     if not isinstance(pending, list) or not pending:
         return []
