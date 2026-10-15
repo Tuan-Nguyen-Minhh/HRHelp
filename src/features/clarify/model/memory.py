@@ -10,6 +10,7 @@ from uuid import UUID
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.agents.conversation import StateUpdate, TaskChange, memory_patch, recent_turns
 from src.features.clarify.model.assess import ClarifyPlan, StoredFact
 from src.features.clarify.model.catalog import fact_label
 from src.features.clarify.model.store import list_messages
@@ -57,7 +58,7 @@ async def build_turn_context(
             parts.append(f"PENDING_ACTION\n{memory.pending_action}")
         if memory.last_user_intent:
             parts.append(f"LAST_USER_INTENT\n{memory.last_user_intent}")
-    recent = _recent_text(live_recent or (memory.recent_messages if memory is not None else []))
+    recent = recent_turns(live_recent or (memory.recent_messages if memory is not None else []))
     if recent:
         parts.append(f"RECENT_TURNS\n{recent}")
     return "\n\n".join(parts)
@@ -75,17 +76,13 @@ async def update_memory(
     memory = await ensure_memory(session, conversation_id)
     if memory is None:
         return
-    memory.pending_fact_keys = _pending_keys(plan)
-    memory.open_questions = _open_questions(plan)
-    if action_completed:
-        memory.pending_action = None
-    elif plan.requested_action == "draft_minutes":
-        memory.pending_action = "draft_minutes"
-    elif memory.pending_action != "draft_minutes":
-        memory.pending_action = plan.requested_action or None
-    memory.last_user_intent = plan.user_intent or None
+    for key, value in memory_patch(
+        plan, pending_action=memory.pending_action, action_completed=action_completed
+    ).items():
+        setattr(memory, key, value)
     memory.recent_messages = await _recent_messages(session, conversation_id)
-    memory.summary = _summary(plan, assistant_text)
+    if plan.state_update == StateUpdate.PROGRESS or plan.task_change == TaskChange.CANCEL:
+        memory.summary = _summary(plan, assistant_text)
     await session.flush()
 
 
@@ -137,46 +134,20 @@ def _case_profile(
     return "\n".join(lines)
 
 
-def _open_questions(plan: ClarifyPlan) -> list[str]:
-    if plan.conflicts:
-        return [f"{item.key}: chọn giữa '{item.confirmed_value}' và '{item.proposed_value}'" for item in plan.conflicts]
-    if plan.missing_keys:
-        return [f"{key}: {fact_label(key)}" for key in plan.missing_keys]
-    if plan.locked:
-        return []
-    return [f"{key}: cần xác nhận" for key, item in plan.merged.items() if item.value and not item.confirmed]
-
-
-def _pending_keys(plan: ClarifyPlan) -> list[str]:
-    keys = list(plan.missing_keys)
-    for key, item in plan.merged.items():
-        if item.value and not item.confirmed and key not in keys:
-            keys.append(key)
-    return keys
-
-
 async def _recent_messages(session: AsyncSession, conversation_id: UUID) -> list[dict[str, str]]:
-    rows = (await list_messages(session, conversation_id))[-RECENT_LIMIT:]
+    rows = [
+        row
+        for row in await list_messages(session, conversation_id)
+        if row.role in {"USER", "ASSISTANT"} and not (getattr(row, "message_metadata", None) or {}).get("internal")
+    ][-RECENT_LIMIT:]
     return [
         {
             "role": row.role,
-            "content": row.content[:1000],
+            "content": row.content,
             "created_at": row.created_at.isoformat() if row.created_at is not None else "",
         }
         for row in rows
     ]
-
-
-def _recent_text(items: object) -> str:
-    lines = []
-    for item in items if isinstance(items, list) else []:
-        if not isinstance(item, dict):
-            continue
-        role = str(item.get("role") or "")
-        content = " ".join(str(item.get("content") or "").split())
-        if role and content:
-            lines.append(f"{role}: {content[:500]}")
-    return "\n".join(lines)
 
 
 def _summary(plan: ClarifyPlan, assistant_text: str) -> str:
@@ -184,11 +155,11 @@ def _summary(plan: ClarifyPlan, assistant_text: str) -> str:
         f"family={plan.family}",
         f"facts_locked={plan.locked}",
     ]
-    if plan.requested_action:
+    if plan.requested_action and plan.task_change != TaskChange.CANCEL:
         lines.append(f"requested_action={plan.requested_action}")
     if plan.user_intent:
         lines.append(f"user_intent={plan.user_intent}")
-    if plan.missing_keys:
+    if plan.missing_keys and plan.task_change != TaskChange.CANCEL:
         lines.append("missing=" + ", ".join(f"{key} ({fact_label(key)})" for key in plan.missing_keys))
     if plan.merged:
         values = []

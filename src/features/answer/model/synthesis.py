@@ -1,13 +1,8 @@
-"""Call the case-report model, then reject any conclusion the passages do not contain.
+"""Synthesize a source-backed proposal without erasing it for incomplete verification.
 
-The model reads the confirmed facts and the passages feature 5 already retrieved.
-It writes the Vietnamese case report and a structured handoff. It does not search,
-issue a decision, or create a legal ticket. A quote that is not a verbatim span of
-its chunk is dropped. Python locks a company level only when an internal-rule quote
-names that form and a law or guiding-decree quote is cited with it, at low or medium
-evidence risk. An internal-rule level without that legal quote stays in the report
-at high risk and is not locked. Precedent and administrative penalties cannot carry
-the employee sanction. Python does not choose a harsher or lighter level.
+References and disproven conditions are checked before keeping a proposed level.
+Full source and condition checks still govern the downstream verification flags.
+The model selects the level; this module never issues a decision or legal ticket.
 """
 
 import asyncio
@@ -18,6 +13,7 @@ from urllib.parse import urlparse
 from uuid import UUID
 
 import httpx
+from openai import LengthFinishReasonError
 
 from src.agents.handoff import CaseHandoff
 from src.core.config import settings
@@ -39,7 +35,7 @@ from src.services.chat_client import create_chat_model
 
 logger = logging.getLogger(__name__)
 
-PROMPT_VERSION = "evidence-synthesis-v6-general-rubric"
+PROMPT_VERSION = "evidence-synthesis-v9-coherent-reply"
 MAX_RETRIES = 1
 _COMPANY = frozenset({"WARNING", "WAGE_POSTPONEMENT", "DEMOTION", "DISMISSAL"})
 _PHRASES = (
@@ -74,18 +70,37 @@ Khi đề xuất hình thức, evidence phải trích cả phần nêu hình th�
 Liên kết luật/hướng dẫn và nội quy cho CÙNG hành vi. Không dùng một đoạn luật bất kỳ để hợp thức hóa nội quy.
 
 status = SUPPORTED chỉ khi một mức khớp đủ điều kiện được chứng minh. Không chọn hình thức nặng nhất hoặc nhẹ nhất; chọn đúng mức câu quy định ứng với tình tiết.
-NEED_MORE_FACTS: còn điều kiện bắt buộc UNKNOWN, recommended_sanction=null; hỏi đúng thông tin thiếu.
-MULTIPLE_SUPPORTED: nhiều mức đủ điều kiện và nguồn không chỉ định một mức, recommended_sanction=null.
+NEED_MORE_FACTS: còn điều kiện bắt buộc UNKNOWN, vẫn chọn recommended_sanction phù hợp nhất từ nguồn;
+nêu rõ điều kiện cần kiểm tra trước khi áp dụng và hỏi đúng thông tin thiếu, không tự coi điều kiện đó đã đáp ứng.
+MULTIPLE_SUPPORTED: so sánh các mức và chọn một recommended_sanction phù hợp nhất với tình tiết đã có, giải thích
+vì sao chọn mức này thay vì các mức khác; không để null chỉ vì có nhiều phương án.
 CONFLICTED: nguồn mâu thuẫn chưa giải quyết được, recommended_sanction=null.
-NOT_SUPPORTED: không có điều khoản áp dụng; reason bắt đầu 'Chưa đủ căn cứ retrieval để xác định mức xử lý.'
-NEED_LEGAL_REVIEW: mâu thuẫn hoặc không đủ kiểm tra áp dụng, recommended_sanction=null.
-Chỉ có nội quy: có thể ghi mức được điều khoản hỗ trợ, risk HIGH; chưa kết luận nội quy trái luật. Chưa retrieval được không có nghĩa pháp luật không quy định.
+NOT_SUPPORTED: nguồn không áp dụng hoặc bác bỏ việc kỷ luật; recommended_sanction=null, quyết định chưa áp dụng
+kỷ luật, giải thích rõ căn cứ và bước xử lý tiếp. Có dữ liệu thì không trả lời chung chung 'chưa đủ căn cứ'.
+NEED_LEGAL_REVIEW: giữ recommended_sanction được nguồn hỗ trợ khi cần rà soát thêm, nêu rõ rủi ro và việc cần kiểm tra.
+Chỉ bỏ mức nếu nguồn mâu thuẫn chưa giải quyết được, điều kiện đã bị bác bỏ, mức không có trích dẫn đúng hoặc có căn cứ cấm.
+Chỉ có nội quy hoặc luật: phải ghi mức được điều khoản hỗ trợ, risk HIGH; nêu nguồn đồng hành cần bổ sung trước áp dụng.
+Chưa kết luận nội quy trái luật. Chưa retrieval được không có nghĩa pháp luật không quy định.
 Thiếu biên bản/giải trình là thiếu thủ tục, không xóa kết quả đối chiếu mức đã đủ điều kiện.
 Đối tượng/hợp đồng cần được đối chiếu theo nguồn; không chỉ dựa nhãn thử việc để suy ra mức hoặc tự từ chối hỗ trợ. TERMINATION không phải mức kỷ luật.
 Mã mức kỷ luật: WARNING=khiển trách; WAGE_POSTPONEMENT=kéo dài/hoãn nâng lương; DEMOTION=cách chức; DISMISSAL=sa thải.
 REPRIMAND/cảnh cáo là mã cũ, không sinh đề xuất mới với mã này. Không dùng phạt tiền, cắt lương hoặc tạm đình chỉ làm mức kỷ luật.
 Risk đo chắc chắn của căn cứ: LOW khi điều kiện đủ, luật/nội quy phù hợp; MEDIUM khi thông tin/thủ tục phụ chưa hoàn tất; HIGH khi thiếu căn cứ, thiếu điều kiện hoặc mâu thuẫn.
 Procedure REQUIRED chỉ khi có trích dẫn yêu cầu; không tự tạo quy trình. reason viết như trợ lý đang trao đổi với HR: tối đa 2–3 câu ngắn, giải thích tình tiết khớp căn cứ nào hoặc vì sao chưa thể đề xuất; không lặp lại tên mức đã có trong recommended_sanction, báo cáo, mã trạng thái, UUID hoặc thuật ngữ retrieval/handoff. description của rule diễn giải ngắn căn cứ, không sao chép báo cáo dài.
+Các câu trong reason phải nối tiếp nhau: tình tiết nào là cơ sở xem xét mức, căn cứ nào hỗ trợ và điểm nào còn phải
+kiểm chứng. Nếu điều kiện còn UNKNOWN, không khẳng định đã khớp hoàn toàn hoặc đủ mọi điều kiện áp dụng.
+risk_assessment.reasons chỉ nêu rủi ro/bất định cụ thể; không đưa nhận xét tích cực như 'Có đủ căn cứ pháp luật'
+vào danh sách rủi ro. Không khẳng định thiệt hại thực tế khi facts chưa xác nhận; chỉ mô tả nguy cơ hoặc tác động tiềm tàng.
+
+ĐẦU RA NỘI BỘ NGẮN GỌN, ƯU TIÊN SUY LUẬN ĐỂ CHỌN ĐÚNG MỨC:
+Đọc đầy đủ nguồn đầu vào; chỉ xuất các rule trực tiếp dùng để quyết định, điều kiện bắt buộc, ngoại lệ và điểm mâu thuẫn
+cần kiểm tra. Không lập một bản phân tích riêng cho từng đoạn retrieval trùng ý hoặc không liên quan.
+case_summary chỉ cần violation và missing_facts; bỏ facts vì Python gắn lại toàn bộ tình tiết đã xác nhận từ đầu vào.
+Mỗi quote lấy đoạn nguyên văn ngắn nhất vẫn đủ hình thức, điều kiện và ngoại lệ; không sao chép nguyên điều luật dài
+vào nhiều evidence. fact_value vẫn phải khớp y nguyên đầu vào. Không bỏ điều kiện bất lợi để làm ngắn kết quả.
+Bỏ các trường tùy chọn rỗng hoặc mặc định; không liệt kê lại supported_sanctions/excluded_sanctions khi đã giải thích
+lựa chọn trong reason. Mỗi mô tả, requirement và next_action một câu ngắn; giữ đủ các kiểm tra ban hành của rubric.
+Không xuất report, handoff, điểm confidence hay bản chép lại toàn bộ hồ sơ; Python dựng các phần này từ kết quả đã kiểm chứng.
 """
     + REASONING_RUBRIC
 )
@@ -118,15 +133,6 @@ async def synthesize(message: CaseHandoff, layered: LayeredBasis) -> Assessment:
     """Read one handoff. A missing key or a bad payload leaves the level unset."""
     if not settings.chat_api_key:
         return unavailable_assessment(message.facts, "Chưa có mô hình tổng hợp. Mức xử lý đề xuất: chưa xác định.")
-    degraded = any(item.retrieval_status == "DEGRADED" for item in message.passages)
-    if degraded:
-        gaps = sorted({gap for item in message.passages for gap in item.evidence_gaps})
-        return unavailable_assessment(
-            message.facts,
-            "Chưa hoàn tất kiểm tra căn cứ truy xuất (" + ", ".join(gaps) + "). "
-            "Kiểm tra COHERE_API_KEY hoặc dịch vụ rerank rồi chạy lại; chưa xác định mức xử lý.",
-            operational_status="RERANK_FAILED",
-        )
     payload = _payload(message, layered)
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -134,6 +140,7 @@ async def synthesize(message: CaseHandoff, layered: LayeredBasis) -> Assessment:
     ]
     model_names = settings.chat_models()
     failed_models: set[str] = set()
+    length_limited_models: set[str] = set()
     last_error = "invalid_assessment"
     total_started = time.perf_counter()
     deadline = total_started + settings.SYNTHESIS_TOTAL_TIMEOUT_SECONDS
@@ -162,7 +169,10 @@ async def synthesize(message: CaseHandoff, layered: LayeredBasis) -> Assessment:
             try:
                 call_started = time.perf_counter()
                 parsed = await asyncio.wait_for(
-                    _complete(messages, attempt, model_name), timeout=min(remaining, settings.SYNTHESIS_TIMEOUT_SECONDS)
+                    _complete(messages, attempt, model_name, length_retry=True)
+                    if model_name in length_limited_models
+                    else _complete(messages, attempt, model_name),
+                    timeout=min(remaining, settings.SYNTHESIS_TIMEOUT_SECONDS),
                 )
                 logger.info(
                     "agent_stage end stage=synthesis_llm model=%s attempt=%s latency_ms=%s",
@@ -176,11 +186,46 @@ async def synthesize(message: CaseHandoff, layered: LayeredBasis) -> Assessment:
                     model_name,
                 )
                 accepted = guard(parsed, _passages(layered), facts=_confirmed_facts(message))
+                if (
+                    not accepted.sanction_assessment.recommended_sanction
+                    and parsed.sanction_assessment.status != "NOT_SUPPORTED"
+                    and attempt < MAX_RETRIES
+                ):
+                    messages.extend(
+                        [
+                            {
+                                "role": "assistant",
+                                "content": SynthesisAssessment.model_validate(parsed.model_dump()).model_dump_json(),
+                            },
+                            {
+                                "role": "user",
+                                "content": (
+                                    "Bản tổng hợp chưa có quyết định mức xử lý hợp lệ. Có dữ liệu truy xuất: hãy đọc lại nguồn và "
+                                    "chọn một recommended_sanction phù hợp nhất, trích nguyên văn đúng nguồn nêu hình thức và hành vi. "
+                                    "Thiếu thủ tục/nguồn đồng hành/điều kiện cần xác minh không làm mất mức đề xuất. "
+                                    "Nếu các nguồn không cho phép áp dụng hình thức nào, ghi NOT_SUPPORTED, kết luận chưa áp dụng "
+                                    "kỷ luật và nêu bước tiếp theo. Không bịa mức hoặc điều kiện. Kết quả kiểm tra: "
+                                    + accepted.sanction_assessment.reason
+                                ),
+                            },
+                        ]
+                    )
+                    continue
                 from src.features.answer.model.report import render_report
 
                 return accepted.model_copy(update={"report": render_report(message, accepted)})
             except Exception as exc:
                 last_error = f"{model_name}: {_error_name(exc)}"
+                if isinstance(exc, LengthFinishReasonError):
+                    length_limited_models.add(model_name)
+                    usage = exc.completion.usage
+                    logger.warning(
+                        "agent_stage retry stage=synthesis reason=output_length model=%s completion_tokens=%s retry_max_tokens=%s reasoning_effort=%s",
+                        model_name,
+                        usage.completion_tokens if usage else None,
+                        _output_budget(length_retry=True),
+                        settings.SYNTHESIS_REASONING_EFFORT,
+                    )
                 logger.warning(
                     "agent_stage error stage=synthesis_llm model=%s attempt=%s latency_ms=%s error=%s",
                     model_name,
@@ -203,13 +248,7 @@ async def synthesize(message: CaseHandoff, layered: LayeredBasis) -> Assessment:
 
 
 def guard(assessment: Assessment, passages: list[Passage], *, facts: dict[str, str] | None = None) -> Assessment:
-    """Drop conclusions whose quotes are not in the retrieved chunks.
-
-    An internal rule that names one form keeps that form in the report when no
-    law or guiding decree is quoted with it. The lock stays closed: can_recommend
-    is true only for a grounded form at low or medium risk. The legal ticket flag
-    is always false.
-    """
+    """Verify citations while preserving proposals with explicit uncertainty and high risk."""
     index = {_chunk_key(passage.chunk_id): passage for passage in passages}
     status = assessment.sanction_assessment.status
     level = _canonical(assessment.sanction_assessment.recommended_sanction)
@@ -301,12 +340,12 @@ def guard(assessment: Assessment, passages: list[Passage], *, facts: dict[str, s
         and assessment.operational_status == "OK"
     )
     if status == "SUPPORTED" and unknown:
-        status, level, risk = "NEED_MORE_FACTS", None, "HIGH"
+        status, risk = "NEED_MORE_FACTS", "HIGH"
         reason = f"{reason} Chưa chứng minh đầy đủ điều kiện bằng tình tiết đã xác nhận và trích dẫn."
-    if status == "SUPPORTED" and unverified:
-        status, level, risk = "NEED_LEGAL_REVIEW", None, "HIGH"
+    if status in {"SUPPORTED", "NEED_MORE_FACTS"} and unverified:
+        status, risk = "NEED_LEGAL_REVIEW", "HIGH"
         reason = f"{reason} Tình tiết đã có nhưng việc áp dụng điều kiện chưa được chứng minh bằng trích dẫn phù hợp."
-    if status == "SUPPORTED" and (unsatisfied or assessment.conflicts):
+    if unsatisfied or assessment.conflicts:
         status, level, risk = "NEED_LEGAL_REVIEW", None, "HIGH"
         reason = f"{reason} Đề xuất mâu thuẫn với điều kiện hoặc xung đột căn cứ; cần kiểm tra lại."
     if status == "SUPPORTED":
@@ -325,12 +364,16 @@ def guard(assessment: Assessment, passages: list[Passage], *, facts: dict[str, s
                 note = "Chưa có nội quy nêu đúng hình thức này đi kèm luật hoặc nghị định."
             if note not in reasons:
                 reasons.append(note)
-    elif status == "MULTIPLE_SUPPORTED":
-        level = None
-        risk = "HIGH" if risk == "HIGH" else "MEDIUM"
+    elif status in {"NEED_MORE_FACTS", "NEED_LEGAL_REVIEW", "MULTIPLE_SUPPORTED"}:
+        risk = "HIGH"
     else:
         level = None
         risk = "HIGH"
+    # A proposal is retained while conditions or companion sources are checked.
+    # Forged references, disallowed levels and disproven conditions never become proposals.
+    if not (named_by_rule or named_by_authority) or len(valid_raw_refs) != len(raw_refs):
+        level = None
+        grounded = False
     can_recommend = status == "SUPPORTED" and level is not None and grounded
     if can_recommend and risk != "HIGH":
         risk = (
@@ -358,7 +401,7 @@ def guard(assessment: Assessment, passages: list[Passage], *, facts: dict[str, s
     missing.extend(gap.fact for gap in fact_gaps)
     missing = list(dict.fromkeys(missing))
     if status == "NEED_MORE_FACTS" and not missing and unverified:
-        status, level, risk = "NEED_LEGAL_REVIEW", None, "HIGH"
+        status, risk = "NEED_LEGAL_REVIEW", "HIGH"
         needs_legal_review = True
     steps = []
     for step in assessment.procedure_assessment.steps:
@@ -630,27 +673,48 @@ def _chunk_key(value: UUID | str) -> str:
         return str(value)
 
 
-async def _complete(messages: list[dict[str, str]], attempt: int, model_name: str) -> Assessment:
+def _output_budget(*, length_retry: bool = False) -> int:
+    return min(settings.SYNTHESIS_MAX_TOKENS * (2 if length_retry else 1), 32000)
+
+
+async def _complete(
+    messages: list[dict[str, str]], attempt: int, model_name: str, *, length_retry: bool = False
+) -> Assessment:
     prompt = list(messages)
     if attempt:
         prompt.append(
             {
                 "role": "user",
-                "content": "Bản trước không đúng schema. Chỉ trả JSON đánh giá, không có report/handoff. Kiểm tra mọi điều kiện và trích dẫn nguyên văn.",
+                "content": "Kiểm tra lại bản tổng hợp theo yêu cầu bổ sung. Chỉ trả JSON đánh giá đúng schema, không có report/handoff. Kiểm tra mọi điều kiện và trích dẫn nguyên văn.",
             }
         )
+    if length_retry:
+        prompt.append(
+            {
+                "role": "user",
+                "content": (
+                    "Lần trước phản hồi bị cắt vì hết ngân sách đầu ra, không phải thiếu dữ liệu. "
+                    "Trả một JSON hoàn chỉnh, ngắn gọn đúng schema: chỉ các rule cần cho quyết định và điều kiện bắt buộc, "
+                    "trích dẫn đoạn ngắn nhất vẫn đủ hình thức, điều kiện và ngoại lệ. Không lặp nguyên toàn bộ tài liệu, "
+                    "không viết report/handoff hoặc giải thích dài. Giữ nguyên việc kiểm tra mọi điều kiện; không bỏ điều kiện "
+                    "bất lợi để rút ngắn. Dữ liệu nguồn đầu vào vẫn đầy đủ như lượt trước."
+                ),
+            }
+        )
+    budget = _output_budget(length_retry=length_retry)
+    reasoning = settings.SYNTHESIS_REASONING_EFFORT
     model = create_chat_model(
         model_name,
         temperature=0,
         timeout=settings.SYNTHESIS_TIMEOUT_SECONDS,
         max_retries=0,
-        max_tokens=settings.SYNTHESIS_MAX_TOKENS if settings.LLM_PROVIDER == "mistral" else None,
+        max_tokens=budget if settings.LLM_PROVIDER == "mistral" else None,
         **(
             {
-                "reasoning_effort": settings.SYNTHESIS_REASONING_EFFORT,
+                "reasoning_effort": reasoning,
                 "extra_body": {
-                    "max_tokens": settings.SYNTHESIS_MAX_TOKENS,
-                    "thinking": {"type": "disabled" if settings.SYNTHESIS_REASONING_EFFORT == "none" else "enabled"},
+                    "max_tokens": budget,
+                    "thinking": {"type": "disabled" if reasoning == "none" else "enabled"},
                 },
             }
             if settings.LLM_PROVIDER == "deepseek"

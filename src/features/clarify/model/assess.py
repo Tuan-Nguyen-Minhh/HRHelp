@@ -41,6 +41,8 @@ class ClarifyPlan:
     validation: str = "ok"
     accepted_keys: tuple[str, ...] = ()
     specs: tuple[FactSpec, ...] = ()
+    state_update: str = "progress"
+    task_change: str = "keep"
 
 
 def assess(text: str, stored: dict[str, StoredFact]) -> ClarifyPlan:

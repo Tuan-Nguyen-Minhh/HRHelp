@@ -21,6 +21,7 @@ from uuid import UUID
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from src.agents.conversation import WORKFLOW_ACTIONS, StateUpdate, TaskChange
 from src.agents.handoff import CaseHandoff
 from src.features.cite.model.graph import SearchFn, handoff_node
 from src.features.cite.model.passage import Passage
@@ -75,6 +76,10 @@ class CaseState(TypedDict, total=False):
     conflicts: list[dict]
     requested_action: str
     pending_action: str
+    pending_fact_keys: list[str]
+    active_specs: list[FactSpec]
+    state_update: str
+    task_change: str
     planner_fallback: bool
     user_intent: str
     ambiguities: list[str]
@@ -122,6 +127,17 @@ def build_case_graph(
             "selected_route": route,
             "requested_action": requested_action,
             "route_trace": trace,
+            "task_change": (
+                (TaskChange.CANCEL.value if decision.task_change == TaskChange.CANCEL else TaskChange.REPLACE.value)
+                if not result.fallback
+                and decision.confidence >= MIN_ROUTE_CONFIDENCE
+                and route != Route.UNSUPPORTED
+                and (
+                    decision.task_change == TaskChange.CANCEL
+                    or (requested_action in WORKFLOW_ACTIONS and requested_action != state.get("pending_action"))
+                )
+                else TaskChange.KEEP.value
+            ),
         }
         logger.info(
             "orchestrator_route_trace case_id=%s route=%s action=%s rule=%s llm_route=%s confidence=%s signals=%s candidates=%s",
@@ -196,6 +212,12 @@ def build_case_graph(
         return {"question": await answer_case_question(question, state)}
 
     async def disambiguate_node(state: CaseState) -> dict:
+        if state.get("task_change") == TaskChange.CANCEL:
+            return {"question": "Đã dừng tác vụ đang chờ. Các tình tiết đã lưu vẫn được giữ lại."}
+        if state.get("intent_router_fallback_kind") in {IntentFallback.OUTPUT.value, IntentFallback.TECHNICAL.value}:
+            return {
+                "question": "Lượt này gặp lỗi xử lý phản hồi. Tôi đã giữ nguyên yêu cầu và thông tin đang có để tiếp tục."
+            }
         return {
             "question": (
                 "Mình chưa chắc mục tiêu chính của lượt này là xem thông tin đang lưu trong hồ sơ, bổ sung tình tiết, "
@@ -245,15 +267,17 @@ def _route_entry(state: CaseState) -> str:
 
 def route_after_intent(state: CaseState) -> str:
     """Route from the intent decision. Python keeps final control."""
-    if state.get("intent_router_fallback_kind") == IntentFallback.TECHNICAL.value:
-        return "extract"
-    if state.get("intent_router_fallback_kind") == IntentFallback.SEMANTIC.value:
+    if state.get("task_change") == TaskChange.CANCEL:
         return "disambiguate"
     route = state.get("selected_route")
     if not isinstance(route, Route):
         decision = state.get("intent_decision")
         if isinstance(decision, IntentDecision):
-            route, _, _ = _decide_intent_route(state, decision, IntentFallback.NONE)
+            route, _, _ = _decide_intent_route(
+                state, decision, IntentFallback(state.get("intent_router_fallback_kind") or IntentFallback.NONE)
+            )
+        elif state.get("intent_router_fallback_kind") == IntentFallback.TECHNICAL.value:
+            return "extract"
     if not isinstance(route, Route):
         return "disambiguate"
     if route == Route.CASE_QA:
@@ -266,7 +290,9 @@ def route_after_intent(state: CaseState) -> str:
         decision = state.get("intent_decision")
         if not isinstance(decision, IntentDecision):
             return "disambiguate"
-        return "extract" if decision.requires_fact_planner else "action"
+        return (
+            "extract" if decision.requires_fact_planner or decision.requested_action in WORKFLOW_ACTIONS else "action"
+        )
     if route in {Route.EXTERNAL_RESEARCH, Route.UNSUPPORTED, Route.CAPABILITY_GAP}:
         return "action"
     if route == Route.CLARIFY:
@@ -288,8 +314,15 @@ def _decide_intent_route(
     requested_action = ""
     rule = "default_clarify"
     rejected: list[dict[str, str]] = []
+    waiting = bool(state.get("pending_fact_keys", state.get("locked_fact_keys")))
+    latest = state.get("latest_user_message", state.get("text")) or ""
 
-    if fallback_kind == IntentFallback.TECHNICAL:
+    if fallback_kind == IntentFallback.OUTPUT:
+        selected = Route.FACT_PLANNER if waiting and latest else Route.CLARIFY
+        rule = (
+            "output_failure_revalidate_pending_reply" if selected == Route.FACT_PLANNER else "output_failure_preserve"
+        )
+    elif fallback_kind == IntentFallback.TECHNICAL:
         selected = Route.FACT_PLANNER
         rule = "technical_fallback_to_fact_planner"
     elif fallback_kind == IntentFallback.SEMANTIC:
@@ -306,8 +339,8 @@ def _decide_intent_route(
         if decision.route != Route.EXTERNAL_RESEARCH:
             rejected.append({"route": decision.route.value, "reason": "external/latest signal has higher priority"})
     elif decision.confidence < MIN_ROUTE_CONFIDENCE:
-        selected = Route.CLARIFY
-        rule = "low_confidence_clarify"
+        selected = Route.FACT_PLANNER if waiting and latest else Route.CLARIFY
+        rule = "low_confidence_validate_pending_reply" if selected == Route.FACT_PLANNER else "low_confidence_clarify"
     elif decision.route == Route.CAPABILITY_GAP:
         selected = Route.CAPABILITY_GAP
         requested_action = "capability_gap"
@@ -423,7 +456,7 @@ def _baseline_state(state: CaseState) -> dict:
     return {
         "family": family,
         "merged": stored,
-        "missing_keys": [],
+        "missing_keys": list(state.get("pending_fact_keys") or []),
         "facts_locked": False,
         "conflicts": [],
         "requested_action": "",
@@ -432,5 +465,6 @@ def _baseline_state(state: CaseState) -> dict:
         "ambiguities": [],
         "validation": "ok",
         "accepted_keys": [],
-        "specs": list(default_dynamic_specs(family, set(stored))),
+        "specs": list(state.get("active_specs") or default_dynamic_specs(family, set(stored))),
+        "state_update": StateUpdate.PRESERVE.value,
     }

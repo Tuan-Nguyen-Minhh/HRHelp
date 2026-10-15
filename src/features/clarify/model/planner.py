@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 import httpx
 
+from src.agents.conversation import ORCHESTRATOR_RULES
 from src.core.config import settings
 from src.features.clarify.model.decision import (
     CaseFamily,
@@ -78,8 +79,18 @@ def _messages(state: dict) -> list[dict[str, str]]:
         context += "\n\nLATEST_USER_MESSAGE\n" + (state.get("latest_user_message") or "(none)")
     context += "\n\nORCHESTRATOR_ACTION\n" + (state.get("requested_action") or "(none)")
     context += "\n\nPENDING_ACTION\n" + (state.get("pending_action") or "(none)")
+    specs = state.get("active_specs") or []
+    if specs:
+        context += "\n\nACTIVE FACT SCHEMA (preserve while answering outstanding questions)\n"
+        context += json.dumps(
+            [
+                {"key": spec.key, "label": spec.label, "question": spec.question, "required": spec.required}
+                for spec in specs
+            ],
+            ensure_ascii=False,
+        )
     return [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": SYSTEM_PROMPT + "\n\n" + ORCHESTRATOR_RULES},
         {"role": "user", "content": context},
     ]
 

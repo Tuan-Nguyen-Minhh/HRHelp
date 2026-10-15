@@ -32,7 +32,8 @@ RUBRIC SUY LUẬN CHUNG hr-reasoning-v1 (áp dụng cho mọi hành vi, không c
    chỉ cần một nhánh đáp ứng (OR giữa các nhóm). Không biến các trường hợp thay thế trong điều luật thành AND.
 4. Chỉ chọn mức nguồn cho phép, giải thích ngắn quan hệ hành vi → điều kiện → hình thức. Không suy mức từ cảm tính,
    điểm nghiêm trọng, tiền lệ hoặc độ giống văn bản. Khi nhiều mức: giải thích cơ sở lựa chọn nếu nguồn cho phép
-   cân nhắc; nếu chưa phân giải được thì MULTIPLE_SUPPORTED/CONFLICTED. Không tự chọn nặng nhất/nhẹ nhất.
+   cân nhắc; phải lựa chọn một mức phù hợp nhất và giải thích cơ sở lựa chọn, không chỉ liệt kê nhiều mức rồi bỏ trống
+   đề xuất. Không tự chọn nặng nhất/nhẹ nhất. Nếu nguồn bác bỏ việc áp dụng thì kết luận chưa áp dụng kỷ luật.
 5. rubric_reasoning.severity là mô tả tác động trên thang 1–5: 1 hạn chế/có thể khắc phục, 2 tác động thấp,
    3 tác động đáng kể, 4 tác động lớn, 5 tác động đặc biệt lớn. Đây là neo mô tả do sản phẩm đặt, không phải ngưỡng luật.
    Nêu reason, fact_keys và evidence chứng minh; chưa đủ dữ liệu thì score=null. Không lấy mức hình thức để suy ngược
@@ -50,6 +51,11 @@ RUBRIC SUY LUẬN CHUNG hr-reasoning-v1 (áp dụng cho mọi hành vi, không c
    Nếu có căn cứ cấm áp dụng về nội dung, không gọi mức đó là đề xuất hợp lệ; chuyển NEED_LEGAL_REVIEW.
 8. Không tự chấm xác suất đúng hoặc confidence phần trăm. Python tính EVIDENCE_SUPPORT_INDEX từ kiểm chứng;
    điểm này không phải xác suất pháp lý, điểm rerank cũng không phải độ tin cậy của kết luận.
+9. Có dữ liệu truy xuất thì luôn đánh giá và ra quyết định xử lý. Ghi recommended_sanction là mức phù hợp nhất
+   mà nguồn hỗ trợ; các điều kiện chưa rõ, thiếu nguồn đồng hành hoặc thủ tục được ghi riêng để kiểm tra trước áp dụng,
+   không dùng chúng để bỏ trống mức đề xuất. Chỉ khi truy xuất không có dữ liệu mới trả lời chưa đủ căn cứ để đưa ra mức.
+   Nếu tài liệu chỉ là tiền lệ/xử phạt hành chính, không liên quan hoặc có căn cứ cấm, quyết định chưa áp dụng kỷ luật
+   và nêu việc cần làm; không bịa hình thức xử lý ngoài nguồn. Không tự ban hành quyết định.
 Chỉ xuất kết luận ngắn, bảng điều kiện và căn cứ đủ kiểm tra; không xuất chuỗi suy nghĩ dài.
 """
 

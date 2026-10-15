@@ -6,6 +6,7 @@ These fixtures verify mechanics and refusal paths, not legal-domain accuracy.
 import json
 from dataclasses import replace
 from datetime import date
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import httpx
@@ -157,21 +158,22 @@ def test_administrative_penalty_cannot_fill_employee_sanction_authority():
 
 
 @pytest.mark.asyncio
-async def test_missing_key_propagates_to_handoff_and_skips_synthesis(monkeypatch):
+async def test_degraded_rerank_keeps_synthesis_and_a_proposal_for_review(monkeypatch):
     law = _passage("LAW", "L", "Law", "Khiển trách.")
     rule = _passage("INTERNAL_RULE", "NQ", "Rule", "Khiển trách.")
     selected = select_evidence([law, rule], status="MISSING_KEY")
     handoff = handoff_node({"hits": selected.passages, "facts": _READY,
                            "incident_date": date(2026, 3, 1), "agent_run_id": uuid4()})["handoff"]
     monkeypatch.setattr(settings, "DEEPSEEK_API_KEY", "test")
-    async def forbidden(*args):
-        raise AssertionError("synthesis must not run after degraded rerank")
-    monkeypatch.setattr("src.features.answer.model.synthesis._complete", forbidden)
+    complete = AsyncMock(return_value=_supported("WARNING", law, rule))
+    monkeypatch.setattr("src.features.answer.model.synthesis._complete", complete)
     from src.features.answer.model.layers import split_passages
     result = await synthesize(handoff, split_passages(selected.passages))
-    assert result.operational_status == "RERANK_FAILED"
+    complete.assert_awaited_once()
+    assert result.operational_status == "OK"
     assert not result.downstream_handoff.can_recommend
-    assert "COHERE_API_KEY" in result.sanction_assessment.reason
+    assert result.sanction_assessment.recommended_sanction == "WARNING"
+    assert result.risk_assessment.level == "HIGH"
 
 
 def test_unrelated_law_cannot_unlock_a_company_level_even_with_claimed_conditions():
@@ -192,7 +194,9 @@ def test_invented_confirmed_fact_forces_unknown():
     result = guard(raw, [law, rule], facts=_READY)
     assert result.sanction_assessment.status == "NEED_LEGAL_REVIEW"
     assert "absence_days" not in result.case_summary.missing_facts
-    assert result.sanction_assessment.recommended_sanction is None
+    assert result.sanction_assessment.recommended_sanction == "WARNING"
+    assert not result.downstream_handoff.can_recommend
+    assert result.risk_assessment.level == "HIGH"
 
 
 @pytest.mark.asyncio
@@ -343,7 +347,11 @@ def test_supported_flag_cannot_override_missing_or_conflicting_conditions(proble
         raw = raw.model_copy(update={'conflicts': [Conflict(topic='mức xử lý', description='Hai nguồn mâu thuẫn')]})
     checked = guard(raw, [law, rule], facts=_READY)
     assert not checked.downstream_handoff.can_recommend
-    assert checked.sanction_assessment.recommended_sanction is None
+    if problem in {"unsatisfied", "conflict"}:
+        assert checked.sanction_assessment.recommended_sanction is None
+    else:
+        assert checked.sanction_assessment.recommended_sanction == "WARNING"
+        assert checked.risk_assessment.level == "HIGH"
 
 
 @pytest.mark.asyncio

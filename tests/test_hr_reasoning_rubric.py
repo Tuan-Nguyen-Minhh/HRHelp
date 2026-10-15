@@ -121,7 +121,7 @@ def test_missing_procedure_keeps_grounded_proposal_and_reports_actions():
     assert not accepted.downstream_handoff.can_finalize
     reply = assessment_reply(accepted, _decide(facts, passages, accepted), split_passages(passages))
     assert "tôi đề xuất mức khiển trách" in reply and "Trước khi ban hành" in reply
-    assert "xác suất kết luận đúng" in reply and "Mở biên bản" not in reply
+    assert "Căn cứ hỗ trợ mức xử lý này được đánh giá" in reply and "Mở biên bản" not in reply
 
 
 def test_heading_and_body_from_same_chunk_bind_sanction():

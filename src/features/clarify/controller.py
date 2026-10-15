@@ -57,7 +57,7 @@ async def read_messages(
         messages=[
             MessageView(id=row.id, role=row.role, content=row.content, created_at=row.created_at)
             for row in rows
-            if not (row.message_metadata or {}).get("internal")
+            if row.role != "SYSTEM" and not (row.message_metadata or {}).get("internal")
         ],
     )
 

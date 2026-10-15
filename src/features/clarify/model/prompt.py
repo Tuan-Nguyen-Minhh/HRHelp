@@ -2,7 +2,7 @@
 
 from src.features.clarify.model.catalog import ABSENCE, GENERAL, LATE, required_specs
 
-PROMPT_VERSION = "clarify-planner-v5-semantic-minutes"
+PROMPT_VERSION = "clarify-planner-v6-conversation-contract"
 
 SYSTEM_PROMPT = """You are the semantic planning component of an HR case clarification agent.
 
@@ -98,8 +98,6 @@ def render_case_prompt(narrative: str, stored_lines: list[str]) -> str:
         blocks.append(title + "\n" + "\n".join(lines))
     stored = "\n".join(stored_lines) if stored_lines else "(none)"
     text = narrative.strip() or "(empty)"
-    if len(text) > 8000:
-        text = text[-8000:]
     catalog = "\n\n".join(blocks)
     return (
         "CATALOG TEMPLATES YOU MAY REUSE\n"
