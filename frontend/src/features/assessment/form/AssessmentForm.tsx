@@ -187,10 +187,10 @@ export function AssessmentForm() {
       <header className="rounded-xl border border-rule bg-white px-4 py-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold tracking-[0.14em] text-son-dark">HỒ SƠ #{sections.case_information.case_code}</p>
+            <p className="text-xs font-semibold tracking-[0.14em] text-son-dark">HỒ SƠ {sections.case_information.case_code}</p>
             <h2 className="mt-1 text-xl font-semibold text-ink">Biên bản xử lý vi phạm kỷ luật</h2>
             <p className="mt-1 text-sm text-ink-3">
-              {view.metadata.source === "HR" ? "HR đã sửa bản này." : "AI đề xuất bản nháp."} Lập ngày {formatDate(view.metadata.generated_at)}. Phiên bản {view.version}.
+              {view.metadata.source === "HR" ? "HR đã sửa bản này." : "AI đề xuất bản nháp."} Lập ngày {formatDate(view.metadata.case_created_date ?? null)}. Phiên bản {view.version}.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">

@@ -6,7 +6,7 @@ unconfirmed until HR confirms it, so assessment does not read it before that.
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.common.access import require_mutable_case
@@ -71,7 +71,7 @@ async def _priors(
         select(Case, DisciplinaryDecision)
         .join(DisciplinaryDecision, DisciplinaryDecision.case_id == Case.id)
         .where(
-            Case.employee_code == case.employee_code,
+            func.upper(Case.employee_code) == case.employee_code.strip().upper(),
             Case.id != case.id,
             Case.status.in_(("DECIDED", "CLOSED")),
         )

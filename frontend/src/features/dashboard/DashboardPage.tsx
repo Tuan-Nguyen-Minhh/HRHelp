@@ -80,7 +80,7 @@ export function DashboardPage() {
             {queue.data && queue.data.reviews.length === 0 ? (
               <p className="text-sm text-ink-3">Không có phiếu chờ pháp chế.</p>
             ) : null}
-            <ul className="space-y-2">
+            <ul className="space-y-2 uppercase">
               {(queue.data?.reviews ?? []).map((item) => (
                 <li key={item.case_id}>
                   <Link className="font-medium text-son-dark underline" to={`/legal-review/${item.case_id}`}>
@@ -104,7 +104,7 @@ export function DashboardPage() {
             {managerQueue.data && managerQueue.data.cases.length === 0 ? (
               <p className="text-sm text-ink-3">Không có hồ sơ chờ quản lý.</p>
             ) : null}
-            <ul className="space-y-2">
+            <ul className="space-y-2 uppercase">
               {(managerQueue.data?.cases ?? []).map((item) => (
                 <li key={item.case_id}>
                   <Link className="font-medium text-son-dark underline" to={`/manager/${item.case_id}`}>
@@ -125,7 +125,7 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             {pendingDecisions.length === 0 ? <p className="text-sm text-ink-3">Chưa có hồ sơ đã duyệt để ký.</p> : null}
-            <ul className="space-y-2">
+            <ul className="space-y-2 uppercase">
               {pendingDecisions.map((item) => (
                 <li key={item.case_id}>
                   <Link className="font-medium text-son-dark underline" to={`/decisions/${item.case_id}`}>
@@ -160,16 +160,38 @@ export function DashboardPage() {
           <CardHeader>
             <CardTitle>Hồ sơ gần đây</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            {recent.map((item) => (
-              <div key={item.case_id} className="flex flex-wrap items-center justify-between gap-2 border-b border-rule py-2 last:border-0">
-                <Link className="font-medium text-ink underline" to={`/cases/${item.case_id}`}>
-                  {item.case_code}
-                </Link>
-                <span className="text-sm text-ink-3">{item.employee_name}</span>
-                <StatusBadge status={item.status} />
-              </div>
-            ))}
+          <CardContent className="p-0">
+            <div className="overflow-x-auto rounded-b-xl">
+              <table className="w-full min-w-[36rem] table-fixed text-left text-sm uppercase" aria-label="Hồ sơ gần đây">
+                <colgroup>
+                  <col className="w-1/4" />
+                  <col className="w-[45%]" />
+                  <col className="w-[30%]" />
+                </colgroup>
+                <thead className="border-b border-rule bg-paper-2 text-xs tracking-wide text-ink-3">
+                  <tr>
+                    <th scope="col" className="px-5 py-3">Mã hồ sơ</th>
+                    <th scope="col" className="px-5 py-3">Nhân viên</th>
+                    <th scope="col" className="px-5 py-3">Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recent.map((item) => (
+                    <tr key={item.case_id} className="border-b border-rule last:border-0">
+                      <td className="break-words px-5 py-3 align-middle">
+                        <Link className="font-medium text-ink underline" to={`/cases/${item.case_id}`}>
+                          {item.case_code}
+                        </Link>
+                      </td>
+                      <td className="break-words px-5 py-3 align-middle text-ink-3">{item.employee_name || "Chưa có tên"}</td>
+                      <td className="px-5 py-3 align-middle">
+                        <StatusBadge status={item.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       ) : null}

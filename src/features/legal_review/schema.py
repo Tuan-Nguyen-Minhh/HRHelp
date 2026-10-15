@@ -6,6 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from src.common.text import UppercaseText
 from src.features.answer.schema import AnswerView
 from src.features.assessment.schemas import AssessmentView
 
@@ -36,9 +37,9 @@ class ReviewView(BaseModel):
 
 class QueueItem(BaseModel):
     case_id: UUID
-    case_code: str
-    employee_code: str | None
-    employee_name: str | None
+    case_code: UppercaseText
+    employee_code: UppercaseText | None
+    employee_name: UppercaseText | None
     incident_date: date | None
     status: str
     updated_at: datetime
@@ -52,10 +53,10 @@ class ReviewPack(BaseModel):
     """What legal reads. It is the stored assessment, not a new agent run."""
 
     case_id: UUID
-    case_code: str
+    case_code: UppercaseText
     status: str
-    employee_code: str | None
-    employee_name: str | None
+    employee_code: UppercaseText | None
+    employee_name: UppercaseText | None
     incident_date: date | None
     description: str | None
     answer: AnswerView

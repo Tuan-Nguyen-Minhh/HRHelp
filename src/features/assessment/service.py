@@ -5,8 +5,9 @@ from uuid import UUID, uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.common.access import MUTABLE_STATUSES, require_case_access
-from src.common.clock import utc_now
+from src.common.clock import utc_now, vietnam_date
 from src.common.errors import AppError
+from src.common.minutes_profile import minutes_profile
 from src.common.workflow import CaseAccessLevel
 from src.features.answer.model.answers import load
 from src.features.answer.schema import AnswerView
@@ -375,6 +376,8 @@ async def _present(
         ),
         metadata=AssessmentMetadata(
             generated_at=version.created_at,
+            case_created_date=vietnam_date(case.created_at),
+            minutes_profile=minutes_profile(case.case_code, case.created_at),
             source="HR" if version.source == "HR" else "AI",
             recommendation_id=report.recommendation_id,
             prompt_version=_PROMPT,

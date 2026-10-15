@@ -6,6 +6,7 @@ import { useMe } from "@/app/providers";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { familyLabel, statusLabel } from "@/lib/labels";
 import { formatDate } from "@/lib/utils";
 import { api, errorMessage } from "@/services/api";
@@ -20,8 +21,7 @@ export function CasesPage() {
   const [text, setText] = useState("");
   const [status, setStatus] = useState("");
   const [family, setFamily] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [incidentDate, setIncidentDate] = useState("");
   const [sort, setSort] = useState<"date" | "code" | "employee">("date");
   const [page, setPage] = useState(0);
 
@@ -30,9 +30,7 @@ export function CasesPage() {
     const filtered = (query.data?.cases ?? []).filter((item) => {
       if (status && item.status !== status) return false;
       if (family && item.family !== family) return false;
-      const day = item.incident_date ?? "";
-      if (from && day && day < from) return false;
-      if (to && day && day > to) return false;
+      if (incidentDate && item.incident_date !== incidentDate) return false;
       if (!needle) return true;
       const blob = `${item.case_code} ${item.employee_name ?? ""} ${item.employee_code ?? ""}`.toLocaleLowerCase("vi");
       return blob.includes(needle);
@@ -43,11 +41,11 @@ export function CasesPage() {
       return (right.incident_date ?? "").localeCompare(left.incident_date ?? "");
     });
     return filtered;
-  }, [query.data, text, status, family, from, to, sort]);
+  }, [query.data, text, status, family, incidentDate, sort]);
 
   useEffect(() => {
     setPage(0);
-  }, [text, status, family, from, to, sort]);
+  }, [text, status, family, incidentDate, sort]);
 
   const pageSize = 8;
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
@@ -60,34 +58,43 @@ export function CasesPage() {
           <p className="text-xs font-semibold tracking-[0.16em] text-son-dark">HỒ SƠ</p>
           <h1 className="text-2xl font-semibold text-ink">Danh sách vụ việc</h1>
         </div>
-        {canCreate ? (
-          <Button asChild>
-            <Link to="/cases/new">Tạo hồ sơ</Link>
-          </Button>
-        ) : null}
       </div>
-      <div className="grid gap-3 rounded-xl border border-rule bg-white p-3 md:grid-cols-3 xl:grid-cols-6">
-        <Input value={text} onChange={(event) => setText(event.target.value)} placeholder="Tìm mã hồ sơ hoặc nhân viên" />
-        <select className="h-10 rounded-md border border-rule bg-white px-2 text-sm" value={status} onChange={(event) => setStatus(event.target.value)}>
-          {STATUSES.map((item) => (
-            <option key={item || "all"} value={item}>
-              {item ? statusLabel(item) : "Mọi trạng thái"}
-            </option>
-          ))}
-        </select>
-        <select className="h-10 rounded-md border border-rule bg-white px-2 text-sm" value={family} onChange={(event) => setFamily(event.target.value)}>
-          <option value="">Mọi nhóm</option>
-          <option value="UNAUTHORIZED_ABSENCE">{familyLabel("UNAUTHORIZED_ABSENCE")}</option>
-          <option value="LATE">{familyLabel("LATE")}</option>
-          <option value="GENERAL">{familyLabel("GENERAL")}</option>
-        </select>
-        <Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} aria-label="Từ ngày" />
-        <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} aria-label="Đến ngày" />
-        <select className="h-10 rounded-md border border-rule bg-white px-2 text-sm" value={sort} onChange={(event) => setSort(event.target.value as "date" | "code" | "employee")}>
-          <option value="date">Ngày vụ mới nhất</option>
-          <option value="code">Mã hồ sơ</option>
-          <option value="employee">Tên nhân viên</option>
-        </select>
+      <div className="grid gap-3 rounded-xl border border-rule bg-white p-3 md:grid-cols-2 xl:grid-cols-6">
+        <div className="min-w-0 space-y-1.5 md:col-span-2">
+          <Label htmlFor="case-search">Tìm kiếm</Label>
+          <Input id="case-search" value={text} onChange={(event) => setText(event.target.value)} placeholder="Tìm mã hồ sơ hoặc nhân viên" />
+        </div>
+        <div className="min-w-0 space-y-1.5">
+          <Label htmlFor="case-status">Trạng thái</Label>
+          <select id="case-status" className="h-10 w-full rounded-md border border-rule bg-white px-2 text-sm" value={status} onChange={(event) => setStatus(event.target.value)}>
+            {STATUSES.map((item) => (
+              <option key={item || "all"} value={item}>
+                {item ? statusLabel(item) : "Mọi trạng thái"}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="min-w-0 space-y-1.5">
+          <Label htmlFor="case-family">Nhóm vi phạm</Label>
+          <select id="case-family" className="h-10 w-full rounded-md border border-rule bg-white px-2 text-sm" value={family} onChange={(event) => setFamily(event.target.value)}>
+            <option value="">Mọi nhóm</option>
+            <option value="UNAUTHORIZED_ABSENCE">{familyLabel("UNAUTHORIZED_ABSENCE")}</option>
+            <option value="LATE">{familyLabel("LATE")}</option>
+            <option value="GENERAL">{familyLabel("GENERAL")}</option>
+          </select>
+        </div>
+        <div className="min-w-0 space-y-1.5">
+          <Label htmlFor="case-incident-date">Ngày vi phạm</Label>
+          <Input id="case-incident-date" className="min-w-0" type="date" value={incidentDate} onChange={(event) => setIncidentDate(event.target.value)} />
+        </div>
+        <div className="min-w-0 space-y-1.5">
+          <Label htmlFor="case-sort">Sắp xếp</Label>
+          <select id="case-sort" className="h-10 w-full rounded-md border border-rule bg-white px-2 text-sm" value={sort} onChange={(event) => setSort(event.target.value as "date" | "code" | "employee")}>
+            <option value="date">Ngày vi phạm mới nhất</option>
+            <option value="code">Mã hồ sơ</option>
+            <option value="employee">Tên nhân viên</option>
+          </select>
+        </div>
       </div>
       {query.isLoading ? (
         <div className="space-y-2 rounded-xl border border-rule bg-white p-3" role="status" aria-label="Đang tải hồ sơ">
@@ -108,13 +115,13 @@ export function CasesPage() {
         </div>
       ) : null}
       <div className="overflow-x-auto rounded-xl border border-rule bg-white">
-        <table className="min-w-full text-left text-sm">
+        <table className="min-w-full text-left text-sm uppercase">
           <thead className="bg-paper-2 text-xs uppercase tracking-wide text-ink-3">
             <tr>
               <th className="px-3 py-2">Mã</th>
               <th className="px-3 py-2">Nhân viên</th>
               <th className="px-3 py-2">Nhóm</th>
-              <th className="px-3 py-2">Ngày vụ</th>
+              <th className="px-3 py-2">Ngày vi phạm</th>
               <th className="px-3 py-2">Trạng thái</th>
             </tr>
           </thead>

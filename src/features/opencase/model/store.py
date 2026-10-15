@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date
 from uuid import UUID, uuid4
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import src.common.orm  # noqa: F401
@@ -26,7 +26,7 @@ class NewCase:
 
 async def find_by_code(session: AsyncSession, case_code: str) -> Case | None:
     """Return the case that already uses this code, if any."""
-    stmt = select(Case).where(Case.case_code == case_code)
+    stmt = select(Case).where(func.upper(Case.case_code) == case_code.strip().upper()).limit(1)
     return (await session.execute(stmt)).scalar_one_or_none()
 
 

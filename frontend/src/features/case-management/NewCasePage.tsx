@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 
 import { familyLabel } from "@/lib/labels";
+import { uppercaseText } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,9 +14,9 @@ import { api, errorMessage } from "@/services/api";
 
 const schema = z
   .object({
-    case_code: z.string().trim().min(1, "Nhập mã hồ sơ.").max(100),
-    employee_name: z.string().trim().min(1, "Nhập họ tên.").max(255),
-    employee_code: z.string().trim().min(1, "Nhập mã nhân viên.").max(100),
+    case_code: z.string().trim().toUpperCase().min(1, "Nhập mã hồ sơ.").max(100),
+    employee_name: z.string().trim().toUpperCase().min(1, "Nhập họ tên.").max(255),
+    employee_code: z.string().trim().toUpperCase().min(1, "Nhập mã nhân viên.").max(100),
     department: z.string().trim().max(255).optional(),
     position: z.string().trim().max(255).optional(),
     violation: z.string().trim().max(500).optional(),
@@ -76,6 +77,9 @@ export function NewCasePage() {
           <CardTitle>Thông tin hồ sơ</CardTitle>
         </CardHeader>
         <CardContent>
+          <p className="mb-4 text-xs text-ink-3">
+            Các trường có dấu <span className="font-semibold text-red-600">*</span> là bắt buộc.
+          </p>
           {error ? (
             <p className="mb-4 rounded-md border border-son-line bg-son-tint px-3 py-2 text-sm text-son-dark" role="alert">
               {error}
@@ -101,14 +105,15 @@ export function NewCasePage() {
             })}
           >
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Mã hồ sơ" error={form.formState.errors.case_code?.message}>
-                <Input placeholder="CASE-001" {...form.register("case_code")} />
+              <Field label="Mã hồ sơ" required error={form.formState.errors.case_code?.message}>
+                <Input aria-required className="uppercase" autoCapitalize="characters" placeholder="CASE-001" {...form.register("case_code", { setValueAs: uppercaseText })} />
               </Field>
-              <Field label="Ngày xảy ra" error={form.formState.errors.incident_date?.message}>
-                <Input type="date" {...form.register("incident_date")} />
+              <Field label="Ngày xảy ra" required error={form.formState.errors.incident_date?.message}>
+                <Input aria-required type="date" {...form.register("incident_date")} />
               </Field>
-              <Field label="Nhóm vụ việc" error={form.formState.errors.family?.message}>
+              <Field label="Nhóm vụ việc" required error={form.formState.errors.family?.message}>
                 <select
+                  aria-required
                   className="flex h-10 w-full rounded-md border border-rule bg-white px-3 text-sm text-ink"
                   {...form.register("family")}
                 >
@@ -117,11 +122,11 @@ export function NewCasePage() {
                   <option value="GENERAL">{familyLabel("GENERAL")}</option>
                 </select>
               </Field>
-              <Field label="Nhân viên" error={form.formState.errors.employee_name?.message}>
-                <Input placeholder="Nguyễn Văn A" {...form.register("employee_name")} />
+              <Field label="Nhân viên" required error={form.formState.errors.employee_name?.message}>
+                <Input aria-required className="uppercase" autoCapitalize="characters" placeholder="NGUYỄN VĂN A" {...form.register("employee_name", { setValueAs: uppercaseText })} />
               </Field>
-              <Field label="Mã nhân viên" error={form.formState.errors.employee_code?.message}>
-                <Input placeholder="EMP-001" {...form.register("employee_code")} />
+              <Field label="Mã nhân viên" required error={form.formState.errors.employee_code?.message}>
+                <Input aria-required className="uppercase" autoCapitalize="characters" placeholder="EMP-001" {...form.register("employee_code", { setValueAs: uppercaseText })} />
               </Field>
               <Field label="Phòng ban">
                 <Input placeholder="Engineering" {...form.register("department")} />
@@ -133,8 +138,9 @@ export function NewCasePage() {
             <Field label="Vi phạm" error={form.formState.errors.violation?.message}>
               <Input placeholder="Nghỉ không phép" {...form.register("violation")} />
             </Field>
-            <Field label="Mô tả" error={form.formState.errors.description?.message}>
+            <Field label="Mô tả" required error={form.formState.errors.description?.message}>
               <Textarea
+                aria-required
                 rows={6}
                 placeholder="Nhân viên tự ý nghỉ 5 ngày không phép trong tháng 3..."
                 {...form.register("description")}
@@ -155,10 +161,13 @@ export function NewCasePage() {
   );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
+function Field({ label, required = false, error, children }: { label: string; required?: boolean; error?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5 text-sm font-medium text-ink">
-      <span>{label}</span>
+      <span>
+        {label}
+        {required ? <span className="ml-1 font-semibold text-red-600" aria-hidden="true">*</span> : null}
+      </span>
       {children}
       {error ? <span className="block text-xs font-normal text-son-dark">{error}</span> : null}
     </label>

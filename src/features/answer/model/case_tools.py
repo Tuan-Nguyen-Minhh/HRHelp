@@ -7,14 +7,16 @@ rules.
 """
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.common.clock import utc_now
+from src.common.clock import utc_now, vietnam_date
+from src.common.minutes_profile import MinutesProfile, minutes_profile
+from src.common.minutes_text import clean_minutes_text as _clean_minutes_text
 from src.features.answer.schema import SANCTION_LABELS, AnswerView, CitationView
 from src.features.assessment.schemas import Sections
 from src.models.cases import Case
@@ -26,9 +28,6 @@ CaseToolName = Literal[
 ]
 
 _EXPORT_DIR = Path("/tmp/hr_case_exports")
-_CHUNK_ID_RE = re.compile(r"\s*-?\s*Chunk[_\s-]*id\s*:\s*[\w-]+", re.IGNORECASE)
-_MARKDOWN_RE = re.compile(r"[*_`]+")
-_ROMAN_HEADING_RE = re.compile(r"\b[IVXLCDM]{1,6}\.\s+[A-ZÀ-Ỹ][^.\n]*(?:\.|\s+-)?", re.IGNORECASE)
 _INCIDENT_FACT_KEYS = {
     "absence_days",
     "late_days",
@@ -63,6 +62,9 @@ class CaseDocument:
 
     title: str
     sections: tuple[tuple[str, str], ...]
+    created_date: date | None = None
+    profile: MinutesProfile = field(default_factory=MinutesProfile)
+    basis_groups: tuple[str, ...] = ()
 
     @property
     def content(self) -> str:
@@ -213,7 +215,8 @@ def disciplinary_minutes_document(
     )
     position = _first(None if employee is None else employee.position, case_meta.get("position"), ".....................")
     department = _first(None if employee is None else employee.department, case_meta.get("department"), ".................................")
-    timeline = _first(None if incident is None else incident.timeline, _event_line(case))
+    created_date = vietnam_date(case.created_at)
+    profile = minutes_profile(case.case_code, case.created_at)
     raw_narrative = _first(
         None if incident is None else incident.narrative,
         None if answer is None else answer.rationale,
@@ -234,7 +237,8 @@ def disciplinary_minutes_document(
         None if answer is None or not answer.sanction_type else _sanction(answer),
         ".......................................................................................",
     )
-    basis = _assessment_basis(answer, sections)
+    basis_groups = _assessment_basis_groups(answer, sections)
+    basis = "; ".join(basis_groups)
     return CaseDocument(
         "BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT",
         (
@@ -246,8 +250,8 @@ def disciplinary_minutes_document(
                         f"Mã số nhân viên: {employee_code}",
                         f"Chức vụ/Chức danh: {position}",
                         f"Phòng ban/Bộ phận: {department}",
-                        f"Thời gian lập biên bản: {_minutes_date(case.incident_date)}",
-                        "Địa điểm: Phòng họp Công ty ................................................",
+                        f"Thời gian lập biên bản: {_minutes_date(created_date)}",
+                        f"Địa điểm: {profile.meeting_location}",
                     ]
                 ),
             ),
@@ -255,8 +259,8 @@ def disciplinary_minutes_document(
                 "I. THÀNH PHẦN THAM DỰ",
                 "\n".join(
                     [
-                        "- Đại diện Ban lãnh đạo: Ông/Bà ........................................; Chức vụ ........................................",
-                        "- Đại diện nhân sự công ty: Ông/Bà ........................................; Phòng ban ........................................",
+                        f"- Đại diện Ban lãnh đạo: {profile.leadership_name}; Chức vụ {profile.leadership_position}",
+                        f"- Đại diện nhân sự công ty: {profile.hr_name}; Chức vụ {profile.hr_position}; Phòng ban {profile.hr_department}",
                         f"- Người bị lập biên bản: {employee_name}; Chức vụ {position}; Phòng ban {department}",
                         "- Người làm chứng: Ông/Bà ........................................; Phòng ban ........................................",
                     ]
@@ -266,7 +270,6 @@ def disciplinary_minutes_document(
                 "II. NỘI DUNG",
                 "\n".join(
                     [
-                        f"- Thời gian, địa điểm xảy ra sự việc vi phạm: {timeline}",
                         "- Diễn biến sự việc:",
                         *narrative_lines,
                         f"- Đối chiếu quy định: {basis}",
@@ -274,21 +277,30 @@ def disciplinary_minutes_document(
                         f"- Ý kiến của người bị lập biên bản: {employee_statement}",
                         f"- Kết quả đánh giá: {result_summary}",
                         f"- Hình thức xử phạt của Ban lãnh đạo: {proposal}",
-                        "- Ý kiến của người làm chứng và đại diện nhân sự công ty: ......................................................",
+                        "- Ý kiến của người làm chứng và đại diện nhân sự công ty:",
                         ".....................................................................................................................................................",
                         ".....................................................................................................................................................",
                     ]
                 ),
             ),
         ),
+        created_date=created_date,
+        profile=profile,
+        basis_groups=tuple(basis_groups),
     )
 
 
-def _assessment_basis(answer: AnswerView | None, sections: Sections | None) -> str:
+def _assessment_basis_groups(answer: AnswerView | None, sections: Sections | None) -> list[str]:
     if sections is not None and sections.citations:
-        labels = [item.citation_label or item.title for item in _ordered_basis(sections.citations)[:5]]
-        return "; ".join(label for label in labels if label) or "Chưa có căn cứ."
-    return _citations(answer)
+        groups: dict[str, list[str]] = {}
+        for item in _ordered_basis(sections.citations):
+            title, *parts = re.split(r"\s+[—–]\s+", item.citation_label or item.title)
+            references = groups.setdefault(title, [])
+            reference = " — ".join(parts)
+            if reference and reference not in references:
+                references.append(reference)
+        return [f"{title} — {'; '.join(refs)}" if refs else title for title, refs in groups.items()]
+    return [_citations(answer)]
 
 
 def export_word_document(document: CaseDocument, file_name: str | None = None) -> Path:
@@ -349,21 +361,25 @@ def _export_disciplinary_minutes(
 ) -> None:
     doc = document_cls()
     section = doc.sections[0]
-    section.page_width = inches(8.5)
-    section.page_height = inches(11)
-    section.left_margin = inches(1)
-    section.right_margin = inches(1)
-    section.top_margin = inches(1)
-    section.bottom_margin = inches(1)
+    section.page_width = inches(210 / 25.4)
+    section.page_height = inches(297 / 25.4)
+    section.left_margin = section.right_margin = inches(20 / 25.4)
+    section.top_margin = section.bottom_margin = inches(20 / 25.4)
     normal = doc.styles["Normal"]
     normal.font.name = "Times New Roman"
     normal._element.rPr.rFonts.set(qn_fn("w:eastAsia"), "Times New Roman")
     normal.font.size = pt(13)
-    normal.paragraph_format.space_after = pt(3)
-    normal.paragraph_format.line_spacing = 1.05
+    normal.paragraph_format.space_after = pt(6)
+    normal.paragraph_format.line_spacing = 1.3
+    normal.paragraph_format.widow_control = True
+    title_style = doc.styles["Title"]
+    title_style.paragraph_format.line_spacing = 1.3
+    for element in title_style.element.xpath("./w:pPr/w:pBdr | ./w:rPr/w:spacing"):
+        element.getparent().remove(element)
 
     info = _section_map(document)
-    _add_header_table(doc, table_alignment, vertical_alignment, oxml_element, qn_fn, pt)
+    profile = document.profile
+    _add_header_table(doc, table_alignment, vertical_alignment, oxml_element, qn_fn, pt, document)
     _add_center(doc, "BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT", paragraph_alignment, pt, size=16, bold=True)
     _add_paragraph(doc, "Biên bản xem xét xử lý vi phạm kỷ luật lao động đối với:", pt)
     employee = _lines(info.get("Thông tin người lao động", ""))
@@ -397,19 +413,19 @@ def _export_disciplinary_minutes(
     _add_paragraph(doc, "- Đại diện Ban lãnh đạo:", pt)
     _add_two_column_line(
         doc,
-        "Ông/Bà: ...........................................................",
-        "Chức vụ: ..................................................",
+        f"Ông/Bà: {profile.leadership_name}",
+        f"Chức vụ: {profile.leadership_position}",
         pt,
         oxml_element,
         qn_fn,
         inches,
     )
     _add_paragraph(doc, "- Đại diện nhân sự công ty:", pt)
-    _add_paragraph(doc, "Ông/Bà: .......................................................................................................................................", pt)
+    _add_paragraph(doc, f"Ông/Bà: {profile.hr_name}", pt)
     _add_two_column_line(
         doc,
-        "Chức vụ: .........................................................",
-        "Phòng ban: ...............................................",
+        f"Chức vụ: {profile.hr_position}",
+        f"Phòng ban: {profile.hr_department}",
         pt,
         oxml_element,
         qn_fn,
@@ -440,27 +456,36 @@ def _export_disciplinary_minutes(
     content = _lines(info.get("II. NỘI DUNG", ""))
     _add_paragraph(doc, "II. NỘI DUNG:", pt, bold=True)
     for line in content:
-        _add_paragraph(doc, line, pt)
+        if line.startswith("- Đối chiếu quy định: ") and document.basis_groups:
+            _add_paragraph(doc, "- Đối chiếu quy định:", pt)
+            for group in document.basis_groups:
+                _add_paragraph(doc, f"  - {group.rstrip('.')}.", pt)
+        else:
+            _add_paragraph(doc, line, pt)
     _add_signature_table(doc, table_alignment, vertical_alignment, oxml_element, qn_fn, pt)
     doc.save(path)
 
 
-def _add_header_table(doc, table_alignment, vertical_alignment, oxml_element, qn_fn, pt) -> None:
+def _add_header_table(doc, table_alignment, vertical_alignment, oxml_element, qn_fn, pt, document: CaseDocument) -> None:
     table = doc.add_table(rows=1, cols=2)
     table.alignment = table_alignment.CENTER
-    table.autofit = True
+    table.autofit = False
     _clear_borders(table, oxml_element, qn_fn)
     left, right = table.rows[0].cells
     left.vertical_alignment = vertical_alignment.TOP
     right.vertical_alignment = vertical_alignment.TOP
-    _cell_text(left, "CÔNG TY .................\nSố: ...../...../BB-.....", pt, bold_first=True)
+    profile = document.profile
+    company = profile.company_name.replace(" – CÔNG TY CP", "\n– CÔNG TY CP")
+    _cell_text(left, f"{company}\nSố: {profile.document_number}", pt, bold_first=True, center=True)
+    left.paragraphs[1].runs[0].bold = True
     _cell_text(
         right,
-        "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\n........., ngày ..... tháng ..... năm ......",
+        f"CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\n{profile.city}, {_minutes_calendar_date(document.created_date)}",
         pt,
         bold_first=True,
         center=True,
     )
+    right.paragraphs[1].runs[0].bold = True
 
 
 def _add_signature_table(doc, table_alignment, vertical_alignment, oxml_element, qn_fn, pt) -> None:
@@ -477,16 +502,22 @@ def _add_signature_table(doc, table_alignment, vertical_alignment, oxml_element,
             _cell_text(cell, value, pt, bold_first=True, center=True)
 
 
-def _add_two_column_line(doc, left: str, right: str, pt, _oxml_element, _qn_fn, inches) -> None:
-    paragraph = doc.add_paragraph()
-    paragraph.paragraph_format.tab_stops.add_tab_stop(inches(3.55))
-    left_run = paragraph.add_run(left)
-    left_run.font.name = "Times New Roman"
-    left_run.font.size = pt(13)
-    left_run.add_tab()
-    right_run = paragraph.add_run(right)
-    right_run.font.name = "Times New Roman"
-    right_run.font.size = pt(13)
+def _add_two_column_line(doc, left: str, right: str, pt, oxml_element, qn_fn, inches) -> None:
+    # Separate cells keep a long value from pushing the next field onto its line.
+    table = doc.add_table(rows=1, cols=2)
+    table.autofit = False
+    _clear_borders(table, oxml_element, qn_fn)
+    section = doc.sections[0]
+    column_width = int((section.page_width - section.left_margin - section.right_margin) / 2)
+    for index, (cell, value) in enumerate(zip(table.rows[0].cells, (left, right), strict=True)):
+        table.columns[index].width = cell.width = column_width
+        margin = oxml_element("w:tcMar")
+        edge = oxml_element("w:right" if index == 0 else "w:left")
+        edge.set(qn_fn("w:w"), "170")  # 3 mm, matching the preview column gap.
+        edge.set(qn_fn("w:type"), "dxa")
+        margin.append(edge)
+        cell._tc.get_or_add_tcPr().append(margin)
+        _cell_text(cell, value, pt)
 
 
 def _clear_borders(table, oxml_element, qn_fn) -> None:
@@ -502,6 +533,15 @@ def _clear_borders(table, oxml_element, qn_fn) -> None:
             element = oxml_element(tag)
             borders.append(element)
         element.set(qn_fn("w:val"), "nil")
+    margins = oxml_element("w:tblCellMar")
+    for edge in ("top", "left", "bottom", "right"):
+        element = oxml_element(f"w:{edge}")
+        element.set(qn_fn("w:w"), "0")
+        element.set(qn_fn("w:type"), "dxa")
+        margins.append(element)
+    tbl_pr.append(margins)
+    for row in table.rows:
+        row._tr.get_or_add_trPr().append(oxml_element("w:cantSplit"))
 
 
 def _cell_text(cell, text: str, pt, *, bold_first: bool = False, center: bool = False) -> None:
@@ -509,10 +549,9 @@ def _cell_text(cell, text: str, pt, *, bold_first: bool = False, center: bool = 
     for index, line in enumerate(text.splitlines() or [""]):
         paragraph = cell.paragraphs[0] if index == 0 else cell.add_paragraph()
         paragraph.alignment = 1 if center else 0
-        run = paragraph.add_run(line)
-        run.font.name = "Times New Roman"
-        run.font.size = pt(13)
-        run.bold = bool(bold_first and index == 0)
+        # Literal leaders inside fixed cells also render in Word-compatible viewers.
+        line = re.sub(r"\.{10,}", "." * 20, line)
+        _minutes_run(paragraph, line, pt, bold=bool(bold_first and index == 0), leader=False)
 
 
 def _add_center(doc, text: str, paragraph_alignment, pt, *, size: int = 13, bold: bool = False) -> None:
@@ -522,11 +561,42 @@ def _add_center(doc, text: str, paragraph_alignment, pt, *, size: int = 13, bold
 
 def _add_paragraph(doc, text: str, pt, *, size: int = 13, bold: bool = False):
     paragraph = doc.add_paragraph()
+    paragraph.alignment = 3 if not bold and not re.fullmatch(r"[.\s]+", text) else 0
+    if bold:
+        paragraph.paragraph_format.keep_with_next = True
+        paragraph.paragraph_format.space_before = pt(10 if size == 13 else 14)
+        if size == 16:
+            paragraph.style = doc.styles["Title"]
+            paragraph.paragraph_format.space_after = pt(16)
+    elif text.startswith("- Đại diện") or text in {"- Người bị lập biên bản:", "- Người làm chứng:", "- Diễn biến sự việc:", "- Đối chiếu quy định:"}:
+        paragraph.paragraph_format.keep_with_next = True
+    if text.startswith("  - "):
+        text = "• " + text[4:]
+        paragraph.paragraph_format.left_indent = pt(19.5)
+        paragraph.paragraph_format.first_line_indent = pt(-10)
+    section = doc.sections[0]
+    width = section.page_width - section.left_margin - section.right_margin
+    _minutes_run(paragraph, text, pt, size=size, bold=bold, width=width)
+    return paragraph
+
+
+def _minutes_run(paragraph, text: str, pt, *, size: int = 13, bold: bool = False, width=None, leader: bool = True):
+    from docx.enum.text import WD_TAB_ALIGNMENT, WD_TAB_LEADER
+    from docx.oxml.ns import qn
+    from docx.shared import RGBColor
+
+    if leader and re.search(r"\.{10,}", text):
+        text = re.split(r"\.{10,}", text, maxsplit=1)[0].rstrip() + " \t\u00a0"
+        paragraph.paragraph_format.tab_stops.add_tab_stop(int(width or pt(460)), WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
+        paragraph.alignment = 0
     run = paragraph.add_run(text)
     run.font.name = "Times New Roman"
+    for script in ("ascii", "hAnsi", "eastAsia", "cs"):
+        run._element.rPr.rFonts.set(qn(f"w:{script}"), "Times New Roman")
     run.font.size = pt(size)
+    run.font.color.rgb = RGBColor(0, 0, 0)
     run.bold = bold
-    return paragraph
+    return run
 
 
 def _section_map(document: CaseDocument) -> dict[str, str]:
@@ -561,9 +631,13 @@ def _event_line(case: Case) -> str:
 
 
 def _minutes_date(value: date | None) -> str:
+    return f"..... giờ ..... phút, {_minutes_calendar_date(value)}"
+
+
+def _minutes_calendar_date(value: date | None) -> str:
     if value is None:
-        return "..... giờ ..... phút, ngày ..... tháng ..... năm ....."
-    return f"..... giờ ..... phút, ngày {value.day:02d} tháng {value.month:02d} năm {value.year}"
+        return "ngày ..... tháng ..... năm ....."
+    return f"ngày {value.day:02d} tháng {value.month:02d} năm {value.year}"
 
 
 def _case_line(case: Case) -> str:
@@ -658,18 +732,8 @@ def _minutes_bullets(value: str) -> list[str]:
     lines = [line.strip() for line in clean.splitlines() if line.strip()]
     if len(lines) == 1:
         lines = [part.strip() for part in re.split(r"\s+-\s+|(?<=[.!?])\s+(?=[A-ZÀ-Ỹ0-9])", lines[0]) if part.strip()]
-    clean_lines = [line.lstrip("- ").rstrip(".") for line in lines if line.strip()]
-    return [f"  - {line}." for line in clean_lines[:5] if line and not _looks_like_assessment_report(line)]
-
-
-def _clean_minutes_text(value: str) -> str:
-    text = _CHUNK_ID_RE.sub("", value or "")
-    text = _MARKDOWN_RE.sub("", text)
-    text = _ROMAN_HEADING_RE.sub("", text)
-    text = re.sub(r"\b[IVXLCDM]{1,6}\.\s*", "", text)
-    text = re.sub(r"[ \t]+", " ", text)
-    text = re.sub(r"\n{3,}", "\n\n", text)
-    return text.strip()
+    clean_lines = dict.fromkeys(line.lstrip("-• ").rstrip(".;") for line in lines if line.strip())
+    return [f"  - {line}." for line in clean_lines if line and not _looks_like_assessment_report(line)]
 
 
 def _looks_like_assessment_report(value: str) -> bool:

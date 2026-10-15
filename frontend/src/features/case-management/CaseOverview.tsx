@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { familyLabel } from "@/lib/labels";
-import { formatDate } from "@/lib/utils";
+import { formatDate, uppercaseText } from "@/lib/utils";
 import { useWorkspace } from "@/features/case-management/CaseWorkspace";
 
 export function CaseOverview() {
@@ -12,8 +12,8 @@ export function CaseOverview() {
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-          <Info label="Nhân viên" value={caseView.employee_name || "—"} />
-          <Info label="Mã nhân viên" value={caseView.employee_code || "—"} />
+          <Info label="Nhân viên" value={uppercaseText(caseView.employee_name || "—")} />
+          <Info label="Mã nhân viên" value={uppercaseText(caseView.employee_code || "—")} />
           <Info label="Ngày xảy ra" value={formatDate(caseView.incident_date)} />
           <Info label="Nhóm tình tiết" value={familyLabel(facts?.family)} />
         </div>

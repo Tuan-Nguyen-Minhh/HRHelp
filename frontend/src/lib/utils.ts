@@ -5,6 +5,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function uppercaseText(value: string): string {
+  return value.toLocaleUpperCase("vi-VN");
+}
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
   const [year, month, day] = value.slice(0, 10).split("-");

@@ -5,12 +5,14 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.common.text import UppercaseText
+
 
 class ManagerQueueItem(BaseModel):
     case_id: UUID
-    case_code: str
-    employee_code: str | None
-    employee_name: str | None
+    case_code: UppercaseText
+    employee_code: UppercaseText | None
+    employee_name: UppercaseText | None
     incident_date: date | None
     status: str
     updated_at: datetime

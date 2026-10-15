@@ -6,6 +6,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.common.text import UppercaseText
+
 FamilyName = Literal["UNAUTHORIZED_ABSENCE", "LATE", "GENERAL"]
 
 
@@ -14,9 +16,9 @@ class OpenCaseRequest(BaseModel):
 
     model_config = ConfigDict(str_strip_whitespace=True)
 
-    case_code: str = Field(min_length=1, max_length=100, description="Mã hồ sơ, duy nhất")
-    employee_code: str = Field(min_length=1, max_length=100)
-    employee_name: str = Field(min_length=1, max_length=255)
+    case_code: UppercaseText = Field(min_length=1, max_length=100, description="Mã hồ sơ, duy nhất")
+    employee_code: UppercaseText = Field(min_length=1, max_length=100)
+    employee_name: UppercaseText = Field(min_length=1, max_length=255)
     description: str = Field(min_length=1, max_length=8000, description="Mô tả tình huống")
     incident_date: date = Field(description="Ngày xảy ra việc, mốc lọc văn bản còn hiệu lực")
     family: FamilyName | None = None
@@ -35,9 +37,9 @@ class CaseView(BaseModel):
 
     case_id: UUID
     conversation_id: UUID | None
-    case_code: str
-    employee_code: str | None
-    employee_name: str | None
+    case_code: UppercaseText
+    employee_code: UppercaseText | None
+    employee_name: UppercaseText | None
     description: str | None
     incident_date: date | None
     status: str
@@ -55,8 +57,8 @@ class CasePatchRequest(BaseModel):
 
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
-    employee_code: str | None = Field(default=None, min_length=1, max_length=100)
-    employee_name: str | None = Field(default=None, min_length=1, max_length=255)
+    employee_code: UppercaseText | None = Field(default=None, min_length=1, max_length=100)
+    employee_name: UppercaseText | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = Field(default=None, min_length=1, max_length=8000)
     incident_date: date | None = None
     family: FamilyName | None = None

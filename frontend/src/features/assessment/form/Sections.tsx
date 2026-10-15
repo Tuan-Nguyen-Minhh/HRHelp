@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { clip, placeLabel } from "@/lib/utils";
+import { clip, cn, placeLabel } from "@/lib/utils";
 import type {
   AssessmentForm,
   AssessmentSections,
@@ -65,6 +65,7 @@ export function DocumentSections({
   onOpen: (card: EvidenceCard) => void;
 }) {
   const canEdit = view.permissions.can_edit;
+  const profile = view.metadata.minutes_profile;
   const employee = sections.employee_information;
   const incident = sections.incident_summary;
   const info = sections.case_information;
@@ -77,7 +78,7 @@ export function DocumentSections({
     "HR xem xét trên thông tin đã thu thập và căn cứ áp dụng trước khi quyết định hình thức xử lý.";
   const proposed = sections.handling_proposal.proposed_actions.map((item) => item.label).join("; ") || "Chưa xác định do chưa đủ căn cứ.";
   const basisCards = orderedBasis(sections.citations.length ? sections.citations : sections.evidence_reviewed);
-  const evidence = basisCards.map((item) => item.citation_label || item.title).join("; ");
+  const evidence = groupedBasis(basisCards);
   return (
     <div className="space-y-4">
       <section id="minutes" className="scroll-mt-4 rounded-xl border border-rule bg-white">
@@ -120,26 +121,27 @@ export function DocumentSections({
         </header>
 
         <div className="overflow-x-auto bg-paper-2 px-3 py-4">
-          <article className="mx-auto min-h-[68rem] w-full max-w-[52rem] bg-white px-8 py-8 font-serif text-[15px] leading-7 text-black shadow-sm sm:px-12">
-            <div className="grid grid-cols-2 gap-8 text-center">
+          <article className="minutes-document mx-auto bg-white text-black shadow-sm">
+            <div className="minutes-columns minutes-letterhead text-center">
               <div className="text-left">
-                <p className="text-center font-bold">CÔNG TY .................</p>
-                <p className="text-center">Số: ...../...../BB-.....</p>
+                <p className="text-center font-bold">{profile.company_name.split(" – ")[0]}<br />– {profile.company_name.split(" – ")[1]}</p>
+                <p className="text-center">Số: {profile.document_number}</p>
               </div>
               <div>
                 <p className="font-bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
                 <p className="font-bold">Độc lập - Tự do - Hạnh phúc</p>
-                <p className="mt-4">........., ngày ..... tháng ..... năm ......</p>
+                <p className="mt-4">{profile.city}, ngày {dateParts(view.metadata.case_created_date ?? null)}</p>
               </div>
             </div>
 
-            <h1 className="mt-10 text-center text-xl font-bold">BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT</h1>
+            <h1 className="minutes-title">BIÊN BẢN XỬ LÝ VI PHẠM KỶ LUẬT</h1>
 
-            <p className="mt-8">Biên bản xem xét xử lý vi phạm kỷ luật lao động đối với:</p>
-            <div className="grid grid-cols-2 gap-x-10">
+            <p>Biên bản xem xét xử lý vi phạm kỷ luật lao động đối với:</p>
+            <div className="minutes-columns">
               <EditableLine
                 label="Ông/Bà"
                 value={employee.employee_name || ""}
+                uppercase
                 placeholder="........................................"
                 editing={editing === "employee"}
                 onChange={(value) => onEmployee({ ...employee, employee_name: value || null })}
@@ -147,6 +149,7 @@ export function DocumentSections({
               <EditableLine
                 label="Mã số nhân viên"
                 value={employee.employee_code || ""}
+                uppercase
                 placeholder="......................................"
                 editing={editing === "employee"}
                 onChange={(value) => onEmployee({ ...employee, employee_code: value || null })}
@@ -167,38 +170,40 @@ export function DocumentSections({
               />
             </div>
             <p>
-              Vào lúc: ..... giờ ..... phút, ngày {dateParts(info.incident_date)}
+              Vào lúc: ..... giờ ..... phút, ngày {dateParts(view.metadata.case_created_date ?? null)}
             </p>
-            <p>Tại: Phòng họp Công ty ...............................................................................................................</p>
+            <p>Tại: {profile.meeting_location}</p>
 
-            <h2 id="participants" className="mt-3 font-bold">
+            <h2 id="participants" className="minutes-section-title">
               I. THÀNH PHẦN THAM DỰ:
             </h2>
             <p>- Đại diện Ban lãnh đạo:</p>
-            <p>Ông/Bà: ........................................................... &nbsp;&nbsp;&nbsp;&nbsp; Chức vụ: ..................................................</p>
+            <div className="minutes-columns">
+              <StaticLine label="Ông/Bà" value={profile.leadership_name} />
+              <StaticLine label="Chức vụ" value={profile.leadership_position} />
+            </div>
             <p>- Đại diện nhân sự công ty:</p>
-            <p>Ông/Bà: .......................................................................................................................................</p>
-            <p>Chức vụ: ......................................................... &nbsp;&nbsp;&nbsp;&nbsp; Phòng ban: ...............................................</p>
+            <StaticLine label="Ông/Bà" value={profile.hr_name} />
+            <div className="minutes-columns">
+              <StaticLine label="Chức vụ" value={profile.hr_position} />
+              <StaticLine label="Phòng ban" value={profile.hr_department} />
+            </div>
             <p>- Người bị lập biên bản:</p>
-            <p>Ông/Bà: {employee.employee_name || "........................................................................................................................................"}</p>
-            <p>
-              Chức vụ: {employeePosition || "........................................................."} &nbsp;&nbsp;&nbsp;&nbsp; Phòng ban:{" "}
-              {employeeDepartment || "..............................................."}
-            </p>
+            <StaticLine label="Ông/Bà" value={employee.employee_name} />
+            <div className="minutes-columns">
+              <StaticLine label="Chức vụ" value={employeePosition} />
+              <StaticLine label="Phòng ban" value={employeeDepartment} />
+            </div>
             <p>- Người làm chứng:</p>
-            <p>Ông/Bà: .......................................................................................................................................</p>
-            <p>Chức vụ: ......................................................... &nbsp;&nbsp;&nbsp;&nbsp; Phòng ban: ...............................................</p>
+            <StaticLine label="Ông/Bà" />
+            <div className="minutes-columns">
+              <StaticLine label="Chức vụ" />
+              <StaticLine label="Phòng ban" />
+            </div>
 
-            <h2 id="content" className="mt-3 font-bold">
+            <h2 id="content" className="minutes-section-title">
               II. NỘI DUNG:
             </h2>
-            <EditableArea
-              label="- Thời gian, địa điểm xảy ra sự việc vi phạm"
-              value={incident.timeline}
-              placeholder="............................................................................."
-              editing={editing === "incident"}
-              onChange={(value) => onIncident({ ...incident, timeline: value })}
-            />
             <EditableArea
               label="- Diễn biến sự việc"
               value={incidentNarrative}
@@ -210,8 +215,9 @@ export function DocumentSections({
                 else onIncident({ ...incident, narrative: value });
               }}
             />
-            <p>- Đối chiếu quy định: {evidence || "............................................................................... ..............................."}</p>
-            <p>- Thiệt hại của công ty: ................................................................................ ...............................</p>
+            <p>- Đối chiếu quy định:</p>
+            {evidence.length ? <ul className="minutes-bullets">{evidence.map((item) => <li key={item}>{item}</li>)}</ul> : <WritingLines />}
+            <StaticLine label="- Thiệt hại của công ty" />
             <EditableArea
               label="- Ý kiến của người bị lập biên bản"
               value={incident.employee_statement}
@@ -227,9 +233,8 @@ export function DocumentSections({
               editing={editing === "rationale"}
               onChange={onRationale}
             />
-            <p>- Ý kiến của người làm chứng và đại diện nhân sự công ty: ......................................................</p>
-            <p>.....................................................................................................................................................</p>
-            <p>.....................................................................................................................................................</p>
+            <p>- Ý kiến của người làm chứng và đại diện nhân sự công ty:</p>
+            <WritingLines count={2} />
 
             <div id="signatures" className="mt-10 grid grid-cols-2 gap-x-8 gap-y-14 text-center">
               <Signature title="Đại diện Ban lãnh đạo" subtitle="(Ký tên, ghi họ tên và đóng dấu)" />
@@ -291,21 +296,23 @@ function EditableLine({
   value,
   placeholder,
   editing,
+  uppercase = false,
   onChange,
 }: {
   label: string;
   value: string;
   placeholder: string;
   editing: boolean;
+  uppercase?: boolean;
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="block">
+    <label className="minutes-field">
       <span>{label}: </span>
       {editing ? (
-        <Input className="inline-flex h-8 w-56 rounded-none border-0 border-b border-dotted border-black px-1 font-sans text-sm shadow-none" value={value} onChange={(event) => onChange(event.target.value)} />
+        <Input className={cn("minutes-input min-w-0 flex-1 rounded-none border-0 border-b border-dotted border-black px-1 shadow-none", uppercase && "uppercase")} placeholder={placeholder} autoCapitalize={uppercase ? "characters" : undefined} value={value} onChange={(event) => onChange(event.target.value)} />
       ) : (
-        <span>{value || placeholder}</span>
+        value ? <span className={uppercase ? "uppercase" : undefined}>{value}</span> : <span className="minutes-blank" aria-label="Chưa điền" />
       )}
     </label>
   );
@@ -328,24 +335,21 @@ function EditableArea({
 }) {
   const bullets = bulleted ? minutesBullets(value) : [];
   return (
-    <div>
+    <div className="minutes-area">
       <p>
-        {label}:{editing || (bulleted && bullets.length) ? null : ` ${value || placeholder}`}
+        {label}:{editing || bulleted || !value ? null : ` ${cleanMinutesText(value)}`}
       </p>
       {!editing && bulleted && bullets.length ? (
-        <ul className="ml-7 list-disc">
+        <ul className="minutes-bullets">
           {bullets.map((item, index) => (
             <li key={`${item}-${index}`}>{item}</li>
           ))}
         </ul>
       ) : null}
       {editing ? (
-        <Textarea className="mt-1 min-h-24 rounded-none border border-dotted border-black font-sans text-sm" value={value} onChange={(event) => onChange(event.target.value)} />
+        <Textarea className="minutes-input mt-1 min-h-24 rounded-none border border-dotted border-black" placeholder={placeholder} value={value} onChange={(event) => onChange(event.target.value)} />
       ) : value || bullets.length ? null : (
-        <>
-          <p>.....................................................................................................................................................</p>
-          <p>.....................................................................................................................................................</p>
-        </>
+        <WritingLines count={2} />
       )}
     </div>
   );
@@ -354,18 +358,18 @@ function EditableArea({
 function minutesBullets(value: string): string[] {
   const clean = cleanMinutesText(value);
   const roughLines = clean.split(/\n+/);
-  return roughLines
+  return [...new Set(roughLines
     .map((line) => line.replace(/^[-•]\s*/, "").replace(/[.;]\s*$/, "").trim())
     .filter((line) => Boolean(line) && !looksLikeAssessmentReport(line))
-    .slice(0, 5);
+    )].map((line) => `${line}.`);
 }
 
 function cleanMinutesText(value: string): string {
   return value
     .replace(/\s*-?\s*Chunk[_\s-]*id\s*:\s*[\w-]+/gi, "")
     .replace(/[*_`]+/g, "")
-    .replace(/\b[IVXLCDM]{1,6}\.\s+[A-ZÀ-Ỹ][^.\n]*(?:\.|\s+-)?/giu, "")
-    .replace(/\b[IVXLCDM]{1,6}\.\s*/giu, "")
+    .replace(/^[ \t]*[IVXLCDM]{1,6}\.[ \t]+/gm, "")
+    .replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, "$3/$2/$1")
     .replace(/[ \t]+/g, " ")
     .trim();
 }
@@ -439,6 +443,26 @@ const INCIDENT_FACT_KEYS = new Set([
 
 function orderedBasis(items: EvidenceCard[]): EvidenceCard[] {
   return items.map((item, index) => ({ item, index })).sort((left, right) => basisRank(left.item) - basisRank(right.item) || left.index - right.index).map(({ item }) => item);
+}
+
+function groupedBasis(items: EvidenceCard[]): string[] {
+  const groups = new Map<string, Set<string>>();
+  for (const item of items) {
+    const label = item.citation_label || item.title;
+    const [title, ...parts] = label.split(/\s+[—–]\s+/);
+    const references = groups.get(title) ?? new Set<string>();
+    if (parts.length) references.add(parts.join(" — "));
+    groups.set(title, references);
+  }
+  return [...groups].map(([title, references]) => references.size ? `${title} — ${[...references].join("; ")}.` : `${title}.`);
+}
+
+function StaticLine({ label, value }: { label: string; value?: string | null }) {
+  return <p className="minutes-field"><span>{label}: </span>{value ? <span>{value}</span> : <span className="minutes-blank" aria-label="Chưa điền" />}</p>;
+}
+
+function WritingLines({ count = 1 }: { count?: number }) {
+  return <div aria-label="Phần để trống">{Array.from({ length: count }, (_, index) => <div key={index} className="minutes-writing-line" />)}</div>;
 }
 
 function basisRank(item: EvidenceCard): number {

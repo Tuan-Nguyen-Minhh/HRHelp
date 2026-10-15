@@ -5,10 +5,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from src.common.text import UppercaseText
+
 
 class PriorCase(BaseModel):
     case_id: UUID
-    case_code: str
+    case_code: UppercaseText
     status: str
 
 

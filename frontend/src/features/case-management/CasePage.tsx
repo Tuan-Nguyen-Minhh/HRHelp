@@ -1,29 +1,19 @@
-import { AssessmentEntry } from "@/features/assessment/form/AssessmentForm";
+import { AgentStatus } from "@/components/common/AgentStatus";
 import { CaseOverview } from "@/features/case-management/CaseOverview";
-import { RecidivismPanel } from "@/features/case-management/RecidivismPanel";
-import { ConversationPanel } from "@/features/conversation/ConversationPanel";
-import { EvidencePanel } from "@/features/evidence/EvidencePanel";
-import { FactPanel } from "@/features/evidence/FactPanel";
-import { MissingFactCard } from "@/features/evidence/MissingFactCard";
-import { RetrievalPanel } from "@/features/evidence/RetrievalPanel";
+import { CaseProgress } from "@/features/case-management/CaseProgress";
+import { ReopenCard } from "@/features/case-management/ReopenCard";
+import { useWorkspace } from "@/features/case-management/CaseWorkspace";
 
 export function CasePage() {
+  const { agent, answer } = useWorkspace();
+  const highRisk = answer?.risk_level === "HIGH" || answer?.risk_level === "CRITICAL";
   return (
     <div className="space-y-4">
-      <div className="grid items-start gap-4 xl:grid-cols-[440px_minmax(0,1fr)]">
-        <div className="order-2 space-y-4 xl:order-1">
-          <CaseOverview />
-          <FactPanel />
-          <MissingFactCard />
-          <RecidivismPanel />
-        </div>
-        <div className="order-1 xl:sticky xl:top-20 xl:order-2">
-          <ConversationPanel />
-        </div>
-      </div>
-      <RetrievalPanel />
-      <EvidencePanel />
-      <AssessmentEntry />
+      {highRisk ? <p className="rounded-xl border border-son-line bg-son-tint px-4 py-3 text-sm leading-6 text-son-dark">Vụ việc có mức rủi ro cao. Hãy kiểm tra căn cứ và chứng cứ trước khi xử lý. Mức rủi ro không tự quyết hình thức kỷ luật.</p> : null}
+      <CaseOverview />
+      <CaseProgress />
+      <AgentStatus agent={agent} />
+      <ReopenCard />
     </div>
   );
 }

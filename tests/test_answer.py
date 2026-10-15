@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, date, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -7,6 +7,7 @@ import pytest
 
 from src.agents.case_graph import build_case_graph
 from src.agents.handoff import CaseHandoff, CitedPassage
+from src.common.clock import vietnam_date
 from src.core.config import settings
 from src.features.answer.model import answers
 from src.features.answer.model.agent import build_recommend_agent
@@ -164,6 +165,7 @@ def test_disciplinary_minutes_exports_word_form(monkeypatch, tmp_path):
         incident_date=date(2026, 4, 2),
         status="ANALYZED",
         family="LATE",
+        created_at=datetime(2026, 10, 15, 18, 30),
     )
     path = export_word_document(disciplinary_minutes_document(case, None), "bien-ban-test")
 
@@ -174,6 +176,39 @@ def test_disciplinary_minutes_exports_word_form(monkeypatch, tmp_path):
     assert "Trần Thị B" in text
     assert "CÔNG TY" in table_text
     assert "Người bị lập biên bản" in table_text
+    assert "ngày 16 tháng 10 năm 2026" in table_text
+    assert "TẬP ĐOÀN VINGROUP – CÔNG TY CP" in " ".join(table_text.split())
+    assert "Số: CASE-002/2026/BB-XLKL" in table_text
+    assert "Hà Nội, ngày 16 tháng 10 năm 2026" in table_text
+    assert "NGUYỄN MINH KHANG" in table_text
+    assert "TRẦN THU HÀ" in text
+    assert "Phó Tổng giám đốc" in table_text
+    assert "Giám đốc Nhân sự" in table_text
+    assert "Ban Nhân sự" in table_text
+    assert "Thời gian, địa điểm xảy ra sự việc vi phạm" not in text
+    assert "Vào lúc: ..... giờ ..... phút, ngày 16 tháng 10 năm 2026" in text
+
+
+@pytest.mark.parametrize("timestamp", [datetime(2026, 10, 15, 18, 30), datetime(2026, 10, 15, 18, 30, tzinfo=UTC)])
+def test_minutes_date_uses_case_creation_in_vietnam(timestamp):
+    case = Case(
+        id=uuid4(), created_by=uuid4(), case_code="CASE-099", employee_name="NGUYỄN VĂN G",
+        employee_code="EMP-009", description="Đi muộn.", incident_date=date(2026, 11, 4),
+        status="ANALYZED", created_at=timestamp,
+    )
+    document = disciplinary_minutes_document(case, None)
+    assert document.created_date == date(2026, 10, 16)
+    assert "ngày 16 tháng 10 năm 2026" in document.content
+    assert "ngày 04 tháng 11 năm 2026" not in document.content
+    assert "Thời gian, địa điểm xảy ra sự việc vi phạm" not in document.content
+
+
+def test_missing_creation_date_does_not_use_today_or_incident_date():
+    assert vietnam_date(None) is None
+    case = Case(case_code="CASE-099", incident_date=date(2026, 11, 4), description="Đi muộn.")
+    document = disciplinary_minutes_document(case, None)
+    assert document.created_date is None
+    assert "ngày ..... tháng ..... năm ....." in document.content
 
 
 def test_disciplinary_minutes_cleans_raw_report_from_incident_narrative():

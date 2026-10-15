@@ -1,6 +1,8 @@
 """The assessment form is assembled from stored facts. It does not send a ticket."""
 
-from datetime import date
+from datetime import date, datetime
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -14,6 +16,26 @@ from src.features.assessment.schemas import AssessmentPatch, EvidenceCard
 from src.features.assessment.service import ticket_allowed
 from src.features.assessment.validator import validate_sections
 from src.features.clarify.model.catalog import required_specs, resolved_family
+from src.models.cases import Case
+
+
+@pytest.mark.asyncio
+async def test_assessment_preview_date_comes_from_case_creation(monkeypatch):
+    from src.features.assessment import service
+
+    sections, _sources = compose(_source(confirmed=True, sanction="REPRIMAND"))
+    case = Case(id=uuid4(), case_code="case-099", status="ANALYZED", created_at=datetime(2026, 10, 15, 18, 30))
+    report = SimpleNamespace(id=uuid4(), recommendation_id=None)
+    version = SimpleNamespace(
+        version=1, status="DRAFT", source="AI", created_at=datetime(2026, 10, 20),
+        payload={"sections": sections.model_dump(mode="json")},
+    )
+    monkeypatch.setattr(service, "load", AsyncMock(return_value=None))
+    view = await service._present(AsyncMock(), SimpleNamespace(role="HR"), case, report, version)
+    assert view.metadata.case_created_date == date(2026, 10, 16)
+    assert view.metadata.generated_at == datetime(2026, 10, 20)
+    assert view.metadata.minutes_profile.document_number == "CASE-099/2026/BB-XLKL"
+    assert view.metadata.minutes_profile.company_name == "TẬP ĐOÀN VINGROUP – CÔNG TY CP"
 
 
 def test_a_confirmed_hold_can_open_the_legal_ticket():

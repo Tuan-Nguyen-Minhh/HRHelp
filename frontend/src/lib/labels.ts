@@ -60,6 +60,7 @@ export function riskLabel(level: string | null | undefined): string {
 }
 
 export const FAMILY_LABEL: Record<string, string> = {
+  UNSPECIFIED: "Chưa phân loại",
   UNAUTHORIZED_ABSENCE: "Nghỉ không phép",
   LATE: "Đi muộn",
   GENERAL: "Vi phạm khác",

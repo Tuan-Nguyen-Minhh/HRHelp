@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AssessmentForm } from "@/features/assessment/form/AssessmentForm";
-import { ConversationPanel } from "@/features/conversation/ConversationPanel";
 import { RecidivismPanel } from "@/features/case-management/RecidivismPanel";
 import { useWorkspace } from "@/features/case-management/CaseWorkspace";
 import { DraftList } from "@/features/decision/DraftList";
@@ -9,10 +8,6 @@ import { FactPanel } from "@/features/evidence/FactPanel";
 import { MissingFactCard } from "@/features/evidence/MissingFactCard";
 import { RetrievalPanel } from "@/features/evidence/RetrievalPanel";
 import { TimelinePanel } from "@/features/timeline/TimelinePanel";
-
-export function ConversationPage() {
-  return <ConversationPanel />;
-}
 
 export function FactsPage() {
   return (

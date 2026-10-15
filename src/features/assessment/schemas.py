@@ -6,6 +6,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.common.minutes_profile import MinutesProfile
+from src.common.text import UppercaseText
+
 FormStatus = Literal["AI_DRAFT", "HR_EDITING", "READY_FOR_CONFIRM", "CONFIRMED", "SUPERSEDED"]
 ReportStatus = Literal["DRAFT", "CONFIRMED", "SUPERSEDED"]
 FactStatus = Literal["CONFIRMED", "MISSING", "UNCERTAIN", "HR_EDITED"]
@@ -22,7 +25,7 @@ ResultStatus = Literal[
 class CaseInformation(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    case_code: str
+    case_code: UppercaseText
     incident_date: date | None = None
     violation_type: str | None = None
     description: str = ""
@@ -32,8 +35,8 @@ class CaseInformation(BaseModel):
 class EmployeeInformation(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    employee_code: str | None = None
-    employee_name: str | None = None
+    employee_code: UppercaseText | None = None
+    employee_name: UppercaseText | None = None
     department: str | None = None
     position: str | None = None
     contract_type: str | None = None
@@ -166,6 +169,8 @@ class Permissions(BaseModel):
 
 class AssessmentMetadata(BaseModel):
     generated_at: datetime | None = None
+    case_created_date: date | None = None
+    minutes_profile: MinutesProfile = Field(default_factory=MinutesProfile)
     source: Literal["AI", "HR"]
     recommendation_id: UUID | None = None
     prompt_version: str = "assessment-form-v1"

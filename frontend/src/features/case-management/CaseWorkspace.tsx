@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { Link, Outlet, useParams } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { AgentStatus } from "@/components/common/AgentStatus";
+import { Sheet } from "@/components/ui/sheet";
+import { ConversationPanel } from "@/features/conversation/ConversationPanel";
+import { CASE_SECTIONS } from "@/features/case-management/case-navigation";
 import { clearIdempotency, idempotencyKey } from "@/lib/idempotency";
 import { isRawHandoffMessage } from "@/lib/report";
 import { clearHandoff, loadHandoff, loadMessages, rememberCase, saveHandoff, saveMessages } from "@/lib/session";
@@ -11,8 +13,6 @@ import { api, errorMessage } from "@/services/api";
 import { subscribeAgentEvents } from "@/services/sse";
 import type { AgentEvent, AgentName, AnswerView, CaseHandoff, CaseView, ChatMessage, ChatRole, FactListResponse, TurnResponse } from "@/types/api";
 import { CaseHeader } from "@/features/case-management/CaseHeader";
-import { CaseProgress } from "@/features/case-management/CaseProgress";
-import { ReopenCard } from "@/features/case-management/ReopenCard";
 
 interface WorkspaceValue {
   caseId: string;
@@ -50,6 +50,13 @@ export function useWorkspace(): WorkspaceValue {
 
 export function CaseWorkspace() {
   const { caseId = "" } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const base = `/cases/${caseId}`;
+  const section = location.pathname.slice(base.length).split("/").filter(Boolean)[0];
+  const selectedPanel = CASE_SECTIONS.find((item) => item.path === section);
+  const lastPanel = useRef("");
+  const focusChatAfterClose = useRef(false);
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<ChatMessage[]>(() => loadMessages(caseId));
   const [handoff, setHandoff] = useState<CaseHandoff | null>(() => loadHandoff(caseId));
@@ -60,6 +67,10 @@ export function CaseWorkspace() {
   const [chatNode, setChatNode] = useState<HTMLTextAreaElement | null>(null);
   const serverSyncedAt = useRef(0);
   const sendingLocked = useRef(false);
+
+  useEffect(() => {
+    if (selectedPanel) lastPanel.current = selectedPanel.path;
+  }, [selectedPanel]);
 
   useEffect(() => {
     setMessages(loadMessages(caseId));
@@ -278,31 +289,35 @@ export function CaseWorkspace() {
       await confirmMutation.mutateAsync({ factKey, factValue });
     },
     focusChat() {
-      chatNode?.focus();
+      if (selectedPanel) {
+        focusChatAfterClose.current = true;
+        navigate(base, { replace: true, preventScrollReset: true });
+      } else chatNode?.focus();
     },
     registerChat: setChatNode,
   };
 
   return (
     <WorkspaceContext.Provider value={value}>
-      <div className="space-y-4">
+      <div className="case-workspace flex h-full min-h-0 flex-col">
         <CaseHeader />
-        {answerQuery.data?.risk_level === "HIGH" || answerQuery.data?.risk_level === "CRITICAL" ? (
-          <p className="rounded-xl border border-son-line bg-son-tint px-4 py-3 text-sm text-son-dark">
-            Cần thận trọng. Vụ việc có mức rủi ro cao. Hãy kiểm tra căn cứ và chứng cứ trước khi xử lý. Mức rủi ro không tự quyết hình thức kỷ luật.
-          </p>
-        ) : null}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <AgentStatus agent={agent} />
-          {error ? (
-            <p className="text-sm text-son-dark" role="alert">
-              {error}
-            </p>
-          ) : null}
-        </div>
-        <CaseProgress />
-        <ReopenCard />
-        <Outlet />
+        <ConversationPanel />
+        <Sheet
+          open={Boolean(selectedPanel)}
+          onOpenChange={(open) => { if (!open) navigate(base, { replace: true, preventScrollReset: true }); }}
+          title={`${selectedPanel?.label ?? "Hồ sơ"} · ${caseQuery.data.case_code.toLocaleUpperCase("vi-VN")}`}
+          description="Xem và xử lý thông tin hồ sơ. Đóng bảng để tiếp tục hội thoại; nội dung đang soạn được giữ nguyên."
+          className={selectedPanel?.path === "assessment" || selectedPanel?.path === "legal-review" ? "case-detail-panel max-w-6xl" : selectedPanel?.path === "overview" ? "case-detail-panel max-w-2xl" : "case-detail-panel max-w-4xl"}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            if (focusChatAfterClose.current) {
+              focusChatAfterClose.current = false;
+              chatNode?.focus();
+            } else document.getElementById(`case-tool-${lastPanel.current}`)?.focus();
+          }}
+        >
+          {selectedPanel ? <Outlet /> : null}
+        </Sheet>
       </div>
     </WorkspaceContext.Provider>
   );

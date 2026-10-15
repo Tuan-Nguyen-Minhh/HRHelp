@@ -1,84 +1,39 @@
-import { NavLink } from "react-router-dom";
+import { AlertTriangle, MessageSquareText } from "lucide-react";
+import { Link, NavLink } from "react-router-dom";
 
-import { StatusBadge, ToneBadge } from "@/components/common/StatusBadge";
-import { familyLabel, riskLabel, riskTone } from "@/lib/labels";
-import { cn, formatDate } from "@/lib/utils";
+import { StatusBadge } from "@/components/common/StatusBadge";
+import { CASE_SECTIONS } from "@/features/case-management/case-navigation";
 import { useWorkspace } from "@/features/case-management/CaseWorkspace";
-
-const LINKS = [
-  { to: "", label: "Tổng quan", end: true },
-  { to: "conversation", label: "Hội thoại", end: false },
-  { to: "facts", label: "Tình tiết", end: false },
-  { to: "evidence", label: "Căn cứ", end: false },
-  { to: "assessment", label: "Đánh giá", end: false },
-  { to: "documents", label: "Văn bản", end: false },
-  { to: "timeline", label: "Dòng thời gian", end: false },
-  { to: "decision", label: "Phiếu", end: false },
-  { to: "legal-review", label: "Gói duyệt", end: false },
-];
+import { riskLabel } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 
 export function CaseHeader() {
   const { caseId, caseView, facts, answer } = useWorkspace();
-  const violation = firstLine(caseView.description);
+  const base = `/cases/${caseId}`;
+  const highRisk = answer?.risk_level === "HIGH" || answer?.risk_level === "CRITICAL";
+
   return (
-    <header className="rounded-xl border border-rule bg-white px-4 py-4 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold tracking-[0.16em] text-son-dark">HỒ SƠ</p>
-          <h1 className="text-2xl font-semibold text-ink">#{caseView.case_code}</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge status={caseView.status} />
-          {answer?.risk_level ? (
-            <ToneBadge tone={riskTone(answer.risk_level)} label={`Rủi ro ${riskLabel(answer.risk_level).toLowerCase()}`} />
-          ) : null}
-        </div>
+    <header className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-rule bg-paper px-4 py-2.5 lg:px-6" aria-label="Thông tin và điều hướng hồ sơ">
+      <div className="flex min-w-0 items-center gap-3">
+        <Link to={base} className="flex min-w-0 items-center gap-2.5 rounded-md" aria-label="Về hội thoại hồ sơ" title="Về hội thoại hồ sơ">
+          <MessageSquareText className="h-5 w-5 shrink-0 text-son" aria-hidden="true" />
+          <h1 className="truncate text-base font-semibold uppercase text-ink">{caseView.case_code}</h1>
+        </Link>
+        <span className="hidden sm:inline-flex"><StatusBadge status={caseView.status} /></span>
+        {highRisk ? (
+          <Link to={`${base}/overview`} aria-label={`Xem cảnh báo rủi ro ${riskLabel(answer?.risk_level)}`} title={`Rủi ro ${riskLabel(answer?.risk_level)} — xem chi tiết`} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-son-tint text-son-dark">
+            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        ) : null}
       </div>
-      <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
-        <div>
-          <dt className="text-xs text-ink-3">Nhân viên</dt>
-          <dd className="font-medium text-ink">{caseView.employee_name || "—"}</dd>
-          <dd className="text-xs text-ink-3">{caseView.employee_code || "Chưa có mã"}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-ink-3">Sự việc</dt>
-          <dd className="line-clamp-2 font-medium text-ink">{violation || "Chưa có mô tả"}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-ink-3">Ngày xảy ra</dt>
-          <dd className="font-medium text-ink">{formatDate(caseView.incident_date)}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-ink-3">Nhóm</dt>
-          <dd className="font-medium text-ink">{familyLabel(caseView.family || facts?.family)}</dd>
-        </div>
-      </dl>
-      <nav className="mt-4 flex gap-1 overflow-x-auto" aria-label="Phần hồ sơ">
-        {LINKS.map((item) => (
-          <NavLink
-            key={item.label}
-            to={item.to ? `/cases/${caseId}/${item.to}` : `/cases/${caseId}`}
-            end={item.end}
-            className={({ isActive }) =>
-              cn(
-                "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium",
-                isActive ? "bg-son text-white" : "bg-paper-2 text-ink hover:bg-paper-3",
-              )
-            }
-          >
-            {item.label}
+      <nav className="flex max-w-full shrink-0 items-center gap-0.5 overflow-x-auto" aria-label="Công cụ hồ sơ">
+        {CASE_SECTIONS.map((item) => (
+          <NavLink key={item.path} id={`case-tool-${item.path}`} to={`${base}/${item.path}`} title={item.label} aria-label={item.label} aria-haspopup="dialog" className={({ isActive }) => cn("relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-paper-2", isActive ? "bg-son-tint text-son-dark" : "text-ink-3")}>
+            <item.icon className="h-[18px] w-[18px]" aria-hidden="true" />
+            {item.path === "facts" && Boolean(facts?.missing_fact_keys.length) ? <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-son" aria-hidden="true" /> : null}
           </NavLink>
         ))}
       </nav>
     </header>
   );
-}
-
-function firstLine(value: string | null): string {
-  if (!value) return "";
-  const line = value
-    .split("\n")
-    .map((item) => item.trim())
-    .find(Boolean);
-  return line ?? "";
 }

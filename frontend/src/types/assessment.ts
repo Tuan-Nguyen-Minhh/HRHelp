@@ -139,6 +139,18 @@ export interface AssessmentForm {
   permissions: AssessmentPermissions;
   metadata: {
     generated_at: string | null;
+    case_created_date?: string | null;
+    minutes_profile: {
+      company_name: string;
+      city: string;
+      document_number: string;
+      meeting_location: string;
+      leadership_name: string;
+      leadership_position: string;
+      hr_name: string;
+      hr_position: string;
+      hr_department: string;
+    };
     source: "AI" | "HR";
     recommendation_id: string | null;
     prompt_version: string;

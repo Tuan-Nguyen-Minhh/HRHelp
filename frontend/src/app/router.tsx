@@ -9,7 +9,6 @@ import { CasesPage } from "@/features/case-management/CasesPage";
 import { CaseWorkspace } from "@/features/case-management/CaseWorkspace";
 import {
   AssessmentPage,
-  ConversationPage,
   DocumentsPage,
   EvidencePage,
   FactsPage,
@@ -85,8 +84,9 @@ export function AppRouter() {
             </RequireRole>
           }
         >
-          <Route index element={<CasePage />} />
-          <Route path="conversation" element={<ConversationPage />} />
+          <Route index element={null} />
+          <Route path="overview" element={<CasePage />} />
+          <Route path="conversation" element={null} />
           <Route path="facts" element={<FactsPage />} />
           <Route path="evidence" element={<EvidencePage />} />
           <Route path="assessment" element={<AssessmentPage />} />

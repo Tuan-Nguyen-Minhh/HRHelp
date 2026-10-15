@@ -5,10 +5,10 @@ Python already checked. The prompt in ``prompts.py`` is the contract: this step
 does not confirm the form and does not send a ticket.
 """
 
-import re
 from dataclasses import dataclass
 from datetime import date
 
+from src.common.minutes_text import clean_minutes_text
 from src.features.answer.model.conversation import confidence_sentence
 from src.features.answer.model.rubric import ISSUANCE_LABELS
 from src.features.answer.schema import AnswerView, CitationView
@@ -35,9 +35,6 @@ _COMPANY = {
     "DEMOTION": "Cách chức",
     "DISMISSAL": "Sa thải",
 }
-_CHUNK_ID_RE = re.compile(r"\s*-?\s*Chunk[_\s-]*id\s*:\s*[\w-]+", re.IGNORECASE)
-_MARKDOWN_RE = re.compile(r"[*_`]+")
-_ROMAN_HEADING_RE = re.compile(r"\b[IVXLCDM]{1,6}\.\s+[A-ZÀ-Ỹ][^.\n]*(?:\.|\s+-)?", re.IGNORECASE)
 _INCIDENT_FACT_KEYS = {
     "absence_days",
     "late_days",
@@ -187,7 +184,7 @@ def _incident_narrative(source: ComposeInput, facts: list[ConfirmedFact], fallba
             items.append(f"{fact.label}: {fact.value}")
     if not items and fallback:
         items.append(fallback)
-    clean_items = [_clean_minutes_text(item).strip(" -.;") for item in items]
+    clean_items = dict.fromkeys(_clean_minutes_text(item).strip(" -.;") for item in items)
     return "\n".join(f"- {item}." for item in clean_items if item and not _looks_like_assessment_report(item))
 
 
@@ -215,12 +212,7 @@ def _case_description_meta(description: str) -> dict[str, str]:
 
 
 def _clean_minutes_text(value: str) -> str:
-    text = _CHUNK_ID_RE.sub("", value or "")
-    text = _MARKDOWN_RE.sub("", text)
-    text = _ROMAN_HEADING_RE.sub("", text)
-    text = re.sub(r"\b[IVXLCDM]{1,6}\.\s*", "", text)
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
+    return " ".join(clean_minutes_text(value).split())
 
 
 def _handling_summary(result: AssessmentResult, proposed: list[ProposedAction], gaps: list[str]) -> str:
