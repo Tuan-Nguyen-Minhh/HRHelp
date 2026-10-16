@@ -27,6 +27,7 @@ import { LegalCasePage } from "@/features/legal-review/LegalCasePage";
 import { LegalQueuePage } from "@/features/legal-review/LegalQueuePage";
 import { LegalReviewPage } from "@/features/legal-review/LegalReviewPage";
 import { NotificationsPage } from "@/features/notifications/NotificationsPage";
+import { GuidePage } from "@/features/guide/GuidePage";
 
 function RequireAuth() {
   const { auth } = useAuth();
@@ -61,6 +62,7 @@ export function AppRouter() {
       <Route element={<RequireAuth />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/guide" element={<GuidePage />} />
         <Route
           path="/cases"
           element={
