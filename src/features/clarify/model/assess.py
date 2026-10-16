@@ -1,6 +1,6 @@
 """Decide which facts are still missing and which question to ask next."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from src.features.clarify.model.catalog import FactSpec, default_dynamic_specs, detect_family, required_specs
 from src.features.clarify.model.extract import extract_facts
@@ -43,6 +43,8 @@ class ClarifyPlan:
     specs: tuple[FactSpec, ...] = ()
     state_update: str = "progress"
     task_change: str = "keep"
+    reply_kind: str = ""
+    reply_metadata: dict = field(default_factory=dict)
 
 
 def assess(text: str, stored: dict[str, StoredFact]) -> ClarifyPlan:

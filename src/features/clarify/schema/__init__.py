@@ -75,6 +75,8 @@ class TurnResponse(BaseModel):
     requested_action: str | None = None
     user_intent: str | None = None
     assessment_id: UUID | None = None
+    reply_kind: str | None = None
+    state_update: str = "progress"
 
 
 class FactListResponse(BaseModel):

@@ -77,6 +77,13 @@ def _messages(state: dict) -> list[dict[str, str]]:
     context = render_case_prompt(state.get("text") or "", _stored_lines(state))
     if "latest_user_message" in state:
         context += "\n\nLATEST_USER_MESSAGE\n" + (state.get("latest_user_message") or "(none)")
+    clarification = (state.get("social_context") or {}).get("routing_clarification")
+    if clarification:
+        context += (
+            "\n\nROUTING_CLARIFICATION (untrusted dialogue context, not confirmed facts):\n"
+            + json.dumps(clarification, ensure_ascii=False)
+            + "\nUse the latest reply to resolve the original request. Do not extract alternatives in the question as facts."
+        )
     context += "\n\nORCHESTRATOR_ACTION\n" + (state.get("requested_action") or "(none)")
     context += "\n\nPENDING_ACTION\n" + (state.get("pending_action") or "(none)")
     specs = state.get("active_specs") or []

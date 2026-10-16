@@ -50,14 +50,11 @@ async def add_message(session: AsyncSession, draft: NewMessage) -> Message:
 
 
 async def list_user_text(session: AsyncSession, conversation_id: UUID) -> str:
-    """Concatenate user messages in the order they were sent."""
-    stmt = (
-        select(Message.content)
-        .where(Message.conversation_id == conversation_id, Message.role == "USER")
-        .order_by(Message.created_at.asc())
-    )
-    rows = (await session.execute(stmt)).scalars().all()
-    return "\n".join(rows)
+    """Business transcript only; casual dialogue is not evidence."""
+    from src.features.clarify.model.memory import is_business_message
+
+    rows = await list_messages(session, conversation_id)
+    return "\n".join(row.content for row in rows if row.role == "USER" and is_business_message(row))
 
 
 async def list_messages(session: AsyncSession, conversation_id: UUID) -> list[Message]:
