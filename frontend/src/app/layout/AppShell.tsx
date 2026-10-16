@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Bot, FileSearch, Gavel, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, Scale, ScrollText, ShieldCheck, Upload, Users } from "lucide-react";
+import { Bell, BookOpen, Bot, FileSearch, Gavel, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, Scale, ScrollText, ShieldCheck, Upload, Users } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Link, matchPath, NavLink, Outlet, useLocation } from "react-router-dom";
 
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
 import { NotificationsPage } from "@/features/notifications/NotificationsPage";
+import { GuidePage } from "@/features/guide/GuidePage";
 import { ROLE_LABEL } from "@/lib/labels";
 import { api } from "@/services/api";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ const NAV: NavItem[] = [
   { to: "/legal-review", label: "Pháp chế", icon: Scale, roles: ["LEGAL"] },
   { to: "/manager", label: "Quản lý tài khoản", icon: Users, roles: ["MANAGER"] },
   { to: "/decisions", label: "Quyết định", icon: Gavel, roles: ["SIGNER", "ADMIN"] },
+  { to: "/guide", label: "Giới thiệu & hướng dẫn", icon: BookOpen, roles: ["HR", "MANAGER", "LEGAL", "SIGNER", "ADMIN"] },
   { to: "/notifications", label: "Thông báo", icon: Bell, roles: ["HR", "MANAGER", "LEGAL", "SIGNER", "ADMIN"] },
   { to: "/admin/ingestion", label: "Nạp văn bản", icon: Upload, roles: ["ADMIN"] },
   { to: "/audit", label: "Nhật ký", icon: ScrollText, roles: ["ADMIN"] },
@@ -37,7 +39,7 @@ export function AppShell() {
   const caseWorkspace = Boolean(caseMatch && caseMatch.params.caseId !== "new");
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const collapsed = caseWorkspace && !sidebarExpanded;
-  const [panel, setPanel] = useState<"/dashboard" | "/notifications" | null>(null);
+  const [panel, setPanel] = useState<"/dashboard" | "/notifications" | "/guide" | null>(null);
   const panelTrigger = useRef<HTMLAnchorElement | null>(null);
   const isCasePage = ["/cases/:caseId/*", "/legal-review/:caseId", "/manager/:caseId", "/decisions/:caseId"].some((pattern) => {
     const match = matchPath(pattern, location.pathname);
@@ -56,7 +58,7 @@ export function AppShell() {
   }, [location.key]);
 
   function openPanel(event: MouseEvent<HTMLAnchorElement>, to: string) {
-    if (!isCasePage || (to !== "/dashboard" && to !== "/notifications")) return;
+    if (!isCasePage || (to !== "/dashboard" && to !== "/notifications" && to !== "/guide")) return;
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     panelTrigger.current = event.currentTarget;
@@ -120,7 +122,7 @@ export function AppShell() {
               title={collapsed ? item.label : undefined}
               aria-label={item.label}
               onClick={(event) => openPanel(event, item.to)}
-              aria-haspopup={isCasePage && (item.to === "/dashboard" || item.to === "/notifications") ? "dialog" : undefined}
+              aria-haspopup={isCasePage && (item.to === "/dashboard" || item.to === "/notifications" || item.to === "/guide") ? "dialog" : undefined}
               className={({ isActive }) =>
                 cn(
                   "flex shrink-0 items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors duration-200 lg:w-full",
@@ -192,15 +194,15 @@ export function AppShell() {
       <Sheet
         open={panel !== null}
         onOpenChange={(open) => { if (!open) setPanel(null); }}
-        title={panel === "/dashboard" ? "Bảng điều khiển" : "Thông báo"}
+        title={panel === "/dashboard" ? "Bảng điều khiển" : panel === "/guide" ? "Giới thiệu & hướng dẫn" : "Thông báo"}
         description="Xem thông tin và đóng bảng để tiếp tục hồ sơ đang mở."
-        className={panel === "/dashboard" ? "max-w-5xl" : "max-w-2xl"}
+        className={panel === "/notifications" ? "max-w-2xl" : "max-w-5xl"}
         onCloseAutoFocus={(event) => {
           event.preventDefault();
           panelTrigger.current?.focus();
         }}
       >
-        {panel === "/dashboard" ? <DashboardPage /> : panel === "/notifications" ? <NotificationsPage /> : null}
+        {panel === "/dashboard" ? <DashboardPage /> : panel === "/notifications" ? <NotificationsPage /> : panel === "/guide" ? <GuidePage /> : null}
       </Sheet>
     </div>
   );
