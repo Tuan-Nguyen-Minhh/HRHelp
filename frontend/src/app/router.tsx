@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { AppShell } from "@/app/layout/AppShell";
 import { useAuth, useMe } from "@/app/providers";
+import { StaffAccountsPage } from "@/features/accounts/StaffAccountsPage";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { CasePage } from "@/features/case-management/CasePage";
 import { CasesPage } from "@/features/case-management/CasesPage";
@@ -17,7 +18,7 @@ import {
 import { NewCasePage } from "@/features/case-management/NewCasePage";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
 import { DecisionPage } from "@/features/decision/DecisionPage";
-import { ManagerQueuePage } from "@/features/decision/ManagerQueuePage";
+import { ManagerReviewPage } from "@/features/decision/ManagerReviewPage";
 import { SignerPage } from "@/features/decision/SignerPage";
 import { SignerQueuePage } from "@/features/decision/SignerQueuePage";
 import { AuditPage } from "@/features/audit/AuditPage";
@@ -115,7 +116,7 @@ export function AppRouter() {
           path="/manager"
           element={
             <RequireRole roles={["MANAGER"]}>
-              <ManagerQueuePage />
+              <StaffAccountsPage />
             </RequireRole>
           }
         />
@@ -123,7 +124,7 @@ export function AppRouter() {
           path="/manager/:caseId"
           element={
             <RequireRole roles={["MANAGER"]}>
-              <SignerPage />
+              <ManagerReviewPage />
             </RequireRole>
           }
         />

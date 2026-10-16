@@ -111,6 +111,7 @@ class HandlingProposal(BaseModel):
     confidence: str = "LOW"
     requires_legal_review: bool = True
     rationale: str = ""
+    manual_text: str | None = None
 
 
 class MissingItem(BaseModel):

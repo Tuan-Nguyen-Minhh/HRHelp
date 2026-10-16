@@ -26,6 +26,7 @@ def test_state_machine_allows_the_human_loop():
     assert_transition("REJECTED", "NEED_INFO")
     assert_transition("REJECTED", "ANALYZED")
     assert_transition("APPROVED", "DECIDED")
+    assert_transition("APPROVED", "REJECTED")
     assert_transition("DECIDED", "CLOSED")
     assert TRANSITIONS["CLOSED"] == frozenset()
 
@@ -115,6 +116,7 @@ def test_audit_catalog_covers_the_human_decisions():
         "HR_ESCALATED",
         "LEGAL_APPROVED",
         "LEGAL_REJECTED",
+        "MANAGER_REJECTED",
         "CASE_REOPENED",
         "DECISION_ISSUED",
         "PRECEDENT_CREATED",
@@ -148,6 +150,8 @@ def test_enterprise_routes_are_mounted():
         "/api/v1/cases/{case_id}/reviews",
         "/api/v1/cases/{case_id}/reviews/latest",
         "/api/v1/manager/queue",
+        "/api/v1/manager/cases/{case_id}/review-pack",
+        "/api/v1/manager/cases/{case_id}/reject",
         "/api/v1/manager/users",
         "/api/v1/manager/users/{user_id}",
         "/api/v1/cases/{case_id}/reopen",

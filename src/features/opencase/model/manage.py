@@ -243,6 +243,8 @@ async def _copy_rejected_report(session: AsyncSession, case: Case) -> None:
         status="DRAFT",
     )
     session.add(copy)
+    # The models have no ORM relationship to order inserts of the citation copies.
+    await session.flush()
     citations = list(
         (
             await session.scalars(

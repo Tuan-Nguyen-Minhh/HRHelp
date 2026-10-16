@@ -5,11 +5,12 @@ from uuid import UUID, uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.common.access import MUTABLE_STATUSES, require_case_access
+from src.common.audit import write_audit
 from src.common.clock import utc_now, vietnam_date
 from src.common.errors import AppError
 from src.common.minutes_profile import minutes_profile
-from src.common.workflow import CaseAccessLevel
-from src.features.answer.model.answers import load
+from src.common.workflow import CaseAccessLevel, assert_transition, lock_case
+from src.features.answer.model.answers import load, load_stored
 from src.features.answer.schema import AnswerView
 from src.features.assessment.agent import ComposeInput, FactInput, compose
 from src.features.assessment.repository import append_version, current_version, get_report
@@ -25,6 +26,7 @@ from src.features.assessment.schemas import (
 from src.features.assessment.validator import validate_sections
 from src.features.clarify.model.catalog import OPTIONAL_FACT_KEYS, fact_label, required_specs, resolved_family
 from src.features.clarify.model.store import list_fact_rows
+from src.features.opencase.model.manage import _copy_rejected_report
 from src.models.assessment_reports import AssessmentReport, AssessmentVersion
 from src.models.cases import Case
 from src.models.users import User
@@ -120,8 +122,66 @@ async def confirm_assessment(session: AsyncSession, actor: User, case_id: UUID) 
 
 
 async def reanalyze_assessment(session: AsyncSession, actor: User, case_id: UUID) -> AssessmentView:
-    """Build a new draft from the latest stored facts and evidence. The old version stays."""
-    return await generate_assessment(session, actor, case_id)
+    """Open the saved minutes as a new HR draft, preserving the submitted version."""
+    case = await lock_case(session, case_id)
+    if case is None:
+        raise AppError(404, "Không tìm thấy hồ sơ.", code="CASE_NOT_FOUND")
+    await require_case_access(session, actor, case, CaseAccessLevel.EDIT)
+    if actor.role not in {"HR", "MANAGER"}:
+        raise AppError(403, "Chỉ HR được sửa biên bản.", code="FORBIDDEN")
+    if case.status not in MUTABLE_STATUSES:
+        raise AppError(409, "Hồ sơ không còn ở bước sửa biên bản.", code="CASE_NOT_EDITABLE")
+    report, version = await _open(session, case.id)
+    previous_status = case.status
+    if case.status == "REJECTED":
+        assert_transition(case.status, "ANALYZED")
+        await _copy_rejected_report(session, case)
+        case.status = "ANALYZED"
+    sections, sources = _saved(version)
+    sections = sections.model_copy(
+        update={
+            "case_information": sections.case_information.model_copy(update={"case_status": case.status}),
+        }
+    )
+    answer = await load_stored(session, case)
+    sections = _align_saved_citations(sections, answer)
+    await write_audit(
+        session,
+        case_id=case.id,
+        actor_id=actor.id,
+        actor_role=actor.role,
+        action="ASSESSMENT_REVISED",
+        entity_type="assessment_reports",
+        entity_id=report.id,
+        before={"status": previous_status, "version": version.version},
+        after={"status": case.status, "source": "HR", "version": version.version + 1},
+    )
+    return await _store_new(session, actor, case, sections, sources, "HR", report)
+
+
+def _align_saved_citations(sections: Sections, answer: AnswerView | None) -> Sections:
+    """Retain snapshot quotes whose original chunk was removed; never invent a source."""
+    if answer is None:
+        return sections
+    rows = [*answer.legal_basis, *answer.internal_rule, *answer.precedent, *answer.inspection_risk]
+
+    def signature(item):
+        return (" ".join(item.quote.split()), item.article, item.clause, item.point)
+
+    archived = {signature(item) for item in rows if item.chunk_id is None}
+    allowed = _stored_chunk_ids(answer)
+
+    def align(card):
+        if card.chunk_id is not None and str(card.chunk_id) not in allowed and signature(card) in archived:
+            return card.model_copy(update={"chunk_id": None})
+        return card
+
+    return sections.model_copy(
+        update={
+            "citations": [align(card) for card in sections.citations],
+            "evidence_reviewed": [align(card) for card in sections.evidence_reviewed],
+        }
+    )
 
 
 async def _compose_case(session: AsyncSession, case: Case) -> tuple[Sections, dict[str, str]]:
@@ -293,6 +353,7 @@ def _merge(sections: Sections, sources: dict[str, str], patch: AssessmentPatch) 
         data["confirmed_facts"] = [item.model_dump() for item in merged]
     if patch.handling_rationale is not None:
         data["handling_proposal"]["rationale"] = patch.handling_rationale
+        data["handling_proposal"]["manual_text"] = patch.handling_rationale
         sources["handling_proposal.rationale"] = "HR"
     return Sections.model_validate(data), sources
 
@@ -352,6 +413,8 @@ async def _present(
     sections, sources = _saved(version)
     answer = await load(session, case)
     validation = validate_sections(sections, _stored_chunk_ids(answer) if answer is not None else set())
+    if any(card.chunk_id is None for card in sections.citations):
+        validation.warnings.append("Một số căn cứ chỉ còn bản trích đã lưu. Pháp chế cần đối chiếu lại liên kết nguồn.")
     ticket = None if answer is None or answer.ticket is None else answer.ticket.disposition
     mutable = case.status in MUTABLE_STATUSES and actor.role in {"HR", "MANAGER"}
     confirmed = version.status == "CONFIRMED"
@@ -403,7 +466,12 @@ def ticket_allowed(
 
 
 def _can_refresh(actor: User, case: Case, version: AssessmentVersion) -> bool:
-    return version.status == "DRAFT" and case.status in MUTABLE_STATUSES and actor.role in {"HR", "MANAGER"}
+    return (
+        version.status == "DRAFT"
+        and version.source != "HR"
+        and case.status in MUTABLE_STATUSES
+        and actor.role in {"HR", "MANAGER"}
+    )
 
 
 def _catalog_mismatch(case: Case, sections: Sections) -> bool:

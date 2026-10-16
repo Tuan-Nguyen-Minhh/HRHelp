@@ -64,3 +64,9 @@ class PrecedentRequest(BaseModel):
 class CloseResponse(BaseModel):
     case_id: UUID
     status: str
+
+
+class RejectDecisionRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+    comment: str = Field(min_length=1, max_length=4000)

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { useMe } from "@/app/providers";
@@ -10,6 +10,7 @@ import { LegalTicketCard } from "@/features/decision/LegalTicketCard";
 import { DocumentSections, EvidenceDetail, sectionLinks, type EditKey } from "@/features/assessment/form/Sections";
 import { formatDate } from "@/lib/utils";
 import { api, errorMessage } from "@/services/api";
+import type { CaseView } from "@/types/api";
 import type {
   AssessmentForm as AssessmentFormView,
   AssessmentPatch,
@@ -57,10 +58,14 @@ export function AssessmentEntry() {
 }
 
 export function AssessmentForm() {
-  const { caseId } = useWorkspace();
+  const { caseId, caseView } = useWorkspace();
   const me = useMe();
+  const role = me.data?.role ?? "";
+  const canStart = role === "HR" || role === "MANAGER";
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["assessment", caseId], queryFn: () => api.getAssessment(caseId) });
+  const returnReason = useQuery({ queryKey: ["return-reason", caseId], queryFn: () => api.latestReturnReason(caseId), enabled: canStart && ["REJECTED", "ANALYZED", "NEED_INFO"].includes(caseView.status) });
+  const editRevision = useRef(false);
   const [draft, setDraft] = useState<DraftState>({});
   const [editing, setEditing] = useState<EditKey | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -73,8 +78,15 @@ export function AssessmentForm() {
   const versionKey = view ? `${view.assessment_id}:${view.version}:${view.status}` : "";
 
   useEffect(() => {
-    setDraft({});
-    setEditing(null);
+    if (editRevision.current && view) {
+      editRevision.current = false;
+      setDraft(seed({}, "all", view.sections));
+      setEditing("all");
+      requestAnimationFrame(() => document.getElementById("minutes")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    } else {
+      setDraft({});
+      setEditing(null);
+    }
     setAskConfirm(false);
   }, [versionKey]);
 
@@ -97,8 +109,13 @@ export function AssessmentForm() {
     mutationFn: () => api.reanalyzeAssessment(caseId),
     onSuccess: (next) => {
       setAskRedo(false);
-      setNotice(null);
-      store(next, false);
+      setNotice("Đã mở bản nháp mới. HR sửa trực tiếp các ô trong biên bản, lưu rồi xác nhận và gửi lại.");
+      editRevision.current = true;
+      store(next, true);
+      queryClient.setQueryData<CaseView>(["case", caseId], (current) => current ? { ...current, status: next.sections.case_information.case_status } : current);
+      void queryClient.invalidateQueries({ queryKey: ["answer", caseId] });
+      void queryClient.invalidateQueries({ queryKey: ["cases"] });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
   const save = useMutation({
@@ -120,8 +137,6 @@ export function AssessmentForm() {
 
   const busy = generate.isPending || redo.isPending || save.isPending || confirm.isPending;
   const failure = generate.error || redo.error || save.error || confirm.error;
-  const role = me.data?.role ?? "";
-  const canStart = role === "HR" || role === "MANAGER";
 
   async function persist(nextDraft: DraftState) {
     const patch = toPatch(nextDraft);
@@ -181,9 +196,27 @@ export function AssessmentForm() {
 
   const sections = shown(view, draft);
   const blocking = view.validation.blocking_errors;
+  const returned = returnReason.data;
+
+  function beginRevision() {
+    if (view && view.status === "DRAFT" && view.metadata.source === "HR" && caseView.status !== "REJECTED") {
+      setDraft((current) => seed(current, "all", view.sections));
+      setEditing("all");
+      document.getElementById("minutes")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else setAskRedo(true);
+  }
 
   return (
     <div className="space-y-4">
+      {returnReason.isError ? <p role="alert" className="rounded-xl border border-son-line bg-son-tint p-4 text-sm text-son-dark">Chưa tải được lý do trả lại: {errorMessage(returnReason.error)}</p> : null}
+      {returned ? (
+        <section id="return-reason" className="scroll-mt-4 space-y-2 rounded-xl border border-son-line bg-son-tint px-4 py-4 text-sm text-son-dark">
+          <h2 className="font-semibold">Lý do trả lại gần nhất · {returned.reviewer_role === "MANAGER" ? "Quản lý" : "Pháp chế"}</h2>
+          <p>{returned.reviewer_name || (returned.reviewer_role === "MANAGER" ? "Quản lý" : "Pháp chế")} · {new Date(returned.returned_at).toLocaleString("vi-VN")}</p>
+          <p className="whitespace-pre-wrap font-medium">{returned.comment || "Chưa có ghi chú lý do trả lại."}</p>
+          <p>{caseView.status === "REJECTED" ? "Chọn Lập lại biên bản để mở bản nháp và sửa thủ công theo yêu cầu." : "HR chỉnh sửa bản nháp theo yêu cầu này, sau đó xác nhận và gửi lại."}</p>
+        </section>
+      ) : caseView.status === "REJECTED" && !returnReason.isLoading && !returnReason.isError ? <p className="rounded-xl border border-rule bg-paper-2 p-4 text-sm">Hồ sơ đã bị trả lại, nhưng chưa có ghi chú lý do được lưu.</p> : null}
       <header className="rounded-xl border border-rule bg-white px-4 py-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -216,6 +249,9 @@ export function AssessmentForm() {
               {item.label}
             </a>
           ))}
+          {returned ? <a href="#return-reason" className="block shrink-0 rounded-md px-3 py-1.5 text-sm font-medium text-son-dark hover:bg-paper-2">Lý do trả lại</a> : null}
+          <a href="#minutes-confirmation" className="block shrink-0 rounded-md px-3 py-1.5 text-sm font-medium text-son-dark hover:bg-paper-2">Xác nhận biên bản</a>
+          <a href="#legal-ticket" className="block shrink-0 rounded-md px-3 py-1.5 text-sm font-medium text-son-dark hover:bg-paper-2">Gửi pháp chế</a>
         </nav>
         <DocumentSections
           view={view}
@@ -257,7 +293,7 @@ export function AssessmentForm() {
               <Link to={`/cases/${caseId}/conversation`}>Quay lại cuộc hội thoại</Link>
             </Button>
             {view.permissions.can_reanalyze ? (
-              <Button variant="secondary" disabled={busy} onClick={() => setAskRedo(true)}>
+              <Button variant="secondary" disabled={busy} onClick={beginRevision}>
                 Lập lại biên bản
               </Button>
             ) : null}
@@ -284,7 +320,7 @@ export function AssessmentForm() {
         </p>
       ) : null}
 
-      <div className="rounded-xl border border-rule bg-white px-4 py-3">
+      <div id="minutes-confirmation" className="scroll-mt-4 rounded-xl border border-rule bg-white px-4 py-3">
         {!view.permissions.can_confirm && view.status !== "CONFIRMED" && blocking.length === 0 ? (
           <p className="mb-2 text-sm text-ink-3">Xác nhận chỉ mở khi hồ sơ còn ở bước HR và biên bản không còn lỗi bắt buộc.</p>
         ) : null}
@@ -305,13 +341,13 @@ export function AssessmentForm() {
         ) : null}
         {askRedo ? (
           <div className="mb-3 rounded-md border border-rule bg-paper-2 px-3 py-3 text-sm text-ink">
-            <p>Lập lại tạo một phiên bản mới từ tình tiết và căn cứ đã lưu. Bản cũ được giữ. Phiếu không được gửi.</p>
+            <p>Mở bản nháp từ biên bản hiện tại để HR sửa thủ công? Bản đã gửi và lý do trả lại vẫn được giữ. Hồ sơ chỉ được gửi lại sau khi HR lưu và xác nhận.</p>
             <div className="mt-2 flex gap-2">
               <Button variant="secondary" onClick={() => setAskRedo(false)}>
                 Hủy
               </Button>
               <Button disabled={busy} onClick={() => redo.mutate()}>
-                {redo.isPending ? "Đang lập lại…" : "Lập lại"}
+                {redo.isPending ? "Đang mở bản nháp…" : "Mở bản nháp để sửa"}
               </Button>
             </div>
           </div>
@@ -323,8 +359,8 @@ export function AssessmentForm() {
             </Button>
           ) : null}
           {view.permissions.can_reanalyze ? (
-            <Button variant="secondary" disabled={busy} onClick={() => setAskRedo(true)}>
-              Lập lại phân tích
+            <Button variant="secondary" disabled={busy} onClick={beginRevision}>
+              {view.status === "DRAFT" && view.metadata.source === "HR" && caseView.status !== "REJECTED" ? "Sửa biên bản" : "Lập lại biên bản"}
             </Button>
           ) : null}
           <Button
@@ -364,6 +400,13 @@ function shown(view: AssessmentFormView, draft: DraftState): AssessmentSections 
 }
 
 function seed(current: DraftState, key: EditKey, sections: AssessmentSections): DraftState {
+  if (key === "all") return {
+    employee_information: sections.employee_information,
+    incident_summary: sections.incident_summary,
+    confirmed_facts: sections.confirmed_facts,
+    handling_rationale: sections.handling_proposal.rationale,
+    ...current,
+  };
   if (key === "case" && !current.case_information) return { ...current, case_information: sections.case_information };
   if (key === "employee" && !current.employee_information) return { ...current, employee_information: sections.employee_information };
   if (key === "incident" && !current.incident_summary) return { ...current, incident_summary: sections.incident_summary };
@@ -375,6 +418,7 @@ function seed(current: DraftState, key: EditKey, sections: AssessmentSections): 
 }
 
 function drop(current: DraftState, key: EditKey): DraftState {
+  if (key === "all") return {};
   const next = { ...current };
   if (key === "case") delete next.case_information;
   if (key === "employee") delete next.employee_information;
