@@ -1,0 +1,3085 @@
+{
+  "status": "provisional",
+  "reference_status": "draft_pending_expert_review",
+  "dataset_sha256": "4a06100ebc57550b506652de5a3a22f89cd01cb8c29742f4592db3e253ab09c4",
+  "corpus_sha256": "11216f7de78a63b5eb4cb7219259245b82e0028dc2e2ccf028be8a47fd63a6a3",
+  "scope_vi": "20 ca truy xuất; nhãn chứng cứ tối thiểu và mức liên quan là bản nháp. Không xác nhận căn cứ đủ để ra quyết định pháp lý.",
+  "configuration": {
+    "EMBEDDING_MODEL": "mistral-embed",
+    "EMBEDDING_DIMENSIONS": 1024,
+    "COHERE_RERANK_MODEL": "rerank-v4.0-pro",
+    "COHERE_RERANK_TIMEOUT_SECONDS": 25.0,
+    "RETRIEVAL_CANDIDATE_K": 40,
+    "RETRIEVAL_FUSION_K": 100,
+    "RETRIEVAL_FINAL_K": 12,
+    "RETRIEVAL_BM25_MAX_CORPUS": 10000,
+    "RETRIEVAL_GRAPH_INCOMING": false,
+    "RETRIEVAL_EVIDENCE_MAX_BYTES": 40000,
+    "RETRIEVAL_EVIDENCE_TOKEN_BUDGET": 8000,
+    "scope": "live_production_retrieval_graph_readonly_no_synthesis",
+    "case_timeout": 150,
+    "exact_tokenizer_configured": false,
+    "rerank_request_interval_seconds": 7.0
+  },
+  "sample_count": 20,
+  "completed_count": 20,
+  "error_count": 0,
+  "degraded_count": 0,
+  "passed_labeled_checks": 20,
+  "corpus_stable_after_run": true,
+  "graph_edges_in_snapshot": 0,
+  "averages": {
+    "candidate_recall": {
+      "mean": 1.0,
+      "scored_count": 19
+    },
+    "final_recall": {
+      "mean": 1.0,
+      "scored_count": 19
+    },
+    "complete_labeled_bundle": {
+      "mean": 1.0,
+      "scored_count": 19
+    },
+    "critical_chunk_recall": {
+      "mean": 1.0,
+      "scored_count": 18
+    },
+    "labeled_precision_lower_bound": {
+      "mean": 0.2587719298245614,
+      "scored_count": 19
+    },
+    "judged_precision": {
+      "mean": 1.0,
+      "scored_count": 19
+    },
+    "judgment_coverage": {
+      "mean": 0.2587719298245614,
+      "scored_count": 19
+    },
+    "ndcg_lower_bound": {
+      "mean": 0.8659807004032375,
+      "scored_count": 19
+    },
+    "date_eligibility_pass": {
+      "mean": 1.0,
+      "scored_count": 20
+    },
+    "passage_fidelity_pass": {
+      "mean": 1.0,
+      "scored_count": 20
+    },
+    "expected_empty_pass": {
+      "mean": 1.0,
+      "scored_count": 1
+    },
+    "graph_recall_gain": {
+      "mean": null,
+      "scored_count": 0
+    },
+    "latency_ms": {
+      "mean": 33542.05,
+      "scored_count": 20
+    },
+    "selected_count": {
+      "mean": 11.4,
+      "scored_count": 20
+    }
+  },
+  "stage_averages": {
+    "similarity": {
+      "mean": 0.6271929824561403,
+      "scored_count": 19
+    },
+    "bm25": {
+      "mean": 0.9035087719298246,
+      "scored_count": 19
+    },
+    "lexical": {
+      "mean": 0.7719298245614036,
+      "scored_count": 19
+    },
+    "fused": {
+      "mean": 1.0,
+      "scored_count": 19
+    },
+    "seeds": {
+      "mean": 0.8771929824561404,
+      "scored_count": 19
+    },
+    "expanded": {
+      "mean": 1.0,
+      "scored_count": 19
+    }
+  },
+  "cases": [
+    {
+      "case_id": "S01",
+      "status": "complete",
+      "origin": "source_excerpt",
+      "input": {
+        "query": "- Diễn biến sự việc: Nhân viên tự ý nghỉ 5 ngày làm việc không phép.\nTìm căn cứ nội quy và pháp luật, kèm điều kiện cần kiểm tra trước khi đề xuất xử lý.",
+        "description": "- Diễn biến sự việc: Nhân viên tự ý nghỉ 5 ngày làm việc không phép.\nTìm căn cứ nội quy và pháp luật, kèm điều kiện cần kiểm tra trước khi đề xuất xử lý.",
+        "family": "UNAUTHORIZED_ABSENCE",
+        "facts": {},
+        "incident_date": "2026-10-16"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.4166666666666667,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.4166666666666667,
+        "ndcg_lower_bound": 0.8973960702791516,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 30601,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 0.5,
+        "bm25": 1.0,
+        "lexical": 1.0,
+        "fused": 1.0,
+        "seeds": 1.0,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "0812add5-c466-47fc-87cf-2c085cda1b87",
+        "1b730e11-d067-4b4a-acb2-51e0d7209b30",
+        "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+        "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+        "e1ae17b1-b450-4e2a-8803-ceecc6b84c50",
+        "1186184d-60aa-4909-b8e8-850330f433d2",
+        "452b101e-b011-4b2b-bd7d-65c43249a46f"
+      ],
+      "selected": [
+        {
+          "chunk_id": "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+          "policy_code": "NQCT",
+          "article": "13",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "0812add5-c466-47fc-87cf-2c085cda1b87",
+          "policy_code": "NQCT",
+          "article": "4",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "52e33d20-472b-45a9-97bd-3f0bc2d2d6de",
+          "policy_code": "BLLD_2019",
+          "article": "125",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "1b730e11-d067-4b4a-acb2-51e0d7209b30",
+          "policy_code": "BLLD_2019",
+          "article": "115",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+          "policy_code": "NQCT",
+          "article": "12",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "5f3cd296-055a-430f-92a9-e9885cc6078f",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "1",
+          "point": null,
+          "grade": 1
+        },
+        {
+          "chunk_id": "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+          "policy_code": "NQCT",
+          "article": "11",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e1ae17b1-b450-4e2a-8803-ceecc6b84c50",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "4",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": 1
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": 1
+        }
+      ]
+    },
+    {
+      "case_id": "S02",
+      "status": "complete",
+      "origin": "source_excerpt",
+      "input": {
+        "query": "- Diễn biến sự việc: Nhân viên đi làm muộn 4 lần trong tháng.\nTìm căn cứ nội quy và pháp luật, kèm điều kiện cần kiểm tra trước khi đề xuất xử lý.",
+        "description": "- Diễn biến sự việc: Nhân viên đi làm muộn 4 lần trong tháng.\nTìm căn cứ nội quy và pháp luật, kèm điều kiện cần kiểm tra trước khi đề xuất xử lý.",
+        "family": "LATE",
+        "facts": {},
+        "incident_date": "2026-10-16"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.3333333333333333,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.3333333333333333,
+        "ndcg_lower_bound": 0.8755116424996906,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 34785,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 0.5,
+        "bm25": 0.5,
+        "lexical": 0.5,
+        "fused": 1.0,
+        "seeds": 1.0,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+        "30981c98-6047-4c6d-a6da-9a229ebcbc5e",
+        "dbbb3ca2-4003-408b-a50f-6a85e737cd5a",
+        "452b101e-b011-4b2b-bd7d-65c43249a46f",
+        "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+        "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+        "cf5db6c1-2585-4fbb-ad32-51b6be2be3ef",
+        "abcf16e4-dd41-44e2-a9de-b3d700c82926"
+      ],
+      "selected": [
+        {
+          "chunk_id": "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+          "policy_code": "NQCT",
+          "article": "11",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+          "policy_code": "NQCT",
+          "article": "10",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "30981c98-6047-4c6d-a6da-9a229ebcbc5e",
+          "policy_code": "BLLD_2019",
+          "article": "119",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "dbbb3ca2-4003-408b-a50f-6a85e737cd5a",
+          "policy_code": "NQCT",
+          "article": "3",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": 1
+        },
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": 1
+        },
+        {
+          "chunk_id": "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+          "policy_code": "NQCT",
+          "article": "12",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+          "policy_code": "NQCT",
+          "article": "16",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "cf5db6c1-2585-4fbb-ad32-51b6be2be3ef",
+          "policy_code": "NQCT",
+          "article": "2",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+          "policy_code": "NQCT",
+          "article": "13",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "S03",
+      "status": "complete",
+      "origin": "source_excerpt",
+      "input": {
+        "query": "- Diễn biến sự việc: Nhân viên nộp báo cáo công việc trễ hạn.\nTìm căn cứ nội quy và pháp luật, kèm điều kiện cần kiểm tra trước khi đề xuất xử lý.",
+        "description": "- Diễn biến sự việc: Nhân viên nộp báo cáo công việc trễ hạn.\nTìm căn cứ nội quy và pháp luật, kèm điều kiện cần kiểm tra trước khi đề xuất xử lý.",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-10-16"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.4166666666666667,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.4166666666666667,
+        "ndcg_lower_bound": 0.8798683295461021,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 35342,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 0.5,
+        "bm25": 1.0,
+        "lexical": 0.5,
+        "fused": 1.0,
+        "seeds": 0.5,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+        "452b101e-b011-4b2b-bd7d-65c43249a46f",
+        "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+        "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+        "cf5db6c1-2585-4fbb-ad32-51b6be2be3ef",
+        "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+        "ca7b6f9b-119b-4f03-b669-e14c59456564"
+      ],
+      "selected": [
+        {
+          "chunk_id": "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+          "policy_code": "NQCT",
+          "article": "11",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+          "policy_code": "NQCT",
+          "article": "10",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "5f3cd296-055a-430f-92a9-e9885cc6078f",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "1",
+          "point": null,
+          "grade": 1
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": 1
+        },
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": 1
+        },
+        {
+          "chunk_id": "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+          "policy_code": "NQCT",
+          "article": "12",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+          "policy_code": "NQCT",
+          "article": "16",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "cf5db6c1-2585-4fbb-ad32-51b6be2be3ef",
+          "policy_code": "NQCT",
+          "article": "2",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+          "policy_code": "NQCT",
+          "article": "13",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "ca7b6f9b-119b-4f03-b669-e14c59456564",
+          "policy_code": "NQCT",
+          "article": "1",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "S04",
+      "status": "complete",
+      "origin": "source_excerpt",
+      "input": {
+        "query": "- Diễn biến sự việc: Nhân viên rời vị trí làm việc khi chưa bàn giao.\nTìm căn cứ nội quy và pháp luật, kèm điều kiện cần kiểm tra trước khi đề xuất xử lý.",
+        "description": "- Diễn biến sự việc: Nhân viên rời vị trí làm việc khi chưa bàn giao.\nTìm căn cứ nội quy và pháp luật, kèm điều kiện cần kiểm tra trước khi đề xuất xử lý.",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-10-16"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.4166666666666667,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.4166666666666667,
+        "ndcg_lower_bound": 0.5879622552747023,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 34828,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 0.5,
+        "bm25": 1.0,
+        "lexical": 0.5,
+        "fused": 1.0,
+        "seeds": 0.5,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+        "68488e14-8044-42a9-9c75-e64fde741b08",
+        "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+        "452b101e-b011-4b2b-bd7d-65c43249a46f",
+        "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+        "986582ca-db07-49b7-ae28-52118c5f4075",
+        "e295a845-d11e-47dc-80ff-a1e9cda1927c"
+      ],
+      "selected": [
+        {
+          "chunk_id": "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+          "policy_code": "NQCT",
+          "article": "13",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+          "policy_code": "NQCT",
+          "article": "11",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "68488e14-8044-42a9-9c75-e64fde741b08",
+          "policy_code": "BLLD_2019",
+          "article": "40",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "5f3cd296-055a-430f-92a9-e9885cc6078f",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "1",
+          "point": null,
+          "grade": 1
+        },
+        {
+          "chunk_id": "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+          "policy_code": "NQCT",
+          "article": "12",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+          "policy_code": "NQCT",
+          "article": "10",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": 1
+        },
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": 1
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "986582ca-db07-49b7-ae28-52118c5f4075",
+          "policy_code": "BLLD_2019",
+          "article": "35",
+          "clause": "1",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+          "policy_code": "NQCT",
+          "article": "16",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "S05",
+      "status": "complete",
+      "origin": "source_excerpt",
+      "input": {
+        "query": "- Diễn biến sự việc: Nhân viên không sử dụng đầy đủ trang bị bảo hộ theo quy trình.\nTìm căn cứ nội quy và pháp luật, kèm điều kiện cần kiểm tra trước khi đề xuất xử lý.",
+        "description": "- Diễn biến sự việc: Nhân viên không sử dụng đầy đủ trang bị bảo hộ theo quy trình.\nTìm căn cứ nội quy và pháp luật, kèm điều kiện cần kiểm tra trước khi đề xuất xử lý.",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-10-16"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.4166666666666667,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.4166666666666667,
+        "ndcg_lower_bound": 0.8684461448044452,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 35093,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 0.0,
+        "bm25": 1.0,
+        "lexical": 1.0,
+        "fused": 1.0,
+        "seeds": 0.5,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+        "cd3fcc2e-b5e7-4696-84c6-4eebd7b20999",
+        "452b101e-b011-4b2b-bd7d-65c43249a46f",
+        "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+        "b3be50af-b6f2-498f-9f52-4723ed04b973",
+        "cf5db6c1-2585-4fbb-ad32-51b6be2be3ef",
+        "ca7b6f9b-119b-4f03-b669-e14c59456564"
+      ],
+      "selected": [
+        {
+          "chunk_id": "5a647271-68ce-453f-bd35-a862e4d14d08",
+          "policy_code": "NQCT",
+          "article": "7",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+          "policy_code": "NQCT",
+          "article": "10",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "cd3fcc2e-b5e7-4696-84c6-4eebd7b20999",
+          "policy_code": "BLLD_2019",
+          "article": "134",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "5f3cd296-055a-430f-92a9-e9885cc6078f",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "1",
+          "point": null,
+          "grade": 1
+        },
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": 1
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+          "policy_code": "NQCT",
+          "article": "16",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": 1
+        },
+        {
+          "chunk_id": "b3be50af-b6f2-498f-9f52-4723ed04b973",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "2",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "cf5db6c1-2585-4fbb-ad32-51b6be2be3ef",
+          "policy_code": "NQCT",
+          "article": "2",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "ca7b6f9b-119b-4f03-b669-e14c59456564",
+          "policy_code": "NQCT",
+          "article": "1",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q06",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Nhân viên tự ý nghỉ 3 ngày trong 30 ngày. Tìm điều kiện theo nội quy, cách báo vắng và nền tảng pháp luật.",
+        "description": "Nhân viên tự ý nghỉ 3 ngày trong 30 ngày. Tìm điều kiện theo nội quy, cách báo vắng và nền tảng pháp luật.",
+        "family": "UNAUTHORIZED_ABSENCE",
+        "facts": {},
+        "incident_date": "2026-10-16"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.25,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.25,
+        "ndcg_lower_bound": 0.9217868789962073,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 34957,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 0.3333333333333333,
+        "bm25": 1.0,
+        "lexical": 1.0,
+        "fused": 1.0,
+        "seeds": 0.6666666666666666,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "52e33d20-472b-45a9-97bd-3f0bc2d2d6de",
+        "1b730e11-d067-4b4a-acb2-51e0d7209b30",
+        "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+        "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+        "e08afa41-2e8f-4bd4-aac2-a3ab53b6087a",
+        "779013cd-822a-4a5d-9bbc-4d5294019406",
+        "452b101e-b011-4b2b-bd7d-65c43249a46f",
+        "e1ae17b1-b450-4e2a-8803-ceecc6b84c50",
+        "d82c0638-7939-4a4a-97d1-961074d3d1f1"
+      ],
+      "selected": [
+        {
+          "chunk_id": "0812add5-c466-47fc-87cf-2c085cda1b87",
+          "policy_code": "NQCT",
+          "article": "4",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+          "policy_code": "NQCT",
+          "article": "12",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "52e33d20-472b-45a9-97bd-3f0bc2d2d6de",
+          "policy_code": "BLLD_2019",
+          "article": "125",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "1b730e11-d067-4b4a-acb2-51e0d7209b30",
+          "policy_code": "BLLD_2019",
+          "article": "115",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+          "policy_code": "NQCT",
+          "article": "13",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+          "policy_code": "NQCT",
+          "article": "11",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "e08afa41-2e8f-4bd4-aac2-a3ab53b6087a",
+          "policy_code": "BLLD_2019",
+          "article": "36",
+          "clause": "1",
+          "point": "e",
+          "grade": null
+        },
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e1ae17b1-b450-4e2a-8803-ceecc6b84c50",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "4",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q07",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Nghỉ 5 ngày trong 30 ngày vì bản thân bị ốm có giấy xác nhận. Cần kiểm tra ngoại lệ lý do chính đáng trong nội quy và Bộ luật Lao động.",
+        "description": "Nghỉ 5 ngày trong 30 ngày vì bản thân bị ốm có giấy xác nhận. Cần kiểm tra ngoại lệ lý do chính đáng trong nội quy và Bộ luật Lao động.",
+        "family": "UNAUTHORIZED_ABSENCE",
+        "facts": {},
+        "incident_date": "2026-10-16"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.16666666666666666,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.16666666666666666,
+        "ndcg_lower_bound": 0.9197207891481876,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 35103,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 0.0,
+        "bm25": 1.0,
+        "lexical": 1.0,
+        "fused": 1.0,
+        "seeds": 1.0,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "0812add5-c466-47fc-87cf-2c085cda1b87",
+        "e1ae17b1-b450-4e2a-8803-ceecc6b84c50",
+        "1b730e11-d067-4b4a-acb2-51e0d7209b30",
+        "452b101e-b011-4b2b-bd7d-65c43249a46f",
+        "1186184d-60aa-4909-b8e8-850330f433d2",
+        "c564139d-0e49-4731-a477-fe26195f30e3",
+        "779013cd-822a-4a5d-9bbc-4d5294019406",
+        "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+        "ab26b6e8-2b62-426a-b3eb-e8b665460284",
+        "d82c0638-7939-4a4a-97d1-961074d3d1f1"
+      ],
+      "selected": [
+        {
+          "chunk_id": "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+          "policy_code": "NQCT",
+          "article": "13",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "0812add5-c466-47fc-87cf-2c085cda1b87",
+          "policy_code": "NQCT",
+          "article": "4",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "52e33d20-472b-45a9-97bd-3f0bc2d2d6de",
+          "policy_code": "BLLD_2019",
+          "article": "125",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "e1ae17b1-b450-4e2a-8803-ceecc6b84c50",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "4",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "1b730e11-d067-4b4a-acb2-51e0d7209b30",
+          "policy_code": "BLLD_2019",
+          "article": "115",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "c564139d-0e49-4731-a477-fe26195f30e3",
+          "policy_code": "BLLD_2019",
+          "article": "141",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+          "policy_code": "NQCT",
+          "article": "16",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "ab26b6e8-2b62-426a-b3eb-e8b665460284",
+          "policy_code": "BLLD_2019",
+          "article": "37",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q08",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Nhân viên chuyển dữ liệu khách hàng cho bên thứ ba khi không có nhiệm vụ. Tìm quy định về bí mật và điều kiện xử lý.",
+        "description": "Nhân viên chuyển dữ liệu khách hàng cho bên thứ ba khi không có nhiệm vụ. Tìm quy định về bí mật và điều kiện xử lý.",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-10-16"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.25,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.25,
+        "ndcg_lower_bound": 0.9674679834891693,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 34952,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 0.3333333333333333,
+        "bm25": 0.6666666666666666,
+        "lexical": 0.6666666666666666,
+        "fused": 1.0,
+        "seeds": 1.0,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "5c2a053b-75ef-4be0-9439-e4cf0a91bf3a",
+        "1186184d-60aa-4909-b8e8-850330f433d2",
+        "452b101e-b011-4b2b-bd7d-65c43249a46f",
+        "ca7b6f9b-119b-4f03-b669-e14c59456564",
+        "cf5db6c1-2585-4fbb-ad32-51b6be2be3ef",
+        "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+        "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+        "a4262ce5-00ee-4518-a44f-358a5e65694b",
+        "2f91a733-3f9e-4e9c-a593-ef57cd51abef"
+      ],
+      "selected": [
+        {
+          "chunk_id": "3791d3ec-e215-419a-b3ef-7f2386456154",
+          "policy_code": "NQCT",
+          "article": "6",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+          "policy_code": "NQCT",
+          "article": "13",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "5c2a053b-75ef-4be0-9439-e4cf0a91bf3a",
+          "policy_code": "BLLD_2019",
+          "article": "21",
+          "clause": "2",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "52e33d20-472b-45a9-97bd-3f0bc2d2d6de",
+          "policy_code": "BLLD_2019",
+          "article": "125",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "ca7b6f9b-119b-4f03-b669-e14c59456564",
+          "policy_code": "NQCT",
+          "article": "1",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "cf5db6c1-2585-4fbb-ad32-51b6be2be3ef",
+          "policy_code": "NQCT",
+          "article": "2",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+          "policy_code": "NQCT",
+          "article": "16",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "a4262ce5-00ee-4518-a44f-358a5e65694b",
+          "policy_code": "BLLD_2019",
+          "article": "5",
+          "clause": "2",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+          "policy_code": "NQCT",
+          "article": "10",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q09",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Hành vi quấy rối tình dục xảy ra trong chuyến công tác. Tìm định nghĩa, phạm vi nơi làm việc, nội quy và điều kiện áp dụng.",
+        "description": "Hành vi quấy rối tình dục xảy ra trong chuyến công tác. Tìm định nghĩa, phạm vi nơi làm việc, nội quy và điều kiện áp dụng.",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-08-15"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.3333333333333333,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.3333333333333333,
+        "ndcg_lower_bound": 0.8215664107074528,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 35026,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 0.75,
+        "bm25": 1.0,
+        "lexical": 1.0,
+        "fused": 1.0,
+        "seeds": 0.5,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+        "1fb462ef-af13-4556-b3c5-6f2f66089d0f",
+        "66489ac0-ac52-4359-8064-e1b0ba527fbf",
+        "1186184d-60aa-4909-b8e8-850330f433d2",
+        "90133201-5ce7-4d07-87aa-753d96c0daa0",
+        "e6acb658-4be2-4383-801b-4935604b94f4",
+        "ce799348-1160-4509-9b74-390bcb04117d",
+        "8f8c5cca-726d-4f0a-989e-cd25a145110d"
+      ],
+      "selected": [
+        {
+          "chunk_id": "902fac74-b956-4ada-b126-72763228309e",
+          "policy_code": "NQCT",
+          "article": "8",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+          "policy_code": "NQCT",
+          "article": "13",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "7a66c7c2-8580-48da-a43c-894a7eeb87f5",
+          "policy_code": "ND145_2020",
+          "article": "84",
+          "clause": "3",
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "1fb462ef-af13-4556-b3c5-6f2f66089d0f",
+          "policy_code": "BLLD_2019",
+          "article": "3",
+          "clause": "9",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "66489ac0-ac52-4359-8064-e1b0ba527fbf",
+          "policy_code": "ND145_2020",
+          "article": "85",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "90133201-5ce7-4d07-87aa-753d96c0daa0",
+          "policy_code": "ND145_2020",
+          "article": "84",
+          "clause": "2",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "8b2e283e-734d-4d6a-ad12-3bdd053ac719",
+          "policy_code": "ND145_2020",
+          "article": "84",
+          "clause": "1",
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "e6acb658-4be2-4383-801b-4935604b94f4",
+          "policy_code": "ND145_2020",
+          "article": "69",
+          "clause": "2",
+          "point": "d",
+          "grade": null
+        },
+        {
+          "chunk_id": "52e33d20-472b-45a9-97bd-3f0bc2d2d6de",
+          "policy_code": "BLLD_2019",
+          "article": "125",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "ce799348-1160-4509-9b74-390bcb04117d",
+          "policy_code": "ND145_2020",
+          "article": "86",
+          "clause": "1",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "8f8c5cca-726d-4f0a-989e-cd25a145110d",
+          "policy_code": "BLLD_2019",
+          "article": "8",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q10",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Cần kiểm tra trường hợp chưa được xử lý kỷ luật: người lao động đang mang thai hoặc mất khả năng nhận thức do bệnh.",
+        "description": "Cần kiểm tra trường hợp chưa được xử lý kỷ luật: người lao động đang mang thai hoặc mất khả năng nhận thức do bệnh.",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-10-16"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.16666666666666666,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.16666666666666666,
+        "ndcg_lower_bound": 0.57064171895532,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 34907,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 1.0,
+        "bm25": 1.0,
+        "lexical": 0.0,
+        "fused": 1.0,
+        "seeds": 1.0,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+        "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+        "5f3cd296-055a-430f-92a9-e9885cc6078f",
+        "452b101e-b011-4b2b-bd7d-65c43249a46f",
+        "52e33d20-472b-45a9-97bd-3f0bc2d2d6de",
+        "1186184d-60aa-4909-b8e8-850330f433d2",
+        "779013cd-822a-4a5d-9bbc-4d5294019406",
+        "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+        "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+        "81817aeb-f763-4a3a-a737-ed0ae4d31aa7"
+      ],
+      "selected": [
+        {
+          "chunk_id": "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+          "policy_code": "NQCT",
+          "article": "10",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+          "policy_code": "NQCT",
+          "article": "13",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e1ae17b1-b450-4e2a-8803-ceecc6b84c50",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "4",
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "ec55a44e-bc3a-4046-82bd-db5b7df46165",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "5",
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "5f3cd296-055a-430f-92a9-e9885cc6078f",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "1",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "52e33d20-472b-45a9-97bd-3f0bc2d2d6de",
+          "policy_code": "BLLD_2019",
+          "article": "125",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+          "policy_code": "NQCT",
+          "article": "16",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "81817aeb-f763-4a3a-a737-ed0ae4d31aa7",
+          "policy_code": "BLLD_2019",
+          "article": "137",
+          "clause": "3",
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q11",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Có được phạt tiền hoặc cắt lương thay cho xử lý kỷ luật lao động không? Tìm điều cấm trong luật và nội quy.",
+        "description": "Có được phạt tiền hoặc cắt lương thay cho xử lý kỷ luật lao động không? Tìm điều cấm trong luật và nội quy.",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-10-16"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.16666666666666666,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.16666666666666666,
+        "ndcg_lower_bound": 0.9197207891481876,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 44997,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 0.5,
+        "bm25": 1.0,
+        "lexical": 1.0,
+        "fused": 1.0,
+        "seeds": 1.0,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+        "74f24434-cad1-481d-b3d0-9b1a4495cc42",
+        "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+        "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+        "cf5db6c1-2585-4fbb-ad32-51b6be2be3ef",
+        "ec184d4a-841f-4ff1-b596-fcc91f03711e",
+        "452b101e-b011-4b2b-bd7d-65c43249a46f",
+        "779013cd-822a-4a5d-9bbc-4d5294019406",
+        "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+        "e295a845-d11e-47dc-80ff-a1e9cda1927c"
+      ],
+      "selected": [
+        {
+          "chunk_id": "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+          "policy_code": "NQCT",
+          "article": "10",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+          "policy_code": "NQCT",
+          "article": "13",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "b43ce99b-50d8-4f7c-860e-75c3a25bba6b",
+          "policy_code": "BLLD_2019",
+          "article": "127",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "74f24434-cad1-481d-b3d0-9b1a4495cc42",
+          "policy_code": "BLLD_2019",
+          "article": "129",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+          "policy_code": "NQCT",
+          "article": "12",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+          "policy_code": "NQCT",
+          "article": "11",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "cf5db6c1-2585-4fbb-ad32-51b6be2be3ef",
+          "policy_code": "NQCT",
+          "article": "2",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "ec184d4a-841f-4ff1-b596-fcc91f03711e",
+          "policy_code": "NQCT",
+          "article": "17",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+          "policy_code": "NQCT",
+          "article": "16",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q12",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Tìm thời hiệu xử lý kỷ luật thông thường và trường hợp liên quan tài chính, tài sản, bí mật kinh doanh theo luật và nội quy.",
+        "description": "Tìm thời hiệu xử lý kỷ luật thông thường và trường hợp liên quan tài chính, tài sản, bí mật kinh doanh theo luật và nội quy.",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-10-16"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.16666666666666666,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.16666666666666666,
+        "ndcg_lower_bound": 0.9197207891481876,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 35395,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 1.0,
+        "bm25": 1.0,
+        "lexical": 1.0,
+        "fused": 1.0,
+        "seeds": 1.0,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+        "52e33d20-472b-45a9-97bd-3f0bc2d2d6de",
+        "1186184d-60aa-4909-b8e8-850330f433d2",
+        "b28f0706-d2fc-490d-83db-a39a44571355",
+        "5f3cd296-055a-430f-92a9-e9885cc6078f",
+        "779013cd-822a-4a5d-9bbc-4d5294019406",
+        "e1b907a2-ba21-4c04-89dc-b8289c15fbbb",
+        "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+        "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+        "3791d3ec-e215-419a-b3ef-7f2386456154"
+      ],
+      "selected": [
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+          "policy_code": "NQCT",
+          "article": "13",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "0625a584-8e80-4cfa-83a0-c058c9471096",
+          "policy_code": "BLLD_2019",
+          "article": "123",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "52e33d20-472b-45a9-97bd-3f0bc2d2d6de",
+          "policy_code": "BLLD_2019",
+          "article": "125",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "b28f0706-d2fc-490d-83db-a39a44571355",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "6",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "5f3cd296-055a-430f-92a9-e9885cc6078f",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "1",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e1b907a2-ba21-4c04-89dc-b8289c15fbbb",
+          "policy_code": "BLLD_2019",
+          "article": "117",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+          "policy_code": "NQCT",
+          "article": "16",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+          "policy_code": "NQCT",
+          "article": "12",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "3791d3ec-e215-419a-b3ef-7f2386456154",
+          "policy_code": "NQCT",
+          "article": "6",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q13",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Nhân viên đã bị kéo dài thời hạn nâng lương, nay lặp lại hành vi. Tìm điều kiện tái phạm và xóa kỷ luật trước khi đề xuất.",
+        "description": "Nhân viên đã bị kéo dài thời hạn nâng lương, nay lặp lại hành vi. Tìm điều kiện tái phạm và xóa kỷ luật trước khi đề xuất.",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-10-16"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.25,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.25,
+        "ndcg_lower_bound": 0.7328286204777911,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 34776,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 0.3333333333333333,
+        "bm25": 1.0,
+        "lexical": 1.0,
+        "fused": 1.0,
+        "seeds": 1.0,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+        "452b101e-b011-4b2b-bd7d-65c43249a46f",
+        "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+        "4209ec08-1cfe-42db-bc10-4abdbdd82cdc",
+        "0625a584-8e80-4cfa-83a0-c058c9471096",
+        "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+        "779013cd-822a-4a5d-9bbc-4d5294019406",
+        "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+        "55788187-2ee7-4b3d-a89d-a1a46b14e3d6"
+      ],
+      "selected": [
+        {
+          "chunk_id": "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+          "policy_code": "NQCT",
+          "article": "12",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+          "policy_code": "NQCT",
+          "article": "13",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "52e33d20-472b-45a9-97bd-3f0bc2d2d6de",
+          "policy_code": "BLLD_2019",
+          "article": "125",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "d2c381cd-ff74-466c-9a9e-160d05daf794",
+          "policy_code": "BLLD_2019",
+          "article": "126",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+          "policy_code": "NQCT",
+          "article": "10",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "4209ec08-1cfe-42db-bc10-4abdbdd82cdc",
+          "policy_code": "BLLD_2019",
+          "article": "124",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "0625a584-8e80-4cfa-83a0-c058c9471096",
+          "policy_code": "BLLD_2019",
+          "article": "123",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+          "policy_code": "NQCT",
+          "article": "16",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+          "policy_code": "NQCT",
+          "article": "11",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q14",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Liệt kê các hình thức xử lý kỷ luật được quy định trong Bộ luật Lao động và nội quy công ty.",
+        "description": "Liệt kê các hình thức xử lý kỷ luật được quy định trong Bộ luật Lao động và nội quy công ty.",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-10-16"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.16666666666666666,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.16666666666666666,
+        "ndcg_lower_bound": 0.9197207891481876,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 35015,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 1.0,
+        "bm25": 0.5,
+        "lexical": 0.0,
+        "fused": 1.0,
+        "seeds": 1.0,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+        "52e33d20-472b-45a9-97bd-3f0bc2d2d6de",
+        "1186184d-60aa-4909-b8e8-850330f433d2",
+        "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+        "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+        "e1ae17b1-b450-4e2a-8803-ceecc6b84c50",
+        "5f3cd296-055a-430f-92a9-e9885cc6078f",
+        "ec55a44e-bc3a-4046-82bd-db5b7df46165",
+        "b28f0706-d2fc-490d-83db-a39a44571355",
+        "b43ce99b-50d8-4f7c-860e-75c3a25bba6b"
+      ],
+      "selected": [
+        {
+          "chunk_id": "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+          "policy_code": "NQCT",
+          "article": "10",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+          "policy_code": "NQCT",
+          "article": "13",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "4209ec08-1cfe-42db-bc10-4abdbdd82cdc",
+          "policy_code": "BLLD_2019",
+          "article": "124",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "52e33d20-472b-45a9-97bd-3f0bc2d2d6de",
+          "policy_code": "BLLD_2019",
+          "article": "125",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+          "policy_code": "NQCT",
+          "article": "12",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "55788187-2ee7-4b3d-a89d-a1a46b14e3d6",
+          "policy_code": "NQCT",
+          "article": "11",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e1ae17b1-b450-4e2a-8803-ceecc6b84c50",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "4",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "5f3cd296-055a-430f-92a9-e9885cc6078f",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "1",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "ec55a44e-bc3a-4046-82bd-db5b7df46165",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "5",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "b28f0706-d2fc-490d-83db-a39a44571355",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "6",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "b43ce99b-50d8-4f7c-860e-75c3a25bba6b",
+          "policy_code": "BLLD_2019",
+          "article": "127",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q15",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Tìm quy định có nêu thời hạn thông báo trước cuộc họp xử lý kỷ luật lao động.",
+        "description": "Tìm quy định có nêu thời hạn thông báo trước cuộc họp xử lý kỷ luật lao động.",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-09-09"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": null,
+        "labeled_precision_lower_bound": 0.16666666666666666,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.16666666666666666,
+        "ndcg_lower_bound": 0.9197207891481876,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 34737,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 1.0,
+        "bm25": 1.0,
+        "lexical": 1.0,
+        "fused": 1.0,
+        "seeds": 1.0,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "452b101e-b011-4b2b-bd7d-65c43249a46f",
+        "4db67952-5cd7-4998-a53b-8c23b3a993be",
+        "0625a584-8e80-4cfa-83a0-c058c9471096",
+        "4c7cedf6-e073-4852-801f-279f298e226f",
+        "c675c268-2bae-4df8-b2fb-6a26d935035a",
+        "5f3cd296-055a-430f-92a9-e9885cc6078f",
+        "a7fdcfe6-d654-4904-9ed9-f50e3da21ee5",
+        "e1ae17b1-b450-4e2a-8803-ceecc6b84c50",
+        "1186184d-60aa-4909-b8e8-850330f433d2",
+        "8e2037d7-d155-4b72-bff7-3fcd56857b21"
+      ],
+      "selected": [
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "8526e91e-6e31-4edc-993f-b3b9a1a65272",
+          "policy_code": "ND145_2020",
+          "article": "70",
+          "clause": "2",
+          "point": "a",
+          "grade": 3
+        },
+        {
+          "chunk_id": "4db67952-5cd7-4998-a53b-8c23b3a993be",
+          "policy_code": "ND145_2020",
+          "article": "70",
+          "clause": "2",
+          "point": "c",
+          "grade": null
+        },
+        {
+          "chunk_id": "0625a584-8e80-4cfa-83a0-c058c9471096",
+          "policy_code": "BLLD_2019",
+          "article": "123",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "4c7cedf6-e073-4852-801f-279f298e226f",
+          "policy_code": "ND145_2020",
+          "article": "70",
+          "clause": "2",
+          "point": "b",
+          "grade": null
+        },
+        {
+          "chunk_id": "c675c268-2bae-4df8-b2fb-6a26d935035a",
+          "policy_code": "ND145_2020",
+          "article": "71",
+          "clause": "2",
+          "point": "a",
+          "grade": null
+        },
+        {
+          "chunk_id": "5f3cd296-055a-430f-92a9-e9885cc6078f",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "1",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "a7fdcfe6-d654-4904-9ed9-f50e3da21ee5",
+          "policy_code": "ND145_2020",
+          "article": "70",
+          "clause": "3",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e1ae17b1-b450-4e2a-8803-ceecc6b84c50",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "4",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "8e2037d7-d155-4b72-bff7-3fcd56857b21",
+          "policy_code": "ND145_2020",
+          "article": "71",
+          "clause": "2",
+          "point": "b",
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q16",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Khi phát hiện vi phạm và tổ chức họp kỷ luật, việc lập biên bản và chữ ký của người tham dự được quy định ra sao?",
+        "description": "Khi phát hiện vi phạm và tổ chức họp kỷ luật, việc lập biên bản và chữ ký của người tham dự được quy định ra sao?",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-08-15"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.3333333333333333,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.3333333333333333,
+        "ndcg_lower_bound": 0.9058070822076759,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 35218,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 0.6666666666666666,
+        "bm25": 1.0,
+        "lexical": 1.0,
+        "fused": 1.0,
+        "seeds": 1.0,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "779013cd-822a-4a5d-9bbc-4d5294019406",
+        "4c7cedf6-e073-4852-801f-279f298e226f",
+        "4db67952-5cd7-4998-a53b-8c23b3a993be",
+        "d233931c-ecbe-4d91-ab68-b4588fe83e3d",
+        "8526e91e-6e31-4edc-993f-b3b9a1a65272",
+        "452b101e-b011-4b2b-bd7d-65c43249a46f",
+        "1186184d-60aa-4909-b8e8-850330f433d2",
+        "bfd3b222-123d-4f1a-bb41-391cf9239745"
+      ],
+      "selected": [
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "a7fdcfe6-d654-4904-9ed9-f50e3da21ee5",
+          "policy_code": "ND145_2020",
+          "article": "70",
+          "clause": "3",
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "a8435b93-3eae-444f-af6e-6ecf357496d8",
+          "policy_code": "ND145_2020",
+          "article": "70",
+          "clause": "1",
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "5f3cd296-055a-430f-92a9-e9885cc6078f",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "1",
+          "point": null,
+          "grade": 1
+        },
+        {
+          "chunk_id": "4c7cedf6-e073-4852-801f-279f298e226f",
+          "policy_code": "ND145_2020",
+          "article": "70",
+          "clause": "2",
+          "point": "b",
+          "grade": null
+        },
+        {
+          "chunk_id": "4db67952-5cd7-4998-a53b-8c23b3a993be",
+          "policy_code": "ND145_2020",
+          "article": "70",
+          "clause": "2",
+          "point": "c",
+          "grade": null
+        },
+        {
+          "chunk_id": "d233931c-ecbe-4d91-ab68-b4588fe83e3d",
+          "policy_code": "ND145_2020",
+          "article": "71",
+          "clause": "3",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "8526e91e-6e31-4edc-993f-b3b9a1a65272",
+          "policy_code": "ND145_2020",
+          "article": "70",
+          "clause": "2",
+          "point": "a",
+          "grade": null
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "bfd3b222-123d-4f1a-bb41-391cf9239745",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "3",
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q17",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Ai có thẩm quyền xử lý và ký quyết định kỷ luật lao động theo nội quy và văn bản hướng dẫn?",
+        "description": "Ai có thẩm quyền xử lý và ký quyết định kỷ luật lao động theo nội quy và văn bản hướng dẫn?",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-08-15"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.16666666666666666,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.16666666666666666,
+        "ndcg_lower_bound": 0.9197207891481876,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 34881,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 1.0,
+        "bm25": 0.5,
+        "lexical": 0.5,
+        "fused": 1.0,
+        "seeds": 1.0,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "ca7b6f9b-119b-4f03-b669-e14c59456564",
+        "1186184d-60aa-4909-b8e8-850330f433d2",
+        "9e1e504c-d536-45ad-bd5b-f837ebe0dcfa",
+        "4db67952-5cd7-4998-a53b-8c23b3a993be",
+        "b28f0706-d2fc-490d-83db-a39a44571355",
+        "5f3cd296-055a-430f-92a9-e9885cc6078f",
+        "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+        "779013cd-822a-4a5d-9bbc-4d5294019406",
+        "e1b907a2-ba21-4c04-89dc-b8289c15fbbb",
+        "452b101e-b011-4b2b-bd7d-65c43249a46f"
+      ],
+      "selected": [
+        {
+          "chunk_id": "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+          "policy_code": "NQCT",
+          "article": "16",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "ca7b6f9b-119b-4f03-b669-e14c59456564",
+          "policy_code": "NQCT",
+          "article": "1",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "056e648c-af93-4d58-bee6-3edf518f5a09",
+          "policy_code": "ND145_2020",
+          "article": "69",
+          "clause": "2",
+          "point": "i",
+          "grade": 3
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "9e1e504c-d536-45ad-bd5b-f837ebe0dcfa",
+          "policy_code": "ND145_2020",
+          "article": "70",
+          "clause": "4",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "4db67952-5cd7-4998-a53b-8c23b3a993be",
+          "policy_code": "ND145_2020",
+          "article": "70",
+          "clause": "2",
+          "point": "c",
+          "grade": null
+        },
+        {
+          "chunk_id": "b28f0706-d2fc-490d-83db-a39a44571355",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "6",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "5f3cd296-055a-430f-92a9-e9885cc6078f",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "1",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e1b907a2-ba21-4c04-89dc-b8289c15fbbb",
+          "policy_code": "BLLD_2019",
+          "article": "117",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q18",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Người lao động sơ suất làm hỏng dụng cụ, thiệt hại không nghiêm trọng. Tìm trách nhiệm vật chất, mức bồi thường và nguyên tắc xem xét.",
+        "description": "Người lao động sơ suất làm hỏng dụng cụ, thiệt hại không nghiêm trọng. Tìm trách nhiệm vật chất, mức bồi thường và nguyên tắc xem xét.",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-10-16"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.25,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.25,
+        "ndcg_lower_bound": 0.9060254355346823,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 35027,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 1.0,
+        "bm25": 1.0,
+        "lexical": 1.0,
+        "fused": 1.0,
+        "seeds": 1.0,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+        "5f3cd296-055a-430f-92a9-e9885cc6078f",
+        "b28f0706-d2fc-490d-83db-a39a44571355",
+        "452b101e-b011-4b2b-bd7d-65c43249a46f",
+        "74c17390-69b8-43d8-8598-7b69385ed211",
+        "1186184d-60aa-4909-b8e8-850330f433d2",
+        "779013cd-822a-4a5d-9bbc-4d5294019406",
+        "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+        "8d640dec-b1bc-4119-8baa-3f24cd795afb"
+      ],
+      "selected": [
+        {
+          "chunk_id": "ec184d4a-841f-4ff1-b596-fcc91f03711e",
+          "policy_code": "NQCT",
+          "article": "17",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+          "policy_code": "NQCT",
+          "article": "12",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "74f24434-cad1-481d-b3d0-9b1a4495cc42",
+          "policy_code": "BLLD_2019",
+          "article": "129",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "bcc64089-9d9e-4951-b3c8-f748c462a018",
+          "policy_code": "BLLD_2019",
+          "article": "130",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "5f3cd296-055a-430f-92a9-e9885cc6078f",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "1",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "b28f0706-d2fc-490d-83db-a39a44571355",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "6",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "74c17390-69b8-43d8-8598-7b69385ed211",
+          "policy_code": "BLLD_2019",
+          "article": "102",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "8d640dec-b1bc-4119-8baa-3f24cd795afb",
+          "policy_code": "BLLD_2019",
+          "article": "131",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q19",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Tìm quy định có nêu thời hạn thông báo trước cuộc họp xử lý kỷ luật lao động.",
+        "description": "Tìm quy định có nêu thời hạn thông báo trước cuộc họp xử lý kỷ luật lao động.",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2026-09-10"
+      },
+      "metrics": {
+        "candidate_recall": 1.0,
+        "final_recall": 1.0,
+        "complete_labeled_bundle": true,
+        "critical_chunk_recall": 1.0,
+        "labeled_precision_lower_bound": 0.08333333333333333,
+        "judged_precision": 1.0,
+        "judgment_coverage": 0.08333333333333333,
+        "ndcg_lower_bound": 1.0,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": null,
+        "graph_recall_gain": null,
+        "latency_ms": 34714,
+        "selected_count": 12
+      },
+      "stage_recall": {
+        "similarity": 1.0,
+        "bm25": 1.0,
+        "lexical": 1.0,
+        "fused": 1.0,
+        "seeds": 1.0,
+        "expanded": 1.0
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "EVIDENCE_BUDGET_EXCEEDED"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [
+        "452b101e-b011-4b2b-bd7d-65c43249a46f",
+        "0625a584-8e80-4cfa-83a0-c058c9471096",
+        "5f3cd296-055a-430f-92a9-e9885cc6078f",
+        "1186184d-60aa-4909-b8e8-850330f433d2",
+        "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+        "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+        "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+        "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+        "e1b907a2-ba21-4c04-89dc-b8289c15fbbb",
+        "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+        "cf5db6c1-2585-4fbb-ad32-51b6be2be3ef"
+      ],
+      "selected": [
+        {
+          "chunk_id": "779013cd-822a-4a5d-9bbc-4d5294019406",
+          "policy_code": "NQCT",
+          "article": "15",
+          "clause": null,
+          "point": null,
+          "grade": 3
+        },
+        {
+          "chunk_id": "452b101e-b011-4b2b-bd7d-65c43249a46f",
+          "policy_code": "NQCT",
+          "article": "18",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "0625a584-8e80-4cfa-83a0-c058c9471096",
+          "policy_code": "BLLD_2019",
+          "article": "123",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "5f3cd296-055a-430f-92a9-e9885cc6078f",
+          "policy_code": "BLLD_2019",
+          "article": "122",
+          "clause": "1",
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "1186184d-60aa-4909-b8e8-850330f433d2",
+          "policy_code": "BLLD_2019",
+          "article": "118",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "abcf16e4-dd41-44e2-a9de-b3d700c82926",
+          "policy_code": "NQCT",
+          "article": "13",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "2f91a733-3f9e-4e9c-a593-ef57cd51abef",
+          "policy_code": "NQCT",
+          "article": "10",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "d82c0638-7939-4a4a-97d1-961074d3d1f1",
+          "policy_code": "NQCT",
+          "article": "14",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e37b5b35-86d1-4991-aa97-76e07c5f53a4",
+          "policy_code": "NQCT",
+          "article": "12",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e1b907a2-ba21-4c04-89dc-b8289c15fbbb",
+          "policy_code": "BLLD_2019",
+          "article": "117",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "e295a845-d11e-47dc-80ff-a1e9cda1927c",
+          "policy_code": "NQCT",
+          "article": "16",
+          "clause": null,
+          "point": null,
+          "grade": null
+        },
+        {
+          "chunk_id": "cf5db6c1-2585-4fbb-ad32-51b6be2be3ef",
+          "policy_code": "NQCT",
+          "article": "2",
+          "clause": null,
+          "point": null,
+          "grade": null
+        }
+      ]
+    },
+    {
+      "case_id": "Q20",
+      "status": "complete",
+      "origin": "synthetic_source_task",
+      "input": {
+        "query": "Tìm căn cứ về xử lý kỷ luật lao động cho vụ việc này.",
+        "description": "Tìm căn cứ về xử lý kỷ luật lao động cho vụ việc này.",
+        "family": "GENERAL",
+        "facts": {},
+        "incident_date": "2000-01-01"
+      },
+      "metrics": {
+        "candidate_recall": null,
+        "final_recall": null,
+        "complete_labeled_bundle": null,
+        "critical_chunk_recall": null,
+        "labeled_precision_lower_bound": null,
+        "judged_precision": null,
+        "judgment_coverage": null,
+        "ndcg_lower_bound": null,
+        "date_eligibility_pass": true,
+        "passage_fidelity_pass": true,
+        "expected_empty_pass": true,
+        "graph_recall_gain": null,
+        "latency_ms": 487,
+        "selected_count": 0
+      },
+      "stage_recall": {
+        "similarity": null,
+        "bm25": null,
+        "lexical": null,
+        "fused": null,
+        "seeds": null,
+        "expanded": null
+      },
+      "passed_checks": true,
+      "healthy": true,
+      "health_gaps": [],
+      "evidence_gaps": [
+        "MISSING_INTERNAL_RULE",
+        "MISSING_AUTHORITY"
+      ],
+      "missing_critical_units": [],
+      "ineligible_selected_ids": [],
+      "altered_selected_ids": [],
+      "unjudged_selected_ids": [],
+      "selected": []
+    }
+  ]
+}
