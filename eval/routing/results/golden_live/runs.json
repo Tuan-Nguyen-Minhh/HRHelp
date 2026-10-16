@@ -1,0 +1,3964 @@
+{
+  "dataset_sha256": "40fa7688c74ced6a5e32ea882d6e8fc38e14bd5f3617e047d85733afcb364740",
+  "configuration": {
+    "provider": "deepseek",
+    "models": [
+      "deepseek-flash"
+    ],
+    "intent_prompt_version": "intent-router-v5-rule-recheck-social-help",
+    "fact_prompt_version": "clarify-planner-v6-conversation-contract",
+    "concurrency": 2,
+    "case_timeout_seconds": 75,
+    "scope": "live_production_components_no_db_no_retrieval"
+  },
+  "runs": {
+    "R01": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "general_chat",
+        "selected_route": "general_chat",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "general_chat",
+          "speech_act": "greeting",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "greeting",
+          "raw_intent_label": "hello greeting",
+          "capability_needed": "",
+          "target": "general_conversation",
+          "confidence": 0.97,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Lượt hội thoại chỉ là lời chào xã giao ('Hello!'), không chứa yêu cầu nghiệp vụ, câu hỏi về hồ sơ, quy định hay hành động workflow; giữ nguyên trạng thái tác vụ.",
+          "signals": {
+            "asks_general_chat": true,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "general_chat",
+              "score": 0.97,
+              "evidence": [
+                "Hello!"
+              ]
+            },
+            {
+              "route": "system_help",
+              "score": 0.05,
+              "evidence": [
+                "Hello!"
+              ]
+            },
+            {
+              "route": "clarify",
+              "score": 0.02,
+              "evidence": [
+                "Hello!"
+              ]
+            }
+          ]
+        },
+        "edge": "general_chat",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "a80107d570bd102c22131ac537f56bdf4380fb756e739e4e8e91b40c0fbf228f",
+      "latency_ms": 5221
+    },
+    "R02": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "general_chat",
+        "selected_route": "general_chat",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "general_chat",
+          "speech_act": "question",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "everyday_meal_suggestion",
+          "raw_intent_label": "casual meal question",
+          "capability_needed": "",
+          "target": "general_conversation",
+          "confidence": 0.97,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Người dùng chỉ hỏi gợi ý món ăn nhanh gọn — hội thoại đời thường, không liên quan hồ sơ, không có yêu cầu nghiệp vụ hay nguồn bên ngoài; 'hôm nay' chỉ là chỉ thời gian thông thường.",
+          "signals": {
+            "asks_general_chat": true,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "general_chat",
+              "score": 0.97,
+              "evidence": [
+                "Hôm nay ăn gì cho nhanh gọn?"
+              ]
+            },
+            {
+              "route": "external_research",
+              "score": 0.03,
+              "evidence": [
+                "Hôm nay"
+              ]
+            },
+            {
+              "route": "clarify",
+              "score": 0.02,
+              "evidence": [
+                "câu hỏi ngắn, ngoài phạm vi hồ sơ"
+              ]
+            }
+          ]
+        },
+        "edge": "general_chat",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "1e312b530759a6269e3acad6c890a250f2bfd7827ffc2042b8ad9d24d9a0e93a",
+      "latency_ms": 5312
+    },
+    "R04": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "system_help",
+        "selected_route": "system_help",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "system_help",
+          "speech_act": "question",
+          "help_topic_ids": [
+            "capabilities"
+          ],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "hỏi_khả_năng_hỗ_trợ_của_hệ_thống",
+          "raw_intent_label": "hỏi hệ thống hỗ trợ những việc gì",
+          "capability_needed": "",
+          "target": "system",
+          "confidence": 0.96,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Câu hỏi về khả năng/chức năng của chính hệ thống trợ lý, không liên quan hồ sơ hay nghiệp vụ cụ thể → system_help với chủ đề capabilities.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": true,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "system_help",
+              "score": 0.96,
+              "evidence": [
+                "Hệ thống này hỗ trợ tôi những việc gì?"
+              ]
+            },
+            {
+              "route": "general_chat",
+              "score": 0.05,
+              "evidence": [
+                "câu hỏi ngắn, giọng hội thoại"
+              ]
+            },
+            {
+              "route": "clarify",
+              "score": 0.02,
+              "evidence": [
+                "câu hỏi rất ngắn, có thể mơ hồ nếu không xét nghĩa"
+              ]
+            }
+          ]
+        },
+        "edge": "system_help",
+        "recheck_status": "not_needed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "e02f3feb9b22d5a085feb5f5aedf5c846b7abcba026d235fc0b59d3264cbdcc6",
+      "latency_ms": 2876
+    },
+    "R03": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "general_chat",
+        "selected_route": "general_chat",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "general_chat",
+          "speech_act": "thanking",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "lời cảm ơn xã giao",
+          "raw_intent_label": "thanks",
+          "capability_needed": "",
+          "target": "general_conversation",
+          "confidence": 0.97,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Lượt mới nhất chỉ là lời cảm ơn xã giao, không mang yêu cầu nghiệp vụ, không cung cấp dữ kiện và không hủy tác vụ đang chờ; giữ nguyên tác vụ draft_minutes.",
+          "signals": {
+            "asks_general_chat": true,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "general_chat",
+              "score": 0.97,
+              "evidence": [
+                "Cảm ơn nhé!"
+              ]
+            },
+            {
+              "route": "clarify",
+              "score": 0.03,
+              "evidence": [
+                "Cảm ơn nhé!"
+              ]
+            }
+          ]
+        },
+        "edge": "general_chat",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "e4ad0501523666175728e84f94c88cde05f973801e8d9c2f141911b98a952e14",
+      "latency_ms": 4202
+    },
+    "R05": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "system_help",
+        "selected_route": "system_help",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "system_help",
+          "speech_act": "question_about_authority",
+          "help_topic_ids": [
+            "authority_limits"
+          ],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "ask_ai_approval_authority",
+          "raw_intent_label": "AI có quyền phê duyệt hồ sơ không?",
+          "capability_needed": "",
+          "target": "system",
+          "confidence": 0.92,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Người dùng hỏi về giới hạn thẩm quyền của AI (AI có được phê duyệt hồ sơ hay không), không yêu cầu phê duyệt một hồ sơ cụ thể; đây là câu hỏi về năng lực/thẩm quyền của hệ thống nên thuộc system_help, không phải unsupported.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": true,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "system_help",
+              "score": 0.92,
+              "evidence": [
+                "AI có quyền phê duyệt hồ sơ không?"
+              ]
+            },
+            {
+              "route": "unsupported",
+              "score": 0.15,
+              "evidence": [
+                "phê duyệt hồ sơ"
+              ]
+            }
+          ]
+        },
+        "edge": "system_help",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "4ff76fe72fe046bb256afa1169df8c458a5f8b5ed789c8112d2a2417f05ada54",
+      "latency_ms": 5759
+    },
+    "R06": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "system_help",
+        "selected_route": "system_help",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "system_help",
+          "speech_act": "question",
+          "help_topic_ids": [
+            "capabilities",
+            "minutes_help"
+          ],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "ask_system_capability_minutes_support",
+          "raw_intent_label": "hỏi hệ thống có hỗ trợ lập biên bản không",
+          "capability_needed": "",
+          "target": "system",
+          "confidence": 0.9,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Câu hỏi về khả năng/giới hạn hỗ trợ của hệ thống ('có hỗ trợ lập biên bản không'), không phải yêu cầu tạo biên bản cho một hồ sơ cụ thể; theo quy tắc phân biệt, đây là system_help chứ không phải workflow_action.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": true,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "system_help",
+              "score": 0.9,
+              "evidence": [
+                "Bạn có hỗ trợ lập biên bản không?"
+              ]
+            },
+            {
+              "route": "workflow_action",
+              "score": 0.2,
+              "evidence": [
+                "lập biên bản"
+              ]
+            }
+          ]
+        },
+        "edge": "system_help",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "37c6e569735f6b9803f1348b34993b4a37b3e6a581af06fad742cde2ec8ece8d",
+      "latency_ms": 5695
+    },
+    "R07": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "case_qa",
+        "selected_route": "case_qa",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "case_qa",
+          "speech_act": "ask_case_status",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "hỏi trạng thái/bước hiện tại của hồ sơ",
+          "raw_intent_label": "case_status_question",
+          "capability_needed": "",
+          "target": "case_profile",
+          "confidence": 0.93,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Câu hỏi về bước/trạng thái hiện tại của hồ sơ → case_qa, trả lời chỉ từ case profile/memory; không cập nhật fact, không hỏi quy định, không yêu cầu workflow hay nguồn ngoài.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": true,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "case_qa",
+              "score": 0.93,
+              "evidence": [
+                "Hồ sơ này đang ở bước nào?"
+              ]
+            },
+            {
+              "route": "system_help",
+              "score": 0.08,
+              "evidence": [
+                "đang ở bước nào"
+              ]
+            },
+            {
+              "route": "clarify",
+              "score": 0.05,
+              "evidence": [
+                "Hồ sơ này"
+              ]
+            }
+          ]
+        },
+        "edge": "case_qa",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "211a6f194c63c0a8e6fc681306c9d877a4b7ba7051d024678f9ab08de8513b12",
+      "latency_ms": 5804
+    },
+    "R08": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "case_qa",
+        "selected_route": "case_qa",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "case_qa",
+          "speech_act": "question_about_case_status",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "Hỏi mức kỷ luật đã lưu của hồ sơ",
+          "raw_intent_label": "ask_stored_disciplinary_level",
+          "capability_needed": "",
+          "target": "case_facts",
+          "confidence": 0.9,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Câu hỏi về giá trị 'mức kỷ luật' đã được lưu trong hồ sơ hiện tại — đọc bộ nhớ/tình trạng case, không phải hỏi căn cứ quy định hay cập nhật dữ kiện.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": true,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "case_qa",
+              "score": 0.9,
+              "evidence": [
+                "Mức kỷ luật đang lưu của hồ sơ này là gì?",
+                "'đang lưu' chỉ thông tin đã có trong hồ sơ/case facts"
+              ]
+            },
+            {
+              "route": "policy_qa",
+              "score": 0.15,
+              "evidence": [
+                "cụm 'mức kỷ luật' có thể gợi liên tưởng quy định",
+                "nhưng không hỏi căn cứ/điều khoản/mức áp dụng theo luật"
+              ]
+            }
+          ]
+        },
+        "edge": "case_qa",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "2f158312966363912a96d38e6620319e103088b40d0967add29ca904ce0331cb",
+      "latency_ms": 6267
+    },
+    "R09": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "case_qa",
+        "selected_route": "case_qa",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "case_qa",
+          "speech_act": "question",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "case_memory_employee_name",
+          "raw_intent_label": "Hỏi tên nhân viên trong hồ sơ này",
+          "capability_needed": "",
+          "target": "case_profile",
+          "confidence": 0.94,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Câu hỏi ai/tên nhân viên trong hồ sơ hiện tại — hỏi về dữ liệu ký ức hồ sơ, không thêm/sửa tình tiết, không hỏi quy định, không yêu cầu tạo văn bản hay nguồn ngoài.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": true,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "case_qa",
+              "score": 0.94,
+              "evidence": [
+                "Nhân viên trong hồ sơ này tên gì?"
+              ]
+            },
+            {
+              "route": "clarify",
+              "score": 0.05,
+              "evidence": [
+                "Hồ sơ hiện chưa có dữ liệu (CASE PROFILE none) nhưng câu hỏi vẫn rõ ràng thuộc case_qa"
+              ]
+            }
+          ]
+        },
+        "edge": "case_qa",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "a94905e425a9569cc8517b1479daebb65240bd9ac013ea60f20022de97d72d7f",
+      "latency_ms": 5845
+    },
+    "R10": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "policy_qa",
+        "selected_route": "policy_qa",
+        "requested_action": "answer_policy_question",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "policy_qa",
+          "speech_act": "question",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "Hỏi quy định nội quy công ty về xử lý nghỉ không phép",
+          "raw_intent_label": "internal policy question about handling unauthorized leave",
+          "capability_needed": "",
+          "target": "internal_policy",
+          "confidence": 0.95,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": true,
+          "requires_external_research": false,
+          "requested_action": "answer_policy_question",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Câu hỏi hỏi nội quy/quy định nội bộ công ty về cách xử lý hành vi nghỉ không phép; không hỏi dữ liệu hồ sơ, không yêu cầu tạo artifact, không xin nguồn công khai/bên ngoài. Từ 'nghỉ' chỉ nằm trong cụm chủ đề quy định, không phải cung cấp tình tiết case.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": true,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "policy_qa",
+              "score": 0.95,
+              "evidence": [
+                "Theo nội quy công ty",
+                "nghỉ không phép được xử lý thế nào?"
+              ]
+            },
+            {
+              "route": "external_research",
+              "score": 0.08,
+              "evidence": [
+                "Không nêu nguồn công khai/web; chỉ hỏi nội quy công ty"
+              ]
+            },
+            {
+              "route": "case_qa",
+              "score": 0.05,
+              "evidence": [
+                "Không hỏi về hồ sơ hay tình tiết đã lưu của case hiện tại"
+              ]
+            }
+          ]
+        },
+        "edge": "action",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "1dffa64667804d726c3596ae39ef61d0fe310ee28b3b1a5f0a8a7a55d8517a20",
+      "latency_ms": 6761
+    },
+    "R11": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "policy_qa",
+        "selected_route": "policy_qa",
+        "requested_action": "answer_policy_question",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "policy_qa",
+          "speech_act": "hỏi_thủ_tục_pháp_lý",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "Hỏi các bước lập biên bản theo quy định pháp luật",
+          "raw_intent_label": "Lập biên bản cần những bước nào theo luật?",
+          "capability_needed": "",
+          "target": "internal_policy",
+          "confidence": 0.9,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": true,
+          "requires_external_research": false,
+          "requested_action": "answer_policy_question",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Câu hỏi về trình tự/các bước lập biên bản theo quy định pháp luật/nội quy — cần tra cứu tri thức nội bộ, không phải lệnh soạn biên bản cho vụ việc cụ thể, cũng không hỏi về chức năng của hệ thống hay nguồn công khai bên ngoài.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": true,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "policy_qa",
+              "score": 0.9,
+              "evidence": [
+                "Lập biên bản cần những bước nào",
+                "theo luật?"
+              ]
+            },
+            {
+              "route": "system_help",
+              "score": 0.15,
+              "evidence": [
+                "cần những bước nào"
+              ]
+            },
+            {
+              "route": "workflow_action",
+              "score": 0.12,
+              "evidence": [
+                "Lập biên bản"
+              ]
+            }
+          ]
+        },
+        "edge": "action",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "64648f099c32ebfd20a08e45b05c4e38fbb6347b1faada6b19f71bc8a4b401c4",
+      "latency_ms": 6710
+    },
+    "R12": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "policy_qa",
+        "selected_route": "policy_qa",
+        "requested_action": "answer_policy_question",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "policy_qa",
+          "speech_act": "question",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "Hỏi căn cứ điều khoản để xử lý vụ việc",
+          "raw_intent_label": "ask_legal_basis_for_case_handling",
+          "capability_needed": "",
+          "target": "internal_policy",
+          "confidence": 0.9,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": true,
+          "requires_external_research": false,
+          "requested_action": "answer_policy_question",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Người dùng hỏi căn cứ điều khoản/luật/nội quy áp dụng cho vụ việc → tra cứu chính sách nội bộ; không cung cấp tình tiết mới, không yêu cầu workflow, không đòi nguồn công khai.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": true,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "policy_qa",
+              "score": 0.9,
+              "evidence": [
+                "Căn cứ điều khoản nào",
+                "để xử lý vụ việc này?"
+              ]
+            },
+            {
+              "route": "case_qa",
+              "score": 0.15,
+              "evidence": [
+                "vụ việc này"
+              ]
+            },
+            {
+              "route": "clarify",
+              "score": 0.05,
+              "evidence": [
+                "vụ việc này — có thể chưa rõ hồ sơ cụ thể"
+              ]
+            }
+          ]
+        },
+        "edge": "action",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "a01d14caabbf4488a00be7c4e34ac359c7729c24eb74c2c1152e8e275f536f8e",
+      "latency_ms": 5997
+    },
+    "R13": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "workflow_action",
+        "selected_route": "workflow_action",
+        "requested_action": "draft_minutes",
+        "task_change": "replace",
+        "contract_issues": [],
+        "decision": {
+          "route": "workflow_action",
+          "speech_act": "request",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "draft_minutes_request",
+          "raw_intent_label": "Lập biên bản vụ này giúp tôi",
+          "capability_needed": "",
+          "target": "workflow",
+          "confidence": 0.95,
+          "requires_fact_planner": true,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "draft_minutes",
+          "task_change": "replace",
+          "risk_level": "low",
+          "reason": "Người dùng yêu cầu soạn biên bản cho vụ việc hiện tại — hành động soạn thảo được hỗ trợ (draft_minutes); cần extract node xác thực dữ kiện trước khi tạo biên bản.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": true,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "workflow_action",
+              "score": 0.95,
+              "evidence": [
+                "Lập biên bản vụ này giúp tôi."
+              ]
+            },
+            {
+              "route": "fact_planner",
+              "score": 0.2,
+              "evidence": [
+                "vụ này"
+              ]
+            },
+            {
+              "route": "policy_qa",
+              "score": 0.05,
+              "evidence": [
+                "Lập biên bản"
+              ]
+            }
+          ]
+        },
+        "edge": "extract",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "d00f5c00993178f09eb5d1fb0db761bb9a89ba4086c0d06bc3083a672d4f0c97",
+      "latency_ms": 5687
+    },
+    "R14": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "workflow_action",
+        "selected_route": "workflow_action",
+        "requested_action": "draft_minutes",
+        "task_change": "replace",
+        "contract_issues": [],
+        "decision": {
+          "route": "workflow_action",
+          "speech_act": "request",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "draft_minutes_for_hr_review",
+          "raw_intent_label": "ghi nhận sự việc thành bản ghi nhận/văn bản cho HR xem",
+          "capability_needed": "",
+          "target": "workflow",
+          "confidence": 0.92,
+          "requires_fact_planner": true,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "draft_minutes",
+          "task_change": "replace",
+          "risk_level": "low",
+          "reason": "Người dùng yêu cầu ghi nhận sự việc thành một bản văn bản để HR xem — đây là hành động soạn biên bản/bản ghi nhận (draft_minutes), cần extract node xác thực dữ kiện hồ sơ.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": true,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "workflow_action",
+              "score": 0.92,
+              "evidence": [
+                "Ghi nhận sự việc này thành một bản",
+                "để HR xem giúp tôi"
+              ]
+            },
+            {
+              "route": "fact_planner",
+              "score": 0.25,
+              "evidence": [
+                "Ghi nhận sự việc này"
+              ]
+            },
+            {
+              "route": "clarify",
+              "score": 0.08,
+              "evidence": [
+                "yêu cầu ngắn, không nêu loại văn bản cụ thể"
+              ]
+            }
+          ]
+        },
+        "edge": "extract",
+        "recheck_status": "not_needed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "5833fdcaa7a3c7218a056543f03781bdec68fb62d249c18b0e5e781f86153403",
+      "latency_ms": 3907
+    },
+    "R15": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "workflow_action",
+        "selected_route": "workflow_action",
+        "requested_action": "create_ticket_preview",
+        "task_change": "replace",
+        "contract_issues": [],
+        "decision": {
+          "route": "workflow_action",
+          "speech_act": "request",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "create_legal_ticket_preview",
+          "raw_intent_label": "Tạo bản xem trước phiếu pháp chế cho vụ này",
+          "capability_needed": "",
+          "target": "workflow",
+          "confidence": 0.95,
+          "requires_fact_planner": true,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "create_ticket_preview",
+          "task_change": "replace",
+          "risk_level": "low",
+          "reason": "Người dùng yêu cầu tạo bản xem trước phiếu pháp chế cho vụ việc — đây là lệnh workflow được hỗ trợ (create_ticket_preview), không phải phê duyệt/ký/đóng hồ sơ. Vì hồ sơ chưa có dữ kiện nào, cần fact planner xác thực/hoàn thiện dữ kiện trước khi tạo phiếu.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": true,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "workflow_action",
+              "score": 0.95,
+              "evidence": [
+                "Tạo bản xem trước phiếu pháp chế",
+                "cho vụ này"
+              ]
+            },
+            {
+              "route": "fact_planner",
+              "score": 0.3,
+              "evidence": [
+                "Hồ sơ chưa có working facts nên cần thu thập/xác thực dữ kiện trước khi tạo phiếu"
+              ]
+            },
+            {
+              "route": "clarify",
+              "score": 0.1,
+              "evidence": [
+                "'vụ này' chưa gắn với hồ sơ cụ thể, nhưng ý định tạo phiếu xem trước đã rõ"
+              ]
+            }
+          ]
+        },
+        "edge": "extract",
+        "recheck_status": "not_needed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "4ce3ffbfb8747df8f8a69193c967b2f19c13f78d80ec1852decd198180e5dd67",
+      "latency_ms": 4465
+    },
+    "R16": {
+      "status": "error",
+      "actual": {
+        "initial_route": "workflow_action",
+        "selected_route": "clarify",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "clarify",
+          "speech_act": "",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "unroutable_intent",
+          "raw_intent_label": "",
+          "capability_needed": "",
+          "target": "unknown",
+          "confidence": 0.0,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "medium",
+          "reason": "Recheck failed",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": []
+        },
+        "edge": "disambiguate",
+        "recheck_status": "failed",
+        "fallback_kind": "output",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": "Bộ định tuyến dùng phương án dự phòng",
+      "input_sha256": "313754b00dcff8e3d731c3159ade59cbadcf077e083ed3b0b2917d6321a60c05",
+      "latency_ms": 8322
+    },
+    "R17": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "external_research",
+        "selected_route": "external_research",
+        "requested_action": "external_research",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "external_research",
+          "speech_act": "request_external_research",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "Tra cứu nguồn công khai mới nhất về kỷ luật lao động",
+          "raw_intent_label": "web search public sources latest labor discipline",
+          "capability_needed": "",
+          "target": "internal_policy",
+          "confidence": 0.95,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": true,
+          "requested_action": "external_research",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Người dùng chỉ định rõ tra cứu trên web, nguồn công khai và thông tin mới nhất về kỷ luật lao động — yêu cầu nguồn bên ngoài, không phải quy định nội bộ hay dữ liệu hồ sơ.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": true,
+            "asks_latest_info": true,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "external_research",
+              "score": 0.95,
+              "evidence": [
+                "Tra cứu trên web nguồn công khai",
+                "mới nhất về kỷ luật lao động"
+              ]
+            },
+            {
+              "route": "policy_qa",
+              "score": 0.2,
+              "evidence": [
+                "kỷ luật lao động (chủ đề luật lao động, nhưng không hỏi quy định nội bộ của hồ sơ)"
+              ]
+            }
+          ]
+        },
+        "edge": "action",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "0fcb8b5fa3323a4251c864fcc25d994575a4e9a9f6a95d2b494bb379008bb4a1",
+      "latency_ms": 6193
+    },
+    "R18": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "external_research",
+        "selected_route": "external_research",
+        "requested_action": "external_research",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "external_research",
+          "speech_act": "request_external_lookup",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "tra_cứu_quy_định_nghỉ_phép_từ_nguồn_công_khai",
+          "raw_intent_label": "Tìm trên chinhphu.vn, không dùng dữ liệu nội bộ, quy định về nghỉ phép",
+          "capability_needed": "",
+          "target": "internal_policy",
+          "confidence": 0.96,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": true,
+          "requested_action": "external_research",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Người dùng chỉ đích danh nguồn công khai chinhphu.vn và nói rõ không dùng dữ liệu nội bộ khi hỏi quy định về nghỉ phép, nên đây là yêu cầu tra cứu nguồn bên ngoài, không phải policy_qa nội bộ.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": true,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "external_research",
+              "score": 0.96,
+              "evidence": [
+                "Tìm trên chinhphu.vn",
+                "không dùng dữ liệu nội bộ",
+                "quy định về nghỉ phép"
+              ]
+            },
+            {
+              "route": "policy_qa",
+              "score": 0.2,
+              "evidence": [
+                "quy định về nghỉ phép"
+              ]
+            }
+          ]
+        },
+        "edge": "action",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "2ce50a18c230966539d9336bd96969ca6babbce3474be98dc93c87effffb8236",
+      "latency_ms": 5950
+    },
+    "R19": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "unsupported",
+        "selected_route": "unsupported",
+        "requested_action": "unsupported",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "unsupported",
+          "speech_act": "request_prohibited_action",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "Request to approve case file (out of chat authority)",
+          "raw_intent_label": "phê duyệt hồ sơ này ngay",
+          "capability_needed": "",
+          "target": "workflow",
+          "confidence": 0.97,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "unsupported",
+          "task_change": "keep",
+          "risk_level": "high",
+          "reason": "Người dùng yêu cầu phê duyệt hồ sơ ngay; phê duyệt/ký/chốt là thẩm quyền cuối cùng không thuộc trợ lý chat, không phải workflow_action.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": true
+          },
+          "candidates": [
+            {
+              "route": "unsupported",
+              "score": 0.97,
+              "evidence": [
+                "Phê duyệt hồ sơ này ngay giúp tôi."
+              ]
+            },
+            {
+              "route": "workflow_action",
+              "score": 0.12,
+              "evidence": [
+                "hồ sơ này"
+              ]
+            },
+            {
+              "route": "system_help",
+              "score": 0.05,
+              "evidence": [
+                "giúp tôi"
+              ]
+            }
+          ]
+        },
+        "edge": "action",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "69ae84d6dfbd353022c1d19eb0e5a5dad297dd7943a7839e8fed515b6cbc161c",
+      "latency_ms": 5301
+    },
+    "R20": {
+      "status": "error",
+      "actual": {
+        "initial_route": "unsupported",
+        "selected_route": "clarify",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "clarify",
+          "speech_act": "",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "unroutable_intent",
+          "raw_intent_label": "",
+          "capability_needed": "",
+          "target": "unknown",
+          "confidence": 0.0,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "medium",
+          "reason": "Recheck failed",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": []
+        },
+        "edge": "disambiguate",
+        "recheck_status": "failed",
+        "fallback_kind": "output",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": "Bộ định tuyến dùng phương án dự phòng",
+      "input_sha256": "971ffc7124e903d9a98be5bceaeec6c6c22782e1b610cd7b89283d573d2b1007",
+      "latency_ms": 6293
+    },
+    "R21": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "unsupported",
+        "selected_route": "unsupported",
+        "requested_action": "unsupported",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "unsupported",
+          "speech_act": "request_prohibited_operation",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "delete_case_from_system",
+          "raw_intent_label": "Xóa hồ sơ này khỏi hệ thống",
+          "capability_needed": "",
+          "target": "unknown",
+          "confidence": 0.97,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "unsupported",
+          "task_change": "keep",
+          "risk_level": "high",
+          "reason": "Yêu cầu xóa hồ sơ khỏi hệ thống là thao tác vượt thẩm quyền của trợ lý; không route nào được phép xóa/đóng hồ sơ. Cụm 'hồ sơ này' chỉ là đối tượng bị xóa, không phải câu hỏi về dữ liệu hồ sơ nên case_qa không áp dụng.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": true
+          },
+          "candidates": [
+            {
+              "route": "unsupported",
+              "score": 0.97,
+              "evidence": [
+                "Xóa hồ sơ này khỏi hệ thống."
+              ]
+            },
+            {
+              "route": "case_qa",
+              "score": 0.05,
+              "evidence": [
+                "hồ sơ này"
+              ]
+            },
+            {
+              "route": "clarify",
+              "score": 0.03,
+              "evidence": [
+                "Xóa hồ sơ này khỏi hệ thống."
+              ]
+            }
+          ]
+        },
+        "edge": "action",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "7299559849926c78dcec711b17c51fe091201b65f2cf2c7f65ae8fc35aa762cb",
+      "latency_ms": 4965
+    },
+    "R22": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "unsupported",
+        "selected_route": "unsupported",
+        "requested_action": "unsupported",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "unsupported",
+          "speech_act": "request_prohibited_authority_action",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "Bỏ qua pháp chế và tự động phê duyệt",
+          "raw_intent_label": "bypass_legal_and_approve",
+          "capability_needed": "",
+          "target": "workflow",
+          "confidence": 0.97,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "unsupported",
+          "task_change": "keep",
+          "risk_level": "high",
+          "reason": "Người dùng yêu cầu bỏ qua bước pháp chế và phê duyệt ngay — đây là hành vi vượt thẩm quyền (bypass review + approve), không được chat thực hiện.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": true
+          },
+          "candidates": [
+            {
+              "route": "unsupported",
+              "score": 0.97,
+              "evidence": [
+                "Bỏ qua bước pháp chế",
+                "duyệt luôn"
+              ]
+            },
+            {
+              "route": "system_help",
+              "score": 0.05,
+              "evidence": [
+                "duyệt luôn"
+              ]
+            }
+          ]
+        },
+        "edge": "action",
+        "recheck_status": "not_needed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "6c926c8f933bde0aabb16427248670c6095ef23a03a1d9941d205a4506d9f886",
+      "latency_ms": 2331
+    },
+    "R23": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "clarify",
+        "selected_route": "clarify",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "clarify",
+          "speech_act": "unclear_reference",
+          "help_topic_ids": [],
+          "needs_clarification": true,
+          "clarification_question": "Bạn vui lòng nói rõ hơn ý bạn là gì? Ví dụ: bạn muốn xem thông tin hồ sơ hiện có, bổ sung tình tiết vụ việc, hỏi quy định/nội quy áp dụng, hay yêu cầu soạn biên bản/tạo phiếu pháp chế?",
+          "intent_label": "ambiguous_reference_no_context",
+          "raw_intent_label": "vague_pointer_utterance",
+          "capability_needed": "",
+          "target": "unknown",
+          "confidence": 0.82,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Lượt người dùng chỉ là cụm từ chỉ định mơ hồ ('Cái đó.') không có tiền ngữ, không có hồ sơ, không có tác vụ đang chờ và không có ngữ cảnh hội thoại, nên không thể định tuyến an toàn.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "clarify",
+              "score": 0.82,
+              "evidence": [
+                "Cái đó."
+              ]
+            },
+            {
+              "route": "case_qa",
+              "score": 0.08,
+              "evidence": [
+                "Cái đó."
+              ]
+            },
+            {
+              "route": "general_chat",
+              "score": 0.05,
+              "evidence": [
+                "Cái đó."
+              ]
+            }
+          ]
+        },
+        "edge": "disambiguate",
+        "recheck_status": "not_needed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "4aa09fa446acbaf9ba42919e61ff9da9cb9fca8d9e7c9ff9fb8e72118d8fcf8f",
+      "latency_ms": 3228
+    },
+    "R24": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "clarify",
+        "selected_route": "clarify",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "clarify",
+          "speech_act": "request_vague",
+          "help_topic_ids": [],
+          "needs_clarification": true,
+          "clarification_question": "Bạn muốn tôi hỗ trợ việc gì cụ thể ạ? Ví dụ: (1) ghi nhận/ bổ sung tình tiết của vụ việc, (2) cho biết hồ sơ hiện đang có gì, (3) tra cứu quy định/nội quy áp dụng, (4) soạn biên bản hoặc tạo phiếu pháp chế, hay (5) tra cứu nguồn bên ngoài. Bạn vui lòng nêu rõ vụ việc và nội dung cần xử lý.",
+          "intent_label": "yêu cầu xử lý mơ hồ, chưa rõ mục tiêu",
+          "raw_intent_label": "Xử lý giúp tôi",
+          "capability_needed": "",
+          "target": "unknown",
+          "confidence": 0.35,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Lượt hội thoại quá ngắn và không có ngữ cảnh vụ việc; không xác định được mục tiêu cụ thể nên cần hỏi lại.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "clarify",
+              "score": 0.7,
+              "evidence": [
+                "Xử lý giúp tôi."
+              ]
+            },
+            {
+              "route": "workflow_action",
+              "score": 0.2,
+              "evidence": [
+                "Xử lý giúp tôi."
+              ]
+            },
+            {
+              "route": "fact_planner",
+              "score": 0.1,
+              "evidence": [
+                "Xử lý giúp tôi."
+              ]
+            }
+          ]
+        },
+        "edge": "disambiguate",
+        "recheck_status": "not_needed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "12cc9186b4482bf805b907b23714f1557d3c56862950c245710f72d7f3fa6386",
+      "latency_ms": 3271
+    },
+    "R25": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "capability_gap",
+        "selected_route": "capability_gap",
+        "requested_action": "capability_gap",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "capability_gap",
+          "speech_act": "request",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "yêu cầu tích hợp máy chấm công với phần mềm kế toán",
+          "raw_intent_label": "integration_request_attendance_accounting",
+          "capability_needed": "tích hợp/đồng bộ dữ liệu máy chấm công với phần mềm kế toán",
+          "target": "unknown",
+          "confidence": 0.82,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Yêu cầu tích hợp kỹ thuật giữa máy chấm công và phần mềm kế toán là yêu cầu nghiệp vụ hợp lệ nhưng không có route/công cụ nào trong danh sách hỗ trợ thực hiện, nên thuộc capability_gap.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "capability_gap",
+              "score": 0.82,
+              "evidence": [
+                "Kết nối trực tiếp máy chấm công với phần mềm kế toán giúp tôi"
+              ]
+            },
+            {
+              "route": "system_help",
+              "score": 0.2,
+              "evidence": [
+                "giúp tôi"
+              ]
+            }
+          ]
+        },
+        "edge": "action",
+        "recheck_status": "not_needed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "3e62164906a2f81fc7e74a7daab7ec0c32fd36bc8cd6d709e02f56d463fbf604",
+      "latency_ms": 7434
+    },
+    "R26": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "capability_gap",
+        "selected_route": "capability_gap",
+        "requested_action": "capability_gap",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "capability_gap",
+          "speech_act": "request_prediction",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "Dự báo xác suất vi phạm kỷ luật của nhân viên",
+          "raw_intent_label": "Employee disciplinary violation predictive risk scoring",
+          "capability_needed": "Dự báo/phân tích rủi ro (predictive analytics) xác suất vi phạm kỷ luật",
+          "target": "unknown",
+          "confidence": 0.85,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "medium",
+          "reason": "Yêu cầu dự báo xác suất vi phạm là nhu cầu analytics hợp lý nhưng không route/tool nào được hỗ trợ thực hiện; không phải hành vi phê duyệt/ký/đóng nên không thuộc unsupported. Từ 'kỷ luật' chỉ là ngữ cảnh, không phải câu hỏi nội quy.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "capability_gap",
+              "score": 0.85,
+              "evidence": [
+                "Dự báo xác suất từng nhân viên sẽ vi phạm kỷ luật năm sau"
+              ]
+            },
+            {
+              "route": "policy_qa",
+              "score": 0.08,
+              "evidence": [
+                "chỉ trùng từ 'kỷ luật', không hỏi quy định/nội quy nào áp dụng"
+              ]
+            },
+            {
+              "route": "clarify",
+              "score": 0.05,
+              "evidence": [
+                "yêu cầu prediction/analytics nằm ngoài các route được hỗ trợ"
+              ]
+            }
+          ]
+        },
+        "edge": "action",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "9e6611555dc8a345394273b5af98d1f5bf7772ee549f32f9290a042530aed792",
+      "latency_ms": 8139
+    },
+    "R27": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "fact_planner",
+        "selected_route": "fact_planner",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "fact_planner",
+          "speech_act": "provide_case_fact_with_greeting",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "Cung cấp ngày xảy ra vụ việc",
+          "raw_intent_label": "greeting + incident date fact",
+          "capability_needed": "",
+          "target": "case_facts",
+          "confidence": 0.94,
+          "requires_fact_planner": true,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Lượt nói gồm lời chào xã giao cộng với việc cung cấp giá trị cho tình tiết 'ngày xảy ra vụ việc' (12/10/2026). Theo quy tắc, lời chào kèm dữ liệu kiện được định tuyến là fact_planner, không phải general_chat.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": true,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "fact_planner",
+              "score": 0.94,
+              "evidence": [
+                "ngày xảy ra vụ việc là 12/10/2026"
+              ]
+            },
+            {
+              "route": "general_chat",
+              "score": 0.1,
+              "evidence": [
+                "Hello"
+              ]
+            }
+          ]
+        },
+        "edge": "extract",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "fa10f1c092d09870e00d61ad01e5363dd236e9851de117bcd04498aa2202262a",
+      "latency_ms": 5414
+    },
+    "R28": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "fact_planner",
+        "selected_route": "fact_planner",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "fact_planner",
+          "speech_act": "báo cáo/ cập nhật tình tiết hồ sơ",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "cập nhật tình tiết: đã lập biên bản, chưa yêu cầu giải trình",
+          "raw_intent_label": "Đã lập biên bản rồi, chưa yêu cầu giải trình.",
+          "capability_needed": "",
+          "target": "case_facts",
+          "confidence": 0.88,
+          "requires_fact_planner": true,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Người dùng mô tả trạng thái thực tế của vụ việc (đã lập biên bản, chưa yêu cầu giải trình) — đây là báo cáo/ cập nhật tình tiết, không phải yêu cầu soạn biên bản mới, không hỏi quy định, không hỏi dữ liệu đã lưu.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": true,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "fact_planner",
+              "score": 0.88,
+              "evidence": [
+                "Đã lập biên bản rồi",
+                "chưa yêu cầu giải trình"
+              ]
+            },
+            {
+              "route": "workflow_action",
+              "score": 0.12,
+              "evidence": [
+                "có cụm 'lập biên bản' nhưng là thuật lại việc đã làm, không yêu cầu soạn/tạo biên bản"
+              ]
+            },
+            {
+              "route": "case_qa",
+              "score": 0.1,
+              "evidence": [
+                "thông tin về trạng thái biên bản/giải trình, nhưng người dùng đang cung cấp chứ không hỏi dữ liệu hồ sơ"
+              ]
+            }
+          ]
+        },
+        "edge": "extract",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "dbc4ef8f6f3204553ef6b21f5406840d2b9a7d9a1e6656fde72ffa1086e546a9",
+      "latency_ms": 7523
+    },
+    "R29": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "fact_planner",
+        "selected_route": "fact_planner",
+        "requested_action": "",
+        "task_change": "keep",
+        "contract_issues": [],
+        "decision": {
+          "route": "fact_planner",
+          "speech_act": "correction",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "correct_case_fact_absence_days",
+          "raw_intent_label": "đính chính số ngày nghỉ không phép từ 5 thành 7",
+          "capability_needed": "",
+          "target": "case_facts",
+          "confidence": 0.95,
+          "requires_fact_planner": true,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "keep",
+          "risk_level": "low",
+          "reason": "Người dùng đính chính một tình tiết đã lưu (số ngày nghỉ không phép 5 -> 7). Đây là cập nhật dữ kiện, không phải câu hỏi chính sách hay yêu cầu workflow mới; task draft_minutes vẫn được giữ và hoàn thiện bằng dữ kiện đúng.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": true,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "fact_planner",
+              "score": 0.95,
+              "evidence": [
+                "Không phải 5 ngày, là 7 ngày nghỉ không phép."
+              ]
+            },
+            {
+              "route": "workflow_action",
+              "score": 0.2,
+              "evidence": [
+                "ACTIVE TASK: draft_minutes — dữ kiện chỉnh sửa phục vụ hoàn thiện biên bản đang chờ"
+              ]
+            }
+          ]
+        },
+        "edge": "extract",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "ac1ae3a53a45025bbc4a1cb1e24f3ba5d102b012007aa0fef03c9fd0fbb41fae",
+      "latency_ms": 6315
+    },
+    "R30": {
+      "status": "complete",
+      "actual": {
+        "initial_route": "clarify",
+        "selected_route": "clarify",
+        "requested_action": "",
+        "task_change": "cancel",
+        "contract_issues": [],
+        "decision": {
+          "route": "clarify",
+          "speech_act": "task_cancellation",
+          "help_topic_ids": [],
+          "needs_clarification": false,
+          "clarification_question": "",
+          "intent_label": "cancel_pending_minutes_draft",
+          "raw_intent_label": "Hủy yêu cầu lập biên bản đang chờ, tôi chưa muốn làm tiếp",
+          "capability_needed": "",
+          "target": "workflow",
+          "confidence": 0.96,
+          "requires_fact_planner": false,
+          "requires_internal_retrieval": false,
+          "requires_external_research": false,
+          "requested_action": "",
+          "task_change": "cancel",
+          "risk_level": "low",
+          "reason": "Người dùng chủ động hủy tác vụ soạn biên bản đang chờ; đây là yêu cầu điều khiển tác vụ rõ ràng, không phải phê duyệt/đóng/xóa hồ sơ.",
+          "signals": {
+            "asks_general_chat": false,
+            "asks_system_help": false,
+            "asks_external_public_source": false,
+            "asks_latest_info": false,
+            "asks_internal_policy": false,
+            "updates_case_fact": false,
+            "asks_workflow_action": false,
+            "asks_case_memory": false,
+            "asks_prohibited_action": false
+          },
+          "candidates": [
+            {
+              "route": "clarify",
+              "score": 0.95,
+              "evidence": [
+                "Hủy yêu cầu lập biên bản đang chờ",
+                "tôi chưa muốn làm tiếp"
+              ]
+            },
+            {
+              "route": "workflow_action",
+              "score": 0.1,
+              "evidence": [
+                "lập biên bản (chỉ được nhắc trong ngữ cảnh hủy, không phải yêu cầu soạn mới)"
+              ]
+            }
+          ]
+        },
+        "edge": "disambiguate",
+        "recheck_status": "confirmed",
+        "fallback_kind": "none",
+        "model": "deepseek-flash",
+        "prompt_version": "intent-router-v5-rule-recheck-social-help"
+      },
+      "error": null,
+      "input_sha256": "302fdfa27c493a2dca8a789f9c898f95769b95a9ae27e6a48fa11ed1bd440fe0",
+      "latency_ms": 5148
+    },
+    "F01": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "absence_days",
+            "value": "5 ngày",
+            "confidence": 0.95,
+            "evidence": "tự ý nghỉ 5 ngày làm việc không phép",
+            "ambiguous": false
+          },
+          {
+            "key": "notice_form",
+            "value": "không báo",
+            "confidence": 0.95,
+            "evidence": "Không gửi đơn xin nghỉ hoặc thông báo cho quản lý trước khi vắng mặt",
+            "ambiguous": false
+          }
+        ],
+        "decision": {
+          "family": "UNAUTHORIZED_ABSENCE",
+          "family_confidence": 0.95,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Loại hợp đồng lao động của nhân viên là gì?",
+              "required": true,
+              "reason": "Cần để xác định khung xử lý kỷ luật áp dụng.",
+              "source": "catalog"
+            },
+            {
+              "key": "absence_days",
+              "label": "Số ngày nghỉ không phép",
+              "question": "Nhân viên đã nghỉ không phép bao nhiêu ngày?",
+              "required": true,
+              "reason": "Số ngày nghỉ không phép là mức độ vi phạm cốt lõi.",
+              "source": "catalog"
+            },
+            {
+              "key": "notice_form",
+              "label": "Hình thức báo vắng",
+              "question": "Nhân viên có báo vắng bằng hình thức nào không?",
+              "required": true,
+              "reason": "Việc có báo vắng hay không ảnh hưởng đến việc đánh giá hành vi.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản cho sự việc này chưa?",
+              "required": true,
+              "reason": "Cần để kiểm tra tính đầy đủ của hồ sơ xử lý.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã yêu cầu nhân viên giải trình chưa?",
+              "required": true,
+              "reason": "Cần để đánh giá quy trình xử lý trước khi có kết luận.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "absence_days",
+              "value": "5 ngày",
+              "confidence": 0.95,
+              "evidence": "tự ý nghỉ 5 ngày làm việc không phép",
+              "ambiguous": false
+            },
+            {
+              "key": "notice_form",
+              "value": "không báo",
+              "confidence": 0.95,
+              "evidence": "Không gửi đơn xin nghỉ hoặc thông báo cho quản lý trước khi vắng mặt",
+              "ambiguous": false
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "provide_facts",
+          "requested_action": "need_clarification",
+          "ambiguities": [],
+          "confidence": 0.9,
+          "reasoning_summary": "Nhân viên nghỉ không phép 5 ngày, không thông báo cho quản lý; còn thiếu loại hợp đồng, biên bản và yêu cầu giải trình."
+        },
+        "family": "UNAUTHORIZED_ABSENCE",
+        "merged": {
+          "absence_days": {
+            "value": "5 ngày",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [
+          "contract_type",
+          "notice_form",
+          "minutes_made",
+          "explanation_requested"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "781ce81fe3286e078ca73bc34ebb659b86061f2821cfb72d7dafb9cd75467920",
+      "latency_ms": 4698
+    },
+    "F02": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "late_days",
+            "value": "4 lần",
+            "confidence": 0.95,
+            "evidence": "Nhân viên đi làm muộn 4 lần trong tháng.",
+            "ambiguous": false
+          }
+        ],
+        "decision": {
+          "family": "LATE",
+          "family_confidence": 0.9,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Hãy cung cấp loại hợp đồng lao động của nhân viên?",
+              "required": true,
+              "reason": "Cần xác định loại hợp đồng để áp dụng đúng quy định xử lý đi muộn.",
+              "source": "catalog"
+            },
+            {
+              "key": "late_days",
+              "label": "Số lần hoặc số ngày đi muộn",
+              "question": "Nhân viên đã đi muộn bao nhiêu lần hoặc bao nhiêu ngày?",
+              "required": true,
+              "reason": "Số lần đi muộn là dữ kiện chính của hành vi vi phạm.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản cho các lần đi muộn này chưa?",
+              "required": true,
+              "reason": "Cần biết hồ sơ vi phạm đã được ghi nhận bằng biên bản hay chưa.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã yêu cầu nhân viên giải trình chưa?",
+              "required": true,
+              "reason": "Cần biết bước yêu cầu giải trình đã được thực hiện hay chưa.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "late_days",
+              "value": "4 lần",
+              "confidence": 0.95,
+              "evidence": "Nhân viên đi làm muộn 4 lần trong tháng.",
+              "ambiguous": false
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "provide_facts",
+          "requested_action": "need_clarification",
+          "ambiguities": [],
+          "confidence": 0.85,
+          "reasoning_summary": "Người dùng cung cấp số lần đi muộn; các dữ kiện về hợp đồng, biên bản và giải trình còn thiếu nên cần hỏi thêm."
+        },
+        "family": "LATE",
+        "merged": {
+          "late_days": {
+            "value": "4 lần",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [
+          "contract_type",
+          "minutes_made",
+          "explanation_requested"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "4a4f402d8405d8ed6385ba170dbdbea8c17f447119c56b18c9ed19233714a261",
+      "latency_ms": 3861
+    },
+    "F03": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "violation_summary",
+            "value": "Nhân viên nộp báo cáo công việc trễ hạn",
+            "confidence": 0.95,
+            "evidence": "Nhân viên nộp báo cáo công việc trễ hạn.",
+            "ambiguous": false
+          }
+        ],
+        "decision": {
+          "family": "GENERAL",
+          "family_confidence": 0.78,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Nhân viên này đang làm việc theo loại hợp đồng nào (thử việc, xác định thời hạn, không xác định thời hạn, mùa vụ)?",
+              "required": true,
+              "reason": "Loại hợp đồng quyết định khung xử lý kỷ luật và trình tự áp dụng.",
+              "source": "catalog"
+            },
+            {
+              "key": "violation_summary",
+              "label": "Hành vi vi phạm",
+              "question": "Mô tả ngắn gọn hành vi vi phạm của nhân viên?",
+              "required": true,
+              "reason": "Cần xác định đúng bản chất sự việc để tra cứu quy định phù hợp.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản cho sự việc này chưa?",
+              "required": true,
+              "reason": "Biên bản là chứng cứ và điều kiện trình tự trong xử lý kỷ luật.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã yêu cầu nhân viên giải trình chưa?",
+              "required": true,
+              "reason": "Việc yêu cầu giải trình ảnh hưởng đến tính hợp lệ của trình tự xử lý.",
+              "source": "catalog"
+            },
+            {
+              "key": "violation_degree",
+              "label": "Mức độ vi phạm",
+              "question": "Cụ thể nhân viên nộp báo cáo trễ bao nhiêu lần / trễ bao lâu, và hậu quả đối với công việc?",
+              "required": true,
+              "reason": "Mức độ và hậu quả của vi phạm cần thiết để đánh giá khung xử lý phù hợp.",
+              "source": "ai_generated"
+            },
+            {
+              "key": "prior_violation",
+              "label": "Vi phạm trước đó",
+              "question": "Nhân viên này đã từng bị nhắc nhở hoặc xử lý kỷ luật về vi phạm tương tự chưa?",
+              "required": false,
+              "reason": "Tiền sử vi phạm có thể ảnh hưởng đến việc áp dụng hình thức xử lý.",
+              "source": "ai_generated"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "violation_summary",
+              "value": "Nhân viên nộp báo cáo công việc trễ hạn",
+              "confidence": 0.95,
+              "evidence": "Nhân viên nộp báo cáo công việc trễ hạn.",
+              "ambiguous": false
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "provide_facts",
+          "requested_action": "need_clarification",
+          "ambiguities": [
+            "violation_degree"
+          ],
+          "confidence": 0.82,
+          "reasoning_summary": "Người dùng cung cấp mô tả sự việc (nộp báo cáo trễ hạn) nhưng còn thiếu loại hợp đồng, tình trạng biên bản, yêu cầu giải trình và mức độ vi phạm."
+        },
+        "family": "GENERAL",
+        "merged": {
+          "violation_summary": {
+            "value": "Nhân viên nộp báo cáo công việc trễ hạn",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [
+          "contract_type",
+          "minutes_made",
+          "explanation_requested"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "a4f0c5cf94d70699dadbf206817587ce214a2d36b750318c9832e99ddfaaf53e",
+      "latency_ms": 7958
+    },
+    "F04": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "violation_summary",
+            "value": "Nhân viên rời vị trí làm việc khi chưa bàn giao",
+            "confidence": 0.9,
+            "evidence": "Nhân viên rời vị trí làm việc khi chưa bàn giao.",
+            "ambiguous": false
+          }
+        ],
+        "decision": {
+          "family": "GENERAL",
+          "family_confidence": 0.7,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Loại hợp đồng lao động của nhân viên là gì (thử việc, xác định thời hạn, không xác định thời hạn, mùa vụ)?",
+              "required": true,
+              "reason": "Cần để áp dụng đúng quy định về xử lý kỷ luật theo loại hợp đồng.",
+              "source": "catalog"
+            },
+            {
+              "key": "violation_summary",
+              "label": "Hành vi vi phạm",
+              "question": "Tóm tắt hành vi vi phạm của nhân viên?",
+              "required": true,
+              "reason": "Cần để xác định đúng nhóm sự việc và quy trình xử lý.",
+              "source": "catalog"
+            },
+            {
+              "key": "handover_required",
+              "label": "Có yêu cầu bàn giao",
+              "question": "Vị trí/ca làm việc này có bắt buộc phải bàn giao trước khi rời đi không?",
+              "required": true,
+              "reason": "Việc rời vị trí không bàn giao chỉ là vi phạm nếu quy trình yêu cầu bàn giao.",
+              "source": "ai_generated"
+            },
+            {
+              "key": "position_absence_duration",
+              "label": "Thời gian rời vị trí",
+              "question": "Nhân viên đã rời vị trí làm việc trong bao lâu?",
+              "required": false,
+              "reason": "Giúp đánh giá mức độ ảnh hưởng của sự việc.",
+              "source": "ai_generated"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản cho sự việc này chưa?",
+              "required": true,
+              "reason": "Cần để biết hồ sơ xử lý đã được ghi nhận chưa.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã yêu cầu nhân viên giải trình chưa?",
+              "required": true,
+              "reason": "Cần để đảm bảo đúng trình tự xử lý kỷ luật.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "violation_summary",
+              "value": "Nhân viên rời vị trí làm việc khi chưa bàn giao",
+              "confidence": 0.9,
+              "evidence": "Nhân viên rời vị trí làm việc khi chưa bàn giao.",
+              "ambiguous": false
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "provide_facts",
+          "requested_action": "need_clarification",
+          "ambiguities": [],
+          "confidence": 0.8,
+          "reasoning_summary": "Người dùng cung cấp mô tả sự việc rời vị trí không bàn giao; còn thiếu loại hợp đồng, tình trạng biên bản và yêu cầu giải trình."
+        },
+        "family": "GENERAL",
+        "merged": {
+          "violation_summary": {
+            "value": "Nhân viên rời vị trí làm việc khi chưa bàn giao",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [
+          "contract_type",
+          "minutes_made",
+          "explanation_requested"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "f1ad45b42e3c943a19f1c614aedd76566eb871945de6a56f64780b84f3cdb088",
+      "latency_ms": 8148
+    },
+    "F06": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "absence_days",
+            "value": "5 ngày",
+            "confidence": 1.0,
+            "evidence": "nghỉ không phép 5 ngày",
+            "ambiguous": false
+          }
+        ],
+        "decision": {
+          "family": "UNAUTHORIZED_ABSENCE",
+          "family_confidence": 0.95,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Loại hợp đồng của nhân viên là gì (thử việc, xác định thời hạn, không xác định thời hạn, mùa vụ)?",
+              "required": true,
+              "reason": "Cần xác định loại hợp đồng để áp dụng đúng quy định xử lý vi phạm.",
+              "source": "catalog"
+            },
+            {
+              "key": "absence_days",
+              "label": "Số ngày nghỉ không phép",
+              "question": "Nhân viên đã nghỉ không phép bao nhiêu ngày?",
+              "required": true,
+              "reason": "Số ngày nghỉ không phép là căn cứ đánh giá mức độ vi phạm.",
+              "source": "catalog"
+            },
+            {
+              "key": "notice_form",
+              "label": "Hình thức báo vắng",
+              "question": "Nhân viên có báo vắng không và bằng hình thức nào (không báo, điện thoại, tin nhắn, email, đơn, trực tiếp)?",
+              "required": true,
+              "reason": "Hình thức báo vắng ảnh hưởng đến việc xác định tính chất vi phạm.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản ghi nhận vi phạm chưa?",
+              "required": true,
+              "reason": "Cần biết biên bản đã được lập hay chưa để đánh giá thủ tục.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã yêu cầu nhân viên giải trình chưa?",
+              "required": true,
+              "reason": "Việc yêu cầu giải trình là bước thủ tục cần thiết trước khi xử lý.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "absence_days",
+              "value": "5 ngày",
+              "confidence": 1.0,
+              "evidence": "nghỉ không phép 5 ngày",
+              "ambiguous": false
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "provide_facts",
+          "requested_action": "need_clarification",
+          "ambiguities": [],
+          "confidence": 0.9,
+          "reasoning_summary": "Nhân viên nghỉ không phép 5 ngày; thiếu loại hợp đồng, hình thức báo vắng, biên bản và yêu cầu giải trình nên cần làm rõ."
+        },
+        "family": "UNAUTHORIZED_ABSENCE",
+        "merged": {
+          "absence_days": {
+            "value": "5 ngày",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [
+          "contract_type",
+          "notice_form",
+          "minutes_made",
+          "explanation_requested"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "3cf48cb4eda78dcd609e8e9d00b27eb79ac0733ce9afc396dec978b85c343b98",
+      "latency_ms": 3861
+    },
+    "F05": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "violation_summary",
+            "value": "Nhân viên không sử dụng đầy đủ trang bị bảo hộ theo quy trình",
+            "confidence": 0.9,
+            "evidence": "Nhân viên không sử dụng đầy đủ trang bị bảo hộ theo quy trình.",
+            "ambiguous": false
+          }
+        ],
+        "decision": {
+          "family": "safety_incident",
+          "family_confidence": 0.78,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Loại hợp đồng của nhân viên là gì?",
+              "required": true,
+              "reason": "Cần để áp dụng đúng khung xử lý theo loại hợp đồng.",
+              "source": "catalog"
+            },
+            {
+              "key": "violation_summary",
+              "label": "Hành vi vi phạm",
+              "question": "Tóm tắt hành vi vi phạm là gì?",
+              "required": true,
+              "reason": "Cần để xác định nhóm sự việc và tra cứu quy định phù hợp.",
+              "source": "catalog"
+            },
+            {
+              "key": "ppe_missing_details",
+              "label": "Trang bị bảo hộ không sử dụng đầy đủ",
+              "question": "Cụ thể trang bị bảo hộ nào không được sử dụng đầy đủ?",
+              "required": true,
+              "reason": "Mức độ và loại thiếu hụt PPE ảnh hưởng tới đánh giá rủi ro an toàn.",
+              "source": "ai_generated"
+            },
+            {
+              "key": "safety_consequence",
+              "label": "Hậu quả an toàn",
+              "question": "Đã có tai nạn, thương tích hoặc rủi ro thực tế nào chưa?",
+              "required": false,
+              "reason": "Hậu quả giúp đánh giá mức độ nghiêm trọng của sự việc.",
+              "source": "ai_generated"
+            },
+            {
+              "key": "prior_safety_reminder",
+              "label": "Nhắc nhở trước đó",
+              "question": "Trước đó nhân viên đã được nhắc nhở về PPE chưa?",
+              "required": false,
+              "reason": "Tính tái phạm liên quan tới biện pháp xử lý nội bộ.",
+              "source": "ai_generated"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản cho sự việc này chưa?",
+              "required": true,
+              "reason": "Cần để xác định trạng thái hồ sơ sự việc.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã yêu cầu nhân viên giải trình chưa?",
+              "required": true,
+              "reason": "Cần để đánh giá đúng trình tự xử lý sự việc.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "violation_summary",
+              "value": "Nhân viên không sử dụng đầy đủ trang bị bảo hộ theo quy trình",
+              "confidence": 0.9,
+              "evidence": "Nhân viên không sử dụng đầy đủ trang bị bảo hộ theo quy trình.",
+              "ambiguous": false
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "provide_facts",
+          "requested_action": "need_clarification",
+          "ambiguities": [],
+          "confidence": 0.75,
+          "reasoning_summary": "Người dùng mô tả sự việc an toàn (không dùng đủ PPE); còn thiếu loại hợp đồng, chi tiết PPE và trạng thái biên bản/giải trình."
+        },
+        "family": "GENERAL",
+        "merged": {
+          "violation_summary": {
+            "value": "Nhân viên không sử dụng đầy đủ trang bị bảo hộ theo quy trình",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [
+          "contract_type",
+          "minutes_made",
+          "explanation_requested"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "c43d135722ee36ba289f8d25ad7fa98da695a114fa5c5b374614cba9d71def35",
+      "latency_ms": 8137
+    },
+    "F08": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "minutes_made",
+            "value": "true",
+            "confidence": 0.95,
+            "evidence": "Đã lập biên bản",
+            "ambiguous": false
+          },
+          {
+            "key": "explanation_requested",
+            "value": "false",
+            "confidence": 0.95,
+            "evidence": "chưa yêu cầu giải trình",
+            "ambiguous": false
+          }
+        ],
+        "decision": {
+          "family": "GENERAL",
+          "family_confidence": 0.6,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Loại hợp đồng của người lao động là gì?",
+              "required": true,
+              "reason": "Cần để xác định quy trình xử lý phù hợp với loại hợp đồng.",
+              "source": "catalog"
+            },
+            {
+              "key": "violation_summary",
+              "label": "Hành vi vi phạm",
+              "question": "Hành vi vi phạm cụ thể là gì?",
+              "required": true,
+              "reason": "Cần mô tả sự việc để tra cứu quy định và đánh giá thủ tục.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản chưa?",
+              "required": true,
+              "reason": "Cần để đánh giá tính đầy đủ của hồ sơ xử lý.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã yêu cầu giải trình chưa?",
+              "required": true,
+              "reason": "Cần để đánh giá bước thủ tục còn thiếu.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "minutes_made",
+              "value": "true",
+              "confidence": 0.95,
+              "evidence": "Đã lập biên bản",
+              "ambiguous": false
+            },
+            {
+              "key": "explanation_requested",
+              "value": "false",
+              "confidence": 0.95,
+              "evidence": "chưa yêu cầu giải trình",
+              "ambiguous": false
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "provide_facts",
+          "requested_action": "need_clarification",
+          "ambiguities": [],
+          "confidence": 0.85,
+          "reasoning_summary": "Người dùng cung cấp trạng thái biên bản và giải trình, nhưng còn thiếu loại hợp đồng và mô tả hành vi vi phạm."
+        },
+        "family": "GENERAL",
+        "merged": {
+          "minutes_made": {
+            "value": "true",
+            "confirmed": true
+          },
+          "explanation_requested": {
+            "value": "false",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [
+          "contract_type",
+          "violation_summary"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "de004dc02f9b9b446532ece59bb2d4db163e0c65496269c807a6808363caa2a6",
+      "latency_ms": 3286
+    },
+    "F07": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "contract_type",
+            "value": "xác định thời hạn",
+            "confidence": 0.97,
+            "evidence": "Hợp đồng xác định thời hạn",
+            "ambiguous": false
+          },
+          {
+            "key": "absence_days",
+            "value": "5 ngày",
+            "confidence": 0.97,
+            "evidence": "nghỉ không phép 5 ngày",
+            "ambiguous": false
+          },
+          {
+            "key": "notice_form",
+            "value": "không báo",
+            "confidence": 0.95,
+            "evidence": "không báo",
+            "ambiguous": false
+          },
+          {
+            "key": "minutes_made",
+            "value": "false",
+            "confidence": 0.96,
+            "evidence": "Chưa lập biên bản",
+            "ambiguous": false
+          },
+          {
+            "key": "explanation_requested",
+            "value": "true",
+            "confidence": 0.96,
+            "evidence": "đã yêu cầu giải trình",
+            "ambiguous": false
+          }
+        ],
+        "decision": {
+          "family": "UNAUTHORIZED_ABSENCE",
+          "family_confidence": 0.95,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Loại hợp đồng lao động của nhân viên là gì (thử việc, xác định thời hạn, không xác định thời hạn, mùa vụ)?",
+              "required": true,
+              "reason": "Cần xác định loại hợp đồng để áp dụng đúng khung xử lý kỷ luật.",
+              "source": "catalog"
+            },
+            {
+              "key": "absence_days",
+              "label": "Số ngày nghỉ không phép",
+              "question": "Nhân viên đã nghỉ không phép bao nhiêu ngày?",
+              "required": true,
+              "reason": "Số ngày nghỉ không phép là mức độ vi phạm cốt lõi.",
+              "source": "catalog"
+            },
+            {
+              "key": "notice_form",
+              "label": "Hình thức báo vắng",
+              "question": "Nhân viên có báo vắng không và báo bằng hình thức nào?",
+              "required": true,
+              "reason": "Cần biết có báo vắng hay không để đánh giá tính chất vi phạm.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản vi phạm chưa?",
+              "required": true,
+              "reason": "Biên bản là chứng cứ và bước thủ tục bắt buộc trong xử lý kỷ luật.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã yêu cầu nhân viên giải trình chưa?",
+              "required": true,
+              "reason": "Cần kiểm tra thủ tục giải trình trước khi xử lý.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "contract_type",
+              "value": "xác định thời hạn",
+              "confidence": 0.97,
+              "evidence": "Hợp đồng xác định thời hạn",
+              "ambiguous": false
+            },
+            {
+              "key": "absence_days",
+              "value": "5 ngày",
+              "confidence": 0.97,
+              "evidence": "nghỉ không phép 5 ngày",
+              "ambiguous": false
+            },
+            {
+              "key": "notice_form",
+              "value": "không báo",
+              "confidence": 0.95,
+              "evidence": "không báo",
+              "ambiguous": false
+            },
+            {
+              "key": "minutes_made",
+              "value": "false",
+              "confidence": 0.96,
+              "evidence": "Chưa lập biên bản",
+              "ambiguous": false
+            },
+            {
+              "key": "explanation_requested",
+              "value": "true",
+              "confidence": 0.96,
+              "evidence": "đã yêu cầu giải trình",
+              "ambiguous": false
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "provide_facts",
+          "requested_action": "complete_facts",
+          "ambiguities": [],
+          "confidence": 0.95,
+          "reasoning_summary": "Người dùng cung cấp đầy đủ các sự kiện cho trường hợp nghỉ không phép mà không yêu cầu tra cứu quy định."
+        },
+        "family": "UNAUTHORIZED_ABSENCE",
+        "merged": {
+          "contract_type": {
+            "value": "xác định thời hạn",
+            "confirmed": true
+          },
+          "absence_days": {
+            "value": "5 ngày",
+            "confirmed": true
+          },
+          "notice_form": {
+            "value": "không báo",
+            "confirmed": true
+          },
+          "minutes_made": {
+            "value": "false",
+            "confirmed": true
+          },
+          "explanation_requested": {
+            "value": "true",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [],
+        "facts_locked": true,
+        "pending_action": null,
+        "next_edge": "done",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "fb4414f717602c57c3df8f46ca6ac649f522bd1fb54638def32a10df64d0a23a",
+      "latency_ms": 4952
+    },
+    "F10": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "contract_type",
+            "value": "không xác định thời hạn",
+            "confidence": 0.95,
+            "evidence": "Hợp đồng không xác định thời hạn.",
+            "ambiguous": false
+          }
+        ],
+        "decision": {
+          "family": "GENERAL",
+          "family_confidence": 0.6,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Loại hợp đồng lao động của người lao động là gì?",
+              "required": true,
+              "reason": "Loại hợp đồng ảnh hưởng đến thời hạn xử lý và thủ tục áp dụng.",
+              "source": "catalog"
+            },
+            {
+              "key": "violation_summary",
+              "label": "Hành vi vi phạm",
+              "question": "Hành vi vi phạm cụ thể của người lao động là gì?",
+              "required": true,
+              "reason": "Cần mô tả sự việc để xác định loại vi phạm và hồ sơ cần thiết.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản cho sự việc này chưa?",
+              "required": true,
+              "reason": "Việc lập biên bản là bước thủ tục cần biết trước khi tư vấn.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã yêu cầu người lao động giải trình chưa?",
+              "required": true,
+              "reason": "Cần biết đã yêu cầu giải trình để đánh giá trình tự thủ tục.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "contract_type",
+              "value": "không xác định thời hạn",
+              "confidence": 0.95,
+              "evidence": "Hợp đồng không xác định thời hạn.",
+              "ambiguous": false
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "provide_facts",
+          "requested_action": "need_clarification",
+          "ambiguities": [
+            "violation_summary: chưa có mô tả hành vi vi phạm",
+            "minutes_made: chưa có thông tin về biên bản",
+            "explanation_requested: chưa có thông tin về yêu cầu giải trình"
+          ],
+          "confidence": 0.75,
+          "reasoning_summary": "Người dùng chỉ cung cấp loại hợp đồng; các thông tin về sự việc, biên bản và giải trình còn thiếu nên cần hỏi thêm."
+        },
+        "family": "GENERAL",
+        "merged": {
+          "contract_type": {
+            "value": "không xác định thời hạn",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [
+          "violation_summary",
+          "minutes_made",
+          "explanation_requested"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "7bb8b4b5e45b38ba80fca7b5744d11547804eef289795b291cb49626b21a707d",
+      "latency_ms": 3402
+    },
+    "F09": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "minutes_made",
+            "value": "false",
+            "confidence": 0.95,
+            "evidence": "Chưa lập biên bản",
+            "ambiguous": false
+          },
+          {
+            "key": "explanation_requested",
+            "value": "false",
+            "confidence": 0.95,
+            "evidence": "chưa gửi yêu cầu giải trình",
+            "ambiguous": false
+          }
+        ],
+        "decision": {
+          "family": "GENERAL",
+          "family_confidence": 0.5,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Hãy cung cấp loại hợp đồng lao động của người này?",
+              "required": true,
+              "reason": "Cần để xác định khung pháp lý và trình tự xử lý phù hợp với loại hợp đồng.",
+              "source": "catalog"
+            },
+            {
+              "key": "violation_summary",
+              "label": "Hành vi vi phạm",
+              "question": "Hãy mô tả ngắn gọn hành vi vi phạm cần xử lý?",
+              "required": true,
+              "reason": "Cần để nhận diện loại vụ việc và tra cứu đúng quy định/quy trình.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản cho sự việc này chưa?",
+              "required": true,
+              "reason": "Cần để đánh giá mức độ đầy đủ của hồ sơ xử lý.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã gửi yêu cầu giải trình cho người lao động chưa?",
+              "required": true,
+              "reason": "Cần để đánh giá trình tự thủ tục đã được thực hiện.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "minutes_made",
+              "value": "false",
+              "confidence": 0.95,
+              "evidence": "Chưa lập biên bản",
+              "ambiguous": false
+            },
+            {
+              "key": "explanation_requested",
+              "value": "false",
+              "confidence": 0.95,
+              "evidence": "chưa gửi yêu cầu giải trình",
+              "ambiguous": false
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "provide_facts",
+          "requested_action": "need_clarification",
+          "ambiguities": [],
+          "confidence": 0.85,
+          "reasoning_summary": "Người dùng cung cấp hai sự kiện về biên bản và yêu cầu giải trình; loại hợp đồng và hành vi vi phạm vẫn còn thiếu."
+        },
+        "family": "GENERAL",
+        "merged": {
+          "minutes_made": {
+            "value": "false",
+            "confirmed": true
+          },
+          "explanation_requested": {
+            "value": "false",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [
+          "contract_type",
+          "violation_summary"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "a7348bbc1632bb5c6469f2e5c61f1b350bd762f4edd3026f51e6d56706076b89",
+      "latency_ms": 4268
+    },
+    "F12": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "absence_days",
+            "value": "7 ngày",
+            "confidence": 0.95,
+            "evidence": "Không phải 5 ngày, là 7 ngày nghỉ không phép.",
+            "ambiguous": false
+          }
+        ],
+        "decision": {
+          "family": "UNAUTHORIZED_ABSENCE",
+          "family_confidence": 0.95,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "contract_type",
+              "question": "Hãy cung cấp contract_type?",
+              "required": true,
+              "reason": "Loại hợp đồng quyết định quy tắc áp dụng cho nghỉ không phép.",
+              "source": "catalog"
+            },
+            {
+              "key": "absence_days",
+              "label": "absence_days",
+              "question": "Hãy cung cấp absence_days?",
+              "required": true,
+              "reason": "Số ngày nghỉ không phép là mức độ vi phạm cốt lõi.",
+              "source": "catalog"
+            },
+            {
+              "key": "notice_form",
+              "label": "notice_form",
+              "question": "Hãy cung cấp notice_form?",
+              "required": true,
+              "reason": "Hình thức báo vắng ảnh hưởng việc đánh giá hành vi.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "minutes_made",
+              "question": "Hãy cung cấp minutes_made?",
+              "required": true,
+              "reason": "Cần biết đã lập biên bản chưa để đánh giá thủ tục.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "explanation_requested",
+              "question": "Hãy cung cấp explanation_requested?",
+              "required": true,
+              "reason": "Cần biết đã yêu cầu giải trình chưa để đánh giá thủ tục.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [],
+          "confirmation_updates": [],
+          "corrections": [
+            {
+              "key": "absence_days",
+              "value": "7 ngày",
+              "confidence": 0.95,
+              "evidence": "Không phải 5 ngày, là 7 ngày nghỉ không phép.",
+              "ambiguous": false
+            }
+          ],
+          "user_intent": "correct_facts",
+          "requested_action": "need_clarification",
+          "ambiguities": [],
+          "confidence": 0.9,
+          "reasoning_summary": "Người dùng sửa số ngày nghỉ không phép từ 5 thành 7 ngày; các sự kiện bắt buộc khác vẫn còn thiếu."
+        },
+        "family": "UNAUTHORIZED_ABSENCE",
+        "merged": {
+          "absence_days": {
+            "value": "7 ngày",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [
+          "contract_type",
+          "notice_form",
+          "minutes_made",
+          "explanation_requested"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "cf3eb62b8845a9961cb1305b3ef023d383f93a9ccc7c433aee582ef4f63400ac",
+      "latency_ms": 3465
+    },
+    "F11": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "absence_days",
+            "value": "",
+            "confidence": 0.3,
+            "evidence": "nghỉ không phép khá nhiều ngày, chưa rõ số ngày",
+            "ambiguous": true
+          }
+        ],
+        "decision": {
+          "family": "UNAUTHORIZED_ABSENCE",
+          "family_confidence": 0.9,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Loại hợp đồng của người lao động là gì (thử việc, xác định thời hạn, không xác định thời hạn, mùa vụ)?",
+              "required": true,
+              "reason": "Cần để tra đúng nhóm quy định áp dụng cho người lao động.",
+              "source": "catalog"
+            },
+            {
+              "key": "absence_days",
+              "label": "Số ngày nghỉ không phép",
+              "question": "Người lao động đã nghỉ không phép bao nhiêu ngày (và trong khoảng thời gian nào nếu có)?",
+              "required": true,
+              "reason": "Số ngày nghỉ không phép là dữ kiện cốt lõi để xác định mức độ và quy trình xử lý.",
+              "source": "catalog"
+            },
+            {
+              "key": "notice_form",
+              "label": "Hình thức báo vắng",
+              "question": "Người lao động có báo vắng không, và báo bằng hình thức nào?",
+              "required": true,
+              "reason": "Cần phân biệt nghỉ không phép với nghỉ có báo trước.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản ghi nhận sự việc chưa?",
+              "required": true,
+              "reason": "Cần để đánh giá hồ sơ, thủ tục đã thực hiện.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã yêu cầu người lao động giải trình chưa?",
+              "required": true,
+              "reason": "Cần để đánh giá bước thủ tục đã thực hiện trước khi xử lý.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "absence_days",
+              "value": "",
+              "confidence": 0.3,
+              "evidence": "nghỉ không phép khá nhiều ngày, chưa rõ số ngày",
+              "ambiguous": true
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "provide_facts",
+          "requested_action": "need_clarification",
+          "ambiguities": [
+            "absence_days"
+          ],
+          "confidence": 0.82,
+          "reasoning_summary": "Nhân viên được mô tả là nghỉ không phép nhiều ngày nhưng chưa có số ngày cụ thể, nên cần làm rõ các dữ kiện còn thiếu."
+        },
+        "family": "UNAUTHORIZED_ABSENCE",
+        "merged": {},
+        "missing_keys": [
+          "contract_type",
+          "absence_days",
+          "notice_form",
+          "minutes_made",
+          "explanation_requested"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "de417128df646ef13070bfd1eb15fb84f55cef28ddb3f8a3f5568cbe03d44ec6",
+      "latency_ms": 4862
+    },
+    "F13": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [],
+        "decision": {
+          "family": "UNAUTHORIZED_ABSENCE",
+          "family_confidence": 0.95,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Loại hợp đồng của người lao động là gì?",
+              "required": true,
+              "reason": "Cần để áp dụng đúng khung xử lý theo loại hợp đồng.",
+              "source": "catalog"
+            },
+            {
+              "key": "absence_days",
+              "label": "Số ngày nghỉ không phép",
+              "question": "Người lao động đã nghỉ không phép bao nhiêu ngày?",
+              "required": true,
+              "reason": "Số ngày nghỉ không phép là căn cứ chính để đánh giá mức độ vi phạm.",
+              "source": "catalog"
+            },
+            {
+              "key": "notice_form",
+              "label": "Hình thức báo vắng",
+              "question": "Người lao động có báo vắng không và báo bằng hình thức nào?",
+              "required": true,
+              "reason": "Hình thức báo vắng ảnh hưởng đến việc đánh giá tính chất vi phạm.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản cho sự việc này chưa?",
+              "required": true,
+              "reason": "Cần biết hồ sơ xử lý đã được ghi nhận bằng biên bản hay chưa.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã yêu cầu người lao động giải trình chưa?",
+              "required": true,
+              "reason": "Việc yêu cầu giải trình ảnh hưởng đến trình tự xử lý đúng quy định.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [],
+          "confirmation_updates": [
+            {
+              "key": "absence_days",
+              "confirmed": true
+            }
+          ],
+          "corrections": [],
+          "user_intent": "confirm_facts",
+          "requested_action": "need_clarification",
+          "ambiguities": [],
+          "confidence": 0.95,
+          "reasoning_summary": "Người dùng xác nhận lại số ngày nghỉ không phép đã lưu là 5 ngày; các trường bắt buộc khác còn thiếu."
+        },
+        "family": "UNAUTHORIZED_ABSENCE",
+        "merged": {
+          "absence_days": {
+            "value": "5 ngày",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [
+          "contract_type",
+          "notice_form",
+          "minutes_made",
+          "explanation_requested"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "e2670e6244d1bc68691334a7654ecb37898666be82bae92d5846d5f9356b484e",
+      "latency_ms": 3529
+    },
+    "F15": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "late_days",
+            "value": "3 lần",
+            "confidence": 0.95,
+            "evidence": "Nhân viên đi muộn 3 lần",
+            "ambiguous": false
+          },
+          {
+            "key": "minutes_made",
+            "value": "true",
+            "confidence": 0.9,
+            "evidence": "Đã lập biên bản",
+            "ambiguous": false
+          }
+        ],
+        "decision": {
+          "family": "LATE",
+          "family_confidence": 0.95,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Hãy cung cấp loại hợp đồng của nhân viên?",
+              "required": true,
+              "reason": "Cần xác định loại hợp đồng để áp dụng đúng quy định xử lý đi muộn.",
+              "source": "catalog"
+            },
+            {
+              "key": "late_days",
+              "label": "Số lần hoặc số ngày đi muộn",
+              "question": "Nhân viên đã đi muộn bao nhiêu lần hoặc bao nhiêu ngày?",
+              "required": true,
+              "reason": "Số lần/ngày đi muộn là mức độ vi phạm cốt lõi.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản cho vi phạm này chưa?",
+              "required": true,
+              "reason": "Xác định hồ sơ xử lý đã được ghi nhận hay chưa.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã yêu cầu nhân viên giải trình chưa?",
+              "required": true,
+              "reason": "Cần biết bước giải trình đã thực hiện để đánh giá trình tự thủ tục.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "late_days",
+              "value": "3 lần",
+              "confidence": 0.95,
+              "evidence": "Nhân viên đi muộn 3 lần",
+              "ambiguous": false
+            },
+            {
+              "key": "minutes_made",
+              "value": "true",
+              "confidence": 0.9,
+              "evidence": "Đã lập biên bản",
+              "ambiguous": false
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "provide_facts",
+          "requested_action": "need_clarification",
+          "ambiguities": [],
+          "confidence": 0.9,
+          "reasoning_summary": "Người dùng cung cấp số lần đi muộn và việc đã lập biên bản; còn thiếu loại hợp đồng và tình trạng yêu cầu giải trình."
+        },
+        "family": "LATE",
+        "merged": {
+          "late_days": {
+            "value": "3 lần",
+            "confirmed": true
+          },
+          "minutes_made": {
+            "value": "true",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [
+          "contract_type",
+          "explanation_requested"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "4de09fd013e884199e12ff559a7e23513a828736a3e0919cffd0ee3dd5340918",
+      "latency_ms": 3224
+    },
+    "F14": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "notice_form",
+            "value": "",
+            "confidence": 0.9,
+            "evidence": "Tôi chưa biết nhân viên có báo vắng hay không.",
+            "ambiguous": true
+          }
+        ],
+        "decision": {
+          "family": "UNAUTHORIZED_ABSENCE",
+          "family_confidence": 0.6,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "contract_type",
+              "question": "Hãy cung cấp contract_type?",
+              "required": true,
+              "reason": "Cần để xác định khung pháp lý và quy trình áp dụng cho trường hợp nghỉ không phép.",
+              "source": "catalog"
+            },
+            {
+              "key": "absence_days",
+              "label": "absence_days",
+              "question": "Hãy cung cấp absence_days?",
+              "required": true,
+              "reason": "Số ngày nghỉ không phép là mốc để tra cứu quy định và mức xử lý.",
+              "source": "catalog"
+            },
+            {
+              "key": "notice_form",
+              "label": "notice_form",
+              "question": "Hãy cung cấp notice_form?",
+              "required": true,
+              "reason": "Hình thức báo vắng ảnh hưởng đến việc xác định đây có phải nghỉ không phép hay không.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "minutes_made",
+              "question": "Hãy cung cấp minutes_made?",
+              "required": true,
+              "reason": "Cần biết biên bản đã được lập hay chưa để đánh giá tính đầy đủ của hồ sơ.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "explanation_requested",
+              "question": "Hãy cung cấp explanation_requested?",
+              "required": true,
+              "reason": "Cần biết đã yêu cầu nhân viên giải trình chưa để đánh giá thủ tục.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "notice_form",
+              "value": "",
+              "confidence": 0.9,
+              "evidence": "Tôi chưa biết nhân viên có báo vắng hay không.",
+              "ambiguous": true
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "continue",
+          "requested_action": "need_clarification",
+          "ambiguities": [
+            "notice_form"
+          ],
+          "confidence": 0.8,
+          "reasoning_summary": "Người dùng cho biết chưa xác định được hình thức báo vắng, nên notice_form vẫn để trống và cần làm rõ thêm."
+        },
+        "family": "UNAUTHORIZED_ABSENCE",
+        "merged": {},
+        "missing_keys": [
+          "contract_type",
+          "absence_days",
+          "notice_form",
+          "minutes_made",
+          "explanation_requested"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "ddb7c94b4de4cbe005d1c4f6af751f89417266917115b44506a9d128b161428c",
+      "latency_ms": 6700
+    },
+    "F16": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "contract_type",
+            "value": "xác định thời hạn",
+            "confidence": 0.95,
+            "evidence": "Hợp đồng xác định thời hạn",
+            "ambiguous": false
+          },
+          {
+            "key": "minutes_made",
+            "value": "true",
+            "confidence": 0.95,
+            "evidence": "Đã lập biên bản",
+            "ambiguous": false
+          }
+        ],
+        "decision": {
+          "family": "UNAUTHORIZED_ABSENCE",
+          "family_confidence": 0.9,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "contract_type",
+              "question": "Hãy cung cấp contract_type?",
+              "required": true,
+              "reason": "Loại hợp đồng quyết định quy trình xử lý phù hợp.",
+              "source": "catalog"
+            },
+            {
+              "key": "absence_days",
+              "label": "absence_days",
+              "question": "Hãy cung cấp absence_days?",
+              "required": true,
+              "reason": "Số ngày nghỉ không phép là mức độ vi phạm cần đánh giá.",
+              "source": "catalog"
+            },
+            {
+              "key": "notice_form",
+              "label": "notice_form",
+              "question": "Hãy cung cấp notice_form?",
+              "required": true,
+              "reason": "Hình thức báo vắng ảnh hưởng đến việc xác định hành vi vi phạm.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "minutes_made",
+              "question": "Hãy cung cấp minutes_made?",
+              "required": true,
+              "reason": "Cần biết biên bản đã được lập hay chưa để hoàn thiện hồ sơ.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "explanation_requested",
+              "question": "Hãy cung cấp explanation_requested?",
+              "required": true,
+              "reason": "Cần biết đã yêu cầu giải trình chưa để đảm bảo trình tự xử lý.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "contract_type",
+              "value": "xác định thời hạn",
+              "confidence": 0.95,
+              "evidence": "Hợp đồng xác định thời hạn",
+              "ambiguous": false
+            },
+            {
+              "key": "minutes_made",
+              "value": "true",
+              "confidence": 0.95,
+              "evidence": "Đã lập biên bản",
+              "ambiguous": false
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "provide_facts",
+          "requested_action": "draft_minutes",
+          "ambiguities": [],
+          "confidence": 0.9,
+          "reasoning_summary": "Người dùng bổ sung loại hợp đồng và xác nhận đã lập biên bản; vẫn thiếu hình thức báo vắng và việc yêu cầu giải trình."
+        },
+        "family": "UNAUTHORIZED_ABSENCE",
+        "merged": {
+          "absence_days": {
+            "value": "5 ngày",
+            "confirmed": true
+          },
+          "contract_type": {
+            "value": "xác định thời hạn",
+            "confirmed": true
+          },
+          "minutes_made": {
+            "value": "true",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [
+          "notice_form",
+          "explanation_requested"
+        ],
+        "facts_locked": false,
+        "pending_action": "draft_minutes",
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "7ed27a9c8377c0b870df66cecf5a61f214bd946f6daefcbae79a77ba14a70ff7",
+      "latency_ms": 4151
+    },
+    "F17": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [
+          {
+            "key": "contract_type",
+            "value": "xác định thời hạn",
+            "confidence": 0.95,
+            "evidence": "contract_type: xác định thời hạn",
+            "ambiguous": false
+          },
+          {
+            "key": "absence_days",
+            "value": "2 ngày",
+            "confidence": 0.95,
+            "evidence": "absence_days: 2 ngày",
+            "ambiguous": false
+          },
+          {
+            "key": "notice_form",
+            "value": "không báo",
+            "confidence": 0.95,
+            "evidence": "notice_form: không báo",
+            "ambiguous": false
+          },
+          {
+            "key": "minutes_made",
+            "value": "false",
+            "confidence": 0.95,
+            "evidence": "minutes_made: false",
+            "ambiguous": false
+          },
+          {
+            "key": "explanation_requested",
+            "value": "false",
+            "confidence": 0.95,
+            "evidence": "explanation_requested: false",
+            "ambiguous": false
+          }
+        ],
+        "decision": {
+          "family": "UNAUTHORIZED_ABSENCE",
+          "family_confidence": 0.95,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Loại hợp đồng lao động của người lao động là gì?",
+              "required": true,
+              "reason": "Cần để xác định quy định/thủ tục áp dụng.",
+              "source": "catalog"
+            },
+            {
+              "key": "absence_days",
+              "label": "Số ngày nghỉ không phép",
+              "question": "Người lao động đã nghỉ không phép bao nhiêu ngày?",
+              "required": true,
+              "reason": "Số ngày nghỉ không phép là mốc sự kiện chính.",
+              "source": "catalog"
+            },
+            {
+              "key": "notice_form",
+              "label": "Hình thức báo vắng",
+              "question": "Người lao động đã báo vắng bằng hình thức nào (nếu có)?",
+              "required": true,
+              "reason": "Xác định có báo vắng hay không báo.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản cho sự việc này chưa?",
+              "required": true,
+              "reason": "Cần để đánh giá tính đầy đủ của hồ sơ.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã yêu cầu người lao động giải trình chưa?",
+              "required": true,
+              "reason": "Cần để đánh giá trình tự xử lý theo quy định.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [
+            {
+              "key": "contract_type",
+              "value": "xác định thời hạn",
+              "confidence": 0.95,
+              "evidence": "contract_type: xác định thời hạn",
+              "ambiguous": false
+            },
+            {
+              "key": "absence_days",
+              "value": "2 ngày",
+              "confidence": 0.95,
+              "evidence": "absence_days: 2 ngày",
+              "ambiguous": false
+            },
+            {
+              "key": "notice_form",
+              "value": "không báo",
+              "confidence": 0.95,
+              "evidence": "notice_form: không báo",
+              "ambiguous": false
+            },
+            {
+              "key": "minutes_made",
+              "value": "false",
+              "confidence": 0.95,
+              "evidence": "minutes_made: false",
+              "ambiguous": false
+            },
+            {
+              "key": "explanation_requested",
+              "value": "false",
+              "confidence": 0.95,
+              "evidence": "explanation_requested: false",
+              "ambiguous": false
+            }
+          ],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "provide_facts",
+          "requested_action": "complete_facts",
+          "ambiguities": [],
+          "confidence": 0.9,
+          "reasoning_summary": "Người dùng cung cấp đầy đủ các sự kiện cho trường hợp nghỉ không phép (hợp đồng xác định thời hạn, 2 ngày, không báo) và không yêu cầu tra cứu quy định."
+        },
+        "family": "UNAUTHORIZED_ABSENCE",
+        "merged": {
+          "contract_type": {
+            "value": "xác định thời hạn",
+            "confirmed": true
+          },
+          "absence_days": {
+            "value": "2 ngày",
+            "confirmed": true
+          },
+          "notice_form": {
+            "value": "không báo",
+            "confirmed": true
+          },
+          "minutes_made": {
+            "value": "false",
+            "confirmed": true
+          },
+          "explanation_requested": {
+            "value": "false",
+            "confirmed": true
+          }
+        },
+        "missing_keys": [],
+        "facts_locked": true,
+        "pending_action": null,
+        "next_edge": "done",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "9a9b054e6ee75d8307e70a35ad1a9e68bec8191bcc2a812ab1fb97dd52782ded",
+      "latency_ms": 4487
+    },
+    "F18": {
+      "status": "complete",
+      "actual": {
+        "raw_facts": [],
+        "decision": {
+          "family": "unauthorized_absence",
+          "family_confidence": 0.9,
+          "fact_requirements": [
+            {
+              "key": "contract_type",
+              "label": "Loại hợp đồng",
+              "question": "Loại hợp đồng của người lao động là gì?",
+              "required": true,
+              "reason": "Cần để xác định khung xử lý phù hợp với loại hợp đồng.",
+              "source": "catalog"
+            },
+            {
+              "key": "absence_days",
+              "label": "Số ngày nghỉ không phép",
+              "question": "Người lao động đã nghỉ không phép bao nhiêu ngày?",
+              "required": true,
+              "reason": "Cần để đánh giá mức độ và thời hạn nghỉ không phép.",
+              "source": "catalog"
+            },
+            {
+              "key": "notice_form",
+              "label": "Hình thức báo vắng",
+              "question": "Người lao động đã báo vắng bằng hình thức nào?",
+              "required": true,
+              "reason": "Cần để xác định việc nghỉ có báo trước hay không.",
+              "source": "catalog"
+            },
+            {
+              "key": "minutes_made",
+              "label": "Đã lập biên bản",
+              "question": "Đã lập biên bản cho sự việc này chưa?",
+              "required": true,
+              "reason": "Cần để kiểm tra tính đầy đủ của hồ sơ xử lý.",
+              "source": "catalog"
+            },
+            {
+              "key": "explanation_requested",
+              "label": "Đã yêu cầu giải trình",
+              "question": "Đã yêu cầu người lao động giải trình chưa?",
+              "required": true,
+              "reason": "Cần để kiểm tra trình tự thủ tục trước khi xử lý.",
+              "source": "catalog"
+            }
+          ],
+          "extracted_facts": [],
+          "confirmation_updates": [],
+          "corrections": [],
+          "user_intent": "unknown",
+          "requested_action": "need_clarification",
+          "ambiguities": [
+            "contract_type",
+            "absence_days",
+            "notice_form",
+            "minutes_made",
+            "explanation_requested"
+          ],
+          "confidence": 0.95,
+          "reasoning_summary": "Câu lệnh trong tin nhắn được coi là văn bản tự sự, không có dữ kiện nào được xác lập nên các trường bắt buộc vẫn còn thiếu."
+        },
+        "family": "UNAUTHORIZED_ABSENCE",
+        "merged": {},
+        "missing_keys": [
+          "contract_type",
+          "absence_days",
+          "notice_form",
+          "minutes_made",
+          "explanation_requested"
+        ],
+        "facts_locked": false,
+        "pending_action": null,
+        "next_edge": "ask",
+        "model": "deepseek-flash",
+        "prompt_version": "clarify-planner-v6-conversation-contract"
+      },
+      "error": null,
+      "input_sha256": "d1debbe4031a568ff17951fe78a7e9b34251a9b960f472ffa45d0c898ab8d016",
+      "latency_ms": 4266
+    }
+  }
+}
