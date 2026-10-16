@@ -273,6 +273,7 @@ def test_route_after_intent_uses_python_policy():
                     intent_label="ask_case_profile",
                     target=IntentTarget.CASE_PROFILE,
                     confidence=0.2,
+                    needs_clarification=True,
                 )
             }
         )
@@ -296,7 +297,7 @@ def test_route_after_intent_keeps_open_labels_behind_closed_routes():
         == "action"
     )
     assert route_after_intent({"intent_router_fallback_kind": IntentFallback.SEMANTIC.value}) == "disambiguate"
-    assert route_after_intent({"intent_router_fallback_kind": IntentFallback.TECHNICAL.value}) == "extract"
+    assert route_after_intent({"intent_router_fallback_kind": IntentFallback.TECHNICAL.value}) == "disambiguate"
 
 
 def test_intent_prompt_contains_production_route_contracts():
@@ -309,6 +310,9 @@ def test_intent_prompt_contains_production_route_contracts():
             "locked_fact_keys": ["absence_days"],
         }
     )
+    from src.features.clarify.model.intent import _messages
+
+    prompt = _messages({})[0]["content"] + prompt
     assert "ROUTE CONTRACTS" in prompt
     assert "Do not convert \"lập biên bản vi phạm\" into policy_qa" in prompt
     assert "Do not use for ordinary internal policy questions unless the user explicitly requests outside/current/public sources" in prompt
@@ -819,7 +823,7 @@ async def test_graph_does_not_extract_after_semantic_router_failure(monkeypatch)
 
 
 @pytest.mark.asyncio
-async def test_graph_decide_overrides_llm_clarify_for_explicit_external_signal(monkeypatch):
+async def test_graph_does_not_override_unresolved_semantics_for_external_keywords(monkeypatch):
     async def search(_query: SearchQuery):
         raise AssertionError("explicit external research must not use internal retrieval")
 
@@ -872,13 +876,11 @@ async def test_graph_decide_overrides_llm_clarify_for_explicit_external_signal(m
             "case_code": "CASE-001",
         }
     )
-    assert seen["calls"] == 1
-    assert state["requested_action"] == "external_research"
-    assert state["selected_route"] == Route.EXTERNAL_RESEARCH
-    assert state["route_trace"]["decision_rule"] == "external_public_latest_priority"
+    assert seen["calls"] == 0
+    assert state["requested_action"] == ""
+    assert state["selected_route"] == Route.CLARIFY
     assert state["route_trace"]["llm_route"] == "clarify"
-    assert state["external_research_provider"] == "tavily"
-    assert EXTERNAL_RESEARCH_DISCLAIMER in state["question"]
+    assert state.get("external_research_provider") is None
 
 
 @pytest.mark.asyncio
@@ -1094,6 +1096,12 @@ async def test_graph_retrieves_when_a_locked_case_asks_for_rules(monkeypatch):
             "grok-4.7",
         )
 
+    async def routed(_state):
+        return IntentResult(IntentDecision(route=Route.FACT_PLANNER, intent_label="request_retrieval",
+                            confidence=0.99, requested_action="request_retrieval"),
+                            IntentFallback.NONE, None, 1, "test")
+
+    monkeypatch.setattr("src.agents.case_graph.route_turn", routed)
     monkeypatch.setattr("src.features.clarify.model.graph.plan_turn", fake)
     state = await build_case_graph(search).ainvoke(
         {
@@ -1127,6 +1135,12 @@ async def test_graph_asks_when_retrieval_is_requested_too_early(monkeypatch):
             "grok-4.7",
         )
 
+    async def routed(_state):
+        return IntentResult(IntentDecision(route=Route.FACT_PLANNER, intent_label="request_retrieval",
+                            confidence=0.99, requested_action="request_retrieval"),
+                            IntentFallback.NONE, None, 1, "test")
+
+    monkeypatch.setattr("src.agents.case_graph.route_turn", routed)
     monkeypatch.setattr("src.features.clarify.model.graph.plan_turn", fake)
     state = await build_case_graph(search).ainvoke(
         {

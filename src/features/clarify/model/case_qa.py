@@ -82,6 +82,8 @@ def render_case_context(state: dict) -> list[dict[str, str]]:
     """Build auditable memory rows for case QA."""
     rows = []
     _append(rows, "Mã hồ sơ", state.get("case_code"))
+    _append(rows, "Trạng thái hồ sơ", state.get("status"))
+    _append(rows, "Tác vụ đang chờ", state.get("pending_action"))
     _append(rows, "Nhân viên", state.get("employee_name"))
     _append(rows, "Mã nhân viên", state.get("employee_code"))
     incident_date = state.get("incident_date")

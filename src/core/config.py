@@ -38,6 +38,11 @@ class Settings(BaseSettings):
     DEEPSEEK_API_KEY: str = ""
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
     LLM_TEMPERATURE: float = Field(default=0.7, ge=0.0, le=2.0)
+    SYSTEM_HELP_ENABLED: bool = True
+    GENERAL_CHAT_ENABLED: bool = True
+    GENERAL_CHAT_TIMEOUT_SECONDS: float = Field(default=20, ge=1, le=60)
+    GENERAL_CHAT_RATE_LIMIT: int = Field(default=12, ge=1, le=120)
+    INTENT_TOTAL_TIMEOUT_SECONDS: float = Field(default=60, ge=1, le=120)
     # Unused by the case agents. Left so an old env file still loads.
     XAI_API_KEY: str = ""
     XAI_MODEL: str = "grok-4.7"

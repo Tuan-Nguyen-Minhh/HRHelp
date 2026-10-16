@@ -364,6 +364,8 @@ export interface TurnResponse {
   agent_run_id: string | null;
   requested_action?: string | null;
   user_intent?: string | null;
+  reply_kind?: string | null;
+  state_update?: "preserve" | "progress";
 }
 
 export type AgentName = "clarification" | "retrieval" | "evidence_synthesis" | "decision" | "legal_review";

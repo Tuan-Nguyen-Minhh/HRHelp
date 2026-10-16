@@ -1,0 +1,12 @@
+[
+  {"message":"Hello!","routes":["general_chat"]},
+  {"message":"Hôm nay tôi ăn gì nhỉ?","routes":["general_chat"]},
+  {"message":"Bạn có thể hỗ trợ tôi những gì?","routes":["system_help"]},
+  {"message":"AI có quyền phê duyệt không?","routes":["system_help"]},
+  {"message":"Hồ sơ này đang chờ phê duyệt ở đâu?","routes":["case_qa"]},
+  {"message":"Hồ sơ này hiện nay đang ở bước nào?","routes":["case_qa"]},
+  {"message":"Hồ sơ này có mức kỷ luật đang lưu là gì?","routes":["case_qa"]},
+  {"message":"Phê duyệt hồ sơ này ngay giúp tôi.","routes":["unsupported"]},
+  {"message":"Hello, ngày xảy ra là 12/10/2026.","routes":["fact_planner"]},
+  {"message":"Lập biên bản vụ này giúp tôi, cảm ơn.","routes":["workflow_action"]}
+]

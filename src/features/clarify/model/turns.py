@@ -25,7 +25,7 @@ from src.features.assessment.service import ensure_assessment
 from src.features.cite.model.search import search_policies
 from src.features.clarify.model.assess import ClarifyPlan, FactConflict, StoredFact, build_question
 from src.features.clarify.model.catalog import OPTIONAL_FACT_KEYS, FactSpec, detect_family, fact_label, required_specs
-from src.features.clarify.model.memory import build_turn_context, get_memory, update_memory
+from src.features.clarify.model.memory import build_turn_context, get_memory, side_context, update_memory
 from src.features.clarify.model.multi_agent import run_dispatch_gate, run_downstream_agents, run_recommendation_agent
 from src.features.clarify.model.store import (
     FactWrite,
@@ -48,6 +48,7 @@ from src.features.opencase.model.cases import active_conversation
 from src.models.agent_runs import AgentRun
 from src.models.cases import Case
 from src.models.conversations import Conversation
+from src.models.messages import Message
 from src.models.recommendations import Recommendation
 from src.models.users import User
 
@@ -213,7 +214,14 @@ async def _clarify(
         await _reopen(session, case)
         answer = None
         text = _question(plan)
-    assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", text, {"kind": "clarify"}))
+    metadata = {"kind": plan.reply_kind or "clarify", **plan.reply_metadata}
+    source = await session.get(Message, source_id)
+    if isinstance(source, Message):
+        if metadata.get("routing_clarification"):
+            metadata["routing_clarification"].setdefault("origin_message_id", str(source_id))
+        previous = source.message_metadata if isinstance(source.message_metadata, dict) else {}
+        source.message_metadata = {**previous, **metadata}
+    assistant = await add_message(session, NewMessage(conversation.id, "ASSISTANT", text, metadata))
     finish_run(run, assistant.id)
     await update_memory(session, conversation.id, plan, text)
     await session.commit()
@@ -307,6 +315,7 @@ async def _cite(
             "employee_code": case.employee_code,
             "agent_run_id": run.id,
             "case_id": case.id,
+            "status": case.status,
         }
     )
     logger.info(
@@ -490,9 +499,11 @@ async def _planned(
         semantic=semantic,
         run_id=run_id,
         latest_user_message=latest_user_message,
+        actor_id=actor_id,
     )
-    stored = await _stored(session, case.id)
-    await _persist_extracted(session, case.id, stored, plan.merged, source_id, actor_id)
+    if plan.state_update == StateUpdate.PROGRESS:
+        stored = await _stored(session, case.id)
+        await _persist_extracted(session, case.id, stored, plan.merged, source_id, actor_id)
     return plan, handoff
 
 
@@ -504,6 +515,7 @@ async def _plan(
     semantic: bool = False,
     run_id: UUID | None = None,
     latest_user_message: str = "",
+    actor_id: UUID | None = None,
 ) -> tuple[ClarifyPlan, CaseHandoff | None]:
     started = time.perf_counter()
     stored = await _stored(session, case.id)
@@ -531,10 +543,15 @@ async def _plan(
         len(turn_context),
         len(latest_user_message or ""),
     )
+    social = (
+        await side_context(session, conversation_id) if semantic and latest_user_message and conversation_id else {}
+    )
     graph = build_case_graph(lambda query: search_policies(session, query))
     state = await graph.ainvoke(
         {
             "step": "clarify",
+            "social_context": social,
+            "actor_id": actor_id,
             "text": turn_context,
             "turn_context": turn_context,
             "latest_user_message": latest_user_message,
@@ -552,6 +569,7 @@ async def _plan(
             "employee_code": case.employee_code,
             "agent_run_id": run_id,
             "case_id": case.id,
+            "status": case.status,
         }
     )
     logger.info(
@@ -585,7 +603,47 @@ async def _plan(
         state.get("state_update") or "preserve",
         state.get("task_change") or "keep",
     )
+    plan = _with_reply_metadata(plan, state, latest_user_message)
     return plan, handoff
+
+
+def _with_reply_metadata(plan: ClarifyPlan, state: dict, latest: str) -> ClarifyPlan:
+    from dataclasses import replace
+
+    kind = state.get("reply_kind") or ""
+    metadata = {"route_trace": state.get("route_trace") or {}}
+    decision = state.get("intent_decision")
+    if kind == "general_chat":
+        metadata.update(
+            context_scope="general",
+            safety_action=state.get("safety_action"),
+            include_in_general_context=state.get("safety_action") == "allow",
+        )
+    elif kind == "system_help":
+        metadata.update(
+            context_scope="system_help",
+            help_topic_ids=state.get("help_topic_ids") or [topic.value for topic in decision.help_topic_ids],
+        )
+    elif kind == "clarify" and plan.task_change != "cancel":
+        previous = (state.get("social_context") or {}).get("routing_clarification") or {}
+        if state.get("intent_router_fallback"):
+            kind = "routing_error"
+            metadata["context_scope"] = "routing_error"
+            if previous:
+                metadata["routing_clarification"] = previous
+        else:
+            metadata.update(
+                context_scope="routing_clarification",
+                routing_clarification={
+                    "original_question": previous.get("original_question") or latest,
+                    "latest_reply": latest,
+                    "question": plan.question,
+                    "candidate_routes": (state.get("route_trace") or {}).get("rule_candidate_routes", []),
+                },
+            )
+            if previous.get("origin_message_id"):
+                metadata["routing_clarification"]["origin_message_id"] = previous["origin_message_id"]
+    return replace(plan, reply_kind=kind, reply_metadata=metadata)
 
 
 def _elapsed_ms(started: float) -> int:
@@ -615,6 +673,8 @@ def _turn(
         agent_run_id=run_id,
         requested_action=plan.requested_action or None,
         user_intent=plan.user_intent or None,
+        reply_kind=plan.reply_kind or None,
+        state_update=plan.state_update,
     )
 
 

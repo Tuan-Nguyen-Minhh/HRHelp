@@ -104,6 +104,10 @@ export function CaseWorkspace() {
   }
 
   function applyTurn(turn: TurnResponse) {
+    if (turn.state_update === "preserve") {
+      setAgent(null);
+      return;
+    }
     queryClient.setQueryData<CaseView>(["case", caseId], (current) =>
       current ? { ...current, status: turn.case_status, conversation_id: turn.conversation_id } : current,
     );

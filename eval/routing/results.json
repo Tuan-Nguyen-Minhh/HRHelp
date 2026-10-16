@@ -1,0 +1,188 @@
+{
+  "scope": "synthetic smoke, not a production accuracy estimate",
+  "cases": [
+    {
+      "message": "Hello!",
+      "expected": [
+        "general_chat"
+      ],
+      "initial": "general_chat",
+      "route": "general_chat",
+      "recheck": "confirmed",
+      "rule_ids": [
+        "mentions_social"
+      ],
+      "fallback": "none",
+      "latency_ms": 3875,
+      "model": "deepseek-flash",
+      "prompt_version": "intent-router-v5-rule-recheck-social-help",
+      "pass": true
+    },
+    {
+      "message": "Hôm nay tôi ăn gì nhỉ?",
+      "expected": [
+        "general_chat"
+      ],
+      "initial": "general_chat",
+      "route": "general_chat",
+      "recheck": "confirmed",
+      "rule_ids": [
+        "mentions_social"
+      ],
+      "fallback": "none",
+      "latency_ms": 3988,
+      "model": "deepseek-flash",
+      "prompt_version": "intent-router-v5-rule-recheck-social-help",
+      "pass": true
+    },
+    {
+      "message": "Bạn có thể hỗ trợ tôi những gì?",
+      "expected": [
+        "system_help"
+      ],
+      "initial": "system_help",
+      "route": "system_help",
+      "recheck": "confirmed",
+      "rule_ids": [
+        "mentions_product_help"
+      ],
+      "fallback": "none",
+      "latency_ms": 4558,
+      "model": "deepseek-flash",
+      "prompt_version": "intent-router-v5-rule-recheck-social-help",
+      "pass": true
+    },
+    {
+      "message": "AI có quyền phê duyệt không?",
+      "expected": [
+        "system_help"
+      ],
+      "initial": "system_help",
+      "route": "system_help",
+      "recheck": "confirmed",
+      "rule_ids": [
+        "mentions_authority_action"
+      ],
+      "fallback": "none",
+      "latency_ms": 5277,
+      "model": "deepseek-flash",
+      "prompt_version": "intent-router-v5-rule-recheck-social-help",
+      "pass": true
+    },
+    {
+      "message": "Hồ sơ này đang chờ phê duyệt ở đâu?",
+      "expected": [
+        "case_qa"
+      ],
+      "initial": "case_qa",
+      "route": "case_qa",
+      "recheck": "confirmed",
+      "rule_ids": [
+        "mentions_authority_action",
+        "mentions_case"
+      ],
+      "fallback": "none",
+      "latency_ms": 5854,
+      "model": "deepseek-flash",
+      "prompt_version": "intent-router-v5-rule-recheck-social-help",
+      "pass": true
+    },
+    {
+      "message": "Hồ sơ này hiện nay đang ở bước nào?",
+      "expected": [
+        "case_qa"
+      ],
+      "initial": "case_qa",
+      "route": "case_qa",
+      "recheck": "confirmed",
+      "rule_ids": [
+        "mentions_recency",
+        "mentions_case"
+      ],
+      "fallback": "none",
+      "latency_ms": 5777,
+      "model": "deepseek-flash",
+      "prompt_version": "intent-router-v5-rule-recheck-social-help",
+      "pass": true
+    },
+    {
+      "message": "Hồ sơ này có mức kỷ luật đang lưu là gì?",
+      "expected": [
+        "case_qa"
+      ],
+      "initial": "case_qa",
+      "route": "case_qa",
+      "recheck": "confirmed",
+      "rule_ids": [
+        "mentions_policy",
+        "mentions_case"
+      ],
+      "fallback": "none",
+      "latency_ms": 5267,
+      "model": "deepseek-flash",
+      "prompt_version": "intent-router-v5-rule-recheck-social-help",
+      "pass": true
+    },
+    {
+      "message": "Phê duyệt hồ sơ này ngay giúp tôi.",
+      "expected": [
+        "unsupported"
+      ],
+      "initial": "unsupported",
+      "route": "unsupported",
+      "recheck": "confirmed",
+      "rule_ids": [
+        "mentions_authority_action",
+        "mentions_case"
+      ],
+      "fallback": "none",
+      "latency_ms": 5939,
+      "model": "deepseek-flash",
+      "prompt_version": "intent-router-v5-rule-recheck-social-help",
+      "pass": true
+    },
+    {
+      "message": "Hello, ngày xảy ra là 12/10/2026.",
+      "expected": [
+        "fact_planner"
+      ],
+      "initial": "fact_planner",
+      "route": "fact_planner",
+      "recheck": "confirmed",
+      "rule_ids": [
+        "mentions_fact",
+        "mentions_social"
+      ],
+      "fallback": "none",
+      "latency_ms": 4909,
+      "model": "deepseek-flash",
+      "prompt_version": "intent-router-v5-rule-recheck-social-help",
+      "pass": true
+    },
+    {
+      "message": "Lập biên bản vụ này giúp tôi, cảm ơn.",
+      "expected": [
+        "workflow_action"
+      ],
+      "initial": "workflow_action",
+      "route": "workflow_action",
+      "recheck": "confirmed",
+      "rule_ids": [
+        "mentions_workflow",
+        "mentions_social"
+      ],
+      "fallback": "none",
+      "latency_ms": 5328,
+      "model": "deepseek-flash",
+      "prompt_version": "intent-router-v5-rule-recheck-social-help",
+      "pass": true
+    }
+  ],
+  "chat": {
+    "safety_action": "allow",
+    "text": "Nếu cần nhanh gọn, bạn thử cơm rang trứng, mì gói nâng cấp với trứng và rau, hoặc bánh mì kẹp thịt là ổn trong 10–15 phút. Muốn nhẹ bụng hơn thì salad gà xé hoặc sữa chua với trái cây cũng đủ no. Bạn đang có gì trong bếp để mình gợi ý sát hơn không?",
+    "pass": true
+  },
+  "passed": 10,
+  "total": 10
+}

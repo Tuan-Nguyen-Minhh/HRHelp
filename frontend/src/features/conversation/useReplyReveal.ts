@@ -17,27 +17,27 @@ export function useReplyReveal(caseId: string) {
 
   useEffect(() => {
     setReply(null);
-    // Hidden tabs should not leave the composer waiting for paused frames.
-    function onVisibilityChange() {
-      if (document.hidden) finish();
-    }
-    document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       cancel.current?.();
       cancel.current = null;
-      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [caseId]);
 
   function start(message: ChatMessage) {
     finish();
-    if (document.hidden || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Incremental text is the requested chat behavior, independent of decorative
+    // motion preferences. The user can still choose “Hiện toàn bộ” explicitly.
     const text = readableAssistantText(message.text);
     if (!text) return;
     setReply({ caseId, id: message.id, text: "" });
     cancel.current = revealReply(text, (part) => setReply({ caseId, id: message.id, text: part }), finish, {
       request: (callback) => requestAnimationFrame(callback),
       cancel: (id) => cancelAnimationFrame(id),
+      isVisible: () => !document.hidden,
+      onVisibilityChange: (callback) => {
+        document.addEventListener("visibilitychange", callback);
+        return () => document.removeEventListener("visibilitychange", callback);
+      },
     });
   }
 

@@ -18,6 +18,34 @@ from src.models.conversation_memories import ConversationMemory
 
 RECENT_LIMIT = 8
 SUMMARY_LIMIT = 1600
+SIDE_SCOPES = frozenset({"general", "system_help", "routing_clarification", "routing_error"})
+
+
+def is_business_message(row) -> bool:
+    meta = getattr(row, "message_metadata", None) or {}
+    return not meta.get("internal") and meta.get("context_scope") not in SIDE_SCOPES
+
+
+async def side_context(session: AsyncSession, conversation_id: UUID) -> dict:
+    """Separate dialogue state; never merge this object into case facts or summary."""
+    rows = await list_messages(session, conversation_id)
+    general = []
+    last_assistant = None
+    for row in rows:
+        meta = getattr(row, "message_metadata", None) or {}
+        if row.role == "ASSISTANT" and not meta.get("internal"):
+            last_assistant = row
+        if meta.get("context_scope") == "general" and meta.get("include_in_general_context"):
+            general.append({"role": row.role, "content": row.content})
+    result = {"general_messages": general[-RECENT_LIMIT:]}
+    if last_assistant is not None:
+        meta = getattr(last_assistant, "message_metadata", None) or {}
+        result["last_reply_kind"] = meta.get("kind") or "business"
+        if meta.get("routing_clarification"):
+            result["routing_clarification"] = meta["routing_clarification"]
+        if meta.get("help_topic_ids"):
+            result["last_help_topics"] = meta["help_topic_ids"]
+    return result
 
 
 async def build_turn_context(
@@ -138,7 +166,7 @@ async def _recent_messages(session: AsyncSession, conversation_id: UUID) -> list
     rows = [
         row
         for row in await list_messages(session, conversation_id)
-        if row.role in {"USER", "ASSISTANT"} and not (getattr(row, "message_metadata", None) or {}).get("internal")
+        if row.role in {"USER", "ASSISTANT"} and is_business_message(row)
     ][-RECENT_LIMIT:]
     return [
         {

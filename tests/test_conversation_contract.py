@@ -81,52 +81,21 @@ def _pending_state(**extra):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["draft_minutes", "create_ticket_preview", "send_to_legal", "request_retrieval"])
-async def test_invalid_router_output_recovers_pending_facts_for_every_workflow(monkeypatch, action):
+async def test_invalid_router_output_preserves_pending_facts_for_every_workflow(monkeypatch, action):
     router = AsyncMock(side_effect=OutputParserException("malformed router JSON"))
-    planner = AsyncMock(
-        return_value=PlannerResult(
-            _decision(
-                extracted_facts=[
-                    {
-                        "key": "site_location",
-                        "value": "kho B",
-                        "evidence": "Địa điểm là kho B",
-                        "confidence": 0.99,
-                        "ambiguous": False,
-                    },
-                    {
-                        "key": "explanation_requested",
-                        "value": "true",
-                        "evidence": "Đã yêu cầu giải trình bằng văn bản",
-                        "confidence": 0.99,
-                        "ambiguous": False,
-                    },
-                ]
-            ),
-            False,
-            None,
-            1,
-            "test",
-        )
-    )
+    planner = AsyncMock(side_effect=AssertionError("A router failure does not authorize fact extraction"))
     monkeypatch.setattr(settings, "DEEPSEEK_API_KEY", "test-key")
     monkeypatch.setattr("src.features.clarify.model.intent._complete", router)
     monkeypatch.setattr("src.features.clarify.model.graph.plan_turn", planner)
-    retrieval = AsyncMock(side_effect=AssertionError("No retrieval run was authorized in this test"))
+    retrieval = AsyncMock(side_effect=AssertionError("No retrieval was authorized"))
     result = await build_case_graph(retrieval).ainvoke(_pending_state(pending_action=action))
-
     assert router.await_count == 2
-    planner.assert_awaited_once()
     assert result["intent_router_fallback_kind"] == "output"
-    assert result["selected_route"] == Route.FACT_PLANNER
-    assert result["merged"]["explanation_requested"] == StoredFact("true", True)
-    assert result["requested_action"] == action
-    assert result["family"] == "custom_incident"
+    assert result["selected_route"] == Route.CLARIFY
+    assert result["state_update"] == "preserve"
     assert result["specs"] == list(_SPECS)
-    assert result["missing_keys"] == []
-    assert result["facts_locked"] is True
-    assert "minutes_made" not in result["merged"]
-    assert memory_patch(_plan(result))["pending_fact_keys"] == []
+    assert memory_patch(_plan(result), pending_action=action) == {}
+    planner.assert_not_awaited()
     retrieval.assert_not_awaited()
 
 
