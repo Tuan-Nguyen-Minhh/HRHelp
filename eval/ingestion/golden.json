@@ -1,0 +1,3919 @@
+{
+  "schema_version": 1,
+  "label_status": "draft_source_derived",
+  "description": "Independent source paragraphs, not copied chunk output. Human review is pending.",
+  "normalization": "NFC, Markdown presentation removal, whitespace removal; numbers and accents retained",
+  "documents": [
+    {
+      "code": "BLLD",
+      "document_id": "18/VBHN-VPQH",
+      "document_type": "BO_LUAT",
+      "document_form": "VAN_BAN_HOP_NHAT",
+      "source_path": "data/raw/2026_131_18_VBHN-VPQH.docx",
+      "source_sha256": "1386441b1f513defdd55186d7e65b8432dcac87c2e0d78676de25facb9c5e6ff",
+      "source_kind": "original_docx",
+      "chunk_file": "chunks_BLLD.json",
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "expected_articles": [
+        {
+          "article": 1,
+          "title": "Phạm vi điều chỉnh",
+          "source_index": 17
+        },
+        {
+          "article": 2,
+          "title": "Đối tượng áp dụng",
+          "source_index": 19
+        },
+        {
+          "article": 3,
+          "title": "Giải thích từ ngữ",
+          "source_index": 24
+        },
+        {
+          "article": 4,
+          "title": "Chính sách của Nhà nước về lao động",
+          "source_index": 37
+        },
+        {
+          "article": 5,
+          "title": "Quyền và nghĩa vụ của người lao động",
+          "source_index": 45
+        },
+        {
+          "article": 6,
+          "title": "Quyền và nghĩa vụ của người sử dụng lao động",
+          "source_index": 58
+        },
+        {
+          "article": 7,
+          "title": "Xây dựng quan hệ lao động",
+          "source_index": 71
+        },
+        {
+          "article": 8,
+          "title": "Các hành vi bị nghiêm cấm trong lĩnh vực lao động",
+          "source_index": 76
+        },
+        {
+          "article": 9,
+          "title": "Việc làm, giải quyết việc làm",
+          "source_index": 87
+        },
+        {
+          "article": 10,
+          "title": "Quyền làm việc của người lao động",
+          "source_index": 90
+        },
+        {
+          "article": 11,
+          "title": "Tuyển dụng lao động",
+          "source_index": 93
+        },
+        {
+          "article": 12,
+          "title": "Trách nhiệm quản lý lao động của người sử dụng lao động",
+          "source_index": 96
+        },
+        {
+          "article": 13,
+          "title": "Hợp đồng lao động",
+          "source_index": 105
+        },
+        {
+          "article": 14,
+          "title": "Hình thức hợp đồng lao động",
+          "source_index": 109
+        },
+        {
+          "article": 15,
+          "title": "Nguyên tắc giao kết hợp đồng lao động",
+          "source_index": 113
+        },
+        {
+          "article": 16,
+          "title": "Nghĩa vụ cung cấp thông tin khi giao kết hợp đồng lao động",
+          "source_index": 116
+        },
+        {
+          "article": 17,
+          "title": "Hành vi người sử dụng lao động không được làm khi giao kết, thực hiện hợp đồng lao động",
+          "source_index": 119
+        },
+        {
+          "article": 18,
+          "title": "Thẩm quyền giao kết hợp đồng lao động",
+          "source_index": 123
+        },
+        {
+          "article": 19,
+          "title": "Giao kết nhiều hợp đồng lao động",
+          "source_index": 138
+        },
+        {
+          "article": 20,
+          "title": "Loại hợp đồng lao động",
+          "source_index": 141
+        },
+        {
+          "article": 21,
+          "title": "Nội dung hợp đồng lao động",
+          "source_index": 149
+        },
+        {
+          "article": 22,
+          "title": "Phụ lục hợp đồng lao động",
+          "source_index": 165
+        },
+        {
+          "article": 23,
+          "title": "Hiệu lực của hợp đồng lao động",
+          "source_index": 170
+        },
+        {
+          "article": 24,
+          "title": "Thử việc",
+          "source_index": 172
+        },
+        {
+          "article": 25,
+          "title": "Thời gian thử việc",
+          "source_index": 176
+        },
+        {
+          "article": 26,
+          "title": "Tiền lương thử việc",
+          "source_index": 182
+        },
+        {
+          "article": 27,
+          "title": "Kết thúc thời gian thử việc",
+          "source_index": 184
+        },
+        {
+          "article": 28,
+          "title": "Thực hiện công việc theo hợp đồng lao động",
+          "source_index": 191
+        },
+        {
+          "article": 29,
+          "title": "Chuyển người lao động làm công việc khác so với hợp đồng lao động",
+          "source_index": 193
+        },
+        {
+          "article": 30,
+          "title": "Tạm hoãn thực hiện hợp đồng lao động",
+          "source_index": 199
+        },
+        {
+          "article": 31,
+          "title": "Nhận lại người lao động hết thời hạn tạm hoãn thực hiện hợp đồng lao động",
+          "source_index": 210
+        },
+        {
+          "article": 32,
+          "title": "Làm việc không trọn thời gian",
+          "source_index": 212
+        },
+        {
+          "article": 33,
+          "title": "Sửa đổi, bổ sung hợp đồng lao động",
+          "source_index": 216
+        },
+        {
+          "article": 34,
+          "title": "Các trường hợp chấm dứt hợp đồng lao động",
+          "source_index": 222
+        },
+        {
+          "article": 35,
+          "title": "Quyền đơn phương chấm dứt hợp đồng lao động của người lao động",
+          "source_index": 236
+        },
+        {
+          "article": 36,
+          "title": "Quyền đơn phương chấm dứt hợp đồng lao động của người sử dụng lao động",
+          "source_index": 250
+        },
+        {
+          "article": 37,
+          "title": "Trường hợp người sử dụng lao động không được thực hiện quyền đơn phương chấm dứt hợp đồng lao động",
+          "source_index": 266
+        },
+        {
+          "article": 38,
+          "title": "Hủy bỏ việc đơn phương chấm dứt hợp đồng lao động",
+          "source_index": 270
+        },
+        {
+          "article": 39,
+          "title": "Đơn phương chấm dứt hợp đồng lao động trái pháp luật",
+          "source_index": 272
+        },
+        {
+          "article": 40,
+          "title": "Nghĩa vụ của người lao động khi đơn phương chấm dứt hợp đồng lao động trái pháp luật",
+          "source_index": 274
+        },
+        {
+          "article": 41,
+          "title": "Nghĩa vụ của người sử dụng lao động khi đơn phương chấm dứt hợp đồng lao động trái pháp luật",
+          "source_index": 278
+        },
+        {
+          "article": 42,
+          "title": "Nghĩa vụ của người sử dụng lao động trong trường hợp thay đổi cơ cấu, công nghệ hoặc vì lý do kinh tế",
+          "source_index": 285
+        },
+        {
+          "article": 43,
+          "title": "Nghĩa vụ của người sử dụng lao động khi chia, tách, hợp nhất, sáp nhập; bán, cho thuê, chuyển đổi loại hình doanh nghiệp; chuyển nhượng quyền sở hữu, quyền sử dụng tài sản của doanh nghiệp, hợp tác xã",
+          "source_index": 297
+        },
+        {
+          "article": 44,
+          "title": "Phương án sử dụng lao động",
+          "source_index": 301
+        },
+        {
+          "article": 45,
+          "title": "Thông báo chấm dứt hợp đồng lao động",
+          "source_index": 309
+        },
+        {
+          "article": 46,
+          "title": "Trợ cấp thôi việc",
+          "source_index": 313
+        },
+        {
+          "article": 47,
+          "title": "Trợ cấp mất việc làm",
+          "source_index": 318
+        },
+        {
+          "article": 48,
+          "title": "Trách nhiệm khi chấm dứt hợp đồng lao động",
+          "source_index": 323
+        },
+        {
+          "article": 49,
+          "title": "Hợp đồng lao động vô hiệu",
+          "source_index": 335
+        },
+        {
+          "article": 50,
+          "title": "Thẩm quyền tuyên bố hợp đồng lao động vô hiệu",
+          "source_index": 341
+        },
+        {
+          "article": 51,
+          "title": "Xử lý hợp đồng lao động vô hiệu",
+          "source_index": 343
+        },
+        {
+          "article": 52,
+          "title": "Cho thuê lại lao động",
+          "source_index": 351
+        },
+        {
+          "article": 53,
+          "title": "Nguyên tắc hoạt động cho thuê lại lao động",
+          "source_index": 354
+        },
+        {
+          "article": 54,
+          "title": "Doanh nghiệp cho thuê lại lao động",
+          "source_index": 365
+        },
+        {
+          "article": 55,
+          "title": "Hợp đồng cho thuê lại lao động",
+          "source_index": 368
+        },
+        {
+          "article": 56,
+          "title": "Quyền và nghĩa vụ của doanh nghiệp cho thuê lại lao động",
+          "source_index": 377
+        },
+        {
+          "article": 57,
+          "title": "Quyền và nghĩa vụ của bên thuê lại lao động",
+          "source_index": 385
+        },
+        {
+          "article": 58,
+          "title": "Quyền và nghĩa vụ của người lao động thuê lại",
+          "source_index": 392
+        },
+        {
+          "article": 59,
+          "title": "Đào tạo nghề nghiệp và phát triển kỹ năng nghề",
+          "source_index": 402
+        },
+        {
+          "article": 60,
+          "title": "Trách nhiệm của người sử dụng lao động về đào tạo, bồi dưỡng, nâng cao trình độ, kỹ năng nghề",
+          "source_index": 407
+        },
+        {
+          "article": 61,
+          "title": "Học nghề, tập nghề để làm việc cho người sử dụng lao động",
+          "source_index": 410
+        },
+        {
+          "article": 62,
+          "title": "Hợp đồng đào tạo nghề giữa người sử dụng lao động, người lao động và chi phí đào tạo nghề",
+          "source_index": 417
+        },
+        {
+          "article": 63,
+          "title": "Tổ chức đối thoại tại nơi làm việc",
+          "source_index": 433
+        },
+        {
+          "article": 64,
+          "title": "Nội dung đối thoại tại nơi làm việc",
+          "source_index": 441
+        },
+        {
+          "article": 65,
+          "title": "Thương lượng tập thể",
+          "source_index": 452
+        },
+        {
+          "article": 66,
+          "title": "Nguyên tắc thương lượng tập thể",
+          "source_index": 454
+        },
+        {
+          "article": 67,
+          "title": "Nội dung thương lượng tập thể",
+          "source_index": 456
+        },
+        {
+          "article": 68,
+          "title": "Quyền thương lượng tập thể của tổ chức đại diện người lao động tại cơ sở trong doanh nghiệp",
+          "source_index": 466
+        },
+        {
+          "article": 69,
+          "title": "Đại diện thương lượng tập thể tại doanh nghiệp",
+          "source_index": 471
+        },
+        {
+          "article": 70,
+          "title": "Quy trình thương lượng tập thể tại doanh nghiệp",
+          "source_index": 477
+        },
+        {
+          "article": 71,
+          "title": "Thương lượng tập thể không thành",
+          "source_index": 489
+        },
+        {
+          "article": 72,
+          "title": "Thương lượng tập thể ngành, thương lượng tập thể có nhiều doanh nghiệp tham gia",
+          "source_index": 495
+        },
+        {
+          "article": 73,
+          "title": "Thương lượng tập thể có nhiều doanh nghiệp tham gia thông qua Hội đồng thương lượng tập thể",
+          "source_index": 500
+        },
+        {
+          "article": 74,
+          "title": "Trách nhiệm của Ủy ban nhân dân cấp tỉnh trong thương lượng tập thể",
+          "source_index": 508
+        },
+        {
+          "article": 75,
+          "title": "Thỏa ước lao động tập thể",
+          "source_index": 516
+        },
+        {
+          "article": 76,
+          "title": "Lấy ý kiến và ký kết thỏa ước lao động tập thể",
+          "source_index": 520
+        },
+        {
+          "article": 77,
+          "title": "Gửi thỏa ước lao động tập thể",
+          "source_index": 531
+        },
+        {
+          "article": 78,
+          "title": "Hiệu lực và thời hạn của thỏa ước lao động tập thể",
+          "source_index": 533
+        },
+        {
+          "article": 79,
+          "title": "Thực hiện thỏa ước lao động tập thể tại doanh nghiệp",
+          "source_index": 538
+        },
+        {
+          "article": 80,
+          "title": "Thực hiện thỏa ước lao động tập thể doanh nghiệp trong trường hợp chia, tách, hợp nhất, sáp nhập; bán, cho thuê, chuyển đổi loại hình doanh nghiệp; chuyển nhượng quyền sở hữu, quyền sử dụng tài sản của doanh nghiệp",
+          "source_index": 543
+        },
+        {
+          "article": 81,
+          "title": "Quan hệ giữa thỏa ước lao động tập thể doanh nghiệp, thỏa ước lao động tập thể ngành và thỏa ước lao động tập thể có nhiều doanh nghiệp",
+          "source_index": 546
+        },
+        {
+          "article": 82,
+          "title": "Sửa đổi, bổ sung thỏa ước lao động tập thể",
+          "source_index": 550
+        },
+        {
+          "article": 83,
+          "title": "Thỏa ước lao động tập thể hết hạn",
+          "source_index": 554
+        },
+        {
+          "article": 84,
+          "title": "Mở rộng phạm vi áp dụng của thỏa ước lao động tập thể ngành hoặc thỏa ước lao động tập thể có nhiều doanh nghiệp",
+          "source_index": 557
+        },
+        {
+          "article": 85,
+          "title": "Gia nhập và rút khỏi thỏa ước lao động tập thể ngành hoặc thỏa ước lao động tập thể có nhiều doanh nghiệp",
+          "source_index": 560
+        },
+        {
+          "article": 86,
+          "title": "Thỏa ước lao động tập thể vô hiệu",
+          "source_index": 564
+        },
+        {
+          "article": 87,
+          "title": "Thẩm quyền tuyên bố thỏa ước lao động tập thể vô hiệu",
+          "source_index": 570
+        },
+        {
+          "article": 88,
+          "title": "Xử lý thỏa ước lao động tập thể vô hiệu",
+          "source_index": 572
+        },
+        {
+          "article": 89,
+          "title": "Chi phí thương lượng, ký kết thỏa ước lao động tập thể",
+          "source_index": 574
+        },
+        {
+          "article": 90,
+          "title": "Tiền lương",
+          "source_index": 579
+        },
+        {
+          "article": 91,
+          "title": "Mức lương tối thiểu",
+          "source_index": 583
+        },
+        {
+          "article": 92,
+          "title": "Hội đồng tiền lương quốc gia",
+          "source_index": 588
+        },
+        {
+          "article": 93,
+          "title": "Xây dựng thang lương, bảng lương và định mức lao động",
+          "source_index": 592
+        },
+        {
+          "article": 94,
+          "title": "Nguyên tắc trả lương",
+          "source_index": 597
+        },
+        {
+          "article": 95,
+          "title": "Trả lương",
+          "source_index": 600
+        },
+        {
+          "article": 96,
+          "title": "Hình thức trả lương",
+          "source_index": 604
+        },
+        {
+          "article": 97,
+          "title": "Kỳ hạn trả lương",
+          "source_index": 609
+        },
+        {
+          "article": 98,
+          "title": "Tiền lương làm thêm giờ, làm việc vào ban đêm",
+          "source_index": 614
+        },
+        {
+          "article": 99,
+          "title": "Tiền lương ngừng việc",
+          "source_index": 622
+        },
+        {
+          "article": 100,
+          "title": "Trả lương thông qua người cai thầu",
+          "source_index": 629
+        },
+        {
+          "article": 101,
+          "title": "Tạm ứng tiền lương",
+          "source_index": 633
+        },
+        {
+          "article": 102,
+          "title": "Khấu trừ tiền lương",
+          "source_index": 638
+        },
+        {
+          "article": 103,
+          "title": "Chế độ nâng lương, nâng bậc, phụ cấp, trợ cấp",
+          "source_index": 642
+        },
+        {
+          "article": 104,
+          "title": "Thưởng",
+          "source_index": 644
+        },
+        {
+          "article": 105,
+          "title": "Thời giờ làm việc bình thường",
+          "source_index": 652
+        },
+        {
+          "article": 106,
+          "title": "Giờ làm việc ban đêm",
+          "source_index": 657
+        },
+        {
+          "article": 107,
+          "title": "Làm thêm giờ",
+          "source_index": 659
+        },
+        {
+          "article": 108,
+          "title": "Làm thêm giờ trong trường hợp đặc biệt",
+          "source_index": 673
+        },
+        {
+          "article": 109,
+          "title": "Nghỉ trong giờ làm việc",
+          "source_index": 680
+        },
+        {
+          "article": 110,
+          "title": "Nghỉ chuyển ca",
+          "source_index": 684
+        },
+        {
+          "article": 111,
+          "title": "Nghỉ hằng tuần",
+          "source_index": 686
+        },
+        {
+          "article": 112,
+          "title": "Nghỉ lễ, tết",
+          "source_index": 690
+        },
+        {
+          "article": 113,
+          "title": "Nghỉ hằng năm",
+          "source_index": 700
+        },
+        {
+          "article": 114,
+          "title": "Ngày nghỉ hằng năm tăng thêm theo thâm niên làm việc",
+          "source_index": 711
+        },
+        {
+          "article": 115,
+          "title": "Nghỉ việc riêng, nghỉ không hưởng lương",
+          "source_index": 713
+        },
+        {
+          "article": 116,
+          "title": "Thời giờ làm việc, thời giờ nghỉ ngơi đối với người làm công việc có tính chất đặc biệt",
+          "source_index": 725
+        },
+        {
+          "article": 117,
+          "title": "Kỷ luật lao động",
+          "source_index": 732
+        },
+        {
+          "article": 118,
+          "title": "Nội quy lao động",
+          "source_index": 734
+        },
+        {
+          "article": 119,
+          "title": "Đăng ký nội quy lao động",
+          "source_index": 749
+        },
+        {
+          "article": 120,
+          "title": "Hồ sơ đăng ký nội quy lao động",
+          "source_index": 755
+        },
+        {
+          "article": 121,
+          "title": "Hiệu lực của nội quy lao động",
+          "source_index": 761
+        },
+        {
+          "article": 122,
+          "title": "Nguyên tắc, trình tự, thủ tục xử lý kỷ luật lao động",
+          "source_index": 764
+        },
+        {
+          "article": 123,
+          "title": "Thời hiệu xử lý kỷ luật lao động",
+          "source_index": 779
+        },
+        {
+          "article": 124,
+          "title": "Hình thức xử lý kỷ luật lao động",
+          "source_index": 783
+        },
+        {
+          "article": 125,
+          "title": "Áp dụng hình thức xử lý kỷ luật sa thải",
+          "source_index": 788
+        },
+        {
+          "article": 126,
+          "title": "Xóa kỷ luật, giảm thời hạn chấp hành kỷ luật lao động",
+          "source_index": 795
+        },
+        {
+          "article": 127,
+          "title": "Các hành vi bị nghiêm cấm khi xử lý kỷ luật lao động",
+          "source_index": 798
+        },
+        {
+          "article": 128,
+          "title": "Tạm đình chỉ công việc",
+          "source_index": 802
+        },
+        {
+          "article": 129,
+          "title": "Bồi thường thiệt hại",
+          "source_index": 810
+        },
+        {
+          "article": 130,
+          "title": "Xử lý bồi thường thiệt hại",
+          "source_index": 814
+        },
+        {
+          "article": 131,
+          "title": "Khiếu nại về kỷ luật lao động, trách nhiệm vật chất",
+          "source_index": 817
+        },
+        {
+          "article": 132,
+          "title": "Tuân thủ pháp luật về an toàn, vệ sinh lao động",
+          "source_index": 823
+        },
+        {
+          "article": 133,
+          "title": "Chương trình an toàn, vệ sinh lao động",
+          "source_index": 825
+        },
+        {
+          "article": 134,
+          "title": "Bảo đảm an toàn, vệ sinh lao động tại nơi làm việc",
+          "source_index": 828
+        },
+        {
+          "article": 135,
+          "title": "Chính sách của Nhà nước",
+          "source_index": 836
+        },
+        {
+          "article": 136,
+          "title": "Trách nhiệm của người sử dụng lao động",
+          "source_index": 843
+        },
+        {
+          "article": 137,
+          "title": "Bảo vệ thai sản",
+          "source_index": 848
+        },
+        {
+          "article": 138,
+          "title": "Quyền đơn phương chấm dứt, tạm hoãn hợp đồng lao động của lao động nữ mang thai",
+          "source_index": 856
+        },
+        {
+          "article": 139,
+          "title": "Nghỉ thai sản",
+          "source_index": 860
+        },
+        {
+          "article": 140,
+          "title": "Bảo đảm việc làm cho lao động nghỉ thai sản",
+          "source_index": 867
+        },
+        {
+          "article": 141,
+          "title": "Trợ cấp trong thời gian chăm sóc con ốm đau, thai sản và thực hiện các biện pháp tránh thai",
+          "source_index": 869
+        },
+        {
+          "article": 142,
+          "title": "Nghề, công việc có ảnh hưởng xấu tới chức năng sinh sản và nuôi con",
+          "source_index": 871
+        },
+        {
+          "article": 143,
+          "title": "Lao động chưa thành niên",
+          "source_index": 880
+        },
+        {
+          "article": 144,
+          "title": "Nguyên tắc sử dụng lao động chưa thành niên",
+          "source_index": 885
+        },
+        {
+          "article": 145,
+          "title": "Sử dụng người chưa đủ 15 tuổi làm việc",
+          "source_index": 890
+        },
+        {
+          "article": 146,
+          "title": "Thời giờ làm việc của người chưa thành niên",
+          "source_index": 899
+        },
+        {
+          "article": 147,
+          "title": "Công việc và nơi làm việc cấm sử dụng người lao động từ đủ 15 tuổi đến chưa đủ 18 tuổi",
+          "source_index": 902
+        },
+        {
+          "article": 148,
+          "title": "Người lao động cao tuổi",
+          "source_index": 921
+        },
+        {
+          "article": 149,
+          "title": "Sử dụng người lao động cao tuổi",
+          "source_index": 925
+        },
+        {
+          "article": 150,
+          "title": "Người lao động Việt Nam đi làm việc ở nước ngoài, lao động cho các tổ chức, cá nhân nước ngoài tại Việt Nam",
+          "source_index": 935
+        },
+        {
+          "article": 151,
+          "title": "Điều kiện người lao động nước ngoài làm việc tại Việt Nam",
+          "source_index": 940
+        },
+        {
+          "article": 152,
+          "title": "Điều kiện tuyển dụng, sử dụng người lao động nước ngoài làm việc tại Việt Nam",
+          "source_index": 948
+        },
+        {
+          "article": 153,
+          "title": "Trách nhiệm của người sử dụng lao động và người lao động nước ngoài",
+          "source_index": 952
+        },
+        {
+          "article": 154,
+          "title": "Người lao động nước ngoài làm việc tại Việt Nam không thuộc diện cấp giấy phép lao động",
+          "source_index": 956
+        },
+        {
+          "article": 155,
+          "title": "Thời hạn của giấy phép lao động",
+          "source_index": 967
+        },
+        {
+          "article": 156,
+          "title": "Các trường hợp giấy phép lao động hết hiệu lực",
+          "source_index": 969
+        },
+        {
+          "article": 157,
+          "title": "Cấp, cấp lại, gia hạn, thu hồi giấy phép lao động, giấy xác nhận không thuộc diện cấp giấy phép lao động",
+          "source_index": 978
+        },
+        {
+          "article": 158,
+          "title": "Chính sách của Nhà nước đối với lao động là người khuyết tật",
+          "source_index": 983
+        },
+        {
+          "article": 159,
+          "title": "Sử dụng lao động là người khuyết tật",
+          "source_index": 985
+        },
+        {
+          "article": 160,
+          "title": "Các hành vi bị nghiêm cấm khi sử dụng lao động là người khuyết tật",
+          "source_index": 988
+        },
+        {
+          "article": 161,
+          "title": "Lao động là người giúp việc gia đình",
+          "source_index": 994
+        },
+        {
+          "article": 162,
+          "title": "Hợp đồng lao động đối với lao động là người giúp việc gia đình",
+          "source_index": 998
+        },
+        {
+          "article": 163,
+          "title": "Nghĩa vụ của người sử dụng lao động khi sử dụng lao động là người giúp việc gia đình",
+          "source_index": 1002
+        },
+        {
+          "article": 164,
+          "title": "Nghĩa vụ của lao động là người giúp việc gia đình",
+          "source_index": 1009
+        },
+        {
+          "article": 165,
+          "title": "Các hành vi bị nghiêm cấm đối với người sử dụng lao động",
+          "source_index": 1014
+        },
+        {
+          "article": 166,
+          "title": "Người lao động làm việc trong lĩnh vực nghệ thuật, thể dục, thể thao, hàng hải, hàng không",
+          "source_index": 1021
+        },
+        {
+          "article": 167,
+          "title": "Người lao động nhận công việc về làm tại nhà",
+          "source_index": 1023
+        },
+        {
+          "article": 168,
+          "title": "Tham gia bảo hiểm xã hội, bảo hiểm y tế, bảo hiểm thất nghiệp",
+          "source_index": 1029
+        },
+        {
+          "article": 169,
+          "title": "Tuổi nghỉ hưu",
+          "source_index": 1034
+        },
+        {
+          "article": 170,
+          "title": "Quyền thành lập, gia nhập và tham gia hoạt động của tổ chức đại diện người lao động tại cơ sở",
+          "source_index": 1045
+        },
+        {
+          "article": 171,
+          "title": "Công đoàn cơ sở thuộc hệ thống tổ chức Công đoàn Việt Nam",
+          "source_index": 1049
+        },
+        {
+          "article": 172,
+          "title": "Thành lập, gia nhập tổ chức của người lao động tại doanh nghiệp",
+          "source_index": 1052
+        },
+        {
+          "article": 173,
+          "title": "Ban lãnh đạo và thành viên tổ chức của người lao động tại doanh nghiệp",
+          "source_index": 1058
+        },
+        {
+          "article": 174,
+          "title": "Điều lệ tổ chức của người lao động tại doanh nghiệp",
+          "source_index": 1061
+        },
+        {
+          "article": 175,
+          "title": "Các hành vi bị nghiêm cấm đối với người sử dụng lao động liên quan đến thành lập, gia nhập và hoạt động của tổ chức đại diện người lao động tại cơ sở",
+          "source_index": 1075
+        },
+        {
+          "article": 176,
+          "title": "Quyền của thành viên ban lãnh đạo của tổ chức đại diện người lao động tại cơ sở",
+          "source_index": 1082
+        },
+        {
+          "article": 177,
+          "title": "Nghĩa vụ của người sử dụng lao động đối với tổ chức đại diện người lao động tại cơ sở",
+          "source_index": 1090
+        },
+        {
+          "article": 178,
+          "title": "Quyền và nghĩa vụ của tổ chức đại diện người lao động tại cơ sở trong quan hệ lao động",
+          "source_index": 1096
+        },
+        {
+          "article": 179,
+          "title": "Tranh chấp lao động",
+          "source_index": 1111
+        },
+        {
+          "article": 180,
+          "title": "Nguyên tắc giải quyết tranh chấp lao động",
+          "source_index": 1122
+        },
+        {
+          "article": 181,
+          "title": "Trách nhiệm của cơ quan, tổ chức trong giải quyết tranh chấp lao động",
+          "source_index": 1128
+        },
+        {
+          "article": 182,
+          "title": "Quyền và nghĩa vụ của hai bên trong giải quyết tranh chấp lao động",
+          "source_index": 1133
+        },
+        {
+          "article": 183,
+          "title": "Quyền của cơ quan, tổ chức, cá nhân có thẩm quyền giải quyết tranh chấp lao động",
+          "source_index": 1141
+        },
+        {
+          "article": 184,
+          "title": "Hòa giải viên lao động",
+          "source_index": 1143
+        },
+        {
+          "article": 185,
+          "title": "Hội đồng trọng tài lao động",
+          "source_index": 1146
+        },
+        {
+          "article": 186,
+          "title": "Cấm hành động đơn phương trong khi tranh chấp lao động đang được giải quyết",
+          "source_index": 1162
+        },
+        {
+          "article": 187,
+          "title": "Thẩm quyền giải quyết tranh chấp lao động cá nhân",
+          "source_index": 1167
+        },
+        {
+          "article": 188,
+          "title": "Trình tự, thủ tục hòa giải tranh chấp lao động cá nhân của hòa giải viên lao động",
+          "source_index": 1172
+        },
+        {
+          "article": 189,
+          "title": "Giải quyết tranh chấp lao động cá nhân của Hội đồng trọng tài lao động",
+          "source_index": 1191
+        },
+        {
+          "article": 190,
+          "title": "Thời hiệu yêu cầu giải quyết tranh chấp lao động cá nhân",
+          "source_index": 1197
+        },
+        {
+          "article": 191,
+          "title": "Thẩm quyền giải quyết tranh chấp lao động tập thể về quyền",
+          "source_index": 1206
+        },
+        {
+          "article": 192,
+          "title": "Trình tự, thủ tục giải quyết tranh chấp lao động tập thể về quyền",
+          "source_index": 1212
+        },
+        {
+          "article": 193,
+          "title": "Giải quyết tranh chấp lao động tập thể về quyền của Hội đồng trọng tài lao động",
+          "source_index": 1218
+        },
+        {
+          "article": 194,
+          "title": "Thời hiệu yêu cầu giải quyết tranh chấp lao động tập thể về quyền",
+          "source_index": 1226
+        },
+        {
+          "article": 195,
+          "title": "Thẩm quyền giải quyết tranh chấp lao động tập thể về lợi ích",
+          "source_index": 1233
+        },
+        {
+          "article": 196,
+          "title": "Trình tự, thủ tục giải quyết tranh chấp lao động tập thể về lợi ích",
+          "source_index": 1238
+        },
+        {
+          "article": 197,
+          "title": "Giải quyết tranh chấp lao động tập thể về lợi ích của Hội đồng trọng tài lao động",
+          "source_index": 1244
+        },
+        {
+          "article": 198,
+          "title": "Đình công",
+          "source_index": 1253
+        },
+        {
+          "article": 199,
+          "title": "Trường hợp người lao động có quyền đình công",
+          "source_index": 1255
+        },
+        {
+          "article": 200,
+          "title": "Trình tự đình công",
+          "source_index": 1259
+        },
+        {
+          "article": 201,
+          "title": "Lấy ý kiến về đình công",
+          "source_index": 1263
+        },
+        {
+          "article": 202,
+          "title": "Quyết định đình công và thông báo thời điểm bắt đầu đình công",
+          "source_index": 1270
+        },
+        {
+          "article": 203,
+          "title": "Quyền của các bên trước và trong quá trình đình công",
+          "source_index": 1280
+        },
+        {
+          "article": 204,
+          "title": "Trường hợp đình công bất hợp pháp",
+          "source_index": 1289
+        },
+        {
+          "article": 205,
+          "title": "Thông báo quyết định đóng cửa tạm thời nơi làm việc",
+          "source_index": 1296
+        },
+        {
+          "article": 206,
+          "title": "Trường hợp cấm đóng cửa tạm thời nơi làm việc",
+          "source_index": 1301
+        },
+        {
+          "article": 207,
+          "title": "Tiền lương và các quyền lợi hợp pháp khác của người lao động trong thời gian đình công",
+          "source_index": 1304
+        },
+        {
+          "article": 208,
+          "title": "Các hành vi bị nghiêm cấm trước, trong và sau khi đình công",
+          "source_index": 1307
+        },
+        {
+          "article": 209,
+          "title": "Nơi sử dụng lao động không được đình công",
+          "source_index": 1314
+        },
+        {
+          "article": 210,
+          "title": "Quyết định hoãn, ngừng đình công",
+          "source_index": 1317
+        },
+        {
+          "article": 211,
+          "title": "Xử lý cuộc đình công không đúng trình tự, thủ tục",
+          "source_index": 1320
+        },
+        {
+          "article": 212,
+          "title": "Nội dung quản lý nhà nước về lao động",
+          "source_index": 1328
+        },
+        {
+          "article": 213,
+          "title": "Thẩm quyền quản lý nhà nước về lao động",
+          "source_index": 1335
+        },
+        {
+          "article": 214,
+          "title": "Nội dung thanh tra lao động",
+          "source_index": 1344
+        },
+        {
+          "article": 215,
+          "title": "Thanh tra chuyên ngành về lao động",
+          "source_index": 1350
+        },
+        {
+          "article": 216,
+          "title": "Quyền của thanh tra lao động",
+          "source_index": 1353
+        },
+        {
+          "article": 217,
+          "title": "Xử lý vi phạm",
+          "source_index": 1356
+        },
+        {
+          "article": 218,
+          "title": "Miễn, giảm thủ tục đối với trường hợp sử dụng dưới 10 lao động",
+          "source_index": 1364
+        },
+        {
+          "article": 219,
+          "title": "Sửa đổi, bổ sung một số điều của các luật có liên quan đến lao động",
+          "source_index": 1366
+        },
+        {
+          "article": 220,
+          "title": "Hiệu lực thi hành",
+          "source_index": 1408
+        }
+      ],
+      "inventory_scope": "main numbered articles; annexes, tables/images and signatures are not certified"
+    },
+    {
+      "code": "ND145_2020",
+      "document_id": "145/2020/NĐ-CP",
+      "document_type": "NGHI_DINH",
+      "document_form": "VAN_BAN_GOC",
+      "source_path": "data/raw/nghi-dinh-145-2020-huong-dan-thi-hanh-dieu-kien-lao-dong-va-quan-he-lao-dong.docx",
+      "source_sha256": "78654867a81a64daf5f49deead74edab226b15a00ec4b9a0a7d154fe08c37cee",
+      "source_kind": "original_docx",
+      "chunk_file": "chunks_ND145_2020.json",
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "expected_articles": [
+        {
+          "article": 1,
+          "title": "Phạm vi điều chỉnh",
+          "source_index": 21
+        },
+        {
+          "article": 2,
+          "title": "Đối tượng áp dụng",
+          "source_index": 33
+        },
+        {
+          "article": 3,
+          "title": "Sổ quản lý lao động",
+          "source_index": 41
+        },
+        {
+          "article": 4,
+          "title": "Báo cáo sử dụng lao động",
+          "source_index": 46
+        },
+        {
+          "article": 5,
+          "title": "Nội dung hợp đồng lao động đối với người lao động được thuê làm giám đốc trong doanh nghiệp do Nhà nước nắm giữ 100% vốn điều lệ hoặc Nhà nước nắm giữ trên 50% vốn điều lệ hoặc tổng số cổ phần có quyền biểu quyết",
+          "source_index": 60
+        },
+        {
+          "article": 6,
+          "title": "Nội dung hợp đồng lao động đối với người lao động được thuê làm giám đốc trong doanh nghiệp do Nhà nước nắm giữ từ 50% vốn điều lệ hoặc tổng số cổ phần có quyền biểu quyết trở xuống",
+          "source_index": 85
+        },
+        {
+          "article": 7,
+          "title": "Thời hạn báo trước khi đơn phương chấm dứt hợp đồng lao động đối với một số ngành, nghề, công việc đặc thù",
+          "source_index": 91
+        },
+        {
+          "article": 8,
+          "title": "Trợ cấp thôi việc, trợ cấp mất việc làm",
+          "source_index": 101
+        },
+        {
+          "article": 9,
+          "title": "Xử lý hợp đồng lao động vô hiệu từng phần",
+          "source_index": 127
+        },
+        {
+          "article": 10,
+          "title": "Xử lý hợp đồng lao động vô hiệu toàn bộ do người giao kết không đúng thẩm quyền hoặc vi phạm nguyên tắc giao kết hợp đồng lao động",
+          "source_index": 138
+        },
+        {
+          "article": 11,
+          "title": "Xử lý hợp đồng lao động vô hiệu toàn bộ do toàn bộ nội dung của hợp đồng lao động vi phạm pháp luật hoặc công việc đã giao kết trong hợp đồng lao động là công việc mà pháp luật cấm",
+          "source_index": 149
+        },
+        {
+          "article": 12,
+          "title": "Doanh nghiệp cho thuê lại lao động",
+          "source_index": 165
+        },
+        {
+          "article": 13,
+          "title": "Bên thuê lại lao động",
+          "source_index": 167
+        },
+        {
+          "article": 14,
+          "title": "Người lao động thuê lại",
+          "source_index": 169
+        },
+        {
+          "article": 15,
+          "title": "Ký quỹ và sử dụng tiền ký quỹ",
+          "source_index": 175
+        },
+        {
+          "article": 16,
+          "title": "Nộp tiền ký quỹ",
+          "source_index": 178
+        },
+        {
+          "article": 17,
+          "title": "Quản lý tiền ký quỹ",
+          "source_index": 181
+        },
+        {
+          "article": 18,
+          "title": "Rút tiền ký quỹ",
+          "source_index": 185
+        },
+        {
+          "article": 19,
+          "title": "Trích tiền ký quỹ khi doanh nghiệp cho thuê lại không thực hiện nghĩa vụ đối với người lao động thuê lại",
+          "source_index": 208
+        },
+        {
+          "article": 20,
+          "title": "Nộp bổ sung tiền ký quỹ",
+          "source_index": 214
+        },
+        {
+          "article": 21,
+          "title": "Điều kiện cấp giấy phép",
+          "source_index": 221
+        },
+        {
+          "article": 22,
+          "title": "Thẩm quyền cấp, gia hạn, cấp lại, thu hồi giấy phép",
+          "source_index": 227
+        },
+        {
+          "article": 23,
+          "title": "Giấy phép hoạt động cho thuê lại lao động",
+          "source_index": 229
+        },
+        {
+          "article": 24,
+          "title": "Hồ sơ đề nghị cấp giấy phép",
+          "source_index": 236
+        },
+        {
+          "article": 25,
+          "title": "Trình tự, thủ tục cấp giấy phép",
+          "source_index": 246
+        },
+        {
+          "article": 26,
+          "title": "Gia hạn giấy phép",
+          "source_index": 257
+        },
+        {
+          "article": 27,
+          "title": "Cấp lại giấy phép",
+          "source_index": 272
+        },
+        {
+          "article": 28,
+          "title": "Thu hồi giấy phép",
+          "source_index": 298
+        },
+        {
+          "article": 29,
+          "title": "Trách nhiệm của doanh nghiệp cho thuê lại trong trường hợp bị thu hồi giấy phép hoặc không được gia hạn, cấp lại giấy phép",
+          "source_index": 320
+        },
+        {
+          "article": 30,
+          "title": "Danh mục công việc được thực hiện cho thuê lại lao động",
+          "source_index": 322
+        },
+        {
+          "article": 31,
+          "title": "Trách nhiệm của doanh nghiệp cho thuê lại",
+          "source_index": 328
+        },
+        {
+          "article": 32,
+          "title": "Trách nhiệm của ngân hàng nhận ký quỹ",
+          "source_index": 333
+        },
+        {
+          "article": 33,
+          "title": "Trách nhiệm của Sở Lao động - Thương binh và Xã hội",
+          "source_index": 337
+        },
+        {
+          "article": 34,
+          "title": "Trách nhiệm của Chủ tịch Ủy ban nhân dân cấp tỉnh",
+          "source_index": 342
+        },
+        {
+          "article": 35,
+          "title": "Trách nhiệm của Bộ Lao động - Thương binh và Xã hội",
+          "source_index": 346
+        },
+        {
+          "article": 36,
+          "title": "Trách nhiệm của Ngân hàng Nhà nước Việt Nam",
+          "source_index": 350
+        },
+        {
+          "article": 37,
+          "title": "Trách nhiệm tổ chức đối thoại tại nơi làm việc",
+          "source_index": 359
+        },
+        {
+          "article": 38,
+          "title": "Số lượng, thành phần tham gia đối thoại",
+          "source_index": 380
+        },
+        {
+          "article": 39,
+          "title": "Tổ chức đối thoại định kỳ tại nơi làm việc",
+          "source_index": 395
+        },
+        {
+          "article": 40,
+          "title": "Tổ chức đối thoại khi có yêu cầu của một hoặc các bên",
+          "source_index": 401
+        },
+        {
+          "article": 41,
+          "title": "Tổ chức đối thoại khi có vụ việc",
+          "source_index": 408
+        },
+        {
+          "article": 42,
+          "title": "Nguyên tắc thực hiện quy chế dân chủ ở cơ sở tại nơi làm việc",
+          "source_index": 421
+        },
+        {
+          "article": 43,
+          "title": "Nội dung, hình thức người sử dụng lao động phải công khai",
+          "source_index": 425
+        },
+        {
+          "article": 44,
+          "title": "Nội dung, hình thức người lao động được tham gia ý kiến",
+          "source_index": 440
+        },
+        {
+          "article": 45,
+          "title": "Nội dung, hình thức người lao động được quyết định",
+          "source_index": 450
+        },
+        {
+          "article": 46,
+          "title": "Nội dung, hình thức người lao động được kiểm tra, giám sát",
+          "source_index": 458
+        },
+        {
+          "article": 47,
+          "title": "Hội nghị người lao động",
+          "source_index": 466
+        },
+        {
+          "article": 48,
+          "title": "Trách nhiệm ban hành quy chế dân chủ ở cơ sở tại nơi làm việc",
+          "source_index": 470
+        },
+        {
+          "article": 49,
+          "title": "Chức năng của Hội đồng tiền lương quốc gia",
+          "source_index": 481
+        },
+        {
+          "article": 50,
+          "title": "Nhiệm vụ của Hội đồng tiền lương quốc gia",
+          "source_index": 485
+        },
+        {
+          "article": 51,
+          "title": "Cơ cấu tổ chức của Hội đồng tiền lương quốc gia",
+          "source_index": 491
+        },
+        {
+          "article": 52,
+          "title": "Hoạt động của Hội đồng tiền lương quốc gia",
+          "source_index": 498
+        },
+        {
+          "article": 53,
+          "title": "Trách nhiệm thực hiện về thành lập và hoạt động của Hội đồng tiền lương quốc gia",
+          "source_index": 502
+        },
+        {
+          "article": 54,
+          "title": "Hình thức trả lương",
+          "source_index": 512
+        },
+        {
+          "article": 55,
+          "title": "Tiền lương làm thêm giờ",
+          "source_index": 523
+        },
+        {
+          "article": 56,
+          "title": "Tiền lương làm việc vào ban đêm",
+          "source_index": 549
+        },
+        {
+          "article": 57,
+          "title": "Tiền lương làm thêm giờ vào ban đêm",
+          "source_index": 559
+        },
+        {
+          "article": 58,
+          "title": "Thời giờ được tính vào thời giờ làm việc được hưởng lương",
+          "source_index": 581
+        },
+        {
+          "article": 59,
+          "title": "Sự đồng ý của người lao động khi làm thêm giờ",
+          "source_index": 592
+        },
+        {
+          "article": 60,
+          "title": "Giới hạn số giờ làm thêm",
+          "source_index": 598
+        },
+        {
+          "article": 61,
+          "title": "Các trường hợp được tổ chức làm thêm từ trên 200 giờ đến 300 giờ trong một năm",
+          "source_index": 604
+        },
+        {
+          "article": 62,
+          "title": "Thông báo về việc tổ chức làm thêm từ trên 200 giờ đến 300 giờ trong một năm",
+          "source_index": 609
+        },
+        {
+          "article": 63,
+          "title": "Ca làm việc và tổ chức làm việc theo ca",
+          "source_index": 615
+        },
+        {
+          "article": 64,
+          "title": "Nghỉ trong giờ làm việc",
+          "source_index": 621
+        },
+        {
+          "article": 65,
+          "title": "Thời gian được coi là thời gian làm việc để tính số ngày nghỉ hằng năm của người lao động",
+          "source_index": 626
+        },
+        {
+          "article": 66,
+          "title": "Cách tính ngày nghỉ hằng năm trong một số trường hợp đặc biệt",
+          "source_index": 637
+        },
+        {
+          "article": 67,
+          "title": "Tiền tàu xe, tiền lương trong thời gian đi đường, tiền lương ngày nghỉ hằng năm và các ngày nghỉ có hưởng lương khác",
+          "source_index": 641
+        },
+        {
+          "article": 68,
+          "title": "Một số công việc có tính chất đặc biệt về thời giờ làm việc, thời giờ nghỉ ngơi",
+          "source_index": 645
+        },
+        {
+          "article": 69,
+          "title": "Nội quy lao động",
+          "source_index": 657
+        },
+        {
+          "article": 70,
+          "title": "Trình tự, thủ tục xử lý kỷ luật lao động",
+          "source_index": 672
+        },
+        {
+          "article": 71,
+          "title": "Trình tự, thủ tục xử lý bồi thường thiệt hại",
+          "source_index": 681
+        },
+        {
+          "article": 72,
+          "title": "Thời hiệu xử lý bồi thường thiệt hại",
+          "source_index": 691
+        },
+        {
+          "article": 73,
+          "title": "Khiếu nại về kỷ luật lao động, trách nhiệm vật chất",
+          "source_index": 696
+        },
+        {
+          "article": 74,
+          "title": "Người sử dụng lao động có sử dụng nhiều lao động nữ",
+          "source_index": 706
+        },
+        {
+          "article": 75,
+          "title": "Nơi có nhiều lao động",
+          "source_index": 711
+        },
+        {
+          "article": 76,
+          "title": "Phòng vắt, trữ sữa mẹ",
+          "source_index": 715
+        },
+        {
+          "article": 77,
+          "title": "Nhà trẻ, lớp mẫu giáo",
+          "source_index": 717
+        },
+        {
+          "article": 78,
+          "title": "Quyền làm việc bình đẳng của người lao động, thực hiện các biện pháp bảo đảm bình đẳng giới",
+          "source_index": 726
+        },
+        {
+          "article": 79,
+          "title": "Tăng cường phúc lợi và cải thiện điều kiện làm việc",
+          "source_index": 734
+        },
+        {
+          "article": 80,
+          "title": "Chăm sóc sức khỏe đối với lao động nữ",
+          "source_index": 739
+        },
+        {
+          "article": 81,
+          "title": "Tổ chức nhà trẻ, lớp mẫu giáo ở nơi có nhiều lao động",
+          "source_index": 752
+        },
+        {
+          "article": 82,
+          "title": "Giúp đỡ, hỗ trợ của người sử dụng lao động về chi phí gửi trẻ, mẫu giáo cho người lao động",
+          "source_index": 763
+        },
+        {
+          "article": 83,
+          "title": "Chính sách hỗ trợ người sử dụng lao động",
+          "source_index": 765
+        },
+        {
+          "article": 84,
+          "title": "Quấy rối tình dục tại nơi làm việc",
+          "source_index": 776
+        },
+        {
+          "article": 85,
+          "title": "Quy định của người sử dụng lao động về phòng, chống quấy rối tình dục tại nơi làm việc",
+          "source_index": 783
+        },
+        {
+          "article": 86,
+          "title": "Trách nhiệm, nghĩa vụ phòng, chống quấy rối tình dục tại nơi làm việc",
+          "source_index": 793
+        },
+        {
+          "article": 87,
+          "title": "Tổ chức thực hiện chính sách đối với lao động nữ và bảo đảm bình đẳng giới",
+          "source_index": 811
+        },
+        {
+          "article": 88,
+          "title": "Lao động là người giúp việc gia đình",
+          "source_index": 827
+        },
+        {
+          "article": 89,
+          "title": "Một số quy định riêng đối với lao động là người giúp việc gia đình",
+          "source_index": 829
+        },
+        {
+          "article": 90,
+          "title": "Nghĩa vụ của người sử dụng lao động, người lao động",
+          "source_index": 855
+        },
+        {
+          "article": 91,
+          "title": "Trách nhiệm quản lý lao động là người giúp việc gia đình",
+          "source_index": 858
+        },
+        {
+          "article": 92,
+          "title": "Tiêu chuẩn hòa giải viên lao động",
+          "source_index": 872
+        },
+        {
+          "article": 93,
+          "title": "Trình tự và thủ tục bổ nhiệm hòa giải viên lao động",
+          "source_index": 876
+        },
+        {
+          "article": 94,
+          "title": "Miễn nhiệm hòa giải viên lao động",
+          "source_index": 892
+        },
+        {
+          "article": 95,
+          "title": "Thẩm quyền, trình tự, thủ tục cử hòa giải viên lao động",
+          "source_index": 903
+        },
+        {
+          "article": 96,
+          "title": "Chế độ, điều kiện hoạt động của hòa giải viên lao động",
+          "source_index": 911
+        },
+        {
+          "article": 97,
+          "title": "Quản lý hòa giải viên lao động",
+          "source_index": 922
+        },
+        {
+          "article": 98,
+          "title": "Tiêu chuẩn, điều kiện trọng tài viên lao động",
+          "source_index": 950
+        },
+        {
+          "article": 99,
+          "title": "Bổ nhiệm trọng tài viên lao động",
+          "source_index": 956
+        },
+        {
+          "article": 100,
+          "title": "Miễn nhiệm trọng tài viên lao động",
+          "source_index": 969
+        },
+        {
+          "article": 101,
+          "title": "Thành lập Hội đồng trọng tài lao động",
+          "source_index": 980
+        },
+        {
+          "article": 102,
+          "title": "Thành lập và hoạt động của Ban trọng tài lao động",
+          "source_index": 1007
+        },
+        {
+          "article": 103,
+          "title": "Chế độ, điều kiện hoạt động của trọng tài viên lao động, Hội đồng trọng tài lao động",
+          "source_index": 1023
+        },
+        {
+          "article": 104,
+          "title": "Quản lý nhà nước đối với trọng tài viên lao động, Hội đồng trọng tài lao động",
+          "source_index": 1037
+        },
+        {
+          "article": 105,
+          "title": "Danh mục nơi sử dụng lao động không được đình công",
+          "source_index": 1056
+        },
+        {
+          "article": 106,
+          "title": "Giải quyết tranh chấp lao động cá nhân, tranh chấp lao động tập thể về quyền tại nơi sử dụng lao động không được đình công",
+          "source_index": 1058
+        },
+        {
+          "article": 107,
+          "title": "Giải quyết tranh chấp lao động tập thể về lợi ích tại nơi sử dụng lao động không được đình công",
+          "source_index": 1061
+        },
+        {
+          "article": 108,
+          "title": "Giải quyết tranh chấp liên quan đến quyền thương lượng tập thể tại nơi sử dụng lao động không được đình công",
+          "source_index": 1075
+        },
+        {
+          "article": 109,
+          "title": "Các trường hợp hoãn, ngừng đình công",
+          "source_index": 1081
+        },
+        {
+          "article": 110,
+          "title": "Trình tự, thủ tục thực hiện hoãn đình công",
+          "source_index": 1091
+        },
+        {
+          "article": 111,
+          "title": "Trình tự, thủ tục thực hiện ngừng đình công",
+          "source_index": 1096
+        },
+        {
+          "article": 112,
+          "title": "Giải quyết quyền lợi của người lao động khi hoãn, ngừng đình công",
+          "source_index": 1103
+        },
+        {
+          "article": 113,
+          "title": "Quyền, trách nhiệm của người lao động khi ngừng đình công",
+          "source_index": 1106
+        },
+        {
+          "article": 114,
+          "title": "Hiệu lực thi hành",
+          "source_index": 1113
+        },
+        {
+          "article": 115,
+          "title": "Trách nhiệm thi hành",
+          "source_index": 1131
+        }
+      ],
+      "inventory_scope": "main numbered articles; annexes, tables/images and signatures are not certified"
+    },
+    {
+      "code": "ND283_2026",
+      "document_id": "283/2026/NĐ-CP",
+      "document_type": "NGHI_DINH",
+      "document_form": "VAN_BAN_GOC",
+      "source_path": "data/raw/283_2026_ND-CP_642116.docx",
+      "source_sha256": "4f21745fb09457b552231d096d9a2a3a0f6d5736a94284b5283f19c2ad8921ba",
+      "source_kind": "original_docx",
+      "chunk_file": "chunks_ND283_2026.json",
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "expected_articles": [
+        {
+          "article": 1,
+          "title": "Phạm vi điều chỉnh",
+          "source_index": 20
+        },
+        {
+          "article": 2,
+          "title": "Đối tượng áp dụng",
+          "source_index": 26
+        },
+        {
+          "article": 3,
+          "title": "Hình thức xử phạt, biện pháp khắc phục hậu quả, thời hiệu xử phạt vi phạm hành chính, quy định về hành vi vi phạm hành chính đã kết thúc, hành vi vi phạm hành chính đang thực hiện",
+          "source_index": 30
+        },
+        {
+          "article": 4,
+          "title": "Chuyển hồ sơ vụ vi phạm có dấu hiệu tội phạm",
+          "source_index": 44
+        },
+        {
+          "article": 5,
+          "title": "Lập biên bản vi phạm hành chính đối với hành vi vi phạm quy định tại khoản 2 Điều 53 của Nghị định này",
+          "source_index": 59
+        },
+        {
+          "article": 6,
+          "title": "Xử lý vi phạm hành chính trên môi trường điện tử",
+          "source_index": 65
+        },
+        {
+          "article": 7,
+          "title": "Mức phạt tiền và nguyên tắc áp dụng đối với hành vi vi phạm hành chính nhiều lần",
+          "source_index": 67
+        },
+        {
+          "article": 8,
+          "title": "Vi phạm quy định về dịch vụ việc làm đối với tổ chức dịch vụ việc làm công",
+          "source_index": 86
+        },
+        {
+          "article": 9,
+          "title": "Vi phạm quy định về dịch vụ việc làm đối với doanh nghiệp hoạt động dịch vụ việc làm",
+          "source_index": 99
+        },
+        {
+          "article": 10,
+          "title": "Vi phạm quy định về việc làm",
+          "source_index": 115
+        },
+        {
+          "article": 11,
+          "title": "Vi phạm quy định về tuyển dụng, quản lý lao động",
+          "source_index": 127
+        },
+        {
+          "article": 12,
+          "title": "Vi phạm quy định về đăng ký, điều chỉnh thông tin đăng ký lao động",
+          "source_index": 141
+        },
+        {
+          "article": 13,
+          "title": "Vi phạm quy định về người lao động nước ngoài làm việc tại Việt Nam",
+          "source_index": 149
+        },
+        {
+          "article": 14,
+          "title": "Vi phạm quy định về tuyển dụng, sử dụng, quản lý người lao động Việt Nam làm việc cho tổ chức, cá nhân nước ngoài tại Việt Nam",
+          "source_index": 176
+        },
+        {
+          "article": 15,
+          "title": "Vi phạm quy định về giao kết hợp đồng lao động",
+          "source_index": 185
+        },
+        {
+          "article": 16,
+          "title": "Vi phạm quy định về thử việc",
+          "source_index": 202
+        },
+        {
+          "article": 17,
+          "title": "Vi phạm quy định về thực hiện hợp đồng lao động",
+          "source_index": 214
+        },
+        {
+          "article": 18,
+          "title": "Vi phạm quy định về sửa đổi, bổ sung, chấm dứt hợp đồng lao động",
+          "source_index": 229
+        },
+        {
+          "article": 19,
+          "title": "Vi phạm quy định về cho thuê lại lao động",
+          "source_index": 245
+        },
+        {
+          "article": 20,
+          "title": "Vi phạm quy định về đào tạo, bồi dưỡng, nâng cao trình độ kỹ năng nghề",
+          "source_index": 282
+        },
+        {
+          "article": 21,
+          "title": "Vi phạm quy định về đối thoại tại nơi làm việc",
+          "source_index": 298
+        },
+        {
+          "article": 22,
+          "title": "Vi phạm quy định về thương lượng tập thể, thỏa ước lao động tập thể",
+          "source_index": 307
+        },
+        {
+          "article": 23,
+          "title": "Vi phạm quy định về tiền lương",
+          "source_index": 321
+        },
+        {
+          "article": 24,
+          "title": "Vi phạm quy định về thời giờ làm việc, thời giờ nghỉ ngơi",
+          "source_index": 347
+        },
+        {
+          "article": 25,
+          "title": "Vi phạm quy định về kỷ luật lao động, trách nhiệm vật chất",
+          "source_index": 361
+        },
+        {
+          "article": 26,
+          "title": "Vi phạm quy định về lao động nữ và bảo đảm bình đẳng giới",
+          "source_index": 383
+        },
+        {
+          "article": 27,
+          "title": "Vi phạm quy định về lao động chưa thành niên",
+          "source_index": 403
+        },
+        {
+          "article": 28,
+          "title": "Vi phạm quy định về lao động là người giúp việc gia đình",
+          "source_index": 415
+        },
+        {
+          "article": 29,
+          "title": "Vi phạm quy định về người lao động cao tuổi, người khuyết tật",
+          "source_index": 431
+        },
+        {
+          "article": 30,
+          "title": "Vi phạm quy định về đình công",
+          "source_index": 436
+        },
+        {
+          "article": 31,
+          "title": "Vi phạm quy định về báo cáo công tác an toàn, vệ sinh lao động",
+          "source_index": 451
+        },
+        {
+          "article": 32,
+          "title": "Vi phạm quy định về các biện pháp đảm bảo an toàn, vệ sinh lao động",
+          "source_index": 455
+        },
+        {
+          "article": 33,
+          "title": "Vi phạm quy định về phòng ngừa tai nạn lao động, bệnh nghề nghiệp",
+          "source_index": 480
+        },
+        {
+          "article": 34,
+          "title": "Vi phạm quy định về trách nhiệm của người sử dụng lao động đối với tai nạn lao động, bệnh nghề nghiệp",
+          "source_index": 513
+        },
+        {
+          "article": 35,
+          "title": "Vi phạm quy định về sử dụng máy, thiết bị có yêu cầu nghiêm ngặt về an toàn, vệ sinh lao động",
+          "source_index": 534
+        },
+        {
+          "article": 36,
+          "title": "Vi phạm quy định về hoạt động huấn luyện an toàn, vệ sinh lao động",
+          "source_index": 545
+        },
+        {
+          "article": 37,
+          "title": "Vi phạm quy định về hoạt động kiểm định kỹ thuật an toàn lao động",
+          "source_index": 576
+        },
+        {
+          "article": 38,
+          "title": "Vi phạm quy định về quan trắc môi trường lao động",
+          "source_index": 600
+        },
+        {
+          "article": 39,
+          "title": "Vi phạm quy định về bảo đảm thực hiện quyền của tổ chức đại diện người lao động tại cơ sở và hoạt động công đoàn",
+          "source_index": 617
+        },
+        {
+          "article": 40,
+          "title": "Vi phạm quy định về phân biệt đối xử vì lý do thành lập, gia nhập và hoạt động của tổ chức đại diện người lao động tại cơ sở",
+          "source_index": 643
+        },
+        {
+          "article": 41,
+          "title": "Vi phạm quy định về sử dụng các biện pháp kinh tế hoặc các biện pháp khác gây bất lợi đối với tổ chức và hoạt động của tổ chức đại diện người lao động tại cơ sở",
+          "source_index": 656
+        },
+        {
+          "article": 42,
+          "title": "Vi phạm quy định về đóng kinh phí công đoàn và quản lý, sử dụng kinh phí công đoàn",
+          "source_index": 668
+        },
+        {
+          "article": 43,
+          "title": "Vi phạm về chậm đóng bảo hiểm xã hội bắt buộc",
+          "source_index": 685
+        },
+        {
+          "article": 44,
+          "title": "Vi phạm về trốn đóng bảo hiểm xã hội bắt buộc",
+          "source_index": 702
+        },
+        {
+          "article": 45,
+          "title": "Vi phạm về chậm đóng bảo hiểm thất nghiệp",
+          "source_index": 718
+        },
+        {
+          "article": 46,
+          "title": "Vi phạm về trốn đóng bảo hiểm thất nghiệp",
+          "source_index": 735
+        },
+        {
+          "article": 47,
+          "title": "Vi phạm quy định về lập hồ sơ, hưởng chế độ bảo hiểm xã hội, bảo hiểm thất nghiệp",
+          "source_index": 753
+        },
+        {
+          "article": 48,
+          "title": "Vi phạm các quy định khác về bảo hiểm xã hội, bảo hiểm thất nghiệp",
+          "source_index": 762
+        },
+        {
+          "article": 49,
+          "title": "Vi phạm của doanh nghiệp hoạt động dịch vụ đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng (sau đây viết tắt là doanh nghiệp dịch vụ)",
+          "source_index": 804
+        },
+        {
+          "article": 50,
+          "title": "Vi phạm quy định về đưa người lao động Việt Nam đi làm việc ở nước ngoài của doanh nghiệp trúng thầu, nhận thầu công trình, dự án ở nước ngoài",
+          "source_index": 881
+        },
+        {
+          "article": 51,
+          "title": "Vi phạm quy định về đưa người lao động Việt Nam đi làm việc ở nước ngoài của tổ chức, cá nhân Việt Nam đầu tư ra nước ngoài",
+          "source_index": 914
+        },
+        {
+          "article": 52,
+          "title": "Vi phạm của doanh nghiệp Việt Nam đưa người lao động Việt Nam đi đào tạo, nâng cao trình độ, kỹ năng nghề ở nước ngoài",
+          "source_index": 944
+        },
+        {
+          "article": 53,
+          "title": "Vi phạm của người lao động Việt Nam đi làm việc ở nước ngoài và tổ chức, cá nhân liên quan khác",
+          "source_index": 967
+        },
+        {
+          "article": 54,
+          "title": "Thẩm quyền lập biên bản vi phạm hành chính",
+          "source_index": 981
+        },
+        {
+          "article": 55,
+          "title": "Thẩm quyền xử phạt của Chủ tịch Ủy ban nhân dân",
+          "source_index": 994
+        },
+        {
+          "article": 56,
+          "title": "Thẩm quyền xử phạt của Cục trưởng Cục Quản lý lao động ngoài nước và Trưởng đoàn kiểm tra do Cục trưởng Cục quản lý lao động ngoài nước thành lập",
+          "source_index": 1009
+        },
+        {
+          "article": 57,
+          "title": "Thẩm quyền xử phạt của Giám đốc bảo hiểm xã hội cấp tỉnh, Giám đốc Bảo hiểm xã hội Việt Nam và Trưởng đoàn kiểm tra chuyên ngành do Bảo hiểm xã hội Việt Nam thành lập",
+          "source_index": 1020
+        },
+        {
+          "article": 58,
+          "title": "Thẩm quyền xử phạt của Công an nhân dân",
+          "source_index": 1036
+        },
+        {
+          "article": 59,
+          "title": "Thẩm quyền xử phạt của Cảnh sát biển",
+          "source_index": 1077
+        },
+        {
+          "article": 60,
+          "title": "Thẩm quyền xử phạt của Bộ đội Biên phòng",
+          "source_index": 1113
+        },
+        {
+          "article": 61,
+          "title": "Thẩm quyền xử phạt của Thủ trưởng cơ quan thực hiện nhiệm vụ quản lý nhà nước theo chuyên ngành, lĩnh vực và một số chức danh khác",
+          "source_index": 1143
+        },
+        {
+          "article": 62,
+          "title": "Thẩm quyền của cơ quan đại diện ngoại giao, cơ quan lãnh sự, cơ quan khác được ủy quyền thực hiện chức năng lãnh sự của nước Cộng hòa xã hội chủ nghĩa Việt Nam ở nước ngoài",
+          "source_index": 1168
+        },
+        {
+          "article": 63,
+          "title": "Nguyên tắc xác định và phân định thẩm quyền xử phạt",
+          "source_index": 1174
+        },
+        {
+          "article": 64,
+          "title": "Thi hành các hình thức xử phạt vi phạm hành chính",
+          "source_index": 1192
+        },
+        {
+          "article": 65,
+          "title": "Thi hành các biện pháp khắc phục hậu quả",
+          "source_index": 1197
+        },
+        {
+          "article": 66,
+          "title": "Hiệu lực thi hành",
+          "source_index": 1205
+        },
+        {
+          "article": 67,
+          "title": "Điều khoản chuyển tiếp",
+          "source_index": 1210
+        },
+        {
+          "article": 68,
+          "title": "Trách nhiệm hướng dẫn và thi hành",
+          "source_index": 1214
+        }
+      ],
+      "inventory_scope": "main numbered articles; annexes, tables/images and signatures are not certified"
+    },
+    {
+      "code": "NQCT",
+      "document_id": "NQLD-HRCORP-2026",
+      "document_type": "NOI_QUY",
+      "document_form": "VAN_BAN_NOI_BO",
+      "source_path": "data/markdown/noi_quy_mau_cong_ty.md",
+      "source_sha256": "6f06199293a8f4c13ffcea270c0961590967e82b8c8985a8646df04ef88dd033",
+      "source_kind": "authored_markdown",
+      "chunk_file": "chunks_NQCT.json",
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "expected_articles": [
+        {
+          "article": 1,
+          "title": "Phạm vi điều chỉnh và đối tượng áp dụng",
+          "source_index": 11
+        },
+        {
+          "article": 2,
+          "title": "Nguyên tắc chấp hành kỷ luật lao động",
+          "source_index": 15
+        },
+        {
+          "article": 3,
+          "title": "Thời giờ làm việc và chấm công",
+          "source_index": 21
+        },
+        {
+          "article": 4,
+          "title": "Quy định về xin nghỉ phép và thông báo vắng mặt",
+          "source_index": 28
+        },
+        {
+          "article": 5,
+          "title": "Trật tự tại nơi làm việc",
+          "source_index": 38
+        },
+        {
+          "article": 6,
+          "title": "Bảo vệ tài sản và bí mật kinh doanh, bí mật công nghệ",
+          "source_index": 42
+        },
+        {
+          "article": 7,
+          "title": "An toàn, vệ sinh lao động tại nơi làm việc",
+          "source_index": 48
+        },
+        {
+          "article": 8,
+          "title": "Phòng, chống quấy rối tình dục tại nơi làm việc",
+          "source_index": 52
+        },
+        {
+          "article": 9,
+          "title": "Chuyển người lao động làm công việc khác so với hợp đồng lao động",
+          "source_index": 56
+        },
+        {
+          "article": 10,
+          "title": "Các hình thức xử lý kỷ luật lao động",
+          "source_index": 62
+        },
+        {
+          "article": 11,
+          "title": "Áp dụng hình thức Khiển trách",
+          "source_index": 69
+        },
+        {
+          "article": 12,
+          "title": "Áp dụng hình thức Kéo dài thời hạn nâng lương hoặc Cách chức",
+          "source_index": 76
+        },
+        {
+          "article": 13,
+          "title": "Áp dụng hình thức Sa thải",
+          "source_index": 83
+        },
+        {
+          "article": 14,
+          "title": "Trình tự lập biên bản và yêu cầu giải trình",
+          "source_index": 91
+        },
+        {
+          "article": 15,
+          "title": "Trình tự tổ chức cuộc họp xử lý kỷ luật lao động",
+          "source_index": 96
+        },
+        {
+          "article": 16,
+          "title": "Thẩm quyền ban hành quyết định kỷ luật lao động",
+          "source_index": 100
+        },
+        {
+          "article": 17,
+          "title": "Trách nhiệm vật chất và bồi thường thiệt hại",
+          "source_index": 103
+        },
+        {
+          "article": 18,
+          "title": "Thời hiệu xử lý kỷ luật và xóa kỷ luật",
+          "source_index": 107
+        },
+        {
+          "article": 19,
+          "title": "Chế độ nghỉ phép năm",
+          "source_index": 113
+        },
+        {
+          "article": 20,
+          "title": "Nghỉ việc riêng có hưởng lương",
+          "source_index": 118
+        },
+        {
+          "article": 21,
+          "title": "Nghỉ không hưởng lương",
+          "source_index": 124
+        },
+        {
+          "article": 22,
+          "title": "Chế độ nghỉ ốm đau",
+          "source_index": 128
+        },
+        {
+          "article": 23,
+          "title": "Chế độ thai sản và bảo vệ lao động nữ",
+          "source_index": 136
+        },
+        {
+          "article": 24,
+          "title": "Phân loại mức độ vi phạm",
+          "source_index": 144
+        },
+        {
+          "article": 25,
+          "title": "Quy trình khiển trách bằng miệng",
+          "source_index": 150
+        },
+        {
+          "article": 26,
+          "title": "Quy trình khiển trách bằng văn bản",
+          "source_index": 155
+        },
+        {
+          "article": 27,
+          "title": "Quy trình tạm đình chỉ công tác",
+          "source_index": 159
+        },
+        {
+          "article": 28,
+          "title": "Quy trình xử lý vắng mặt tại cuộc họp kỷ luật",
+          "source_index": 165
+        },
+        {
+          "article": 29,
+          "title": "Quy trình bồi thường thiệt hại vật chất",
+          "source_index": 169
+        },
+        {
+          "article": 30,
+          "title": "Thông báo sa thải cho cơ quan nhà nước",
+          "source_index": 174
+        },
+        {
+          "article": 31,
+          "title": "Trang bị bảo hộ cá nhân (PPE)",
+          "source_index": 179
+        },
+        {
+          "article": 32,
+          "title": "Vận hành thiết bị cơ giới",
+          "source_index": 183
+        },
+        {
+          "article": 33,
+          "title": "Quy trình ứng phó tai nạn lao động",
+          "source_index": 188
+        },
+        {
+          "article": 34,
+          "title": "Quyền từ chối làm việc nguy hiểm",
+          "source_index": 196
+        },
+        {
+          "article": 35,
+          "title": "Vệ sinh và bảo quản tài sản",
+          "source_index": 200
+        },
+        {
+          "article": 36,
+          "title": "Phòng cháy chữa cháy",
+          "source_index": 204
+        },
+        {
+          "article": 37,
+          "title": "Danh mục thông tin mật",
+          "source_index": 211
+        },
+        {
+          "article": 38,
+          "title": "Bảo mật hệ thống CNTT",
+          "source_index": 214
+        },
+        {
+          "article": 39,
+          "title": "Quản lý tài liệu vật lý",
+          "source_index": 219
+        },
+        {
+          "article": 40,
+          "title": "Sử dụng mạng xã hội và thiết bị cá nhân",
+          "source_index": 223
+        },
+        {
+          "article": 41,
+          "title": "Cam kết bảo mật hậu thôi việc",
+          "source_index": 228
+        },
+        {
+          "article": 42,
+          "title": "Đánh giá năng lực định kỳ",
+          "source_index": 233
+        },
+        {
+          "article": 43,
+          "title": "Kiểm soát chất lượng công việc",
+          "source_index": 237
+        },
+        {
+          "article": 44,
+          "title": "Chế độ khen thưởng",
+          "source_index": 242
+        },
+        {
+          "article": 45,
+          "title": "Đào tạo và phát triển nghề nghiệp",
+          "source_index": 247
+        },
+        {
+          "article": 46,
+          "title": "Nguyên tắc tiếp nhận và giải quyết khiếu nại",
+          "source_index": 254
+        },
+        {
+          "article": 47,
+          "title": "Quy trình tiếp nhận khiếu nại nội bộ",
+          "source_index": 260
+        },
+        {
+          "article": 48,
+          "title": "Phân loại khiếu nại và thẩm quyền giải quyết theo cấp",
+          "source_index": 270
+        },
+        {
+          "article": 49,
+          "title": "Quy trình khiếu nại về quyết định xử lý kỷ luật lao động",
+          "source_index": 277
+        },
+        {
+          "article": 50,
+          "title": "Khiếu nại lần thứ hai và thẩm quyền của Hội đồng quản trị",
+          "source_index": 287
+        },
+        {
+          "article": 51,
+          "title": "Quy trình giải quyết tranh chấp lao động cá nhân",
+          "source_index": 293
+        },
+        {
+          "article": 52,
+          "title": "Quy trình giao tiếp và tham vấn với tổ chức đại diện người lao động",
+          "source_index": 306
+        },
+        {
+          "article": 53,
+          "title": "Nguyên tắc xử lý phản ánh của khách hàng",
+          "source_index": 314
+        },
+        {
+          "article": 54,
+          "title": "Phân loại phản ánh của khách hàng và thời hạn xử lý",
+          "source_index": 319
+        },
+        {
+          "article": 55,
+          "title": "Quy trình tiếp nhận, giải quyết và phản hồi phản ánh của khách hàng",
+          "source_index": 326
+        },
+        {
+          "article": 56,
+          "title": "Quy trình quản lý và sử dụng thông tin khách hàng",
+          "source_index": 336
+        },
+        {
+          "article": 57,
+          "title": "Nguyên tắc quản lý văn bản nội bộ",
+          "source_index": 343
+        },
+        {
+          "article": 58,
+          "title": "Quy trình ban hành văn bản nội bộ",
+          "source_index": 347
+        },
+        {
+          "article": 59,
+          "title": "Quy trình đối chiếu văn bản quy phạm và công bố",
+          "source_index": 356
+        },
+        {
+          "article": 60,
+          "title": "Quy trình phát ngôn thông tin ra bên ngoài",
+          "source_index": 361
+        },
+        {
+          "article": 61,
+          "title": "Quy trình đề xuất và phê duyệt mua sắm",
+          "source_index": 368
+        },
+        {
+          "article": 62,
+          "title": "Quy trình tiếp nhận, kiểm kê và cấp phát tài sản",
+          "source_index": 377
+        },
+        {
+          "article": 63,
+          "title": "Quy trình bảo quản, mượn, trả và thanh lý tài sản",
+          "source_index": 386
+        },
+        {
+          "article": 64,
+          "title": "Quy trình tiếp nhận người lao động mới",
+          "source_index": 399
+        },
+        {
+          "article": 65,
+          "title": "Quy trình bàn giao công việc và tài sản",
+          "source_index": 407
+        },
+        {
+          "article": 66,
+          "title": "Quy trình chấm dứt hợp đồng lao động và giải quyết quyền lợi",
+          "source_index": 416
+        },
+        {
+          "article": 67,
+          "title": "Quy trình thanh toán lương và các quyền lợi khi chấm dứt hợp đồng lao động",
+          "source_index": 424
+        },
+        {
+          "article": 68,
+          "title": "Quy trình đề xuất và phê duyệt chương trình đào tạo",
+          "source_index": 432
+        },
+        {
+          "article": 69,
+          "title": "Quy trình hướng dẫn và bồi dưỡng nhân viên mới",
+          "source_index": 441
+        },
+        {
+          "article": 70,
+          "title": "Quy trình thưởng và ghi nhận kết quả lao động",
+          "source_index": 446
+        },
+        {
+          "article": 71,
+          "title": "Quy trình tự kiểm soát trước khi bàn giao",
+          "source_index": 457
+        },
+        {
+          "article": 72,
+          "title": "Quy trình nghiệm thu và kiểm soát chất lượng công việc",
+          "source_index": 462
+        },
+        {
+          "article": 73,
+          "title": "Quy trình bảo đảm an toàn khi vận hành thiết bị và máy móc tại hiện trường",
+          "source_index": 471
+        },
+        {
+          "article": 74,
+          "title": "Quy trình báo cáo sự cố và gần như sự cố",
+          "source_index": 479
+        },
+        {
+          "article": 75,
+          "title": "Quy trình lập biên bản và lập hội đồng điều tra tai nạn lao động",
+          "source_index": 488
+        },
+        {
+          "article": 76,
+          "title": "Quy trình thực hiện kiến nghị sau điều tra",
+          "source_index": 498
+        },
+        {
+          "article": 77,
+          "title": "Quy trình tổ chức họp nội bộ",
+          "source_index": 506
+        },
+        {
+          "article": 78,
+          "title": "Quy trình lập và lưu trữ biên bản họp",
+          "source_index": 511
+        },
+        {
+          "article": 79,
+          "title": "Quy trình báo cáo công việc định kỳ",
+          "source_index": 516
+        },
+        {
+          "article": 80,
+          "title": "Quy trình đối thoại định kỳ giữa Công ty và người lao động",
+          "source_index": 523
+        },
+        {
+          "article": 81,
+          "title": "Hiệu lực thi hành",
+          "source_index": 531
+        },
+        {
+          "article": 82,
+          "title": "Tổ chức thực hiện và sửa đổi",
+          "source_index": 536
+        }
+      ],
+      "inventory_scope": "main numbered articles; annexes, tables/images and signatures are not certified"
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "BLLD-A001",
+      "document_code": "BLLD",
+      "article": 1,
+      "title": "Phạm vi điều chỉnh",
+      "source_heading_index": 17,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 18,
+          "text": "Bộ luật Lao động quy định tiêu chuẩn lao động; quyền, nghĩa vụ, trách nhiệm của người lao động, người sử dụng lao động, tổ chức đại diện người lao động tại cơ sở, tổ chức đại diện người sử dụng lao động trong quan hệ lao động và các quan hệ khác liên quan trực tiếp đến quan hệ lao động; quản lý nhà nước về lao động.",
+          "clause": null,
+          "point": null
+        }
+      ],
+      "references": [],
+      "reference_scope": "complete_empty",
+      "context_requirements": []
+    },
+    {
+      "case_id": "BLLD-A012",
+      "document_code": "BLLD",
+      "article": 12,
+      "title": "Trách nhiệm quản lý lao động của người sử dụng lao động",
+      "source_heading_index": 96,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 97,
+          "text": "1. Lập, cập nhật, quản lý, sử dụng sổ quản lý lao động bằng bản giấy hoặc bản điện tử và xuất trình khi cơ quan nhà nước có thẩm quyền yêu cầu.",
+          "clause": 1,
+          "point": null
+        },
+        {
+          "source_index": 98,
+          "text": "2. Khai trình việc sử dụng lao động trong thời hạn 30 ngày kể từ ngày bắt đầu hoạt động, định kỳ báo cáo tình hình thay đổi về lao động trong quá trình hoạt động với cơ quan chuyên môn về lao động thuộc Ủy ban nhân dân cấp tỉnh và thông báo cho cơ quan bảo hiểm xã hội.",
+          "clause": 2,
+          "point": null
+        },
+        {
+          "source_index": 99,
+          "text": "3. Chính phủ quy định chi tiết Điều này.",
+          "clause": 3,
+          "point": null
+        }
+      ],
+      "references": [],
+      "reference_scope": "positive_only",
+      "context_requirements": []
+    },
+    {
+      "case_id": "BLLD-A118",
+      "document_code": "BLLD",
+      "article": 118,
+      "title": "Nội quy lao động",
+      "source_heading_index": 734,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 735,
+          "text": "1. Người sử dụng lao động phải ban hành nội quy lao động, nếu sử dụng từ 10 người lao động trở lên thì nội quy lao động phải bằng văn bản.",
+          "clause": 1,
+          "point": null
+        },
+        {
+          "source_index": 736,
+          "text": "2. Nội dung nội quy lao động không được trái với pháp luật về lao động và quy định của pháp luật có liên quan. Nội quy lao động bao gồm những nội dung chủ yếu sau đây:",
+          "clause": 2,
+          "point": null
+        },
+        {
+          "source_index": 737,
+          "text": "a) Thời giờ làm việc, thời giờ nghỉ ngơi;",
+          "clause": 2,
+          "point": "a"
+        },
+        {
+          "source_index": 738,
+          "text": "b) Trật tự tại nơi làm việc;",
+          "clause": 2,
+          "point": "b"
+        },
+        {
+          "source_index": 739,
+          "text": "c) An toàn, vệ sinh lao động;",
+          "clause": 2,
+          "point": "c"
+        },
+        {
+          "source_index": 740,
+          "text": "d) Phòng, chống quấy rối tình dục tại nơi làm việc; trình tự, thủ tục xử lý hành vi quấy rối tình dục tại nơi làm việc;",
+          "clause": 2,
+          "point": "d"
+        },
+        {
+          "source_index": 741,
+          "text": "đ) Việc bảo vệ tài sản và bí mật kinh doanh, bí mật công nghệ, sở hữu trí tuệ của người sử dụng lao động;",
+          "clause": 2,
+          "point": "đ"
+        },
+        {
+          "source_index": 742,
+          "text": "e) Trường hợp được tạm thời chuyển người lao động làm việc khác so với hợp đồng lao động;",
+          "clause": 2,
+          "point": "e"
+        },
+        {
+          "source_index": 743,
+          "text": "g) Các hành vi vi phạm kỷ luật lao động của người lao động và các hình thức xử lý kỷ luật lao động;",
+          "clause": 2,
+          "point": "g"
+        },
+        {
+          "source_index": 744,
+          "text": "h) Trách nhiệm vật chất;",
+          "clause": 2,
+          "point": "h"
+        },
+        {
+          "source_index": 745,
+          "text": "i) Người có thẩm quyền xử lý kỷ luật lao động.",
+          "clause": 2,
+          "point": "i"
+        },
+        {
+          "source_index": 746,
+          "text": "3. Trước khi ban hành nội quy lao động hoặc sửa đổi, bổ sung nội quy lao động, người sử dụng lao động phải tham khảo ý kiến của tổ chức đại diện người lao động tại cơ sở đối với nơi có tổ chức đại diện người lao động tại cơ sở.",
+          "clause": 3,
+          "point": null
+        },
+        {
+          "source_index": 747,
+          "text": "4. Nội quy lao động phải được thông báo đến người lao động và những nội dung chính phải được niêm yết ở những nơi cần thiết tại nơi làm việc.",
+          "clause": 4,
+          "point": null
+        },
+        {
+          "source_index": 748,
+          "text": "5. Chính phủ quy định chi tiết Điều này.",
+          "clause": 5,
+          "point": null
+        }
+      ],
+      "references": [],
+      "reference_scope": "positive_only",
+      "context_requirements": []
+    },
+    {
+      "case_id": "BLLD-A125",
+      "document_code": "BLLD",
+      "article": 125,
+      "title": "Áp dụng hình thức xử lý kỷ luật sa thải",
+      "source_heading_index": 788,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 789,
+          "text": "Hình thức xử lý kỷ luật sa thải được người sử dụng lao động áp dụng trong trường hợp sau đây:",
+          "clause": null,
+          "point": null
+        },
+        {
+          "source_index": 790,
+          "text": "1. Người lao động có hành vi trộm cắp, tham ô, đánh bạc, cố ý gây thương tích, sử dụng ma tuý tại nơi làm việc;",
+          "clause": 1,
+          "point": null
+        },
+        {
+          "source_index": 791,
+          "text": "2. Người lao động có hành vi tiết lộ bí mật kinh doanh, bí mật công nghệ, xâm phạm quyền sở hữu trí tuệ của người sử dụng lao động, có hành vi gây thiệt hại nghiêm trọng hoặc đe dọa gây thiệt hại đặc biệt nghiêm trọng về tài sản, lợi ích của người sử dụng lao động hoặc quấy rối tình dục tại nơi làm việc được quy định trong nội quy lao động;",
+          "clause": 2,
+          "point": null
+        },
+        {
+          "source_index": 792,
+          "text": "3. Người lao động bị xử lý kỷ luật kéo dài thời hạn nâng lương hoặc cách chức mà tái phạm trong thời gian chưa xóa kỷ luật. Tái phạm là trường hợp người lao động lặp lại hành vi vi phạm đã bị xử lý kỷ luật mà chưa được xóa kỷ luật theo quy định tại Điều 126 của Bộ luật này;",
+          "clause": 3,
+          "point": null
+        },
+        {
+          "source_index": 793,
+          "text": "4. Người lao động tự ý bỏ việc 05 ngày cộng dồn trong thời hạn 30 ngày hoặc 20 ngày cộng dồn trong thời hạn 365 ngày tính từ ngày đầu tiên tự ý bỏ việc mà không có lý do chính đáng.",
+          "clause": 4,
+          "point": null
+        },
+        {
+          "source_index": 794,
+          "text": "Trường hợp được coi là có lý do chính đáng bao gồm thiên tai, hỏa hoạn, bản thân, thân nhân bị ốm có xác nhận của cơ sở khám bệnh, chữa bệnh có thẩm quyền và trường hợp khác được quy định trong nội quy lao động.",
+          "clause": 4,
+          "point": null
+        }
+      ],
+      "references": [],
+      "reference_scope": "positive_only",
+      "context_requirements": []
+    },
+    {
+      "case_id": "ND145_2020-A003",
+      "document_code": "ND145_2020",
+      "article": 3,
+      "title": "Sổ quản lý lao động",
+      "source_heading_index": 41,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 42,
+          "text": "Việc lập, cập nhật, quản lý, sử dụng sổ quản lý lao động tại khoản 1 Điều 12 của Bộ luật Lao động được quy định như sau:",
+          "clause": null,
+          "point": null
+        },
+        {
+          "source_index": 43,
+          "text": "1.Trong thời hạn 30 ngày kể từ ngày bắt đầu hoạt động, người sử dụng lao động phải lập sổ quản lý lao động ở nơi đặt trụ sở, chi nhánh, văn phòng đại diện.",
+          "clause": 1,
+          "point": null
+        },
+        {
+          "source_index": 44,
+          "text": "2.Sổ quản lý lao động được lập bằng bản giấy hoặc bản điện tử nhưng phải bảo đảm các thông tin cơ bản về người lao động, gồm: họ tên; giới tính; ngày tháng năm sinh; quốc tịch; nơi cư trú; số thẻ Căn cước công dân hoặc Chứng minh nhân dân hoặc hộ chiếu; trình độ chuyên môn kỹ thuật; bậc trình độ kỹ năng nghề; vị trí việc làm; loại hợp đồng lao động; thời điểm bắt đầu làm việc; tham gia bảo hiểm xã hội; tiền lương; nâng bậc, nâng lương; số ngày nghỉ trong năm; số giờ làm thêm; học nghề, đào tạo, bồi dưỡng, nâng cao trình độ kỹ năng nghề; kỷ luật lao động, trách nhiệm vật chất; tai nạn lao động, bệnh nghề nghiệp; thời điểm chấm dứt hợp đồng lao động và lý do.",
+          "clause": 2,
+          "point": null
+        },
+        {
+          "source_index": 45,
+          "text": "3. Người sử dụng lao động có trách nhiệm thể hiện, cập nhật các thông tin quy định tại khoản 2 Điều này kể từ ngày người lao động bắt đầu làm việc; quản lý, sử dụng và xuất trình sổ quản lý lao động với cơ quan quản lý về lao động và các cơ quan liên quan khi có yêu cầu theo quy định của pháp luật.",
+          "clause": 3,
+          "point": null
+        }
+      ],
+      "references": [
+        {
+          "source_quote": "khoản 1 Điều 12",
+          "target_doc": "18/VBHN-VPQH",
+          "article": 12,
+          "clause": 1,
+          "point": null
+        }
+      ],
+      "reference_scope": "positive_only",
+      "context_requirements": []
+    },
+    {
+      "case_id": "ND145_2020-A069",
+      "document_code": "ND145_2020",
+      "article": 69,
+      "title": "Nội quy lao động",
+      "source_heading_index": 657,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 658,
+          "text": "Nội quy lao động tại Điều 118 của Bộ luật Lao động được quy định như sau:",
+          "clause": null,
+          "point": null
+        },
+        {
+          "source_index": 659,
+          "text": "1.Người sử dụng lao động phải ban hành nội quy lao động, nếu sử dụng từ 10 người lao động trở lên thì nội quy lao động phải bằng văn bản, nếu sử dụng dưới 10 người lao động thì không bắt buộc ban hành nội quy lao động bằng văn bản nhưng phải thỏa thuận nội dung về kỷ luật lao động, trách nhiệm vật chất trong hợp đồng lao động.",
+          "clause": 1,
+          "point": null
+        },
+        {
+          "source_index": 660,
+          "text": "2.Nội dung nội quy lao động không được trái với pháp luật về lao động và quy định của pháp luật có liên quan. Nội quy lao động gồm những nội dung chủ yếu sau:",
+          "clause": 2,
+          "point": null
+        },
+        {
+          "source_index": 661,
+          "text": "a) Thời giờ làm việc, thời giờ nghỉ ngơi: quy định thời giờ làm việc bình thường trong 01 ngày, trong 01 tuần; ca làm việc; thời điểm bắt đầu, thời điểm kết thúc ca làm việc; làm thêm giờ (nếu có); làm thêm giờ trong các trường hợp đặc biệt; thời điểm các đợt nghỉ giải lao ngoài thời gian nghỉ giữa giờ; nghỉ chuyển ca; ngày nghỉ hằng tuần; nghỉ hằng năm, nghỉ việc riêng, nghỉ không hưởng lương;",
+          "clause": 2,
+          "point": "a"
+        },
+        {
+          "source_index": 662,
+          "text": "b) Trật tự tại nơi làm việc: quy định phạm vi làm việc, đi lại trong thời giờ làm việc; văn hóa ứng xử, trang phục; tuân thủ phân công, điều động của người sử dụng lao động;",
+          "clause": 2,
+          "point": "b"
+        },
+        {
+          "source_index": 663,
+          "text": "c)An toàn, vệ sinh lao động tại nơi làm việc: trách nhiệm chấp hành các quy định, nội quy, quy trình, biện pháp bảo đảm về an toàn, vệ sinh lao động, phòng chống cháy nổ; sử dụng và bảo quản các phương tiện bảo vệ cá nhân, các thiết bị bảo đảm an toàn, vệ sinh lao động tại nơi làm việc; vệ sinh, khử độc, khử trùng tại nơi làm việc;",
+          "clause": 2,
+          "point": "c"
+        },
+        {
+          "source_index": 664,
+          "text": "d) Phòng, chống quấy rối tình dục tại nơi làm việc; trình tự, thủ tục xử lý hành vi quấy rối tình dục tại nơi làm việc: người sử dụng lao động quy định về phòng, chống quấy rối tình dục theo quy định tại Điều 85 Nghị định này;",
+          "clause": 2,
+          "point": "d"
+        },
+        {
+          "source_index": 665,
+          "text": "đ) Bảo vệ tài sản và bí mật kinh doanh, bí mật công nghệ, sở hữu trí tuệ của người sử dụng lao động: quy định danh mục tài sản, tài liệu, bí mật công nghệ, bí mật kinh doanh, sở hữu trí tuệ; trách nhiệm, biện pháp được áp dụng để bảo vệ tài sản, bí mật; hành vi xâm phạm tài sản và bí mật;",
+          "clause": 2,
+          "point": "đ"
+        },
+        {
+          "source_index": 666,
+          "text": "e)Trường hợp được tạm thời chuyển người lao động làm việc khác so với hợp đồng lao động: quy định cụ thể các trường hợp do nhu cầu sản xuất, kinh doanh được tạm thời chuyển người lao động làm việc khác so với hợp đồng lao động theo quy định tại khoản 1 Điều 29 của Bộ luật Lao động;",
+          "clause": 2,
+          "point": "e"
+        },
+        {
+          "source_index": 667,
+          "text": "g) Các hành vi vi phạm kỷ luật lao động của người lao động và các hình thức xử lý kỷ luật lao động: quy định cụ thể hành vi vi phạm kỷ luật lao động; hình thức xử lý kỷ luật lao động tương ứng với hành vi vi phạm;",
+          "clause": 2,
+          "point": "g"
+        },
+        {
+          "source_index": 668,
+          "text": "h)Trách nhiệm vật chất: quy định các trường hợp phải bồi thường thiệt hại do làm hư hỏng dụng cụ, thiết bị hoặc có hành vi gây thiệt hại tài sản; do làm mất dụng cụ, thiết bị, tài sản hoặc tiêu hao vật tư quá định mức; mức bồi thường thiệt hại tương ứng mức độ thiệt hại; người có thẩm quyền xử lý bồi thường thiệt hại;",
+          "clause": 2,
+          "point": "h"
+        },
+        {
+          "source_index": 669,
+          "text": "i)Người có thẩm quyền xử lý kỷ luật lao động: người có thẩm quyền giao kết hợp đồng lao động bên phía người sử dụng lao động quy định tại khoản 3 Điều 18 của Bộ luật Lao động hoặc người được quy định cụ thể trong nội quy lao động.",
+          "clause": 2,
+          "point": "i"
+        },
+        {
+          "source_index": 670,
+          "text": "3.Trước khi ban hành nội quy lao động hoặc sửa đổi, bổ sung nội quy lao động, người sử dụng lao động phải tham khảo ý kiến của tổ chức đại diện người lao động tại cơ sở đối với nơi có tổ chức đại diện người lao động tại cơ sở. Việc tham khảo ý kiến tổ chức đại diện người lao động tại cơ sở thực hiện theo quy định tại khoản 1 Điều 41 Nghị định này.",
+          "clause": 3,
+          "point": null
+        },
+        {
+          "source_index": 671,
+          "text": "4. Nội quy lao động sau khi ban hành phải được gửi đến từng tổ chức đại diện người lao động tại cơ sở (nếu có) và thông báo đến toàn bộ người lao động, đồng thời niêm yết nội dung chính ở những nơi cần thiết tại nơi làm việc.",
+          "clause": 4,
+          "point": null
+        }
+      ],
+      "references": [
+        {
+          "source_quote": "Điều 118",
+          "target_doc": "18/VBHN-VPQH",
+          "article": 118,
+          "clause": null,
+          "point": null
+        }
+      ],
+      "reference_scope": "positive_only",
+      "context_requirements": []
+    },
+    {
+      "case_id": "ND145_2020-A070",
+      "document_code": "ND145_2020",
+      "article": 70,
+      "title": "Trình tự, thủ tục xử lý kỷ luật lao động",
+      "source_heading_index": 672,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 673,
+          "text": "Trình tự, thủ tục xử lý kỷ luật lao động tại khoản 6 Điều 122 của Bộ luật Lao động được quy định như sau:",
+          "clause": null,
+          "point": null
+        },
+        {
+          "source_index": 674,
+          "text": "1. Khi phát hiện người lao động có hành vi vi phạm kỷ luật lao động tại thời điểm xảy ra hành vi vi phạm, người sử dụng lao động tiến hành lập biên bản vi phạm và thông báo đến tổ chức đại diện người lao động tại cơ sở mà người lao động là thành viên, người đại diện theo pháp luật của người lao động chưa đủ 15 tuổi. Trường hợp người sử dụng lao động phát hiện hành vi vi phạm kỷ luật lao động sau thời điểm hành vi vi phạm đã xảy ra thì thực hiện thu thập chứng cứ chứng minh lỗi của người lao động.",
+          "clause": 1,
+          "point": null
+        },
+        {
+          "source_index": 675,
+          "text": "2. Trong thời hiệu xử lý kỷ luật lao động quy định tại khoản 1, khoản 2 Điều 123 của Bộ luật Lao động, người sử dụng lao động tiến hành họp xử lý kỷ luật lao động như sau:",
+          "clause": 2,
+          "point": null
+        },
+        {
+          "source_index": 676,
+          "text": "a) Ít nhất 05 ngày làm việc trước ngày tiến hành họp xử lý kỷ luật lao động, người sử dụng lao động thông báo về nội dung, thời gian, địa điểm tiến hành cuộc họp xử lý kỷ luật lao động, họ tên người bị xử lý kỷ luật lao động, hành vi vi phạm bị xử lý kỷ luật lao động đến các thành phần phải tham dự họp quy định tại điểm b, điểm c khoản 1 Điều 122 của Bộ luật Lao động, bảo đảm các thành phần này nhận được thông báo trước khi diễn ra cuộc họp;",
+          "clause": 2,
+          "point": "a"
+        },
+        {
+          "source_index": 677,
+          "text": "b) Khi nhận được thông báo của người sử dụng lao động, các thành phần phải tham dự họp quy định tại điểm b, điểm c khoản 1 Điều 122 của Bộ luật Lao động phải xác nhận tham dự cuộc họp với người sử dụng lao động. Trường hợp một trong các thành phần phải tham dự không thể tham dự họp theo thời gian, địa điểm đã thông báo thì người lao động và người sử dụng lao động thỏa thuận việc thay đổi thời gian, địa điểm họp; trường hợp hai bên không thỏa thuận được thì người sử dụng lao động quyết định thời gian, địa điểm họp;",
+          "clause": 2,
+          "point": "b"
+        },
+        {
+          "source_index": 678,
+          "text": "c)Người sử dụng lao động tiến hành họp xử lý kỷ luật lao động theo thời gian, địa điểm đã thông báo quy định tại điểm a, điểm b khoản này. Trường hợp một trong các thành phần phải tham dự họp quy định tại điểm b, điểm c khoản 1 Điều 122 của Bộ luật Lao động không xác nhận tham dự cuộc họp hoặc vắng mặt thì người sử dụng lao động vẫn tiến hành họp xử lý kỷ luật lao động.",
+          "clause": 2,
+          "point": "c"
+        },
+        {
+          "source_index": 679,
+          "text": "3. Nội dung cuộc họp xử lý kỷ luật lao động phải được lập thành biên bản, thông qua trước khi kết thúc cuộc họp và có chữ ký của người tham dự cuộc họp quy định tại điểm b, điểm c khoản 1 Điều 122 của Bộ luật Lao động, trường hợp có người không ký vào biên bản thì người ghi biên bản nêu rõ họ tên, lý do không ký (nếu có) vào nội dung biên bản.",
+          "clause": 3,
+          "point": null
+        },
+        {
+          "source_index": 680,
+          "text": "4. Trong thời hiệu xử lý kỷ luật lao động quy định tại khoản 1, khoản 2 Điều 123 của Bộ luật Lao động, người có thẩm quyền xử lý kỷ luật lao động ban hành quyết định xử lý kỷ luật lao động và gửi đến các thành phần phải tham dự quy định tại điểm b, điểm c khoản 1 Điều 122 của Bộ luật Lao động.",
+          "clause": 4,
+          "point": null
+        }
+      ],
+      "references": [
+        {
+          "source_quote": "khoản 6 Điều 122",
+          "target_doc": "18/VBHN-VPQH",
+          "article": 122,
+          "clause": 6,
+          "point": null
+        }
+      ],
+      "reference_scope": "positive_only",
+      "context_requirements": []
+    },
+    {
+      "case_id": "ND145_2020-A084",
+      "document_code": "ND145_2020",
+      "article": 84,
+      "title": "Quấy rối tình dục tại nơi làm việc",
+      "source_heading_index": 776,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 777,
+          "text": "1.Quấy rối tình dục quy định tại khoản 9 Điều 3 của Bộ luật Lao động có thể xảy ra dưới dạng trao đổi như đề nghị, yêu cầu, gợi ý, đe dọa, ép buộc đổi quan hệ tình dục lấy bất kỳ lợi ích nào liên quan đến công việc; hoặc những hành vi có tính chất tình dục không nhằm mục đích trao đổi, nhưng khiến môi trường làm việc trở nên khó chịu và bất an, gây tổn hại về thể chất, tinh thần, hiệu quả công việc và cuộc sống của người bị quấy rối.",
+          "clause": 1,
+          "point": null
+        },
+        {
+          "source_index": 778,
+          "text": "2. Quấy rối tình dục tại nơi làm việc bao gồm:",
+          "clause": 2,
+          "point": null
+        },
+        {
+          "source_index": 779,
+          "text": "a)Hành vi mang tính thể chất gồm hành động, cử chỉ, tiếp xúc, tác động vào cơ thể mang tính tình dục hoặc gợi ý tình dục;",
+          "clause": 2,
+          "point": "a"
+        },
+        {
+          "source_index": 780,
+          "text": "b)Quấy rối tình dục bằng lời nói gồm lời nói trực tiếp, qua điện thoại hoặc qua phương tiện điện tử có nội dung tình dục hoặc có ngụ ý tình dục;",
+          "clause": 2,
+          "point": "b"
+        },
+        {
+          "source_index": 781,
+          "text": "c)Quấy rối tình dục phi lời nói gồm ngôn ngữ cơ thể; trưng bày, miêu tả tài liệu trực quan về tình dục hoặc liên quan đến hoạt động tình dục trực tiếp hoặc qua phương tiện điện tử.",
+          "clause": 2,
+          "point": "c"
+        },
+        {
+          "source_index": 782,
+          "text": "3.Nơi làm việc quy định tại khoản 9 Điều 3 của Bộ luật Lao động là bất cứ địa điểm nào mà người lao động thực tế làm việc theo thỏa thuận hoặc phân công của người sử dụng lao động, bao gồm cả những địa điểm hay không gian có liên quan đến công việc như các hoạt động xã hội, hội thảo, tập huấn, chuyến đi công tác chính thức, bữa ăn, hội thoại trên điện thoại, các hoạt động giao tiếp qua phương tiện điện tử, phương tiện đi lại do người sử dụng lao động bố trí từ nơi ở đến nơi làm việc và ngược lại, nơi ở do người sử dụng lao động cung cấp và địa điểm khác do người sử dụng lao động quy định.",
+          "clause": 3,
+          "point": null
+        }
+      ],
+      "references": [
+        {
+          "source_quote": "khoản 9 Điều 3",
+          "target_doc": "18/VBHN-VPQH",
+          "article": 3,
+          "clause": 9,
+          "point": null
+        }
+      ],
+      "reference_scope": "positive_only",
+      "context_requirements": []
+    },
+    {
+      "case_id": "ND283_2026-A001",
+      "document_code": "ND283_2026",
+      "article": 1,
+      "title": "Phạm vi điều chỉnh",
+      "source_heading_index": 20,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 21,
+          "text": "Nghị định này quy định về hành vi vi phạm hành chính, hình thức xử phạt, mức xử phạt, biện pháp khắc phục hậu quả đối với hành vi vi phạm hành chính, thẩm quyền lập biên bản vi phạm hành chính, thẩm quyền xử phạt vi phạm hành chính, việc thi hành các hình thức xử phạt vi phạm hành chính, biện pháp khắc phục hậu quả trong các lĩnh vực sau đây:",
+          "clause": null,
+          "point": null
+        },
+        {
+          "source_index": 22,
+          "text": "a) Lao động, bao gồm: việc làm, tuyển dụng và quản lý lao động; điều kiện lao động và quan hệ lao động; an toàn, vệ sinh lao động; tổ chức đại diện người lao động tại cơ sở;",
+          "clause": null,
+          "point": "a"
+        },
+        {
+          "source_index": 23,
+          "text": "b) Bảo hiểm xã hội;",
+          "clause": null,
+          "point": "b"
+        },
+        {
+          "source_index": 24,
+          "text": "c) Người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng.",
+          "clause": null,
+          "point": "c"
+        },
+        {
+          "source_index": 25,
+          "text": "2. Các hành vi vi phạm hành chính khác trong lĩnh vực lao động, bảo hiểm xã hội, người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng không quy định tại Nghị định này thì áp dụng theo quy định về xử phạt vi phạm hành chính trong các lĩnh vực quản lý nhà nước có liên quan.",
+          "clause": 2,
+          "point": null
+        }
+      ],
+      "references": [],
+      "reference_scope": "positive_only",
+      "context_requirements": []
+    },
+    {
+      "case_id": "ND283_2026-A002",
+      "document_code": "ND283_2026",
+      "article": 2,
+      "title": "Đối tượng áp dụng",
+      "source_heading_index": 26,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 27,
+          "text": "1. Người sử dụng lao động, người lao động và các cá nhân, tổ chức khác có hành vi vi phạm hành chính trong lĩnh vực lao động, bảo hiểm xã hội, người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng được quy định tại Nghị định này.",
+          "clause": 1,
+          "point": null
+        },
+        {
+          "source_index": 28,
+          "text": "2. Người có thẩm quyền xử phạt, người có thẩm quyền lập biên bản.",
+          "clause": 2,
+          "point": null
+        },
+        {
+          "source_index": 29,
+          "text": "3. Cơ quan, tổ chức, cá nhân khác có liên quan đến xử phạt vi phạm hành chính và thi hành các hình thức xử phạt, các biện pháp khắc phục hậu quả quy định tại Nghị định này.",
+          "clause": 3,
+          "point": null
+        }
+      ],
+      "references": [],
+      "reference_scope": "positive_only",
+      "context_requirements": []
+    },
+    {
+      "case_id": "ND283_2026-A049",
+      "document_code": "ND283_2026",
+      "article": 49,
+      "title": "Vi phạm của doanh nghiệp hoạt động dịch vụ đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng (sau đây viết tắt là doanh nghiệp dịch vụ)",
+      "source_heading_index": 804,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 805,
+          "text": "1. Phạt tiền từ 10.000.000 đồng đến 15.000.000 đồng khi có một trong các hành vi sau đây:",
+          "clause": 1,
+          "point": null
+        },
+        {
+          "source_index": 806,
+          "text": "a) Không niêm yết công khai bản sao Giấy phép hoạt động dịch vụ đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng của doanh nghiệp dịch vụ tại trụ sở chính hoặc không đăng tải trên trang thông tin điện tử của doanh nghiệp trong thời hạn 30 ngày kể từ ngày Giấy phép được cấp, cấp lại hoặc điều chỉnh thông tin;",
+          "clause": 1,
+          "point": "a"
+        },
+        {
+          "source_index": 807,
+          "text": "b) Chi nhánh của doanh nghiệp dịch vụ được giao nhiệm vụ hoạt động dịch vụ đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng không niêm yết công khai quyết định của doanh nghiệp dịch vụ giao nhiệm vụ cho chi nhánh hoặc bản sao Giấy phép của doanh nghiệp dịch vụ tại trụ sở của chi nhánh;",
+          "clause": 1,
+          "point": "b"
+        },
+        {
+          "source_index": 808,
+          "text": "c) Không thông báo bằng văn bản cho Bộ Nội vụ hoặc không cập nhật thông tin về chi nhánh được giao nhiệm vụ hoạt động dịch vụ đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng trên Hệ thống cơ sở dữ liệu về người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng theo quy định;",
+          "clause": 1,
+          "point": "c"
+        },
+        {
+          "source_index": 809,
+          "text": "d) Không đăng tải hoặc không cập nhật khi có sự thay đổi trên trang thông tin điện tử của doanh nghiệp dịch vụ theo quy định của pháp luật thông tin về: người đại diện theo pháp luật; danh sách nhân viên nghiệp vụ; địa chỉ trụ sở chính, địa điểm kinh doanh; cơ sở vật chất phục vụ hoạt động giáo dục định hướng cho người lao động trước khi đi làm việc ở nước ngoài; quyết định giao nhiệm vụ cho chi nhánh;",
+          "clause": 1,
+          "point": "d"
+        },
+        {
+          "source_index": 810,
+          "text": "đ) Không đăng tải trên trang thông tin điện tử của doanh nghiệp dịch vụ thông tin về: thông tin đầy đủ, chính xác về số lượng hoặc tiêu chuẩn tuyển chọn hoặc điều kiện làm việc hoặc quyền lợi, nghĩa vụ của người lao động theo nội dung hợp đồng cung ứng lao động; danh sách lao động được tuyển chọn;",
+          "clause": 1,
+          "point": "đ"
+        },
+        {
+          "source_index": 811,
+          "text": "e) Không báo cáo hoặc báo cáo không đầy đủ, không chính xác hoặc báo cáo không đúng thời hạn về tình hình hoạt động dịch vụ đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng theo quy định của pháp luật;",
+          "clause": 1,
+          "point": "e"
+        },
+        {
+          "source_index": 812,
+          "text": "g) Không cập nhật thông tin hoặc cập nhật thông tin không đầy đủ về người lao động do doanh nghiệp đưa đi trên Hệ thống cơ sở dữ liệu về người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng kể từ ngày người lao động xuất cảnh cho đến khi thanh lý hợp đồng đưa người lao động Việt Nam đi làm việc ở nước ngoài theo quy định của pháp luật;",
+          "clause": 1,
+          "point": "g"
+        },
+        {
+          "source_index": 813,
+          "text": "h) Không báo cáo hoặc báo cáo không trung thực với Bộ Nội vụ về tình hình của người lao động do doanh nghiệp đưa đi làm việc ở nước ngoài và phương án thực hiện các nghĩa vụ của doanh nghiệp trong hợp đồng cung ứng lao động, hợp đồng đưa người lao động Việt Nam đi làm việc ở nước ngoài còn hiệu lực và văn bản thỏa thuận với doanh nghiệp dịch vụ tiếp nhận quyền, nghĩa vụ trong trường hợp quy định tại điểm b khoản 1 Điều 28 của Luật Người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng theo quy định;",
+          "clause": 1,
+          "point": "h"
+        },
+        {
+          "source_index": 814,
+          "text": "i) Không hướng dẫn người lao động tham gia bảo hiểm xã hội theo quy định của pháp luật về bảo hiểm xã hội;",
+          "clause": 1,
+          "point": "i"
+        },
+        {
+          "source_index": 815,
+          "text": "k) Đóng không đúng thời hạn vào Quỹ hỗ trợ việc làm ngoài nước theo quy định của pháp luật;",
+          "clause": 1,
+          "point": "k"
+        },
+        {
+          "source_index": 816,
+          "text": "l) Kê khai không chính xác về thông tin đáp ứng điều kiện của thị trường, ngành, nghề ở nước ngoài tại văn bản thông báo đáp ứng điều kiện hoạt động dịch vụ đưa người lao động đi làm việc ở nước ngoài tại thị trường, ngành, nghề;",
+          "clause": 1,
+          "point": "l"
+        },
+        {
+          "source_index": 817,
+          "text": "m) Không cập nhật trên Hệ thống cơ sở dữ liệu về người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng và thông báo đến Bộ Nội vụ về danh sách nhân viên nghiệp vụ, cơ sở vật chất, trong thời hạn 7 ngày kể từ ngày có sự thay đổi.",
+          "clause": 1,
+          "point": "m"
+        },
+        {
+          "source_index": 818,
+          "text": "2. Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng đối với mỗi người lao động bị vi phạm nhưng tổng mức phạt tiền không quá 200.000.000 đồng đối với doanh nghiệp dịch vụ khi có một trong các hành vi sau đây:",
+          "clause": 2,
+          "point": null
+        },
+        {
+          "source_index": 819,
+          "text": "a) Không tổ chức giáo dục định hướng hoặc không cấp Giấy chứng nhận hoàn thành khóa học giáo dục định hướng cho người lao động trước khi đi làm việc ở nước ngoài theo quy định của pháp luật;",
+          "clause": 2,
+          "point": "a"
+        },
+        {
+          "source_index": 820,
+          "text": "b) Thỏa thuận mức tiền ký quỹ với người lao động cao hơn mức quy định của pháp luật hoặc thực hiện ký quỹ với người lao động không đúng quy định pháp luật;",
+          "clause": 2,
+          "point": "b"
+        },
+        {
+          "source_index": 821,
+          "text": "c) Không ký hoặc ký không đúng mẫu hợp đồng đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng với người lao động;",
+          "clause": 2,
+          "point": "c"
+        },
+        {
+          "source_index": 822,
+          "text": "d) Không ghi rõ thỏa thuận về tiền dịch vụ và chi phí khác của người lao động trong hợp đồng đưa người lao động Việt Nam đi làm việc ở nước ngoài ký với người lao động;",
+          "clause": 2,
+          "point": "d"
+        },
+        {
+          "source_index": 823,
+          "text": "đ) Không thanh lý hoặc thanh lý hợp đồng đưa người lao động Việt Nam đi làm việc ở nước ngoài với người lao động không theo quy định của pháp luật;",
+          "clause": 2,
+          "point": "đ"
+        },
+        {
+          "source_index": 824,
+          "text": "e) Nội dung hợp đồng đưa người lao động Việt Nam đi làm việc ở nước ngoài không phù hợp với hợp đồng cung ứng lao động đã đăng ký.",
+          "clause": 2,
+          "point": "e"
+        },
+        {
+          "source_index": 825,
+          "text": "3. Phạt tiền từ 20% đến 30% tổng số tiền phải đóng vào Quỹ hỗ trợ việc làm ngoài nước theo quy định của pháp luật tại thời điểm lập biên bản vi phạm hành chính nhưng không quá 200.000.000 đồng khi có hành vi không đóng hoặc đóng không đầy đủ vào Quỹ hỗ trợ việc làm ngoài nước theo quy định của pháp luật.",
+          "clause": 3,
+          "point": null
+        },
+        {
+          "source_index": 826,
+          "text": "4. Phạt tiền từ 40% đến 50% tổng số tiền người lao động đóng vào Quỹ hỗ trợ việc làm ngoài nước thông qua doanh nghiệp dịch vụ mà doanh nghiệp dịch vụ không đóng hoặc đóng không đầy đủ vào Quỹ hỗ trợ việc làm ngoài nước tại thời điểm lập biên bản vi phạm hành chính nhưng không quá 200.000.000 đồng.",
+          "clause": 4,
+          "point": null
+        },
+        {
+          "source_index": 827,
+          "text": "5. Phạt tiền từ 50.000.000 đồng đến 70.000.000 đồng khi có một trong các hành vi sau đây:",
+          "clause": 5,
+          "point": null
+        },
+        {
+          "source_index": 828,
+          "text": "a) Không duy trì một trong các điều kiện quy định tại Điều 10 của Luật Người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng theo quy định của pháp luật trong suốt quá trình hoạt động;",
+          "clause": 5,
+          "point": "a"
+        },
+        {
+          "source_index": 829,
+          "text": "b) Không duy trì điều kiện theo quy định tại khoản 2 Điều 8 của Luật Người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng và quy định tại Điều 20 của Nghị định số 112/2021/NĐ-CP ngày 10 tháng 12 năm 2021 của Chính phủ quy định chi tiết một số điều và biện pháp thi hành Luật Người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng được sửa đổi, bổ sung bởi Nghị định số 372/2025/NĐ-CP;",
+          "clause": 5,
+          "point": "b"
+        },
+        {
+          "source_index": 830,
+          "text": "c) Thực hiện không đúng các nội dung đăng ký hợp đồng cung ứng lao động đã được chấp thuận;",
+          "clause": 5,
+          "point": "c"
+        },
+        {
+          "source_index": 831,
+          "text": "d) Không bồi thường cho người lao động về những thiệt hại do doanh nghiệp hoặc chi nhánh của doanh nghiệp gây ra theo quy định của pháp luật;",
+          "clause": 5,
+          "point": "d"
+        },
+        {
+          "source_index": 832,
+          "text": "đ) Không tư vấn, hỗ trợ cho người lao động các thủ tục liên quan đến chấm dứt hợp đồng lao động, quyền lợi, chế độ và thủ tục về nước;",
+          "clause": 5,
+          "point": "đ"
+        },
+        {
+          "source_index": 833,
+          "text": "e) Quảng cáo, tư vấn, thông báo tuyển chọn hoặc cung cấp thông tin không chính xác với người lao động hoặc với chính quyền địa phương tại nơi tuyển chọn về một trong các nội dung: số lượng; tiêu chuẩn tuyển chọn; điều kiện làm việc; quyền lợi, nghĩa vụ của người lao động theo hợp đồng cung ứng lao động;",
+          "clause": 5,
+          "point": "e"
+        },
+        {
+          "source_index": 834,
+          "text": "g) Không cam kết bằng văn bản về thời gian chờ xuất cảnh sau khi người lao động trúng tuyển đi làm việc ở nước ngoài với thời hạn không quá 180 ngày kể từ ngày người lao động trúng tuyển hoặc không thực hiện đúng cam kết về thời gian chờ xuất cảnh;",
+          "clause": 5,
+          "point": "g"
+        },
+        {
+          "source_index": 835,
+          "text": "h) Không trực tiếp tuyển chọn người lao động.",
+          "clause": 5,
+          "point": "h"
+        },
+        {
+          "source_index": 836,
+          "text": "6. Phạt tiền từ 50.000.000 đồng đến 70.000.000 đồng khi vi phạm đối với mỗi người lao động nhưng không quá 200.000.000 đồng đối với một trong các hành vi sau:",
+          "clause": 6,
+          "point": null
+        },
+        {
+          "source_index": 837,
+          "text": "a) Lợi dụng hoạt động tuyển chọn người lao động Việt Nam đi làm việc ở nước ngoài hoặc hoạt động dịch vụ đưa người lao động Việt Nam đi làm việc ở nước ngoài để thu tiền của người lao động trái pháp luật;",
+          "clause": 6,
+          "point": "a"
+        },
+        {
+          "source_index": 838,
+          "text": "b) Thu tiền tuyển chọn của người lao động;",
+          "clause": 6,
+          "point": "b"
+        },
+        {
+          "source_index": 839,
+          "text": "c) Thu tiền ký quỹ của người lao động nhưng không nộp vào tài khoản phong tỏa theo quy định.",
+          "clause": 6,
+          "point": "c"
+        },
+        {
+          "source_index": 840,
+          "text": "7. Phạt tiền khi có hành vi đưa người lao động Việt Nam đi làm việc ở nước ngoài vượt quá số lượng người đã đăng ký theo Hợp đồng cung ứng lao động theo một trong các mức sau đây:",
+          "clause": 7,
+          "point": null
+        },
+        {
+          "source_index": 841,
+          "text": "a) Từ 40.000.000 đồng đến 80.000.000 đồng khi vượt quá số lượng đăng ký từ 01 người đến 10 người;",
+          "clause": 7,
+          "point": "a"
+        },
+        {
+          "source_index": 842,
+          "text": "b) Từ 80.000.000 đồng đến 120.000.000 đồng khi vượt quá số lượng đăng ký từ 11 người đến 50 người;",
+          "clause": 7,
+          "point": "b"
+        },
+        {
+          "source_index": 843,
+          "text": "c) Từ 120.000.000 đồng đến 180.000.000 đồng khi vượt quá số lượng đăng ký trên 50 người.",
+          "clause": 7,
+          "point": "c"
+        },
+        {
+          "source_index": 844,
+          "text": "8. Phạt tiền từ 80.000.000 đồng đến 100.000.000 đồng khi có một trong các hành vi sau đây:",
+          "clause": 8,
+          "point": null
+        },
+        {
+          "source_index": 845,
+          "text": "a) Thu tiền dịch vụ của người lao động không đúng quy định của pháp luật;",
+          "clause": 8,
+          "point": "a"
+        },
+        {
+          "source_index": 846,
+          "text": "b) Không hoàn trả hoặc hoàn trả không đầy đủ cho người lao động phần tiền dịch vụ và khoản tiền lãi theo tỷ lệ tương ứng với thời gian còn lại của Hợp đồng đưa người lao động Việt Nam đi làm việc ở nước ngoài trong trường hợp người lao động đã nộp tiền dịch vụ cho toàn bộ thời gian làm việc theo Hợp đồng đưa người lao động Việt Nam đi làm việc ở nước ngoài mà phải về nước trước thời hạn và không do lỗi của người lao động;",
+          "clause": 8,
+          "point": "b"
+        },
+        {
+          "source_index": 847,
+          "text": "c) Không tổ chức quản lý, bảo vệ quyền và lợi ích hợp pháp của người lao động do doanh nghiệp đưa đi làm việc ở nước ngoài theo quy định của pháp luật;",
+          "clause": 8,
+          "point": "c"
+        },
+        {
+          "source_index": 848,
+          "text": "d) Không cung cấp trợ giúp pháp lý trong trường hợp người lao động cần đến hỗ trợ pháp lý khi bị lạm dụng, bạo lực hoặc phân biệt đối xử trong thời gian làm việc ở nước ngoài;",
+          "clause": 8,
+          "point": "d"
+        },
+        {
+          "source_index": 849,
+          "text": "đ) Không thực hiện yêu cầu của cơ quan có thẩm quyền hoặc không phối hợp với cơ quan, tổ chức có liên quan của nước tiếp nhận lao động để giải quyết tranh chấp liên quan đến người lao động;",
+          "clause": 8,
+          "point": "đ"
+        },
+        {
+          "source_index": 850,
+          "text": "e) Không giải quyết vấn đề phát sinh đối với người lao động theo một trong các trường hợp sau: chết; tai nạn lao động; bệnh nghề nghiệp; bị xâm phạm tính mạng; bị xâm phạm sức khỏe; bị xâm phạm danh dự, nhân phẩm; bị xâm phạm tài sản; thiên tai; dịch bệnh; chiến tranh; bất ổn chính trị; tình trạng khẩn cấp.",
+          "clause": 8,
+          "point": "e"
+        },
+        {
+          "source_index": 851,
+          "text": "9. Phạt tiền từ 150.000.000 đồng đến 180.000.000 đồng khi có một trong các hành vi sau đây:",
+          "clause": 9,
+          "point": null
+        },
+        {
+          "source_index": 852,
+          "text": "a) Lợi dụng hoạt động đưa người lao động Việt Nam đi làm việc ở nước ngoài để tổ chức xuất cảnh trái phép, bóc lột hoặc cưỡng bức lao động mà không bị truy cứu trách nhiệm hình sự;",
+          "clause": 9,
+          "point": "a"
+        },
+        {
+          "source_index": 853,
+          "text": "b) Đưa người lao động Việt Nam đi làm việc ở nước ngoài theo một trong các trường hợp sau: ở khu vực bị cấm; công việc bị cấm; vi phạm đạo đức xã hội; vi phạm sức khỏe của người lao động hoặc cộng đồng nhưng chưa đến mức truy cứu trách nhiệm hình sự; không được nước tiếp nhận lao động cho phép;",
+          "clause": 9,
+          "point": "b"
+        },
+        {
+          "source_index": 854,
+          "text": "c) Cưỡng ép, lôi kéo, dụ dỗ hoặc lừa gạt người lao động Việt Nam ở lại nước ngoài trái phép mà không bị truy cứu trách nhiệm hình sự;",
+          "clause": 9,
+          "point": "c"
+        },
+        {
+          "source_index": 855,
+          "text": "d) Phân biệt đối xử đối với người lao động hoặc xúc phạm danh dự, nhân phẩm của người lao động trong hoạt động đưa người lao động Việt Nam đi làm việc ở nước ngoài;",
+          "clause": 9,
+          "point": "d"
+        },
+        {
+          "source_index": 856,
+          "text": "đ) Đưa người lao động Việt Nam đi làm việc ở nước ngoài nhưng không đăng ký Hợp đồng cung ứng lao động hoặc đã đăng ký Hợp đồng cung ứng lao động nhưng chưa được chấp thuận;",
+          "clause": 9,
+          "point": "đ"
+        },
+        {
+          "source_index": 857,
+          "text": "e) Sửa chữa, làm sai lệch văn bản, tài liệu trong hồ sơ đề nghị cấp hoặc cấp lại Giấy phép hoạt động dịch vụ đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng nhưng chưa đến mức truy cứu trách nhiệm hình sự;",
+          "clause": 9,
+          "point": "e"
+        },
+        {
+          "source_index": 858,
+          "text": "g) Sửa chữa, làm sai lệch nội dung Giấy phép hoạt động dịch vụ đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng đã được cấp nhưng chưa đến mức truy cứu trách nhiệm hình sự;",
+          "clause": 9,
+          "point": "g"
+        },
+        {
+          "source_index": 859,
+          "text": "h) Giả mạo văn bản, tài liệu trong hồ sơ đề nghị cấp hoặc cấp lại Giấy phép hoạt động dịch vụ đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng mà không bị truy cứu trách nhiệm hình sự;",
+          "clause": 9,
+          "point": "h"
+        },
+        {
+          "source_index": 860,
+          "text": "i) Đưa người lao động đi làm giúp việc gia đình ở nước ngoài khi chưa thông báo hoặc thông báo không đúng sự thật về việc đáp ứng điều kiện hoạt động dịch vụ đưa người lao động Việt Nam đi làm giúp việc gia đình tại nước ngoài.",
+          "clause": 9,
+          "point": "i"
+        },
+        {
+          "source_index": 861,
+          "text": "10. Phạt tiền từ 180.000.000 đồng đến 200.000.000 đồng khi có một trong các hành vi sau đây:",
+          "clause": 10,
+          "point": null
+        },
+        {
+          "source_index": 862,
+          "text": "a) Sử dụng Giấy phép hoạt động dịch vụ đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng của doanh nghiệp khác để tổ chức đưa người lao động Việt Nam đi làm việc ở nước ngoài;",
+          "clause": 10,
+          "point": "a"
+        },
+        {
+          "source_index": 863,
+          "text": "b) Cho tổ chức, cá nhân khác sử dụng Giấy phép hoạt động dịch vụ đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng của doanh nghiệp mình để đưa người lao động Việt Nam đi làm việc ở nước ngoài;",
+          "clause": 10,
+          "point": "b"
+        },
+        {
+          "source_index": 864,
+          "text": "c) Giao nhiệm vụ hoạt động dịch vụ đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng cho chi nhánh của doanh nghiệp không đúng quy định;",
+          "clause": 10,
+          "point": "c"
+        },
+        {
+          "source_index": 865,
+          "text": "d) Thực hiện hợp đồng cung ứng lao động trong thời gian bị đình chỉ thực hiện hợp đồng cung ứng lao động; thực hiện một trong các hoạt động quy định tại khoản 1, 2, 3, 4 Điều 9 của Luật Người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng trong thời gian bị đình chỉ.",
+          "clause": 10,
+          "point": "d"
+        },
+        {
+          "source_index": 866,
+          "text": "11. Hình thức xử phạt bổ sung",
+          "clause": 11,
+          "point": null
+        },
+        {
+          "source_index": 867,
+          "text": "a) Đình chỉ các hoạt động quy định tại khoản 1 và khoản 3 Điều 9 của Luật Người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng tại thị trường có vi phạm từ 03 tháng đến 06 tháng đối với hành vi vi phạm quy định tại điểm e khoản 2 Điều này;",
+          "clause": 11,
+          "point": "a"
+        },
+        {
+          "source_index": 868,
+          "text": "b) Đình chỉ các hoạt động quy định tại khoản 1, 2, 3 và khoản 4 Điều 9 của Luật Người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng tại thị trường có vi phạm từ 12 tháng đến 18 tháng đối với hành vi vi phạm quy định tại điểm b khoản 5 Điều này;",
+          "clause": 11,
+          "point": "b"
+        },
+        {
+          "source_index": 869,
+          "text": "c) Đình chỉ các hoạt động quy định tại khoản 1, 2 và khoản 3 Điều 9 của Luật Người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng từ 06 tháng đến 12 tháng khi có hành vi vi phạm quy định tại điểm a khoản 8 Điều này;",
+          "clause": 11,
+          "point": "c"
+        },
+        {
+          "source_index": 870,
+          "text": "d) Đình chỉ các hoạt động quy định tại khoản 1, 2, 3 và khoản 4 Điều 9 của Luật Người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng từ 06 tháng đến 12 tháng khi có hành vi vi phạm quy định tại điểm đ khoản 8 Điều này.",
+          "clause": 11,
+          "point": "d"
+        },
+        {
+          "source_index": 871,
+          "text": "12. Biện pháp khắc phục hậu quả",
+          "clause": 12,
+          "point": null
+        },
+        {
+          "source_index": 872,
+          "text": "a) Buộc doanh nghiệp dịch vụ cập nhật thông tin về người lao động do doanh nghiệp đưa đi trên Hệ thống cơ sở dữ liệu về người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng theo quy định của pháp luật khi có hành vi vi phạm quy định tại điểm g khoản 1 Điều này;",
+          "clause": 12,
+          "point": "a"
+        },
+        {
+          "source_index": 873,
+          "text": "b) Buộc doanh nghiệp dịch vụ đóng đủ số tiền phải đóng và khoản tiền lãi của số tiền này tính theo mức lãi suất tiền gửi không kỳ hạn cao nhất của các ngân hàng thương mại nhà nước công bố tại thời điểm xử phạt vào Quỹ hỗ trợ việc làm ngoài nước khi có hành vi vi phạm quy định tại khoản 3 Điều này;",
+          "clause": 12,
+          "point": "b"
+        },
+        {
+          "source_index": 874,
+          "text": "c) Buộc doanh nghiệp dịch vụ đóng đủ số tiền người lao động đóng vào Quỹ hỗ trợ việc làm ngoài nước thông qua doanh nghiệp dịch vụ và khoản tiền lãi của số tiền này tính theo mức lãi suất tiền gửi không kỳ hạn cao nhất của các ngân hàng thương mại nhà nước công bố tại thời điểm xử phạt vào Quỹ hỗ trợ việc làm ngoài nước khi có hành vi vi phạm quy định tại khoản 4 Điều này;",
+          "clause": 12,
+          "point": "c"
+        },
+        {
+          "source_index": 875,
+          "text": "d) Buộc doanh nghiệp dịch vụ bồi thường cho người lao động về những thiệt hại do doanh nghiệp, chi nhánh doanh nghiệp gây ra theo quy định của pháp luật khi có hành vi vi phạm quy định tại điểm d khoản 5 Điều này;",
+          "clause": 12,
+          "point": "d"
+        },
+        {
+          "source_index": 876,
+          "text": "đ) Buộc doanh nghiệp dịch vụ trả lại cho người lao động khoản tiền đã thu trái pháp luật của người lao động và khoản tiền lãi của số tiền này tính theo mức lãi suất tiền gửi không kỳ hạn cao nhất của các ngân hàng thương mại nhà nước công bố tại thời điểm xử phạt khi có hành vi vi phạm quy định tại khoản 6, điểm a khoản 8 Điều này;",
+          "clause": 12,
+          "point": "đ"
+        },
+        {
+          "source_index": 877,
+          "text": "e) Buộc doanh nghiệp dịch vụ hoàn trả đầy đủ cho người lao động phần tiền dịch vụ và tiền lãi theo quy định của pháp luật khi có hành vi vi phạm quy định tại điểm b khoản 8 Điều này;",
+          "clause": 12,
+          "point": "e"
+        },
+        {
+          "source_index": 878,
+          "text": "g) Buộc doanh nghiệp dịch vụ hoàn trả số tiền đã thu của người lao động đi làm việc ở nước ngoài và khoản lãi của số tiền này tính theo mức lãi suất tiền gửi không kỳ hạn cao nhất của các ngân hàng thương mại nhà nước công bố tại thời điểm xử phạt đồng thời thực hiện chi trả chi phí đưa người lao động về nước khi có hành vi vi phạm tại điểm b khoản 9 Điều này;",
+          "clause": 12,
+          "point": "g"
+        },
+        {
+          "source_index": 879,
+          "text": "h) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại điểm c khoản 9 Điều này;",
+          "clause": 12,
+          "point": "h"
+        },
+        {
+          "source_index": 880,
+          "text": "i) Buộc nộp lại giấy phép hoạt động dịch vụ đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng cho cơ quan có thẩm quyền đã cấp giấy phép đó khi có hành vi vi phạm quy định tại điểm g khoản 9 Điều này.",
+          "clause": 12,
+          "point": "i"
+        }
+      ],
+      "references": [],
+      "reference_scope": "positive_only",
+      "context_requirements": [
+        {
+          "clause": 1,
+          "points_only": true,
+          "text": "1. Phạt tiền từ 10.000.000 đồng đến 15.000.000 đồng khi có một trong các hành vi sau đây:"
+        }
+      ]
+    },
+    {
+      "case_id": "ND283_2026-A050",
+      "document_code": "ND283_2026",
+      "article": 50,
+      "title": "Vi phạm quy định về đưa người lao động Việt Nam đi làm việc ở nước ngoài của doanh nghiệp trúng thầu, nhận thầu công trình, dự án ở nước ngoài",
+      "source_heading_index": 881,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 882,
+          "text": "1. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng khi có một trong các hành vi sau đây:",
+          "clause": 1,
+          "point": null
+        },
+        {
+          "source_index": 883,
+          "text": "a) Không cập nhật thông tin về người lao động trên Hệ thống cơ sở dữ liệu về người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng;",
+          "clause": 1,
+          "point": "a"
+        },
+        {
+          "source_index": 884,
+          "text": "b) Không báo cáo sau khi hoàn thành hợp đồng trúng thầu, nhận thầu ở nước ngoài hoặc không báo cáo đột xuất theo yêu cầu của Ủy ban nhân dân cấp tỉnh theo quy định của pháp luật.",
+          "clause": 1,
+          "point": "b"
+        },
+        {
+          "source_index": 885,
+          "text": "2. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng khi vi phạm với mỗi người lao động nhưng không quá 200.000.000 đồng khi có hành vi không bảo đảm để người lao động được kiểm tra sức khỏe định kỳ bao gồm cả sức khỏe sinh sản và khám bệnh, chữa bệnh trong trường hợp người lao động bị ốm đau, tai nạn khi làm việc ở nước ngoài.",
+          "clause": 2,
+          "point": null
+        },
+        {
+          "source_index": 886,
+          "text": "3. Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng khi vi phạm với mỗi người lao động nhưng không quá 200.000.000 đồng khi có một trong các hành vi sau đây:",
+          "clause": 3,
+          "point": null
+        },
+        {
+          "source_index": 887,
+          "text": "a) Không tổ chức để người lao động Việt Nam trước khi đi làm việc ở nước ngoài được tham gia khóa học giáo dục định hướng;",
+          "clause": 3,
+          "point": "a"
+        },
+        {
+          "source_index": 888,
+          "text": "b) Không thông tin đầy đủ hoặc không thông tin chính xác hoặc không thông tin rõ ràng về một trong các nội dung: điều kiện làm việc; điều kiện sinh hoạt; quyền lợi hoặc chế độ của người lao động làm việc tại công trình, dự án của doanh nghiệp trúng thầu, nhận thầu ở nước ngoài;",
+          "clause": 3,
+          "point": "b"
+        },
+        {
+          "source_index": 889,
+          "text": "c) Không trực tiếp tổ chức đưa người lao động Việt Nam đi làm việc ở nước ngoài.",
+          "clause": 3,
+          "point": "c"
+        },
+        {
+          "source_index": 890,
+          "text": "4. Phạt tiền từ 20.000.000 đồng đến 30.000.000 đồng khi có một trong các hành vi sau đây:",
+          "clause": 4,
+          "point": null
+        },
+        {
+          "source_index": 891,
+          "text": "a) Không đưa người lao động về nước hoặc không trả chi phí đưa người lao động về nước khi người lao động bị ốm đau, tai nạn đến mức không còn khả năng tiếp tục làm việc ở nước ngoài;",
+          "clause": 4,
+          "point": "a"
+        },
+        {
+          "source_index": 892,
+          "text": "b) Không tổ chức đưa di hài hoặc thi hài người lao động chết trong thời gian làm việc ở nước ngoài về nước; không trả chi phí liên quan đến việc tổ chức đưa di hài hoặc thi hài người lao động chết trong thời gian làm việc ở nước ngoài về nước.",
+          "clause": 4,
+          "point": "b"
+        },
+        {
+          "source_index": 893,
+          "text": "5. Phạt tiền từ 30.000.000 đồng đến 50.000.000 đồng khi có một trong các hành vi sau đây:",
+          "clause": 5,
+          "point": null
+        },
+        {
+          "source_index": 894,
+          "text": "a) Đưa người lao động Việt Nam đi làm việc ở nước ngoài vượt quá số lượng trong phương án hoặc không đúng phương án đưa người lao động Việt Nam đi làm việc ở nước ngoài đã thông báo tới Ủy ban nhân dân cấp tỉnh nơi doanh nghiệp đặt trụ sở chính;",
+          "clause": 5,
+          "point": "a"
+        },
+        {
+          "source_index": 895,
+          "text": "b) Không thỏa thuận bằng phụ lục hợp đồng lao động với người lao động theo quy định hoặc có thỏa thuận bằng phụ lục hợp đồng lao động nhưng nội dung không phù hợp với phương án đưa người lao động Việt Nam đi làm việc ở nước ngoài đã thông báo tới Ủy ban nhân dân cấp tỉnh nơi doanh nghiệp đặt trụ sở chính.",
+          "clause": 5,
+          "point": "b"
+        },
+        {
+          "source_index": 896,
+          "text": "6. Phạt tiền từ 75.000.000 đồng đến 90.000.000 đồng khi có một trong các hành vi sau đây:",
+          "clause": 6,
+          "point": null
+        },
+        {
+          "source_index": 897,
+          "text": "a) Không báo cáo hoặc không phối hợp với cơ quan đại diện Việt Nam ở nước ngoài để quản lý, bảo vệ quyền và lợi ích hợp pháp, chính đáng của người lao động trong thời gian làm việc ở nước ngoài;",
+          "clause": 6,
+          "point": "a"
+        },
+        {
+          "source_index": 898,
+          "text": "b) Không thực hiện yêu cầu của cơ quan có thẩm quyền hoặc không phối hợp với cơ quan, tổ chức có liên quan của nước mà người lao động đến làm việc để giải quyết tranh chấp liên quan đến người lao động làm việc ở nước ngoài;",
+          "clause": 6,
+          "point": "b"
+        },
+        {
+          "source_index": 899,
+          "text": "c) Không giải quyết hoặc không phối hợp giải quyết vấn đề phát sinh đối với người lao động theo một trong các trường hợp sau: chết; bị tai nạn; bị xâm phạm tính mạng; bị xâm phạm sức khỏe; bị xâm phạm danh dự, nhân phẩm; bị xâm phạm tài sản; thiên tai; dịch bệnh; chiến tranh; bất ổn chính trị; suy thoái kinh tế; tình trạng khẩn cấp; vì lý do bất khả kháng khác.",
+          "clause": 6,
+          "point": "c"
+        },
+        {
+          "source_index": 900,
+          "text": "7. Phạt tiền từ 50.000.000 đồng đến 70.000.000 đồng khi vi phạm với mỗi người lao động nhưng không quá 200.000.000 đồng đối với hành vi lợi dụng hoạt động đưa người lao động Việt Nam đi làm việc ở nước ngoài để thu tiền của người lao động trái pháp luật.",
+          "clause": 7,
+          "point": null
+        },
+        {
+          "source_index": 901,
+          "text": "8. Phạt tiền từ 150.000.000 đồng đến 180.000.000 đồng đối với một trong các hành vi sau đây:",
+          "clause": 8,
+          "point": null
+        },
+        {
+          "source_index": 902,
+          "text": "a) Lợi dụng hoạt động đưa người lao động Việt Nam đi làm việc ở nước ngoài để tổ chức xuất cảnh trái phép, bóc lột hoặc cưỡng bức lao động mà không bị truy cứu trách nhiệm hình sự;",
+          "clause": 8,
+          "point": "a"
+        },
+        {
+          "source_index": 903,
+          "text": "b) Đưa người lao động Việt Nam đi làm việc ở nước ngoài theo một trong các trường hợp: ở khu vực bị cấm; công việc bị cấm; vi phạm đạo đức xã hội; vi phạm sức khỏe của người lao động hoặc cộng đồng nhưng chưa đến mức truy cứu trách nhiệm hình sự; không được nước tiếp nhận lao động cho phép;",
+          "clause": 8,
+          "point": "b"
+        },
+        {
+          "source_index": 904,
+          "text": "c) Cưỡng ép, lôi kéo, dụ dỗ hoặc lừa gạt người lao động Việt Nam ở lại nước ngoài trái phép mà không bị truy cứu trách nhiệm hình sự;",
+          "clause": 8,
+          "point": "c"
+        },
+        {
+          "source_index": 905,
+          "text": "d) Đưa người lao động Việt Nam đi làm việc ở nước ngoài mà không thông báo tới Ủy ban nhân dân cấp tỉnh nơi doanh nghiệp đặt trụ sở chính phương án đưa người lao động Việt Nam đi làm việc ở nước ngoài.",
+          "clause": 8,
+          "point": "d"
+        },
+        {
+          "source_index": 906,
+          "text": "9. Hình thức xử phạt bổ sung",
+          "clause": 9,
+          "point": null
+        },
+        {
+          "source_index": 907,
+          "text": "Đình chỉ hoạt động đưa người lao động Việt Nam đi làm việc ở nước ngoài của doanh nghiệp Việt Nam trúng thầu, nhận thầu công trình, dự án ở nước ngoài từ 06 tháng đến 12 tháng khi có hành vi vi phạm quy định tại khoản 6, khoản 7, khoản 8 Điều này.",
+          "clause": 9,
+          "point": null
+        },
+        {
+          "source_index": 908,
+          "text": "10. Biện pháp khắc phục hậu quả",
+          "clause": 10,
+          "point": null
+        },
+        {
+          "source_index": 909,
+          "text": "a) Buộc doanh nghiệp Việt Nam trúng thầu, nhận thầu công trình, dự án ở nước ngoài cập nhật thông tin về người lao động trên Hệ thống cơ sở dữ liệu về người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng khi có hành vi vi phạm quy định tại điểm a khoản 1 Điều này;",
+          "clause": 10,
+          "point": "a"
+        },
+        {
+          "source_index": 910,
+          "text": "b) Buộc doanh nghiệp Việt Nam trúng thầu, nhận thầu công trình, dự án ở nước ngoài đưa người lao động về nước hoặc trả chi phí cho người lao động về nước khi có hành vi vi phạm quy định tại điểm a khoản 4 Điều này;",
+          "clause": 10,
+          "point": "b"
+        },
+        {
+          "source_index": 911,
+          "text": "c) Buộc doanh nghiệp Việt Nam trúng thầu, nhận thầu công trình, dự án ở nước ngoài trả chi phí liên quan đến việc tổ chức đưa di hài hoặc thi hài người lao động chết trong thời gian làm việc ở nước ngoài về nước khi có hành vi không trả chi phí liên quan đến việc tổ chức đưa di hài hoặc thi hài người lao động chết trong thời gian làm việc ở nước ngoài về nước quy định tại điểm b khoản 4 Điều này;",
+          "clause": 10,
+          "point": "c"
+        },
+        {
+          "source_index": 912,
+          "text": "d) Buộc doanh nghiệp Việt Nam trúng thầu, nhận thầu công trình, dự án ở nước ngoài trả lại cho người lao động khoản tiền đã thu trái pháp luật của người lao động và khoản tiền lãi của số tiền này tính theo mức lãi suất tiền gửi không kỳ hạn cao nhất của các ngân hàng thương mại nhà nước công bố tại thời điểm xử phạt khi có hành vi vi phạm quy định tại khoản 7 Điều này;",
+          "clause": 10,
+          "point": "d"
+        },
+        {
+          "source_index": 913,
+          "text": "đ) Buộc doanh nghiệp Việt Nam trúng thầu, nhận thầu công trình, dự án ở nước ngoài nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại điểm c khoản 8 Điều này.",
+          "clause": 10,
+          "point": "đ"
+        }
+      ],
+      "references": [],
+      "reference_scope": "positive_only",
+      "context_requirements": []
+    },
+    {
+      "case_id": "NQCT-A004",
+      "document_code": "NQCT",
+      "article": 4,
+      "title": "Quy định về xin nghỉ phép và thông báo vắng mặt",
+      "source_heading_index": 28,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 29,
+          "text": "1. Người lao động khi nghỉ việc (nghỉ phép năm, nghỉ việc riêng, nghỉ không hưởng lương) phải gửi phiếu yêu cầu xin nghỉ trên hệ thống quản trị nhân sự và được cấp quản lý trực tiếp phê duyệt trước theo tiến độ:",
+          "clause": 1,
+          "point": null
+        },
+        {
+          "source_index": 30,
+          "text": "a) Nghỉ từ 01 đến 02 ngày: Báo trước ít nhất 01 ngày làm việc.",
+          "clause": 1,
+          "point": "a"
+        },
+        {
+          "source_index": 31,
+          "text": "b) Nghỉ từ 03 đến 04 ngày: Báo trước ít nhất 03 ngày làm việc.",
+          "clause": 1,
+          "point": "b"
+        },
+        {
+          "source_index": 32,
+          "text": "c) Nghỉ từ 05 ngày trở lên: Báo trước ít nhất 02 tuần (14 ngày).",
+          "clause": 1,
+          "point": "c"
+        },
+        {
+          "source_index": 33,
+          "text": "2. Trường hợp đột xuất (ốm đau bất ngờ, tai nạn, lý do bất khả kháng), người lao động phải thông báo trực tiếp qua điện thoại/email cho quản lý trực tiếp hoặc bộ phận Nhân sự chậm nhất trước 10 giờ 00 phút sáng của ngày nghỉ đó, đồng thời bổ sung đầy đủ giấy tờ chứng minh hợp lệ trong ngày làm việc đầu tiên đi làm trở lại.",
+          "clause": 2,
+          "point": null
+        },
+        {
+          "source_index": 34,
+          "text": "3. Mọi trường hợp vắng mặt không xin phép hoặc không được quản lý phê duyệt hoặc không có lý do chính đáng được coi là tự ý bỏ việc.",
+          "clause": 3,
+          "point": null
+        }
+      ],
+      "references": [],
+      "reference_scope": "positive_only",
+      "context_requirements": []
+    },
+    {
+      "case_id": "NQCT-A008",
+      "document_code": "NQCT",
+      "article": 8,
+      "title": "Phòng, chống quấy rối tình dục tại nơi làm việc",
+      "source_heading_index": 52,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 53,
+          "text": "1. Nghiêm cấm mọi hành vi quấy rối tình dục dưới bất kỳ hình thức nào tại nơi làm việc theo quy định tại Điều 84 Nghị định 145/2020/NĐ-CP.",
+          "clause": 1,
+          "point": null
+        },
+        {
+          "source_index": 54,
+          "text": "2. Trình tự, thủ tục khiếu nại, tố cáo và giải quyết khiếu nại, tố cáo về quấy rối tình dục tại nơi làm việc được thực hiện theo quy định của pháp luật và quy chế nội bộ bảo mật của Công ty.",
+          "clause": 2,
+          "point": null
+        }
+      ],
+      "references": [
+        {
+          "source_quote": "Điều 84 Nghị định 145/2020/NĐ-CP",
+          "target_doc": "145/2020/NĐ-CP",
+          "article": 84,
+          "clause": null,
+          "point": null
+        }
+      ],
+      "reference_scope": "positive_only",
+      "context_requirements": []
+    },
+    {
+      "case_id": "NQCT-A010",
+      "document_code": "NQCT",
+      "article": 10,
+      "title": "Các hình thức xử lý kỷ luật lao động",
+      "source_heading_index": 62,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 63,
+          "text": "1. Khiển trách (bằng miệng hoặc văn bản).",
+          "clause": 1,
+          "point": null
+        },
+        {
+          "source_index": 64,
+          "text": "2. Kéo dài thời hạn nâng lương không quá 06 tháng.",
+          "clause": 2,
+          "point": null
+        },
+        {
+          "source_index": 65,
+          "text": "3. Cách chức.",
+          "clause": 3,
+          "point": null
+        },
+        {
+          "source_index": 66,
+          "text": "4. Sa thải.",
+          "clause": 4,
+          "point": null
+        },
+        {
+          "source_index": 67,
+          "text": "5. Tuyệt đối không áp dụng hình thức phạt tiền, trừ lương thay cho việc xử lý kỷ luật lao động.",
+          "clause": 5,
+          "point": null
+        }
+      ],
+      "references": [],
+      "reference_scope": "positive_only",
+      "context_requirements": []
+    },
+    {
+      "case_id": "NQCT-A013",
+      "document_code": "NQCT",
+      "article": 13,
+      "title": "Áp dụng hình thức Sa thải",
+      "source_heading_index": 83,
+      "review_status": "draft",
+      "reviewer": null,
+      "reviewed_source_sha256": null,
+      "spans": [
+        {
+          "source_index": 84,
+          "text": "1. Người lao động có hành vi trộm cắp, tham ô, đánh bạc, cố ý gây thương tích, sử dụng ma tuý tại nơi làm việc.",
+          "clause": 1,
+          "point": null
+        },
+        {
+          "source_index": 85,
+          "text": "2. Có hành vi tiết lộ bí mật kinh doanh, bí mật công nghệ, xâm phạm quyền sở hữu trí tuệ, quấy rối tình dục.",
+          "clause": 2,
+          "point": null
+        },
+        {
+          "source_index": 86,
+          "text": "3. Bị xử lý kỷ luật kéo dài thời hạn nâng lương hoặc cách chức mà tái phạm trong thời gian chưa xóa kỷ luật.",
+          "clause": 3,
+          "point": null
+        },
+        {
+          "source_index": 87,
+          "text": "4. Tự ý bỏ việc 05 ngày cộng dồn trong 30 ngày hoặc 20 ngày cộng dồn trong 365 ngày không lý do chính đáng.",
+          "clause": 4,
+          "point": null
+        }
+      ],
+      "references": [],
+      "reference_scope": "positive_only",
+      "context_requirements": []
+    }
+  ]
+}
