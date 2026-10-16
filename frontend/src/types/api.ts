@@ -307,6 +307,13 @@ export interface DecisionPreview {
   summary_hint: string | null;
 }
 
+export interface ReturnReason {
+  reviewer_role: "LEGAL" | "MANAGER";
+  reviewer_name: string | null;
+  comment: string | null;
+  returned_at: string;
+}
+
 export interface DecisionView {
   decision_id: string;
   case_id: string;

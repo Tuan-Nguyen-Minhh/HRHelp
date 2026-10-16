@@ -15,7 +15,7 @@ import type {
   IncidentSummary,
 } from "@/types/assessment";
 
-export type EditKey = "case" | "employee" | "incident" | "facts" | "rationale";
+export type EditKey = "case" | "employee" | "incident" | "facts" | "rationale" | "all";
 
 const NAV = [
   ["minutes", "Biên bản"],
@@ -47,6 +47,7 @@ export function DocumentSections({
   onCase,
   onEmployee,
   onIncident,
+  onFacts,
   onRationale,
   onOpen,
 }: {
@@ -65,6 +66,7 @@ export function DocumentSections({
   onOpen: (card: EvidenceCard) => void;
 }) {
   const canEdit = view.permissions.can_edit;
+  const isEditing = (key: EditKey) => editing === key || editing === "all";
   const profile = view.metadata.minutes_profile;
   const employee = sections.employee_information;
   const incident = sections.incident_summary;
@@ -77,6 +79,7 @@ export function DocumentSections({
     cleanMinutesText(sections.assessment_result.summary) ||
     "HR xem xét trên thông tin đã thu thập và căn cứ áp dụng trước khi quyết định hình thức xử lý.";
   const proposed = sections.handling_proposal.proposed_actions.map((item) => item.label).join("; ") || "Chưa xác định do chưa đủ căn cứ.";
+  const handlingText = isEditing("rationale") ? sections.handling_proposal.rationale : sections.handling_proposal.manual_text ?? proposed;
   const basisCards = orderedBasis(sections.citations.length ? sections.citations : sections.evidence_reviewed);
   const evidence = groupedBasis(basisCards);
   return (
@@ -113,6 +116,9 @@ export function DocumentSections({
                     <Button size="sm" variant="secondary" onClick={() => onBegin("rationale")}>
                       Sửa xử phạt
                     </Button>
+                    <Button size="sm" variant="secondary" onClick={() => onBegin("facts")}>
+                      Sửa thông tin xác nhận
+                    </Button>
                   </>
                 )}
               </>
@@ -143,7 +149,7 @@ export function DocumentSections({
                 value={employee.employee_name || ""}
                 uppercase
                 placeholder="........................................"
-                editing={editing === "employee"}
+                editing={isEditing("employee")}
                 onChange={(value) => onEmployee({ ...employee, employee_name: value || null })}
               />
               <EditableLine
@@ -151,21 +157,21 @@ export function DocumentSections({
                 value={employee.employee_code || ""}
                 uppercase
                 placeholder="......................................"
-                editing={editing === "employee"}
+                editing={isEditing("employee")}
                 onChange={(value) => onEmployee({ ...employee, employee_code: value || null })}
               />
               <EditableLine
                 label="Chức vụ/Chức danh"
                 value={employeePosition}
                 placeholder="....................."
-                editing={editing === "employee"}
+                editing={isEditing("employee")}
                 onChange={(value) => onEmployee({ ...employee, position: value || null })}
               />
               <EditableLine
                 label="Phòng ban/Bộ phận"
                 value={employeeDepartment}
                 placeholder="................................."
-                editing={editing === "employee"}
+                editing={isEditing("employee")}
                 onChange={(value) => onEmployee({ ...employee, department: value || null })}
               />
             </div>
@@ -208,7 +214,7 @@ export function DocumentSections({
               label="- Diễn biến sự việc"
               value={incidentNarrative}
               placeholder="...................................................................................................................."
-              editing={editing === "incident" || editing === "case"}
+              editing={isEditing("incident") || editing === "case"}
               bulleted
               onChange={(value) => {
                 if (editing === "case") onCase({ ...info, description: value });
@@ -222,15 +228,15 @@ export function DocumentSections({
               label="- Ý kiến của người bị lập biên bản"
               value={incident.employee_statement}
               placeholder="............................................................................................"
-              editing={editing === "incident"}
+              editing={isEditing("incident")}
               onChange={(value) => onIncident({ ...incident, employee_statement: value })}
             />
             <p>- Kết quả đánh giá: {resultSummary}</p>
             <EditableArea
               label="- Hình thức xử phạt của Ban lãnh đạo"
-              value={proposed}
+              value={handlingText}
               placeholder="......................................................................................."
-              editing={editing === "rationale"}
+              editing={isEditing("rationale")}
               onChange={onRationale}
             />
             <p>- Ý kiến của người làm chứng và đại diện nhân sự công ty:</p>
@@ -246,6 +252,19 @@ export function DocumentSections({
         </div>
       </section>
 
+      {canEdit && isEditing("facts") ? (
+        <Section id="manual-facts" title="Thông tin HR xác nhận">
+          <p className="mb-3 text-sm text-ink-3">Sửa các thông tin đã xác minh. Thay đổi được lưu vào bản nháp trước khi xác nhận lại.</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {sections.confirmed_facts.map((fact, index) => (
+              <label key={fact.fact_key} className="space-y-1 text-sm">
+                <span className="block font-medium">{fact.label}{fact.blocking ? " (cần bổ sung)" : ""}</span>
+                <Input value={fact.value || ""} disabled={saving} onChange={(event) => onFacts(sections.confirmed_facts.map((item, position) => position === index ? { ...item, value: event.target.value || null } : item))} />
+              </label>
+            ))}
+          </div>
+        </Section>
+      ) : null}
       <Section id="evidence" title="V. Căn cứ và tài liệu">
         {sections.evidence_reviewed.length === 0 ? (
           <p className="text-sm text-ink-3">Chưa có đoạn căn cứ trên báo cáo đã lưu.</p>

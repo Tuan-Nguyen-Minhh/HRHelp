@@ -35,6 +35,13 @@ class ReviewView(BaseModel):
     case_status: str
 
 
+class ReturnReason(BaseModel):
+    reviewer_role: Literal["LEGAL", "MANAGER"]
+    reviewer_name: str | None
+    comment: str | None
+    returned_at: datetime
+
+
 class QueueItem(BaseModel):
     case_id: UUID
     case_code: UppercaseText

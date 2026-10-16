@@ -1,17 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { useMe } from "@/app/providers";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { familyLabel, statusLabel } from "@/lib/labels";
+import { CASE_STATUSES, familyLabel, statusLabel } from "@/lib/labels";
 import { formatDate } from "@/lib/utils";
 import { api, errorMessage } from "@/services/api";
-
-const STATUSES = ["", "OPEN", "NEED_INFO", "ANALYZED", "PENDING_LEGAL", "APPROVED", "REJECTED", "DECIDED", "CLOSED"];
 
 export function CasesPage() {
   const me = useMe();
@@ -19,11 +17,23 @@ export function CasesPage() {
   const canCreate = role === "HR";
   const query = useQuery({ queryKey: ["cases"], queryFn: () => api.listCases() });
   const [text, setText] = useState("");
-  const [status, setStatus] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedStatus = searchParams.get("status") ?? "";
+  const status = CASE_STATUSES.includes(requestedStatus) ? requestedStatus : "";
   const [family, setFamily] = useState("");
   const [incidentDate, setIncidentDate] = useState("");
   const [sort, setSort] = useState<"date" | "code" | "employee">("date");
   const [page, setPage] = useState(0);
+
+  function setStatus(value: string) {
+    setPage(0);
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      if (value) next.set("status", value);
+      else next.delete("status");
+      return next;
+    });
+  }
 
   const rows = useMemo(() => {
     const needle = text.trim().toLocaleLowerCase("vi");
@@ -67,11 +77,7 @@ export function CasesPage() {
         <div className="min-w-0 space-y-1.5">
           <Label htmlFor="case-status">Trạng thái</Label>
           <select id="case-status" className="h-10 w-full rounded-md border border-rule bg-white px-2 text-sm" value={status} onChange={(event) => setStatus(event.target.value)}>
-            {STATUSES.map((item) => (
-              <option key={item || "all"} value={item}>
-                {item ? statusLabel(item) : "Mọi trạng thái"}
-              </option>
-            ))}
+            {["", ...CASE_STATUSES].map((item) => <option key={item || "all"} value={item}>{item ? statusLabel(item) : "Mọi trạng thái"}</option>)}
           </select>
         </div>
         <div className="min-w-0 space-y-1.5">

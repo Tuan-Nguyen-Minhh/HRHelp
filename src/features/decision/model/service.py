@@ -23,7 +23,10 @@ from src.features.decision.schema import (
     ManagerQueueItem,
     ManagerQueueResponse,
     PrecedentRequest,
+    RejectDecisionRequest,
 )
+from src.features.legal_review.model.service import stored_review_pack
+from src.features.legal_review.schema import ReviewPack
 from src.models.case_drafts import CaseDraft
 from src.models.cases import Case
 from src.models.disciplinary_decisions import DisciplinaryDecision
@@ -33,6 +36,94 @@ from src.models.users import User
 logger = logging.getLogger(__name__)
 
 _COMPANY_SANCTIONS = frozenset({"WARNING", "REPRIMAND", "WAGE_POSTPONEMENT", "DEMOTION", "DISMISSAL"})
+
+
+async def manager_review_pack(session: AsyncSession, actor: User, case_id: UUID) -> ReviewPack:
+    if actor.role != "MANAGER":
+        raise AppError(403, "Chỉ quản lý được xem gói duyệt cuối.", code="DECISION_NOT_ALLOWED")
+    case = await session.get(Case, case_id)
+    if case is None:
+        raise AppError(404, "Không tìm thấy hồ sơ.", code="CASE_NOT_FOUND")
+    if case.status not in {"APPROVED", "DECIDED", "CLOSED", "REJECTED"}:
+        raise AppError(409, "Hồ sơ chưa tới bước duyệt cuối.", code="DECISION_NOT_ALLOWED")
+    return await stored_review_pack(session, case_id)
+
+
+async def reject_decision(
+    session: AsyncSession,
+    actor: User,
+    case_id: UUID,
+    payload: RejectDecisionRequest,
+    idempotency_key: str | None,
+) -> CloseResponse:
+    """Return the approved packet to HR without overwriting the legal review."""
+    if actor.role != "MANAGER":
+        raise AppError(403, "Chỉ quản lý được từ chối duyệt cuối.", code="DECISION_NOT_ALLOWED")
+    route = f"POST /api/v1/manager/cases/{case_id}/reject"
+    replay = await claim(
+        session,
+        actor_id=actor.id,
+        route=route,
+        key=idempotency_key,
+        body_hash=request_hash(payload.model_dump(mode="json")),
+    )
+    if replay is not None:
+        return CloseResponse.model_validate(replay.body)
+    case = await lock_case(session, case_id)
+    if case is None:
+        raise AppError(404, "Không tìm thấy hồ sơ.", code="CASE_NOT_FOUND")
+    if case.status != "APPROVED":
+        raise AppError(409, "Hồ sơ không còn trong hàng chờ duyệt cuối.", code="DECISION_NOT_ALLOWED")
+    existing = await session.scalar(select(DisciplinaryDecision.id).where(DisciplinaryDecision.case_id == case.id))
+    if existing is not None:
+        raise AppError(409, "Hồ sơ đã có quyết định.", code="DECISION_ALREADY_EXISTS")
+    recommendation = await session.scalar(
+        select(Recommendation)
+        .where(Recommendation.case_id == case.id, Recommendation.status == "APPROVED")
+        .order_by(Recommendation.created_at.desc())
+        .limit(1)
+        .with_for_update()
+    )
+    if recommendation is None:
+        raise AppError(409, "Không có đề xuất đã duyệt để trả về HR.", code="DECISION_NOT_ALLOWED")
+    drafts = list(
+        (await session.scalars(select(CaseDraft).where(CaseDraft.recommendation_id == recommendation.id))).all()
+    )
+    assert_transition(case.status, "REJECTED")
+    case.status = recommendation.status = "REJECTED"
+    for draft in drafts:
+        draft.status = "REJECTED"
+    await write_audit(
+        session,
+        case_id=case.id,
+        actor_id=actor.id,
+        actor_role=actor.role,
+        action="MANAGER_REJECTED",
+        entity_type="recommendations",
+        entity_id=recommendation.id,
+        before={"status": "APPROVED"},
+        after={"status": "REJECTED"},
+        metadata={"comment": payload.comment},
+    )
+    await notify(
+        session,
+        user_id=case.created_by,
+        event="MANAGER_REJECTED",
+        title="Quản lý không duyệt hồ sơ",
+        body=f"Hồ sơ {case.case_code} cần HR xử lý lại. {payload.comment}",
+        case_id=case.id,
+    )
+    view = CloseResponse(case_id=case.id, status=case.status)
+    await complete(
+        session,
+        actor_id=actor.id,
+        route=route,
+        key=idempotency_key,
+        status_code=200,
+        body=view.model_dump(mode="json"),
+    )
+    await session.commit()
+    return view
 
 
 async def manager_queue(session: AsyncSession, actor: User) -> ManagerQueueResponse:
@@ -61,6 +152,8 @@ async def manager_queue(session: AsyncSession, actor: User) -> ManagerQueueRespo
 async def decision_preview(session: AsyncSession, actor: User, case_id: UUID) -> DecisionPreview:
     """Show the approved decision draft. The sanction is the one legal already approved."""
     case, recommendation, draft = await _approved_bundle(session, actor, case_id, lock=False)
+    if recommendation.sanction_type not in _COMPANY_SANCTIONS:
+        raise AppError(409, "Đề xuất đã duyệt không có mức kỷ luật để ban hành.", code="DECISION_NOT_ALLOWED")
     return DecisionPreview(
         case_id=case.id,
         case_status=case.status,
@@ -298,8 +391,14 @@ async def _approved_bundle(
             .limit(1)
         )
     ).scalar_one_or_none()
-    if recommendation is None or not recommendation.sanction_type:
+    if recommendation is None:
         raise AppError(409, "Không có đề xuất đã duyệt để ban hành.", code="DECISION_NOT_ALLOWED")
+    if not recommendation.sanction_type:
+        raise AppError(
+            409,
+            "Báo cáo chưa xác định mức kỷ luật. HR cần bổ sung trước khi ban hành quyết định.",
+            code="DECISION_NOT_ALLOWED",
+        )
     draft = (
         await session.execute(
             select(CaseDraft).where(

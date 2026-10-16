@@ -10,7 +10,7 @@ const CAPABILITIES = [
   { icon: FilePenLine, title: "Biên bản và phiếu pháp chế", description: "Soạn bản nháp để bạn sửa, xuất Word và chuẩn bị phiếu pháp chế khi đủ điều kiện." },
 ];
 
-export function MessageList({ messages }: { messages: ChatMessage[] }) {
+export function MessageList({ messages, revealing = false }: { messages: ChatMessage[]; revealing?: boolean }) {
   const visibleMessages = messages.filter((message) => message.role !== "system");
 
   if (!visibleMessages.length) {
@@ -49,7 +49,7 @@ export function MessageList({ messages }: { messages: ChatMessage[] }) {
   }
 
   return (
-    <div className="space-y-3" aria-live="polite">
+    <div className="space-y-3" aria-live="polite" aria-busy={revealing}>
       {visibleMessages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}

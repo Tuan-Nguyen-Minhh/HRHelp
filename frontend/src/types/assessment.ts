@@ -80,6 +80,7 @@ export interface HandlingProposal {
   confidence: string;
   requires_legal_review: boolean;
   rationale: string;
+  manual_text?: string | null;
 }
 
 export interface MissingItem {

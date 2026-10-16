@@ -1,3 +1,5 @@
+export const CASE_STATUSES = ["OPEN", "NEED_INFO", "ANALYZED", "PENDING_LEGAL", "APPROVED", "REJECTED", "DECIDED", "CLOSED"];
+
 export const STATUS_LABEL: Record<string, string> = {
   OPEN: "Mới mở",
   NEED_INFO: "Cần bổ sung",

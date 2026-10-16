@@ -23,6 +23,7 @@ import type {
   RegisterBody,
   ReviewPack,
   ReviewView,
+  ReturnReason,
   StaffAccount,
   StaffWrite,
   TimelineResponse,
@@ -204,6 +205,20 @@ export const api = {
   },
   async managerQueue(): Promise<{ cases: QueueItem[] }> {
     const response = await http.get<{ cases: QueueItem[] }>("/manager/queue");
+    return response.data;
+  },
+  async latestReturnReason(caseId: string): Promise<ReturnReason | null> {
+    const response = await http.get<ReturnReason | null>(`/cases/${caseId}/returns/latest`);
+    return response.data;
+  },
+  async managerReviewPack(caseId: string): Promise<ReviewPack> {
+    const response = await http.get<ReviewPack>(`/manager/cases/${caseId}/review-pack`);
+    return response.data;
+  },
+  async rejectDecision(caseId: string, comment: string, idempotencyKey: string): Promise<{ case_id: string; status: string }> {
+    const response = await http.post<{ case_id: string; status: string }>(
+      `/manager/cases/${caseId}/reject`, { comment }, { headers: { "Idempotency-Key": idempotencyKey } },
+    );
     return response.data;
   },
   async staffAccounts(): Promise<{ users: StaffAccount[] }> {

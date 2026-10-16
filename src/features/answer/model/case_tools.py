@@ -232,6 +232,7 @@ def disciplinary_minutes_document(
     )
     result_summary = _assessment_result_summary(sections)
     proposal = _first(
+        None if handling is None else handling.manual_text,
         _handling_level(handling),
         None if sections is not None or handling is None else handling.rationale,
         None if answer is None or not answer.sanction_type else _sanction(answer),

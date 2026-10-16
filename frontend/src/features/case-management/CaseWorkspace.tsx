@@ -4,6 +4,7 @@ import { Link, Outlet, useLocation, useNavigate, useParams } from "react-router-
 
 import { Sheet } from "@/components/ui/sheet";
 import { ConversationPanel } from "@/features/conversation/ConversationPanel";
+import { useReplyReveal } from "@/features/conversation/useReplyReveal";
 import { CASE_SECTIONS } from "@/features/case-management/case-navigation";
 import { clearIdempotency, idempotencyKey } from "@/lib/idempotency";
 import { isRawHandoffMessage } from "@/lib/report";
@@ -28,6 +29,8 @@ interface WorkspaceValue {
   agent: AgentEvent | null;
   error: string | null;
   sending: boolean;
+  revealing: boolean;
+  finishReply: () => void;
   sendingTicket: boolean;
   failedDraft: string | null;
   send: (content: string) => Promise<void>;
@@ -67,6 +70,8 @@ export function CaseWorkspace() {
   const [chatNode, setChatNode] = useState<HTMLTextAreaElement | null>(null);
   const serverSyncedAt = useRef(0);
   const sendingLocked = useRef(false);
+  const { reply, start: revealReply, finish: finishReply } = useReplyReveal(caseId);
+  const revealing = reply !== null;
 
   useEffect(() => {
     if (selectedPanel) lastPanel.current = selectedPanel.path;
@@ -142,10 +147,13 @@ export function CaseWorkspace() {
       commitMessages(next);
     },
     onSuccess: (turn) => {
+      if (turn.case_id !== caseId) return;
       applyTurn(turn);
       const next = loadMessages(caseId).filter((item) => item.id !== "pending");
       if (!isRawHandoffMessage(turn.assistant_message)) {
-        next.push({ id: crypto.randomUUID(), role: "assistant", text: turn.assistant_message, at: new Date().toISOString() });
+        const message: ChatMessage = { id: crypto.randomUUID(), role: "assistant", text: turn.assistant_message, at: new Date().toISOString() };
+        next.push(message);
+        revealReply(message);
       }
       commitMessages(next);
       serverSyncedAt.current = Date.now();
@@ -172,10 +180,13 @@ export function CaseWorkspace() {
     mutationFn: ({ factKey, factValue }: { factKey: string; factValue: string }) =>
       api.confirmFacts(caseId, [{ fact_key: factKey, fact_value: factValue, confirmed: true }]),
     onSuccess: (turn) => {
+      if (turn.case_id !== caseId) return;
       applyTurn(turn);
       if (turn.assistant_message && !isRawHandoffMessage(turn.assistant_message)) {
         const next = loadMessages(caseId);
-        next.push({ id: crypto.randomUUID(), role: "assistant", text: turn.assistant_message, at: new Date().toISOString() });
+        const message: ChatMessage = { id: crypto.randomUUID(), role: "assistant", text: turn.assistant_message, at: new Date().toISOString() };
+        next.push(message);
+        revealReply(message);
         commitMessages(next);
         serverSyncedAt.current = Date.now();
       }
@@ -218,7 +229,9 @@ export function CaseWorkspace() {
 
   useEffect(() => {
     const rows = messageQuery.data?.messages;
-    if (!rows || sendMutation.isPending || confirmMutation.isPending) return;
+    // A refetch assigns server IDs. Wait until display completes so it cannot
+    // replace the partial reply with the complete text halfway through.
+    if (!rows || sendMutation.isPending || confirmMutation.isPending || revealing) return;
     if (messageQuery.dataUpdatedAt < serverSyncedAt.current) return;
     const mapped: ChatMessage[] = rows
       .map((item) => ({
@@ -230,7 +243,7 @@ export function CaseWorkspace() {
       .filter((item) => !isRawHandoffMessage(item.text));
     saveMessages(caseId, mapped);
     setMessages(mapped);
-  }, [messageQuery.data, messageQuery.dataUpdatedAt, sendMutation.isPending, confirmMutation.isPending, caseId]);
+  }, [messageQuery.data, messageQuery.dataUpdatedAt, sendMutation.isPending, confirmMutation.isPending, revealing, caseId]);
 
   if (caseQuery.isLoading) {
     return <div className="space-y-2" role="status" aria-label="Đang tải hồ sơ"><div className="skeleton h-24" aria-hidden="true" /><div className="skeleton h-40" aria-hidden="true" /></div>;
@@ -256,15 +269,17 @@ export function CaseWorkspace() {
     answerLoading: answerQuery.isLoading,
     answerError: answerQuery.isError ? errorMessage(answerQuery.error) : null,
     handoff,
-    messages,
+    messages: reply ? messages.map((message) => message.id === reply.id ? { ...message, text: reply.text } : message) : messages,
     agent,
     error,
-    sending: sendMutation.isPending,
+    sending: sendMutation.isPending || revealing,
+    revealing,
+    finishReply,
     sendingTicket: ticketMutation.isPending,
     failedDraft,
     needsLockedFactsPrompt,
     async send(content) {
-      if (sendingLocked.current) return;
+      if (sendingLocked.current || revealing) return;
       sendingLocked.current = true;
       try {
         await sendMutation.mutateAsync({ content, echo: true });
@@ -273,7 +288,7 @@ export function CaseWorkspace() {
       }
     },
     async retry() {
-      if (!failedDraft || sendingLocked.current) return;
+      if (!failedDraft || sendingLocked.current || revealing) return;
       sendingLocked.current = true;
       try {
         await sendMutation.mutateAsync({ content: failedDraft, echo: false });

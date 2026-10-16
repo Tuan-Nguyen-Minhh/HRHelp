@@ -9,11 +9,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.common.deps import get_actor, get_session
 from src.core.security.guards import require_permissions
 from src.core.security.rbac import PermissionEnum
-from src.features.legal_review.model.service import latest_review, review_pack, review_queue, submit_review
-from src.features.legal_review.schema import QueueResponse, ReviewPack, ReviewRequest, ReviewView
+from src.features.legal_review.model.service import (
+    latest_return_reason,
+    latest_review,
+    review_pack,
+    review_queue,
+    submit_review,
+)
+from src.features.legal_review.schema import QueueResponse, ReturnReason, ReviewPack, ReviewRequest, ReviewView
 from src.models.users import User
 
 router = APIRouter(tags=["Pháp chế"])
+
+
+@router.get("/cases/{case_id}/returns/latest", response_model=ReturnReason | None)
+async def get_latest_return(
+    case_id: UUID,
+    actor: Annotated[User, Depends(get_actor)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    _: Annotated[dict, Depends(require_permissions(PermissionEnum.CASE_READ))],
+) -> ReturnReason | None:
+    return await latest_return_reason(session, actor, case_id)
 
 
 @router.get("/legal/reviews/queue", response_model=QueueResponse)

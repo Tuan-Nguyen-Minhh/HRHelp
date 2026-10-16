@@ -48,9 +48,7 @@ async def case_timeline(session: AsyncSession, actor: User, case_id: UUID) -> Ti
                     entity_id=message.id,
                 )
             )
-        runs = list(
-            (await session.scalars(select(AgentRun).where(AgentRun.conversation_id == conversation_id))).all()
-        )
+        runs = list((await session.scalars(select(AgentRun).where(AgentRun.conversation_id == conversation_id))).all())
         for run in runs:
             events.append(
                 TimelineEvent(
@@ -102,7 +100,8 @@ async def case_timeline(session: AsyncSession, actor: User, case_id: UUID) -> Ti
             TimelineEvent(
                 at=row.decided_at,
                 kind="LEGAL_APPROVED" if row.decision == "APPROVE" else "LEGAL_REJECTED",
-                label=row.comment or ("Pháp chế đã duyệt" if row.decision == "APPROVE" else "Pháp chế yêu cầu xử lý lại"),
+                label=row.comment
+                or ("Pháp chế đã duyệt" if row.decision == "APPROVE" else "Pháp chế yêu cầu xử lý lại"),
                 entity_type="reviews",
                 entity_id=row.id,
             )
@@ -124,7 +123,11 @@ async def case_timeline(session: AsyncSession, actor: User, case_id: UUID) -> Ti
             TimelineEvent(
                 at=row.created_at,
                 kind=row.action,
-                label=row.action,
+                label=(
+                    f"Quản lý không duyệt: {(row.audit_metadata or {}).get('comment', '')}"
+                    if row.action == "MANAGER_REJECTED"
+                    else row.action
+                ),
                 entity_type=row.entity_type,
                 entity_id=row.entity_id,
             )

@@ -86,5 +86,5 @@ async def post_reanalyze(
     session: Annotated[AsyncSession, Depends(get_session)],
     _: Annotated[dict, Depends(require_permissions(PermissionEnum.CASE_CHAT))],
 ) -> AssessmentView:
-    """Lập lại biên bản từ tình tiết và căn cứ mới nhất. Phiên bản cũ được giữ."""
+    """Tạo bản nháp HR từ biên bản cũ để chỉnh sửa thủ công; không chạy lại AI."""
     return await reanalyze_assessment(session, actor, case_id)

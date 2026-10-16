@@ -7,7 +7,7 @@ import { MessageInput } from "@/features/conversation/MessageInput";
 import { MessageList } from "@/features/conversation/MessageList";
 
 export function ConversationPanel() {
-  const { messages, answer, sending, error, needsLockedFactsPrompt, caseId } = useWorkspace();
+  const { messages, answer, sending, revealing, finishReply, error, needsLockedFactsPrompt, caseId } = useWorkspace();
   const scrollRef = useRef<HTMLDivElement>(null);
   const following = useRef(true);
   const latestId = useRef<string | undefined>(undefined);
@@ -32,7 +32,7 @@ export function ConversationPanel() {
           setAtBottom(nearBottom);
         }}>
           <div className="mx-auto w-full max-w-3xl px-4 py-6 md:px-6 md:py-8">
-            <MessageList messages={messages} />
+            <MessageList messages={messages} revealing={revealing} />
             {answer ? (
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link className="inline-flex items-center gap-2 rounded-full border border-rule bg-white px-3 py-2 text-xs font-medium text-ink-2 hover:bg-paper-2" to={`/cases/${caseId}/assessment`}><FileCheck2 className="h-3.5 w-3.5 text-son" aria-hidden="true" />Mở biên bản</Link>
@@ -52,7 +52,12 @@ export function ConversationPanel() {
       </div>
       <div className="shrink-0 bg-paper px-3 pb-3 pt-2 md:px-6 md:pb-4">
         <div className="mx-auto w-full max-w-3xl">
-          {sending ? <p className="mb-2 flex items-center gap-2 px-2 text-xs text-ink-3" role="status"><LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />Trợ lý đang xử lý…</p> : null}
+          {revealing ? (
+            <div className="mb-2 flex items-center justify-between gap-2 px-2 text-xs text-ink-3">
+              <p role="status">Đang hiển thị câu trả lời…</p>
+              <button type="button" className="font-medium text-son-dark underline" onClick={finishReply}>Hiện toàn bộ</button>
+            </div>
+          ) : sending ? <p className="mb-2 flex items-center gap-2 px-2 text-xs text-ink-3" role="status"><LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />Trợ lý đang xử lý…</p> : null}
           {error ? <p className="mb-2 rounded-lg bg-son-tint px-3 py-2 text-xs text-son-dark" role="alert">{error}</p> : null}
           {needsLockedFactsPrompt ? <p className="mb-2 px-2 text-xs text-ink-3">Cần xác nhận tình tiết trước khi lập biên bản. <Link className="font-medium text-son-dark underline" to={`/cases/${caseId}/facts`}>Bổ sung tình tiết</Link></p> : null}
           <MessageInput />

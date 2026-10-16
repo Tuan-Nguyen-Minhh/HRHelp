@@ -7,8 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.common.access import require_case_access
 from src.common.audit import write_audit
+from src.common.clock import vietnam_date
 from src.common.errors import AppError
 from src.common.idempotency import claim, complete, request_hash
+from src.common.minutes_profile import minutes_profile
 from src.common.notify import notify, notify_managers
 from src.common.workflow import CaseAccessLevel, assert_transition, lock_case
 from src.features.answer.model.answers import load_stored
@@ -21,7 +23,15 @@ from src.features.assessment.schemas import (
 )
 from src.features.assessment.service import ticket_allowed
 from src.features.assessment.validator import validate_sections
-from src.features.legal_review.schema import QueueItem, QueueResponse, ReviewPack, ReviewRequest, ReviewView
+from src.features.legal_review.schema import (
+    QueueItem,
+    QueueResponse,
+    ReturnReason,
+    ReviewPack,
+    ReviewRequest,
+    ReviewView,
+)
+from src.models.audit_logs import AuditLog
 from src.models.case_drafts import CaseDraft
 from src.models.cases import Case
 from src.models.recommendations import Recommendation
@@ -53,6 +63,11 @@ async def review_queue(session: AsyncSession, actor: User) -> QueueResponse:
 async def review_pack(session: AsyncSession, actor: User, case_id: UUID) -> ReviewPack:
     """Read the stored assessment and drafts. This does not run an agent."""
     _require_legal(actor)
+    return await stored_review_pack(session, case_id)
+
+
+async def stored_review_pack(session: AsyncSession, case_id: UUID) -> ReviewPack:
+    """Build a read-only packet after the caller has checked its review role."""
     case = await session.get(Case, case_id)
     if case is None:
         raise AppError(404, "Không tìm thấy hồ sơ.", code="CASE_NOT_FOUND")
@@ -195,6 +210,46 @@ async def latest_review(session: AsyncSession, actor: User, case_id: UUID) -> Re
     )
 
 
+async def latest_return_reason(session: AsyncSession, actor: User, case_id: UUID) -> ReturnReason | None:
+    """The newest manager or legal rejection, including reviews predating audits."""
+    case = await session.get(Case, case_id)
+    if case is None:
+        raise AppError(404, "Không tìm thấy hồ sơ.", code="CASE_NOT_FOUND")
+    await require_case_access(session, actor, case, CaseAccessLevel.VIEW)
+    audit = await session.scalar(
+        select(AuditLog)
+        .where(
+            AuditLog.case_id == case.id,
+            AuditLog.action.in_(("LEGAL_REJECTED", "MANAGER_REJECTED")),
+        )
+        .order_by(AuditLog.created_at.desc())
+        .limit(1)
+    )
+    review = await session.scalar(
+        select(Review)
+        .where(Review.case_id == case.id, Review.decision == "REJECT")
+        .order_by(Review.decided_at.desc())
+        .limit(1)
+    )
+    if review is not None and (audit is None or review.decided_at > audit.created_at):
+        reviewer = await session.get(User, review.reviewer_id)
+        return ReturnReason(
+            reviewer_role="LEGAL",
+            reviewer_name=None if reviewer is None else reviewer.full_name,
+            comment=review.comment,
+            returned_at=review.decided_at,
+        )
+    if audit is None:
+        return None
+    reviewer = await session.get(User, audit.actor_id) if audit.actor_id else None
+    return ReturnReason(
+        reviewer_role="MANAGER" if audit.action == "MANAGER_REJECTED" else "LEGAL",
+        reviewer_name=None if reviewer is None else reviewer.full_name,
+        comment=(audit.audit_metadata or {}).get("comment"),
+        returned_at=audit.created_at,
+    )
+
+
 def _require_legal(actor: User) -> None:
     if actor.role != "LEGAL":
         raise AppError(403, "Chỉ pháp chế được duyệt phiếu.", code="REVIEW_NOT_ALLOWED")
@@ -240,6 +295,8 @@ async def _assessment_view(session: AsyncSession, case: Case, answer) -> Assessm
         ),
         metadata=AssessmentMetadata(
             generated_at=version.created_at,
+            case_created_date=vietnam_date(case.created_at),
+            minutes_profile=minutes_profile(case.case_code, case.created_at),
             source="HR" if version.source == "HR" else "AI",
             recommendation_id=report.recommendation_id,
             prompt_version="assessment-form-v1",

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Bot, FileSearch, Gavel, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, Scale, ScrollText, ShieldCheck, Upload } from "lucide-react";
+import { Bell, Bot, FileSearch, Gavel, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, Scale, ScrollText, ShieldCheck, Upload, Users } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Link, matchPath, NavLink, Outlet, useLocation } from "react-router-dom";
 
@@ -23,7 +23,7 @@ const NAV: NavItem[] = [
   { to: "/dashboard", label: "Bảng điều khiển", icon: LayoutDashboard, roles: ["HR", "MANAGER", "LEGAL", "SIGNER", "ADMIN"] },
   { to: "/cases", label: "Hồ sơ HR", icon: FileSearch, roles: ["HR", "ADMIN"] },
   { to: "/legal-review", label: "Pháp chế", icon: Scale, roles: ["LEGAL"] },
-  { to: "/manager", label: "Duyệt cuối", icon: Gavel, roles: ["MANAGER"] },
+  { to: "/manager", label: "Quản lý tài khoản", icon: Users, roles: ["MANAGER"] },
   { to: "/decisions", label: "Quyết định", icon: Gavel, roles: ["SIGNER", "ADMIN"] },
   { to: "/notifications", label: "Thông báo", icon: Bell, roles: ["HR", "MANAGER", "LEGAL", "SIGNER", "ADMIN"] },
   { to: "/admin/ingestion", label: "Nạp văn bản", icon: Upload, roles: ["ADMIN"] },
@@ -116,6 +116,7 @@ export function AppShell() {
             <NavLink
               key={item.to}
               to={item.to}
+              end={item.to === "/manager"}
               title={collapsed ? item.label : undefined}
               aria-label={item.label}
               onClick={(event) => openPanel(event, item.to)}

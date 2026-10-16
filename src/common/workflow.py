@@ -14,7 +14,7 @@ TRANSITIONS: dict[str, frozenset[str]] = {
     "NEED_INFO": frozenset({"NEED_INFO", "ANALYZED"}),
     "ANALYZED": frozenset({"NEED_INFO", "PENDING_LEGAL", "APPROVED"}),
     "PENDING_LEGAL": frozenset({"APPROVED", "REJECTED"}),
-    "APPROVED": frozenset({"DECIDED"}),
+    "APPROVED": frozenset({"DECIDED", "REJECTED"}),
     "REJECTED": frozenset({"NEED_INFO", "ANALYZED"}),
     "DECIDED": frozenset({"CLOSED"}),
     "CLOSED": frozenset(),

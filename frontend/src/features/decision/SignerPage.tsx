@@ -19,7 +19,7 @@ export function SignerPage() {
   const location = useLocation();
   const me = useMe();
   const manager = location.pathname.startsWith("/manager");
-  const back = manager ? "/manager" : "/decisions";
+  const back = manager ? "/dashboard" : "/decisions";
   const canMarkPrecedent = me.data?.role === "SIGNER" || me.data?.role === "ADMIN";
   const queryClient = useQueryClient();
   const preview = useQuery({
@@ -81,7 +81,7 @@ export function SignerPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <Link className="text-sm text-son-dark underline" to={back}>
-        {manager ? "Hàng chờ duyệt cuối" : "Danh sách quyết định"}
+        {manager ? "Bảng điều khiển" : "Danh sách quyết định"}
       </Link>
       <h1 className="text-2xl font-semibold text-ink">{manager ? "Duyệt lần cuối" : "Ban hành quyết định"}</h1>
       {error ? <p className="text-sm text-son-dark">{error}</p> : null}

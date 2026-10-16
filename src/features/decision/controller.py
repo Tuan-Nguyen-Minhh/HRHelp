@@ -14,7 +14,9 @@ from src.features.decision.model.service import (
     decision_preview,
     issue_decision,
     manager_queue,
+    manager_review_pack,
     mark_precedent,
+    reject_decision,
 )
 from src.features.decision.schema import (
     CloseResponse,
@@ -23,11 +25,51 @@ from src.features.decision.schema import (
     IssueDecisionRequest,
     ManagerQueueResponse,
     PrecedentRequest,
+    RejectDecisionRequest,
 )
+from src.features.legal_review.schema import ReviewPack
 from src.models.users import User
 
 router = APIRouter(prefix="/cases", tags=["Quyết định"])
 manager_router = APIRouter(tags=["Quản lý"])
+
+
+@manager_router.get("/manager/cases/{case_id}/review-pack", response_model=ReviewPack)
+async def get_manager_review_pack(
+    case_id: UUID,
+    actor: Annotated[User, Depends(get_actor)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    _: Annotated[
+        dict,
+        Depends(
+            require_roles_and_permissions(
+                RoleEnum.MANAGER,
+                permissions=(PermissionEnum.DECISION_READ,),
+            )
+        ),
+    ],
+) -> ReviewPack:
+    return await manager_review_pack(session, actor, case_id)
+
+
+@manager_router.post("/manager/cases/{case_id}/reject", response_model=CloseResponse)
+async def post_manager_reject(
+    case_id: UUID,
+    payload: RejectDecisionRequest,
+    actor: Annotated[User, Depends(get_actor)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    _: Annotated[
+        dict,
+        Depends(
+            require_roles_and_permissions(
+                RoleEnum.MANAGER,
+                permissions=(PermissionEnum.DECISION_ISSUE,),
+            )
+        ),
+    ],
+    idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
+) -> CloseResponse:
+    return await reject_decision(session, actor, case_id, payload, idempotency_key)
 
 
 @manager_router.get("/manager/queue", response_model=ManagerQueueResponse)
