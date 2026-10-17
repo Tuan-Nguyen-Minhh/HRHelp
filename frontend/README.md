@@ -16,6 +16,7 @@ Frontend React cho luồng hồ sơ kỷ luật. Màn hình gọi API hiện có
 
 - Bấm **hình trợ lý nổi ở góc phải dưới** để mở chat ngay trên trang đang xem, không cần tạo hồ sơ. Khung chat giữ nội dung khi thu nhỏ hoặc chuyển trang, có lịch sử hội thoại riêng, hỏi quy định nội bộ, tra cứu nguồn công khai và trò chuyện. Tra cứu quy định tự dùng ngày hiện tại tại Việt Nam.
 - Đăng nhập, đăng ký, tạo hồ sơ, hội thoại, đọc tình tiết và báo cáo.
+- Khung đăng nhập có bốn tài khoản demo (quản trị viên, quản lý, HR, pháp chế). Chọn vai trò để điền sẵn email/mật khẩu rồi bấm Đăng nhập. Các tài khoản dùng mật khẩu demo từ `scripts/seed_demo_users.py`; chạy script này sau migration nếu cơ sở dữ liệu chưa có tài khoản demo.
 - Đẩy phiếu khi `ticket.disposition` là `PREVIEW`.
 - Tách luật, nghị định hướng dẫn, nội quy, tiền lệ và xử phạt hành chính theo lớp của báo cáo.
 - Không chốt mức kỷ luật, không xếp mức, không tự tính bước đi của hồ sơ ngoài `case.status` và `ticket.disposition`.

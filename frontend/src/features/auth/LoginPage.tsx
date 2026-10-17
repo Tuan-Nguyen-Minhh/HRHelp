@@ -32,6 +32,14 @@ type RegisterValues = z.infer<typeof registerSchema>;
 
 const ROLE_LABEL: Record<string, string> = { HR: "Nhân sự", MANAGER: "Quản lý", LEGAL: "Pháp chế" };
 
+const DEMO_PASSWORD = "Demo-hr-2026";
+const DEMO_ACCOUNTS = [
+  { label: "Quản trị viên", email: "admin.demo@vinuni.edu.vn" },
+  { label: "Quản lý", email: "manager.demo@vinuni.edu.vn" },
+  { label: "Nhân sự", email: "hr.demo@vinuni.edu.vn" },
+  { label: "Pháp chế", email: "legal.demo@vinuni.edu.vn" },
+];
+
 const CHAT_ROLE_LABEL: Record<string, string> = { user: "Nhân sự", assistant: "Trợ lý", system: "Trạng thái" };
 
 const FLOW_READS = [
@@ -69,6 +77,7 @@ export function LoginPage() {
     defaultValues: { email: "", password: "", full_name: "", role: "HR" },
   });
   const busy = loginForm.formState.isSubmitting || registerForm.formState.isSubmitting;
+  const selectedDemo = DEMO_ACCOUNTS.find((account) => account.email === loginForm.watch("email"));
 
   useEffect(() => {
     const scope = rootRef.current;
@@ -925,6 +934,36 @@ export function LoginPage() {
                 </button>
               </form>
             )}
+            {mode === "login" ? (
+              <section className="demo-accounts" aria-labelledby="demo-accounts-title">
+                <h4 id="demo-accounts-title">Dùng thử với tài khoản demo</h4>
+                <p className="demo-hint" aria-live="polite">
+                  {selectedDemo
+                    ? `Đã điền tài khoản ${selectedDemo.label.toLowerCase()}. Nhấn Đăng nhập để tiếp tục.`
+                    : "Chọn vai trò để điền sẵn email và mật khẩu."}
+                </p>
+                <div className="demo-account-grid">
+                  {DEMO_ACCOUNTS.map((account) => (
+                    <button
+                      key={account.email}
+                      type="button"
+                      className="demo-account"
+                      aria-pressed={selectedDemo?.email === account.email}
+                      disabled={busy}
+                      onClick={() => {
+                        setError(null);
+                        loginForm.reset({ email: account.email, password: DEMO_PASSWORD });
+                      }}
+                    >
+                      <span className="demo-account-role">
+                        {account.label}<span aria-hidden="true">↗</span>
+                      </span>
+                      <span className="demo-account-email">{account.email}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ) : null}
             <p className="swap">
               <span>{mode === "login" ? "Chưa có tài khoản?" : "Đã có tài khoản?"}</span>{" "}
               <button type="button" onClick={() => switchMode(mode === "login" ? "register" : "login")}>
