@@ -17,6 +17,8 @@ from src.features.clarify.model.intent import IntentDecision, IntentFallback, In
 from src.features.clarify.model.route_rules import detect_route_hypotheses
 from src.features.clarify.model.system_help import HelpTopic, answer_system_help
 
+pytestmark = pytest.mark.usefixtures("approved_help_reply")
+
 
 def decision(route=Route.CASE_QA, **kwargs):
     return IntentDecision(route=route, intent_label="test_intent", confidence=0.95, **kwargs)

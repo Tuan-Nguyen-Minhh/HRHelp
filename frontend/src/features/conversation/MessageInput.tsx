@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowUp, LoaderCircle } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useId, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -16,12 +16,6 @@ const schema = z.object({
 export function MessageInput() {
   const workspace = useWorkspace();
   const open = MUTABLE_CASE_STATUS.has(workspace.caseView.status);
-  const form = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema), defaultValues: { content: "" } });
-  const field = form.register("content");
-
-  useEffect(() => {
-    if (workspace.failedDraft) form.setValue("content", workspace.failedDraft);
-  }, [workspace.failedDraft, form]);
 
   if (!open) {
     return (
@@ -31,62 +25,84 @@ export function MessageInput() {
     );
   }
 
+  return <ChatComposer sending={workspace.sending} send={workspace.send} failedDraft={workspace.failedDraft} retry={workspace.retry} registerChat={workspace.registerChat} />;
+}
+
+interface ChatComposerProps {
+  sending: boolean;
+  send: (content: string) => Promise<void>;
+  failedDraft?: string | null;
+  retry?: () => Promise<void>;
+  registerChat?: (node: HTMLTextAreaElement | null) => void;
+  placeholder?: string;
+}
+
+export function ChatComposer({ sending, send, failedDraft, retry, registerChat, placeholder = "Nhập tình tiết hoặc câu trả lời…" }: ChatComposerProps) {
+  const contentId = useId();
+  const form = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema), defaultValues: { content: "" } });
+  const field = form.register("content");
+  const submitting = useRef(false);
+
+  useEffect(() => {
+    if (failedDraft) form.setValue("content", failedDraft);
+  }, [failedDraft, form]);
+
+  const submit = form.handleSubmit(async (values) => {
+    if (sending || submitting.current) return;
+    submitting.current = true;
+    try {
+      await send(values.content);
+      form.reset({ content: "" });
+    } catch (error) {
+      form.setError("content", { message: errorMessage(error) });
+    } finally {
+      submitting.current = false;
+    }
+  });
+
   return (
     <form
       className="rounded-3xl border border-rule bg-white px-4 py-3 shadow-sm focus-within:border-rule-2 focus-within:ring-2 focus-within:ring-son/15"
-      onSubmit={form.handleSubmit(async (values) => {
-        try {
-          await workspace.send(values.content);
-          form.reset({ content: "" });
-        } catch (error) {
-          form.setError("content", { message: errorMessage(error) });
-        }
-      })}
+      onSubmit={submit}
     >
-      <label className="sr-only" htmlFor="chat-content">
+      <label className="sr-only" htmlFor={contentId}>
         Nội dung trả lời
       </label>
       <textarea
-        id="chat-content"
+        id={contentId}
+        data-chat-content
         rows={2}
-        placeholder="Nhập tình tiết hoặc câu trả lời…"
-        disabled={workspace.sending}
+        placeholder={placeholder}
+        disabled={sending}
         className="block max-h-40 min-h-14 w-full resize-none border-0 bg-transparent px-1 py-1 text-sm leading-6 text-ink placeholder:text-ink-4 focus-visible:outline-none disabled:opacity-60"
         {...field}
         ref={(node) => {
           field.ref(node);
-          workspace.registerChat(node);
+          registerChat?.(node);
         }}
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
             event.preventDefault();
-            void form.handleSubmit(async (values) => {
-              try {
-                await workspace.send(values.content);
-                form.reset({ content: "" });
-              } catch (error) {
-                form.setError("content", { message: errorMessage(error) });
-              }
-            })();
+            void submit();
           }
         }}
       />
       <div className="mt-2 flex items-center justify-between gap-2">
         <p className="text-[10px] leading-4 text-ink-3">{form.formState.errors.content?.message || "Enter để gửi · Shift+Enter xuống dòng"}</p>
         <div className="flex gap-2">
-          {workspace.failedDraft ? (
+          {failedDraft && retry ? (
             <Button
               variant="secondary"
               size="sm"
-              disabled={workspace.sending}
-              onClick={() => void workspace.retry().catch(() => undefined)}
+              disabled={sending}
+              onClick={() => void retry().catch(() => undefined)}
             >
               Gửi lại
             </Button>
           ) : null}
-          <Button className="h-9 w-9 shrink-0 rounded-full p-0" type="submit" size="icon" disabled={workspace.sending} title="Gửi tin nhắn">
-            {workspace.sending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ArrowUp className="h-4 w-4" aria-hidden="true" />}
-            <span className="sr-only">{workspace.sending ? "Đang gửi…" : "Gửi"}</span>
+          <Button className="h-9 w-9 shrink-0 rounded-full p-0" type="submit" size="icon" disabled={sending} title="Gửi tin nhắn">
+            {sending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ArrowUp className="h-4 w-4" aria-hidden="true" />}
+            <span className="sr-only">{sending ? "Đang gửi…" : "Gửi"}</span>
           </Button>
         </div>
       </div>

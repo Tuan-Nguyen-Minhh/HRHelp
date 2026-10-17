@@ -33,6 +33,7 @@ from src.features.legal_review.controller import router as legal_router
 from src.features.notification.controller import router as notification_router
 from src.features.opencase.controller import router as opencase_router
 from src.features.recidivism.controller import router as recidivism_router
+from src.features.standalone_chat.controller import router as standalone_chat_router
 from src.features.timeline.controller import router as timeline_router
 
 logger = logging.getLogger("src.main")
@@ -88,6 +89,7 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(opencase_router, prefix="/api/v1")
 app.include_router(clarify_router, prefix="/api/v1")
+app.include_router(standalone_chat_router, prefix="/api/v1")
 app.include_router(answer_router, prefix="/api/v1")
 app.include_router(officers_router, prefix="/api/v1")
 app.include_router(assessment_router, prefix="/api/v1")

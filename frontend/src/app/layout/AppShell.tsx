@@ -9,6 +9,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
 import { NotificationsPage } from "@/features/notifications/NotificationsPage";
 import { GuidePage } from "@/features/guide/GuidePage";
+import { FloatingChat } from "@/features/conversation/FloatingChat";
 import { ROLE_LABEL } from "@/lib/labels";
 import { api } from "@/services/api";
 import { cn } from "@/lib/utils";
@@ -204,6 +205,7 @@ export function AppShell() {
       >
         {panel === "/dashboard" ? <DashboardPage /> : panel === "/notifications" ? <NotificationsPage /> : panel === "/guide" ? <GuidePage /> : null}
       </Sheet>
+      <FloatingChat />
     </div>
   );
 }

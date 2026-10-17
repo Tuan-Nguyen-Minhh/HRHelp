@@ -15,6 +15,7 @@ from src.features.clarify.model.decision import (
     RequestedAction,
     UserIntent,
 )
+from src.features.clarify.model.dialogue_context import context_for_prompt
 from src.features.clarify.model.prompt import PROMPT_VERSION, SYSTEM_PROMPT, render_case_prompt
 from src.services.chat_client import create_chat_model
 
@@ -77,6 +78,11 @@ def _messages(state: dict) -> list[dict[str, str]]:
     context = render_case_prompt(state.get("text") or "", _stored_lines(state))
     if "latest_user_message" in state:
         context += "\n\nLATEST_USER_MESSAGE\n" + (state.get("latest_user_message") or "(none)")
+    context += (
+        "\n\nSEMANTIC_DIALOGUE_CONTEXT (reference resolution only; do not extract facts from interpretations "
+        "or assistant statements; require original USER evidence):\n"
+        + json.dumps(context_for_prompt(state, scope="business"), ensure_ascii=False)
+    )
     clarification = (state.get("social_context") or {}).get("routing_clarification")
     if clarification:
         context += (

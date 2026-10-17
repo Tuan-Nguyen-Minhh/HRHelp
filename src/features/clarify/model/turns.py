@@ -25,6 +25,7 @@ from src.features.assessment.service import ensure_assessment
 from src.features.cite.model.search import search_policies
 from src.features.clarify.model.assess import ClarifyPlan, FactConflict, StoredFact, build_question
 from src.features.clarify.model.catalog import OPTIONAL_FACT_KEYS, FactSpec, detect_family, fact_label, required_specs
+from src.features.clarify.model.dialogue_context import build_dialogue_context, context_metadata
 from src.features.clarify.model.memory import build_turn_context, get_memory, side_context, update_memory
 from src.features.clarify.model.multi_agent import run_dispatch_gate, run_downstream_agents, run_recommendation_agent
 from src.features.clarify.model.store import (
@@ -379,7 +380,10 @@ async def _finish_minutes(
     assistant = await add_message(
         session,
         NewMessage(
-            conversation.id, "ASSISTANT", text, {"kind": "minutes_ready", "assessment_id": str(form.assessment_id)}
+            conversation.id,
+            "ASSISTANT",
+            text,
+            {**plan.reply_metadata, "kind": "minutes_ready", "assessment_id": str(form.assessment_id)},
         ),
     )
     if run is not None:
@@ -500,6 +504,7 @@ async def _planned(
         run_id=run_id,
         latest_user_message=latest_user_message,
         actor_id=actor_id,
+        current_message_id=source_id,
     )
     if plan.state_update == StateUpdate.PROGRESS:
         stored = await _stored(session, case.id)
@@ -516,6 +521,7 @@ async def _plan(
     run_id: UUID | None = None,
     latest_user_message: str = "",
     actor_id: UUID | None = None,
+    current_message_id: UUID | None = None,
 ) -> tuple[ClarifyPlan, CaseHandoff | None]:
     started = time.perf_counter()
     stored = await _stored(session, case.id)
@@ -546,11 +552,26 @@ async def _plan(
     social = (
         await side_context(session, conversation_id) if semantic and latest_user_message and conversation_id else {}
     )
+    dialogue = (
+        await build_dialogue_context(
+            session,
+            conversation_id,
+            latest_user_message,
+            current_message_id=current_message_id,
+            task_context={
+                "pending_action": memory.pending_action if memory is not None else None,
+                "pending_fact_keys": list(getattr(memory, "pending_fact_keys", None) or []),
+            },
+        )
+        if semantic and latest_user_message and conversation_id
+        else {"status": "not_requested"}
+    )
     graph = build_case_graph(lambda query: search_policies(session, query))
     state = await graph.ainvoke(
         {
             "step": "clarify",
             "social_context": social,
+            "dialogue_context": dialogue,
             "actor_id": actor_id,
             "text": turn_context,
             "turn_context": turn_context,
@@ -611,7 +632,7 @@ def _with_reply_metadata(plan: ClarifyPlan, state: dict, latest: str) -> Clarify
     from dataclasses import replace
 
     kind = state.get("reply_kind") or ""
-    metadata = {"route_trace": state.get("route_trace") or {}}
+    metadata = {"route_trace": state.get("route_trace") or {}, **context_metadata(state.get("dialogue_context") or {})}
     decision = state.get("intent_decision")
     if kind == "general_chat":
         metadata.update(

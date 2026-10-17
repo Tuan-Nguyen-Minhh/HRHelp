@@ -389,6 +389,8 @@ async def test_reading_facts_projects_memory_without_routing_history(monkeypatch
     monkeypatch.setattr(turns, "get_memory", AsyncMock(return_value=_memory()))
     router = AsyncMock(side_effect=AssertionError("GET/read projection must not run routing or model calls"))
     monkeypatch.setattr(turns, "build_case_graph", router)
+    interpreter = AsyncMock(side_effect=AssertionError("Read projection must not refresh semantic context"))
+    monkeypatch.setattr(turns, "build_dialogue_context", interpreter)
     plan, handoff = await turns._plan(
         AsyncMock(), SimpleNamespace(id=uuid4(), description="Incident"), uuid4(), semantic=True
     )
@@ -398,3 +400,4 @@ async def test_reading_facts_projects_memory_without_routing_history(monkeypatch
     assert plan.state_update == "preserve"
     assert handoff is None
     router.assert_not_called()
+    interpreter.assert_not_awaited()

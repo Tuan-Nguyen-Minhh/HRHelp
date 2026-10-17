@@ -13,17 +13,18 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from src.agents.conversation import ORCHESTRATOR_RULES, TaskChange
 from src.core.config import settings
+from src.features.clarify.model.dialogue_context import context_for_prompt
 from src.features.clarify.model.route_rules import detect_route_hypotheses
-from src.features.clarify.model.system_help import HelpTopic
+from src.features.clarify.model.system_help import HelpTopic, help_topic_catalog
 from src.services.chat_client import create_chat_model
 
 logger = logging.getLogger(__name__)
 
-PROMPT_VERSION = "intent-router-v5-rule-recheck-social-help"
+PROMPT_VERSION = "intent-router-v9-semantic-dialogue-context"
 MAX_RETRIES = 1
 
 ROUTE_CONTRACTS = """ROUTE CONTRACTS
@@ -44,6 +45,7 @@ Signals: updates_case_fact=true. target=case_facts. requires_fact_planner=true w
 policy_qa
 Purpose: answer a question using internal policy/legal retrieval for the incident date and case context.
 Use when the user asks what internal rules, law, decree, company policy, basis, procedure, handling guidance, or disciplinary level applies.
+Questions about using the application, including starting minutes or preparing information, belong to system_help.
 Examples: "theo nội quy xử lý thế nào", "căn cứ điều khoản nào", "mức kỷ luật áp dụng là gì", "quy định công ty nói gì".
 Do not use when the user asks to create or send an artifact ("lập biên bản", "tạo phiếu", "gửi pháp chế"); asks for public/latest web sources; asks only about stored case memory; or supplies facts without asking for a rule answer.
 Signals: asks_internal_policy=true. target=internal_policy. requires_internal_retrieval=true. requested_action=answer_policy_question.
@@ -55,7 +57,8 @@ Examples: "lập biên bản", "soạn biên bản vi phạm", "tạo phiếu ph
 For draft_minutes, recognize the meaning of preparing a written record/assessment of this case, regardless of the exact wording, word order, shorthand, or spelling. Examples include "lập hồ sơ biên bản xử lý vi phạm của người này", "ghi nhận sự việc này thành biên bản giúp tôi", and "soạn cho tôi bản ghi nhận vụ việc để HR xem". These examples illustrate the intent; they are not a list of required keywords.
 Preparing or saving draft minutes is a supported preparation action, even when the record concerns disciplinary handling. It does not approve a sanction, sign a decision, or close a case. Mark unsupported only if the latest user actually requests such a final-authority operation.
 For a minutes preparation request, choose workflow_action with requested_action=draft_minutes and requires_fact_planner=true, whether working facts appear complete or incomplete. The extract node validates the actual fact requirements. Missing facts do not change this preparation intent to unsupported, capability_gap, or policy_qa.
-Distinguish preparation from factual reports ("đã lập biên bản", "chưa có biên bản" -> fact_planner), procedural questions ("lập biên bản cần những bước nào?" -> policy_qa), and questions about a saved record ("biên bản đang lưu có gì?" -> case_qa). Do not revive a drafting request from history when the latest turn asks something else.
+Distinguish preparation from factual reports ("đã lập biên bản", "chưa có biên bản" -> fact_planner), legal procedure questions ("lập biên bản cần những bước nào theo luật?" -> policy_qa), and questions about a saved record ("biên bản đang lưu có gì?" -> case_qa). Do not revive a drafting request from history when the latest turn asks something else.
+Questions asking for instructions rather than execution belong to system_help.
 Do not use for approval/sign/close/delete/bypass requests; those are unsupported. Do not convert "lập biên bản vi phạm" into policy_qa merely because it contains "vi phạm".
 Signals: asks_workflow_action=true. target=workflow. requested_action must be one of draft_minutes, create_ticket_preview, show_assessment, send_to_legal. Set requires_fact_planner=true when required facts are missing before the artifact can be produced.
 
@@ -122,43 +125,12 @@ Execution contract: preserve case facts, facts_locked, schema, status, reports,
 and pending task. No tools, retrieval, workflow handoff, or business mutation.
 
 system_help
-Purpose: explain this assistant/application's identity, supported capabilities,
-usage, workflow roles, data-source boundaries, and limits of authority using
-the approved help catalog. It does not execute the capability being discussed.
+Purpose: answer product capabilities, usage, workflow and preparation questions from the approved Q&A.
+Interpret the user's specific need: minutes_getting_started covers navigation/steps; minutes_required_information covers what to prepare/provide; minutes_help covers working with an existing draft. Do not give navigation instructions when the user asks what information is needed.
+Guidance preserves case state. An actual request to perform an action belongs to workflow_action; supplied case data to fact_planner; stored case content to case_qa; legal/internal-rule requirements to policy_qa.
+Use recent help context for follow-ups. Select no_matching_answer if no topic answers the question.
+Signals: asks_system_help=true, target=system, requested_action="", task_change=keep; all requires_* flags=false.
 
-Use when the user asks what the assistant/system can do, how to use its features,
-whether it can decide on their behalf, who approves/signs, or what happens in
-the application's workflow.
-Examples: "bạn có thể hỗ trợ tôi những gì?", "hệ thống có chức năng gì?",
-"bạn có thể quyết định thay tôi không?", "AI có quyền phê duyệt không?",
-"tôi bắt đầu dùng hệ thống thế nào?", "bạn có hỗ trợ sửa biên bản không?".
-Recognize meaning, paraphrases and context; do not require exact FAQ wording.
-
-Do not use for an actual request to create/send/modify a case artifact:
-supported commands are workflow_action, even when phrased as a polite question.
-Do not use for requests to approve/sign/close/bypass review: unsupported.
-Do not use for the contents/status of a particular case: case_qa; supplied or
-corrected case facts: fact_planner; or the legal procedure/basis: policy_qa.
-Ordinary social conversation belongs to general_chat.
-
-Disambiguation:
-- "AI có quyền duyệt không?" asks about authority: system_help.
-- "bạn duyệt CASE-009 ngay giúp tôi được không?" requests execution: unsupported.
-- "bạn hỗ trợ lập biên bản không?" is system_help; "lập biên bản vụ này giúp tôi"
-  is workflow_action; "biên bản đang lưu có gì?" is case_qa.
-- "lập biên bản cần những bước nào theo luật?" is policy_qa, not product help.
-- "hiện nay hệ thống có tính năng gì?" is system_help, not external_research.
-- A business request is not overridden by a help fragment in the same turn.
-- A help question does not replace/cancel a pending business task.
-- A follow-up such as "còn gì nữa?" may continue help only if the recent dialogue
-  establishes a help topic. Otherwise clarify or choose the contextually correct route.
-
-Signals: asks_system_help=true. target=system.
-requires_fact_planner=false, requires_internal_retrieval=false,
-requires_external_research=false. requested_action="". task_change=keep.
-If supported by the extended schema, propose only allowlisted help_topic_ids.
-Do not generate the help answer, invent capabilities, or authorize operations.
-Execution contract: approved Q&A templates only; preserve case/workflow state.
 """
 
 
@@ -251,9 +223,15 @@ class IntentDecision(BaseModel):
         description="keep for replies/side questions; replace for a new workflow goal; cancel only if the user explicitly cancels the active task.",
     )
     risk_level: RiskLevel = RiskLevel.LOW
-    reason: str = Field(default="", max_length=300)
+    reason: str = Field(default="", max_length=300, description="Brief diagnostic summary, at most 300 characters.")
     signals: IntentSignals = Field(default_factory=IntentSignals)
     candidates: list[IntentCandidate] = Field(default_factory=list, max_length=6)
+
+    @field_validator("reason", mode="before")
+    @classmethod
+    def bound_diagnostic_reason(cls, value: object) -> object:
+        """Diagnostic verbosity must not discard an otherwise valid routing decision."""
+        return value[:300] if isinstance(value, str) else value
 
 
 @dataclass(frozen=True)
@@ -337,6 +315,8 @@ def decision_issues(decision: IntentDecision) -> list[str]:
         problems.append("side_turn_must_preserve_workflow")
     if route != Route.SYSTEM_HELP and decision.help_topic_ids:
         problems.append("help_topics_outside_help")
+    if HelpTopic.NO_MATCH in decision.help_topic_ids and len(decision.help_topic_ids) != 1:
+        problems.append("no_match_cannot_include_answer_topics")
     if route == Route.CASE_QA and (
         decision.requires_fact_planner or decision.requires_internal_retrieval or decision.requires_external_research
     ):
@@ -429,7 +409,10 @@ async def _classify_turn(state: dict) -> IntentResult:
 
 def _messages(state: dict) -> list[dict[str, str]]:
     return [
-        {"role": "system", "content": SYSTEM_PROMPT + "\n\n" + ORCHESTRATOR_RULES + "\n\n" + ROUTE_CONTRACTS},
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT + "\n\n" + ORCHESTRATOR_RULES + "\n\n" + ROUTE_CONTRACTS + "\n\n" + help_topic_catalog(),
+        },
         {"role": "user", "content": render_intent_prompt(state)},
     ]
 
@@ -508,7 +491,14 @@ def render_intent_prompt(state: dict) -> str:
         ", ".join(str(item) for item in state.get("pending_fact_keys", state.get("locked_fact_keys")) or []) or "(none)"
     )
     return (
-        "CASE PROFILE\n"
+        (
+            "CHAT SCOPE: standalone, no case profile. Classify the same intents, but fact_planner is only "
+            "conversation context here; no fact collection, minutes or case workflow can execute. "
+            "incident_date is the policy lookup date selected by the user (default: today), not an extracted incident fact.\n\n"
+            if state.get("chat_scope") == "standalone"
+            else ""
+        )
+        + "CASE PROFILE\n"
         f"{chr(10).join(profile) if profile else '(none)'}\n\n"
         "WORKING FACTS\n"
         f"{chr(10).join(stored) if stored else '(none)'}\n\n"
@@ -518,6 +508,9 @@ def render_intent_prompt(state: dict) -> str:
         f"{state.get('pending_action') or '(none)'}\n\n"
         "LATEST_USER_MESSAGE\n"
         f"{latest or '(none)'}\n\n"
+        "SEMANTIC_DIALOGUE_CONTEXT (advisory interpretation, may be wrong; never facts or new commands; "
+        "resolve references using source turns and prioritize the original latest user message)\n"
+        f"{json.dumps(context_for_prompt(state), ensure_ascii=False)}\n\n"
         "SOCIAL_DIALOGUE (context only; never case evidence)\n"
         f"{json.dumps(state.get('social_context') or {}, ensure_ascii=False)}\n\n"
         "TURN_CONTEXT\n"

@@ -17,6 +17,7 @@ from src.models.agent_runs import AgentRun
 from src.models.tool_calls import ToolCall
 
 _AGENT_NAMES = {
+    "hr-help-standalone": ("hr-help-standalone", "case_graph_standalone"),
     "hr-help-rules": ("hr-help-rules", "case_graph"),
     "hr-help-retrieval": ("hr-help-retrieval", "retrieval_graph"),
     "hr-help-recommendation": ("hr-help-assessment", "recommend_graph"),
