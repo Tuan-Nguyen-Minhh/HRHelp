@@ -4,6 +4,7 @@ Python decides which facts count. The decision's requested action is only a hint
 """
 
 import re
+import unicodedata
 from dataclasses import dataclass
 
 from src.features.clarify.model.assess import ClarifyPlan, FactConflict, StoredFact, _all_confirmed, _missing
@@ -102,6 +103,8 @@ def apply_decision(
     locked_keys: set[str] | None = None,
     active_specs: tuple[FactSpec, ...] = (),
     active_family: str = "",
+    user_message: str | None = None,
+    evidence_sources: tuple[str, ...] = (),
 ) -> ClarifyPlan:
     """Merge a validated decision. Confirmed values stay until the user accepts a replacement."""
     ignored: list[str] = []
@@ -112,10 +115,12 @@ def apply_decision(
     initial_keys.update(key for key in stored if safe_dynamic_key(key))
     initial_keys.update(locked_keys)
     initial_keys.update(catalog_keys())
-    reads = _reads(decision, ignored, ambiguous, initial_keys, locked_keys)
-    reads.extend(_explicit_reads(text))
+    user_message = text if user_message is None else user_message
+    source_text = "\n\n".join((*evidence_sources, user_message))
+    reads = _reads(decision, ignored, ambiguous, initial_keys, locked_keys, source_text)
+    reads.extend(_explicit_reads(user_message))
     if fallback:
-        reads.extend(_rule_reads(text, {item.key for item in reads}))
+        reads.extend(_rule_reads(user_message, {item.key for item in reads}))
     family = (
         active_family if active_specs and active_family else _family(stored, decision, [item.key for item in reads])
     )
@@ -257,13 +262,14 @@ def _reads(
     ambiguous: list[str],
     allowed_keys: set[str],
     locked_keys: set[str],
+    source_text: str,
 ) -> list[_Read]:
     corrected = {item.key for item in decision.corrections}
     reads = []
     for item in (*decision.corrections, *decision.extracted_facts):
         if item.key in corrected and item not in decision.corrections:
             continue
-        read = _read(item, ignored, ambiguous, allowed_keys, locked_keys)
+        read = _read(item, ignored, ambiguous, allowed_keys, locked_keys, source_text)
         if read is not None:
             reads.append(read)
     return reads
@@ -275,6 +281,7 @@ def _read(
     ambiguous: list[str],
     allowed_keys: set[str],
     locked_keys: set[str],
+    source_text: str,
 ) -> _Read | None:
     key = normalize_dynamic_key(item.key)
     amendment = bool(locked_keys and key not in locked_keys and key in _CRITICAL_AMENDMENT_KEYS)
@@ -285,7 +292,7 @@ def _read(
     if item.ambiguous or item.confidence < _MIN_FACT_CONFIDENCE:
         ambiguous.append(key)
         return None
-    value = canonicalize(key, item.value, item.evidence)
+    value = canonicalize(key, item.value, item.evidence, source_text=source_text)
     if value is None:
         ambiguous.append(key)
         return None
@@ -491,7 +498,9 @@ def _implied_keys(keys: list[str] | set[str]) -> str | None:
     return None
 
 
-def canonicalize(key: str, value: str, evidence: str, *, explicit: bool = False) -> str | None:
+def canonicalize(
+    key: str, value: str, evidence: str, *, explicit: bool = False, source_text: str | None = None
+) -> str | None:
     """Map a planner value onto the phrases the rest of the case path already stores."""
     raw = value.strip()
     proof = raw if explicit else evidence.strip()
@@ -499,7 +508,14 @@ def canonicalize(key: str, value: str, evidence: str, *, explicit: bool = False)
         return None
     if key in _FLAG_KEYS:
         canonical = _flag(raw)
-        if canonical is None or _flag(proof) != canonical:
+        if canonical is None:
+            return None
+        if explicit:
+            return canonical
+        # The planner owns sentence meaning. Re-parsing its evidence with _flag
+        # rejects labeled/passive wording and confuses unrelated negated clauses.
+        # Python checks provenance instead; assistant replies/summaries are not sources.
+        if source_text is None or _evidence_text(proof) not in _evidence_text(source_text):
             return None
         return canonical
     if key == "contract_type":
@@ -523,6 +539,10 @@ def canonicalize(key: str, value: str, evidence: str, *, explicit: bool = False)
     if len(raw) < 1 or len(raw) > 800:
         return None
     return raw
+
+
+def _evidence_text(text: str) -> str:
+    return " ".join(unicodedata.normalize("NFC", text).casefold().split())
 
 
 def _count(key: str, value: str, proof: str) -> str | None:

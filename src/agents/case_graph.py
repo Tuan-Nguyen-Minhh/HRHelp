@@ -67,6 +67,7 @@ class CaseState(TypedDict, total=False):
     text: str
     turn_context: str
     dialogue_context: dict
+    user_fact_sources: list[str]
     latest_user_message: str
     stored: dict[str, StoredFact]
     advance: bool

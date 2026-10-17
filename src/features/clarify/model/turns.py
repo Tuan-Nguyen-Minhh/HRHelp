@@ -26,7 +26,13 @@ from src.features.cite.model.search import search_policies
 from src.features.clarify.model.assess import ClarifyPlan, FactConflict, StoredFact, build_question
 from src.features.clarify.model.catalog import OPTIONAL_FACT_KEYS, FactSpec, detect_family, fact_label, required_specs
 from src.features.clarify.model.dialogue_context import build_dialogue_context, context_metadata
-from src.features.clarify.model.memory import build_turn_context, get_memory, side_context, update_memory
+from src.features.clarify.model.memory import (
+    build_turn_context,
+    get_memory,
+    side_context,
+    update_memory,
+    user_fact_sources,
+)
 from src.features.clarify.model.multi_agent import run_dispatch_gate, run_downstream_agents, run_recommendation_agent
 from src.features.clarify.model.store import (
     FactWrite,
@@ -572,6 +578,9 @@ async def _plan(
             "step": "clarify",
             "social_context": social,
             "dialogue_context": dialogue,
+            "user_fact_sources": await user_fact_sources(session, conversation_id)
+            if semantic and latest_user_message and conversation_id
+            else [],
             "actor_id": actor_id,
             "text": turn_context,
             "turn_context": turn_context,

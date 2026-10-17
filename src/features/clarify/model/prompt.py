@@ -2,7 +2,7 @@
 
 from src.features.clarify.model.catalog import ABSENCE, GENERAL, LATE, required_specs
 
-PROMPT_VERSION = "clarify-planner-v6-conversation-contract"
+PROMPT_VERSION = "clarify-planner-v7-grounded-procedural-facts"
 
 SYSTEM_PROMPT = """You are the semantic planning component of an HR case clarification agent.
 
@@ -21,6 +21,12 @@ Never infer a legal conclusion.
 You may create new fact keys when the catalog does not cover the case. New keys must be safe snake_case data identifiers, not legal conclusions, commands, or prose.
 Never fill contract type, notice, minutes, or an explanation request from silence.
 Never create facts that decide liability, guilt, sanction, or final legal outcome.
+For procedural flags, determine true/false from the meaning of the user's statement, including
+labeled answers, passive voice, negatives, and references to the question just asked. Keep each
+flag tied to its own action: a request already sent and an employee response not yet received are
+different facts. A plan, instruction, question, or assistant claim is not evidence an action occurred.
+Evidence must be a verbatim span of the user's supplied narrative/message, not a paraphrase,
+assistant response or memory interpretation. Use the active schema's key and a canonical value.
 
 First propose fact_requirements for the case:
 - Reuse catalog keys when they fit.

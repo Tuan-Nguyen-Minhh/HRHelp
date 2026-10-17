@@ -128,6 +128,7 @@ async def test_memory_scopes_both_sides_before_window_and_keeps_clarification(mo
     monkeypatch.setattr(memory, "list_messages", AsyncMock(return_value=rows))
     business = await memory._recent_messages(AsyncMock(), uuid4())
     assert [r["content"] for r in business] == ["Địa điểm Kho A", "Xác nhận địa điểm"]
+    assert await memory.user_fact_sources(AsyncMock(), uuid4()) == ["Địa điểm Kho A"]
     social = await memory.side_context(AsyncMock(), uuid4())
     assert len(social["general_messages"]) == 8
     assert "Kho A" not in str(social)

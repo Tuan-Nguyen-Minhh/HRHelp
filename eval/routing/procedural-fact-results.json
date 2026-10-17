@@ -1,0 +1,247 @@
+{
+  "description": "Synthetic live smoke; not an accuracy estimate",
+  "results": [
+    {
+      "name": "reported_message",
+      "question": "Biên bản vụ việc: Đã lập biên bản ghi nhận sự việc vi phạm quy định bảo mật thông tin.\n\nYêu cầu giải trình: Đã gửi văn bản yêu cầu nhân viên giải trình (thời hạn phản hồi trong 03 ngày làm việc).",
+      "expected": {
+        "minutes_made": "true",
+        "explanation_requested": "true"
+      },
+      "actual": {
+        "minutes_made": "true",
+        "explanation_requested": "true"
+      },
+      "pass": true,
+      "planner_fallback": false,
+      "validation": "ignored=violation_summary,contract_type",
+      "extracted_facts": [
+        {
+          "key": "minutes_made",
+          "value": "true",
+          "confidence": 0.95,
+          "evidence": "Đã lập biên bản ghi nhận sự việc vi phạm quy định bảo mật thông tin",
+          "ambiguous": false
+        },
+        {
+          "key": "explanation_requested",
+          "value": "true",
+          "confidence": 0.95,
+          "evidence": "Đã gửi văn bản yêu cầu nhân viên giải trình",
+          "ambiguous": false
+        }
+      ],
+      "old_evidence_parser_would_discard": [],
+      "route": "fact_planner"
+    },
+    {
+      "name": "passive_voice",
+      "question": "Biên bản ghi nhận vụ việc đã được HR hoàn tất. Văn bản đề nghị nhân viên giải trình cũng đã được gửi qua email.",
+      "expected": {
+        "minutes_made": "true",
+        "explanation_requested": "true"
+      },
+      "actual": {
+        "minutes_made": "true",
+        "explanation_requested": "true"
+      },
+      "pass": true,
+      "planner_fallback": false,
+      "validation": "ignored=violation_summary",
+      "extracted_facts": [
+        {
+          "key": "minutes_made",
+          "value": "true",
+          "confidence": 0.95,
+          "evidence": "Biên bản ghi nhận vụ việc đã được HR hoàn tất.",
+          "ambiguous": false
+        },
+        {
+          "key": "explanation_requested",
+          "value": "true",
+          "confidence": 0.95,
+          "evidence": "Văn bản đề nghị nhân viên giải trình cũng đã được gửi qua email.",
+          "ambiguous": false
+        }
+      ],
+      "old_evidence_parser_would_discard": [
+        "minutes_made",
+        "explanation_requested"
+      ]
+    },
+    {
+      "name": "sent_no_response",
+      "question": "Biên bản đã được lập; yêu cầu giải trình đã gửi nhưng nhân viên chưa phản hồi.",
+      "expected": {
+        "minutes_made": "true",
+        "explanation_requested": "true"
+      },
+      "actual": {
+        "minutes_made": "true",
+        "explanation_requested": "true"
+      },
+      "pass": true,
+      "planner_fallback": false,
+      "validation": "ignored=violation_summary,contract_type",
+      "extracted_facts": [
+        {
+          "key": "minutes_made",
+          "value": "true",
+          "confidence": 0.97,
+          "evidence": "Biên bản đã được lập",
+          "ambiguous": false
+        },
+        {
+          "key": "explanation_requested",
+          "value": "true",
+          "confidence": 0.95,
+          "evidence": "yêu cầu giải trình đã gửi",
+          "ambiguous": false
+        }
+      ],
+      "old_evidence_parser_would_discard": [
+        "minutes_made",
+        "explanation_requested"
+      ]
+    },
+    {
+      "name": "mixed_status",
+      "question": "Biên bản vụ việc đã được lập rồi, nhưng công ty chưa gửi yêu cầu giải trình.",
+      "expected": {
+        "minutes_made": "true",
+        "explanation_requested": "false"
+      },
+      "actual": {
+        "minutes_made": "true",
+        "explanation_requested": "false"
+      },
+      "pass": true,
+      "planner_fallback": false,
+      "validation": "ignored=violation_summary,contract_type",
+      "extracted_facts": [
+        {
+          "key": "minutes_made",
+          "value": "true",
+          "confidence": 0.95,
+          "evidence": "Biên bản vụ việc đã được lập rồi",
+          "ambiguous": false
+        },
+        {
+          "key": "explanation_requested",
+          "value": "false",
+          "confidence": 0.95,
+          "evidence": "công ty chưa gửi yêu cầu giải trình",
+          "ambiguous": false
+        }
+      ],
+      "old_evidence_parser_would_discard": [
+        "minutes_made"
+      ]
+    },
+    {
+      "name": "not_done",
+      "question": "Biên bản: chưa lập. Giải trình: chưa yêu cầu nhân viên.",
+      "expected": {
+        "minutes_made": "false",
+        "explanation_requested": "false"
+      },
+      "actual": {
+        "minutes_made": "false",
+        "explanation_requested": "false"
+      },
+      "pass": true,
+      "planner_fallback": false,
+      "validation": "ignored=violation_summary",
+      "extracted_facts": [
+        {
+          "key": "minutes_made",
+          "value": "false",
+          "confidence": 0.98,
+          "evidence": "Biên bản: chưa lập",
+          "ambiguous": false
+        },
+        {
+          "key": "explanation_requested",
+          "value": "false",
+          "confidence": 0.98,
+          "evidence": "Giải trình: chưa yêu cầu nhân viên",
+          "ambiguous": false
+        }
+      ],
+      "old_evidence_parser_would_discard": []
+    },
+    {
+      "name": "not_inferred_from_plan",
+      "question": "Tôi dự định mai sẽ lập biên bản và gửi yêu cầu giải trình, hiện cả hai việc đều chưa thực hiện.",
+      "expected": {
+        "minutes_made": "false",
+        "explanation_requested": "false"
+      },
+      "actual": {
+        "minutes_made": "false",
+        "explanation_requested": "false"
+      },
+      "pass": true,
+      "planner_fallback": false,
+      "validation": "ignored=violation_summary",
+      "extracted_facts": [
+        {
+          "key": "minutes_made",
+          "value": "false",
+          "confidence": 0.95,
+          "evidence": "hiện cả hai việc đều chưa thực hiện",
+          "ambiguous": false
+        },
+        {
+          "key": "explanation_requested",
+          "value": "false",
+          "confidence": 0.95,
+          "evidence": "hiện cả hai việc đều chưa thực hiện",
+          "ambiguous": false
+        }
+      ],
+      "old_evidence_parser_would_discard": []
+    }
+  ],
+  "resume_check": {
+    "name": "resume_from_original_user_history",
+    "latest_message": "Tôi đã cung cấp hai thông tin ở trên rồi, hãy tiếp tục lập biên bản.",
+    "actual": {
+      "minutes_made": "true",
+      "explanation_requested": "true"
+    },
+    "pass": true,
+    "missing_keys": [],
+    "planner_fallback": false,
+    "extracted_facts": [
+      {
+        "key": "minutes_made",
+        "value": "true",
+        "confidence": 1.0,
+        "evidence": "Đã lập biên bản ghi nhận sự việc vi phạm quy định bảo mật thông tin.",
+        "ambiguous": false
+      },
+      {
+        "key": "explanation_requested",
+        "value": "true",
+        "confidence": 1.0,
+        "evidence": "Đã gửi văn bản yêu cầu nhân viên giải trình",
+        "ambiguous": false
+      },
+      {
+        "key": "violation_summary",
+        "value": "vi phạm quy định bảo mật thông tin",
+        "confidence": 1.0,
+        "evidence": "vi phạm quy định bảo mật thông tin",
+        "ambiguous": false
+      },
+      {
+        "key": "explanation_deadline",
+        "value": "03 ngày làm việc",
+        "confidence": 1.0,
+        "evidence": "thời hạn phản hồi trong 03 ngày làm việc",
+        "ambiguous": false
+      }
+    ]
+  }
+}
