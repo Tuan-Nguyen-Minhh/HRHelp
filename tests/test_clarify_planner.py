@@ -86,7 +86,7 @@ def _state(plan, **extra) -> dict:
 
 
 def test_prompt_keeps_the_planner_off_the_graph_edge():
-    assert PROMPT_VERSION == "clarify-planner-v6-conversation-contract"
+    assert PROMPT_VERSION == "clarify-planner-v7-grounded-procedural-facts"
     assert "Never invent missing facts" in SYSTEM_PROMPT
     assert "LangGraph" in SYSTEM_PROMPT
     assert "lập biên bản" in SYSTEM_PROMPT

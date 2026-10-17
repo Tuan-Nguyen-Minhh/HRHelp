@@ -99,6 +99,11 @@ async def build_turn_context(
     return "\n\n".join(parts)
 
 
+async def user_fact_sources(session: AsyncSession, conversation_id: UUID) -> list[str]:
+    """Original recent business USER turns for evidence checks, never assistant prose."""
+    return [row["content"] for row in await _recent_messages(session, conversation_id) if row["role"] == "USER"]
+
+
 async def update_memory(
     session: AsyncSession,
     conversation_id: UUID,
