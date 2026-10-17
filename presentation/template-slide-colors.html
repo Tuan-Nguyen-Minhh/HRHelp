@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P029 · Template · Colour by chapter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,wght@0,400;0,500;0,600;1,400&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   P029 · HR Help — slide template (colour by chapter)
+   Nguồn màu: design-system/hr-help/MASTER.md
+   Không gradient · không bóng tĩnh · không hairline · không emoji
+   ============================================================ */
+:root{
+  /* ink / hue gốc (MASTER) */
+  --paper:#FBFAF7; --paper-2:#F4F1EA;
+  --linen:#DCD8CC; --linen-2:#E7E3D9; --linen-3:#CFCABB;
+  --ink:#332C22; --ink-2:#5C554A; --ink-3:#756F63;
+  --rule:#D8D1C3; --solid:#4A3F30;
+  --son:#8C2B2B; --son-dark:#722222; --son-tint:#F6EAE7; --son-line:#E2C4C0;
+  /* derived (cùng hue, chỉ đổi lightness) */
+  --espresso:#241F17; --espresso-2:#322B20; --espresso-3:#3E362A;
+  --paper-muted:#C7BFB0; --son-bright:#D06A57;
+
+  --font-display:"Literata",Georgia,"Times New Roman",serif;
+  --font-text:"Public Sans",system-ui,-apple-system,sans-serif;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:#E9E7E1; color:var(--ink);
+  font-family:var(--font-text); font-size:16px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  padding:40px 20px 80px;
+}
+:focus-visible{outline:2px solid var(--son); outline-offset:3px}
+
+/* chrome ngoài slide: nhãn field để soi màu (không thuộc slide) */
+.deck{display:flex; flex-direction:column; align-items:center; gap:34px; max-width:1280px; margin:0 auto}
+.meta{width:100%; max-width:1280px; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
+  font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:#6C665B}
+.meta .dot{width:14px;height:14px;border-radius:50%;display:inline-block;flex:0 0 auto; transform:translateY(1px)}
+.meta code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; text-transform:none; letter-spacing:0; color:#4A453B}
+.slide-wrap{width:100%; max-width:1280px}
+
+/* ---------- slide khung 16:9 ---------- */
+.slide{
+  position:relative; width:100%; aspect-ratio:16/9; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:center;
+  padding:64px 76px;
+}
+.slide.f0{background:var(--son);       color:var(--paper)}
+.slide.f1{background:var(--paper);     color:var(--ink)}
+.slide.f2{background:var(--linen);     color:var(--ink)}
+.slide.f3{background:var(--espresso);  color:var(--paper)}
+
+/* ---------- type ---------- */
+.display{font-family:var(--font-display); font-weight:500; font-size:48px; line-height:1.05; letter-spacing:-.02em; text-wrap:balance; margin:0}
+.headline{font-family:var(--font-display); font-weight:500; font-size:38px; line-height:1.1; letter-spacing:-.02em; text-wrap:balance; margin:0; max-width:20ch}
+.lead{font-size:20px; line-height:1.4; margin:0; max-width:42ch; font-weight:400}
+.body{font-size:16px; line-height:1.5; margin:0; max-width:46ch}
+.small{font-size:13px; line-height:1.45; margin:0}
+.muted{color:var(--ink-3)}
+.f3 .muted{color:var(--paper-muted)}
+.nums{font-variant-numeric:tabular-nums}
+
+/* accent dùng cho ĐÚNG 1 việc */
+.f1 .accent,.f2 .accent{color:var(--son)}
+.f3 .accent{color:var(--son-bright)}
+.f0 .accent{color:var(--paper)}
+
+/* ---------- dấu niêm (motif) ---------- */
+.seal{
+  width:58px;height:58px;border:1.5px solid currentColor;border-radius:50%;
+  display:grid;place-items:center;font-family:var(--font-display);font-size:9px;
+  line-height:1.2;text-align:center;transform:rotate(-9deg);flex:0 0 auto;
+}
+
+/* ---------- layout phụ ---------- */
+.kicker{font-size:13px; letter-spacing:.04em; text-transform:uppercase}
+.masthead{display:flex; align-items:center; gap:14px}
+.masthead .name{font-family:var(--font-display); font-weight:600; font-size:22px}
+.stack-lg > * + *{margin-top:22px}
+.stack > * + *{margin-top:12px}
+
+/* split: chữ trái, khối phải */
+.split{display:grid; grid-template-columns:1.05fr .95fr; gap:56px; align-items:center}
+.list{list-style:none; margin:0; padding:0; display:grid; gap:14px}
+.list li{display:grid; grid-template-columns:22px 1fr; gap:12px; align-items:start; font-size:17px}
+.list .tick{width:10px;height:10px;border-radius:50%;background:var(--son);margin-top:7px;display:block}
+.f3 .list .tick{background:var(--son-bright)}
+
+/* panel phụ (tách bằng tone, không viền/bóng) */
+.panel{padding:22px 24px}
+.f1 .panel{background:var(--paper-2)}
+.f2 .panel{background:var(--linen-2)}
+.f3 .panel{background:var(--espresso-2)}
+.f0 .panel{background:rgba(0,0,0,.14)}
+
+/* metric: bar dày 4px (được phép), không hairline */
+.metrics{display:grid; grid-template-columns:repeat(4,1fr); gap:26px}
+.metric{border-top:4px solid var(--son); padding-top:12px}
+.f3 .metric{border-top-color:var(--son-bright)}
+.metric .num{font-size:64px; font-weight:700; line-height:1.05; font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+.metric .lbl{font-size:13px; margin-top:4px}
+
+/* chart cột đơn sắc son */
+.bars{display:flex; align-items:flex-end; gap:30px; height:190px; margin-top:8px}
+.bars .bar{flex:1; display:flex; flex-direction:column; justify-content:flex-end; gap:8px}
+.bars .fill{background:var(--son); width:100%}
+.bars .fill.soft{background:transparent; border:3px solid var(--son-line)}
+.bars .cap{font-size:13px}
+
+/* flow dọc đơn giản */
+.flow{display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:16px}
+.node{padding:9px 14px; border-radius:0}
+.f3 .node{background:var(--espresso-3)}
+.f1 .node{background:var(--paper-2)}
+.node.gate{background:var(--son); color:var(--paper)}
+.f3 .node.gate{background:var(--son-bright); color:var(--espresso)}
+.arrow{opacity:.55}
+
+/* bảng so sánh 2 cột */
+.compare{display:grid; grid-template-columns:1fr 1fr; gap:26px}
+.compare .col{padding:20px 22px}
+.f2 .compare .col{background:var(--linen-2)}
+.f2 .compare .col.win{background:var(--paper)}
+.col.win{border-left:4px solid var(--son)}
+.col h3{font-family:var(--font-display); font-weight:500; font-size:20px; margin:0 0 12px}
+.col ul{list-style:none;margin:0;padding:0;display:grid;gap:9px;font-size:15px}
+.col li{display:flex;gap:10px;align-items:baseline}
+.col li i{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5;flex:0 0 auto;transform:translateY(-2px)}
+
+/* timeline ngang */
+.timeline{display:grid; grid-template-columns:repeat(3,1fr); gap:26px}
+.tl{border-top:4px solid rgba(255,255,255,.35); padding-top:12px}
+.tl b{font-weight:600}
+.tl p{margin-top:4px}
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- ================= F0 · Đỏ niêm · cover ================= -->
+  <div class="meta"><span class="dot" style="background:#8C2B2B"></span>F0 · Đỏ niêm <code>#8C2B2B</code></div>
+  <div class="slide-wrap"><section class="slide f0">
+    <div class="stack-lg">
+      <div class="seal">HR<br>HELP</div>
+      <h1 class="display" style="font-size:64px">Ipsum dolor sit</h1>
+      <p class="lead">Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor.</p>
+      <p class="small muted" style="color:#F6EAE7">P029 · VinUni AI20K Build Phase</p>
+    </div>
+  </section></div>
+
+  <!-- ================= F1 · Giấy · split ================= -->
+  <div class="meta"><span class="dot" style="background:#FBFAF7;border:1px solid #D8D1C3"></span>F1 · Giấy <code>#FBFAF7</code> + accent <code>#8C2B2B</code></div>
+  <div class="slide-wrap"><section class="slide f1">
+    <div class="split">
+      <div class="stack-lg">
+        <h2 class="headline">Lorem ipsum dolor, sit amet consectetur</h2>
+        <p class="body muted">Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+      </div>
+      <ul class="list">
+        <li><span class="tick"></span><span>Lorem ipsum dolor sit amet</span></li>
+        <li><span class="tick"></span><span>Consectetur adipiscing elit</span></li>
+        <li><span class="tick"></span><span>Sed do eiusmod tempor <span class="accent">incididunt</span></span></li>
+        <li><span class="tick"></span><span>Ut labore et dolore magna</span></li>
+      </ul>
+    </div>
+  </section></div>
+
+  <!-- ================= F2 · Đá · metrics ================= -->
+  <div class="meta"><span class="dot" style="background:#DCD8CC;border:1px solid #CFCABB"></span>F2 · Đá <code>#DCD8CC</code></div>
+  <div class="slide-wrap"><section class="slide f2">
+    <div class="stack-lg">
+      <h2 class="headline">Lorem ipsum dolor sit, amet consectetur</h2>
+      <div class="metrics">
+        <div class="metric"><div class="num">91.41%</div><p class="lbl muted">Lorem ipsum</p></div>
+        <div class="metric"><div class="num">82.45%</div><p class="lbl muted">Dolor sit amet</p></div>
+        <div class="metric"><div class="num">57.60%</div><p class="lbl muted">Consectetur</p></div>
+        <div class="metric"><div class="num">34.96%</div><p class="lbl muted">Adipiscing</p></div>
+      </div>
+    </div>
+  </section></div>
+
+  <!-- ================= F3 · Đêm · diagram ================= -->
+  <div class="meta"><span class="dot" style="background:#241F17"></span>F3 · Đêm hồ sơ <code>#241F17</code> + accent <code>#D06A57</code></div>
+  <div class="slide-wrap"><section class="slide f3">
+    <div class="stack-lg">
+      <h1 class="display" style="font-size:44px">Lorem ipsum dolor sit</h1>
+      <div class="flow">
+        <span class="node">Case Graph</span><span class="arrow">→</span>
+        <span class="node">CaseHandoff</span><span class="arrow">→</span>
+        <span class="node">Recommendation</span><span class="arrow">→</span>
+        <span class="node gate">Dispatch Gate</span><span class="arrow">→</span>
+        <span class="node">Con người</span>
+      </div>
+      <p class="body muted" style="color:#C7BFB0">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+    </div>
+  </section></div>
+
+  <!-- ================= F2 · Đá · table ================= -->
+  <div class="meta"><span class="dot" style="background:#DCD8CC;border:1px solid #CFCABB"></span>F2 · Đá <code>#DCD8CC</code> · bảng 2 cột</div>
+  <div class="slide-wrap"><section class="slide f2">
+    <div class="stack-lg">
+      <h2 class="headline">Lorem ipsum dolor, sit amet</h2>
+      <div class="compare">
+        <div class="col">
+          <h3>Lorem ipsum</h3>
+          <ul>
+            <li><i></i>Dolor sit amet</li>
+            <li><i></i>Consectetur adipiscing</li>
+            <li><i></i>Sed do eiusmod</li>
+          </ul>
+        </div>
+        <div class="col win">
+          <h3>Dolor sit</h3>
+          <ul>
+            <li><i></i>Tempor incididunt</li>
+            <li><i></i>Ut labore et dolore</li>
+            <li><i></i>Magna aliqua</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section></div>
+
+  <!-- ================= F1 · Giấy · chart + close note ================= -->
+  <div class="meta"><span class="dot" style="background:#FBFAF7;border:1px solid #D8D1C3"></span>F1 · Giấy <code>#FBFAF7</code> · chart đơn sắc</div>
+  <div class="slide-wrap"><section class="slide f1">
+    <div class="stack-lg">
+      <h2 class="headline">Lorem ipsum, dolor sit amet</h2>
+      <div class="bars">
+        <div class="bar"><span class="cap">Lorem ipsum</span><span class="fill" style="height:150px"></span></div>
+        <div class="bar"><span class="cap">Dolor sit</span><span class="fill" style="height:135px"></span></div>
+        <div class="bar"><span class="cap">Consectetur</span><span class="fill soft" style="height:95px"></span></div>
+        <div class="bar"><span class="cap">Adipiscing</span><span class="fill soft" style="height:58px"></span></div>
+      </div>
+      <p class="small muted">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+    </div>
+  </section></div>
+
+  <!-- ================= F0 · Đỏ niêm · close (bookend) ================= -->
+  <div class="meta"><span class="dot" style="background:#8C2B2B"></span>F0 · Đỏ niêm <code>#8C2B2B</code> · đóng (bookend)</div>
+  <div class="slide-wrap"><section class="slide f0">
+    <div class="stack-lg">
+      <div class="timeline">
+        <div class="tl"><b>Lorem ipsum</b><p class="small" style="color:#F6EAE7">Dolor sit amet</p></div>
+        <div class="tl"><b>Consectetur</b><p class="small" style="color:#F6EAE7">Adipiscing elit</p></div>
+        <div class="tl"><b>Sed do</b><p class="small" style="color:#F6EAE7">Eiusmod tempor</p></div>
+      </div>
+      <div class="masthead">
+        <div class="seal">HR<br>HELP</div>
+        <div class="stack" style="margin:0">
+          <span class="name">Ipsum dolor</span>
+          <span class="small" style="color:#F6EAE7">Lorem ipsum · Live demo · Q&amp;A</span>
+        </div>
+      </div>
+    </div>
+  </section></div>
+
+</div>
+</body>
+</html>

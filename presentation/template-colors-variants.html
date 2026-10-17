@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P029 · Variants for the two problem slides</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FBFAF7; --paper-2:#F4F1EA;
+  --linen:#DCD8CC; --linen-2:#E7E3D9; --linen-3:#CFCABB;
+  --ink:#332C22; --ink-2:#5C554A; --ink-3:#756F63;
+  --solid:#4A3F30; --son:#8C2B2B; --son-tint:#F6EAE7;
+  --espresso:#241F17; --espresso-deep:#33291F; --son-bright:#D06A57;
+  --green-deep:#2C3524; --green-mid:#232A1D; --green-light:#A9BE93; --green-ink:#3E4A34;
+  --font-display:"Literata",Georgia,serif; --font-text:"Public Sans",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#E9E7E1;color:var(--ink);font-family:var(--font-text);padding:40px 20px 90px}
+.deck{display:flex;flex-direction:column;gap:52px;max-width:1280px;margin:0 auto}
+.variant{display:flex;flex-direction:column;gap:16px}
+.vhead{display:flex;flex-direction:column;gap:4px}
+.vhead h2{font-family:var(--font-display);font-weight:600;font-size:22px;margin:0}
+.vhead p{margin:0;font-size:14px;color:#6C665B}
+.pair{display:flex;flex-direction:column;gap:18px}
+.slide{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:64px 76px}
+.display{font-family:var(--font-display);font-weight:500;font-size:64px;line-height:1.03;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.headline{font-family:var(--font-display);font-weight:500;font-size:44px;line-height:1.08;letter-spacing:-.02em;margin:0;max-width:20ch}
+.lead{font-size:20px;line-height:1.4;margin:0;max-width:42ch}
+.body{font-size:16px;line-height:1.5;margin:0;max-width:46ch}
+.small{font-size:13px;line-height:1.45;margin:0}
+.stack>*+*{margin-top:20px}
+.masthead{display:flex;align-items:center;gap:14px}
+.seal{width:58px;height:58px;border:1.5px solid currentColor;border-radius:50%;display:grid;place-items:center;font-family:var(--font-display);font-size:9px;line-height:1.2;text-align:center;transform:rotate(-9deg);flex:0 0 auto}
+.flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:16px}
+.node{padding:9px 14px}
+.arrow{opacity:.55}
+.tag{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#6C665B}
+.tag code{font-family:ui-monospace,Menlo,monospace;text-transform:none;letter-spacing:0}
+
+/* ---------- V1 · Da & giấy (bỏ nền đỏ, bỏ đen; đỏ chỉ còn accent nhỏ) ---------- */
+.v1-cover{background:var(--solid);color:var(--paper)}
+.v1-section{background:var(--espresso-deep);color:var(--paper)}
+.v1-section .node{background:#4A3F30}
+.v1-section .node.gate{background:var(--linen-2);color:var(--solid)}
+
+/* ---------- V2 · Sáng toàn phần (không nền đậm) ---------- */
+.v2-cover{background:var(--paper);color:var(--ink)}
+.v2-section{background:var(--linen);color:var(--ink)}
+.v2-section .node{background:var(--linen-2)}
+.v2-section .node.gate{background:var(--son);color:var(--paper)}
+
+/* ---------- V3 · Xanh rêu đậm (đổi hue, bỏ đỏ) ---------- */
+.v3-cover{background:var(--green-deep);color:#F2F1EA}
+.v3-section{background:var(--green-mid);color:#F2F1EA}
+.v3-section .node{background:#33402A}
+.v3-section .node.gate{background:var(--green-light);color:var(--green-mid)}
+.g-accent{color:var(--green-light)}
+.g-ink-accent{color:var(--green-ink)}
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- ================= V1 ================= -->
+  <div class="variant">
+    <div class="vhead">
+      <h2>Phương án 1 · "Da &amp; giấy"</h2>
+      <p>Bỏ hẳn nền đỏ và nền đen. Cover dùng nâu da <code>#4A3F30</code>, slide đậm dùng nâu trầm <code>#33291F</code>. Đỏ son chỉ còn là accent nhỏ (dấu niêm, gạch chân).</p>
+    </div>
+    <div class="pair">
+      <div class="slide v1-cover">
+        <div class="stack">
+          <div class="seal">HR<br>HELP</div>
+          <h1 class="display">Ipsum dolor sit</h1>
+          <p class="lead">Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor.</p>
+          <p class="small" style="color:var(--linen-2)">P029 · VinUni AI20K Build Phase</p>
+        </div>
+      </div>
+      <div class="tag">V1 · slide đậm <code>#33291F</code></div>
+      <div class="slide v1-section">
+        <div class="stack">
+          <h2 class="headline">Lorem ipsum dolor sit</h2>
+          <div class="flow">
+            <span class="node">Case Graph</span><span class="arrow">→</span>
+            <span class="node">CaseHandoff</span><span class="arrow">→</span>
+            <span class="node">Recommendation</span><span class="arrow">→</span>
+            <span class="node gate">Dispatch Gate</span><span class="arrow">→</span>
+            <span class="node">Con người</span>
+          </div>
+          <p class="body" style="color:#C7BFB0">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= V2 ================= -->
+  <div class="variant">
+    <div class="vhead">
+      <h2>Phương án 2 · "Sáng toàn phần"</h2>
+      <p>Không dùng nền đậm nào. Cover trên giấy <code>#FBFAF7</code>, slide phụ trên đá <code>#DCD8CC</code>. Nhịp điệu bằng bước tông sáng, đỏ son vẫn là accent nhỏ.</p>
+    </div>
+    <div class="pair">
+      <div class="slide v2-cover">
+        <div class="stack">
+          <div class="seal" style="color:var(--son)">HR<br>HELP</div>
+          <h1 class="display">Ipsum dolor sit</h1>
+          <p class="lead" style="color:var(--ink-2)">Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor.</p>
+          <p class="small" style="color:var(--ink-3)">P029 · VinUni AI20K Build Phase</p>
+        </div>
+      </div>
+      <div class="tag">V2 · slide phụ <code>#DCD8CC</code></div>
+      <div class="slide v2-section">
+        <div class="stack">
+          <h2 class="headline">Lorem ipsum dolor sit</h2>
+          <div class="flow">
+            <span class="node">Case Graph</span><span class="arrow">→</span>
+            <span class="node">CaseHandoff</span><span class="arrow">→</span>
+            <span class="node">Recommendation</span><span class="arrow">→</span>
+            <span class="node gate">Dispatch Gate</span><span class="arrow">→</span>
+            <span class="node">Con người</span>
+          </div>
+          <p class="body" style="color:var(--ink-2)">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= V3 ================= -->
+  <div class="variant">
+    <div class="vhead">
+      <h2>Phương án 3 · "Xanh rêu đậm"</h2>
+      <p>Đổi hẳn hue accent từ đỏ sang xanh rêu <code>#3E4A34</code>. Cover <code>#2C3524</code>, slide đậm <code>#232A1D</code>. (<em>Lệch khỏi MASTER một hue, nhưng tasteskill cho phép "deep green" làm nguồn ấm.</em>)</p>
+    </div>
+    <div class="pair">
+      <div class="slide v3-cover">
+        <div class="stack">
+          <div class="seal">HR<br>HELP</div>
+          <h1 class="display">Ipsum dolor sit</h1>
+          <p class="lead" style="color:#D7DCCD">Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor.</p>
+          <p class="small" style="color:var(--green-light)">P029 · VinUni AI20K Build Phase</p>
+        </div>
+      </div>
+      <div class="tag">V3 · slide đậm <code>#232A1D</code></div>
+      <div class="slide v3-section">
+        <div class="stack">
+          <h2 class="headline">Lorem ipsum dolor sit</h2>
+          <div class="flow">
+            <span class="node">Case Graph</span><span class="arrow">→</span>
+            <span class="node">CaseHandoff</span><span class="arrow">→</span>
+            <span class="node">Recommendation</span><span class="arrow">→</span>
+            <span class="node gate">Dispatch Gate</span><span class="arrow">→</span>
+            <span class="node">Con người</span>
+          </div>
+          <p class="body" style="color:#C3CBB4">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

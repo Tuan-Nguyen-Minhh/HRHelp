@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P029 · HR Help · Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   P029 · HR Help — pitch deck 16:9
+   Thang sáng V2a: giấy 98 · putty 93 · đá 84 · taupe 74
+   Không nền tối · không nền đỏ · không emoji · không dash
+   ============================================================ */
+:root{
+  --paper:#FBFAF7; --putty:#F0EBE0; --stone:#DCD8CC; --taupe:#C4B9A3; --linen-2:#E7E3D9; --linen-3:#CFCABB;
+  --ink:#332C22; --ink-2:#5C554A; --ink-3:#756F63;
+  --son:#8C2B2B; --son-dark:#722222; --son-tint:#F6EAE7; --son-line:#E2C4C0;
+  --leather:#4A3F30;
+  --font-display:"Literata",Georgia,"Times New Roman",serif;
+  --font-text:"Public Sans",system-ui,-apple-system,sans-serif;
+  --ease-out:cubic-bezier(.22,1,.36,1);
+  --t-reveal:800ms;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-text);font-size:20px;line-height:1.5;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--son);outline-offset:3px}
+
+/* field */
+.f-paper{background:var(--paper);color:var(--ink)}
+.f-putty{background:var(--putty);color:var(--ink)}
+.f-stone{background:var(--stone);color:var(--ink)}
+.f-taupe{background:var(--taupe);color:var(--ink)}
+.f-taupe .muted{color:var(--ink-2)}
+.f-taupe .accent{color:var(--son-dark)}
+
+/* type */
+.display{font-family:var(--font-display);font-weight:500;font-size:clamp(48px,6.4vw,84px);line-height:1.03;letter-spacing:-.022em;margin:0;text-wrap:balance}
+.headline{font-family:var(--font-display);font-weight:500;font-size:clamp(30px,3.4vw,42px);line-height:1.12;letter-spacing:-.02em;margin:0;max-width:24ch;text-wrap:balance}
+.statement{font-family:var(--font-display);font-weight:400;font-size:clamp(26px,2.8vw,34px);line-height:1.3;margin:0;max-width:34ch;text-wrap:balance}
+.lead{font-size:clamp(19px,1.8vw,23px);line-height:1.45;margin:0;max-width:46ch;font-weight:400}
+.body{font-size:clamp(17px,1.5vw,20px);line-height:1.5;margin:0;max-width:50ch}
+.small{font-size:clamp(13px,1vw,15px);line-height:1.45;margin:0}
+.muted{color:var(--ink-3)}
+.nums{font-variant-numeric:tabular-nums}
+.accent{color:var(--son)}
+.seal{width:clamp(52px,6vw,64px);height:clamp(52px,6vw,64px);border:2px solid currentColor;border-radius:50%;display:grid;place-items:center;font-family:var(--font-display);font-size:9px;line-height:1.2;text-align:center;transform:rotate(-9deg);flex:0 0 auto}
+
+/* slide */
+.slide{position:relative;min-height:100dvh;display:flex;align-items:center;padding:clamp(40px,6vh,72px) clamp(28px,6vw,88px);overflow:hidden}
+.inner{width:100%;max-width:1280px;margin:0 auto}
+.stack>*+*{margin-top:clamp(16px,2.2vh,26px)}
+.masthead{display:flex;align-items:center;gap:18px}
+.brand{font-family:var(--font-display);font-weight:600;font-size:clamp(16px,1.8vw,22px)}
+
+/* list */
+.list{list-style:none;margin:0;padding:0;display:grid;gap:clamp(9px,1.3vh,14px)}
+.list li{display:grid;grid-template-columns:22px 1fr;gap:14px;align-items:start;font-size:clamp(18px,1.7vw,22px);font-weight:500}
+.list .tick{width:12px;height:12px;border-radius:50%;background:var(--son);margin-top:9px;display:block}
+.f-taupe .list .tick{background:var(--son-dark)}
+
+/* split */
+.split{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,5vw,64px);align-items:center}
+
+/* big stat */
+.stat{max-width:inherit}
+.stat .num{font-family:var(--font-display);font-weight:600;font-size:clamp(52px,8vw,96px);line-height:.98;letter-spacing:-.03em;margin:0}
+.bignum{font-family:var(--font-display);font-weight:600;font-size:clamp(54px,7.6vw,100px);line-height:1;letter-spacing:-.03em;margin:0}
+.stat .src{margin-top:14px;max-width:52ch}
+
+/* flow */
+.flow{display:flex;align-items:center;gap:clamp(14px,1.6vw,20px);flex-wrap:wrap;font-size:clamp(18px,1.9vw,23px)}
+.step{display:inline-flex;align-items:center;gap:clamp(14px,1.6vw,20px);white-space:nowrap}
+.node{padding:15px 22px;background:rgba(0,0,0,.05);font-weight:500}
+.f-paper .node,.f-putty .node,.f-stone .node{background:rgba(0,0,0,.05)}
+.f-taupe .node{background:rgba(0,0,0,.08)}
+.node.gate{background:var(--son);color:#fff;font-weight:600}
+.f-taupe .node.gate{background:var(--son-dark)}
+.arrow{opacity:.5}
+
+/* demo mock (sẽ thay bằng ảnh UI thật) */
+.mock{background:#FDFCF9;border:1px solid var(--linen-3);max-width:520px}
+.mock .hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--linen-3)}
+.mock .ava{width:40px;height:40px;border-radius:12px;border:1px solid var(--linen-3);background:var(--putty);display:grid;place-items:center;font-family:var(--font-display);color:var(--son-dark);font-weight:600}
+.mock .mb{padding:16px;display:flex;flex-direction:column;gap:12px;font-size:15px}
+.mock .msg{max-width:80%;padding:11px 14px;border-radius:14px}
+.mock .msg.user{align-self:flex-end;background:var(--leather);color:#fff;border-bottom-right-radius:5px}
+.mock .msg.ai{align-self:flex-start;background:#fff;border:1px solid var(--linen-3);border-bottom-left-radius:5px}
+.mock .fact{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 14px}
+.mock .chip{border:1px solid var(--linen-3);background:var(--paper);padding:5px 11px;border-radius:999px;font-size:12.5px;color:var(--ink-2)}
+.mock .chip.ok{border-color:var(--son-line);color:var(--son-dark);background:var(--son-tint)}
+
+/* ảnh chụp thật */
+.shotwrap{margin:0;aspect-ratio:16/10;overflow:hidden;background:var(--linen-2)}
+.shot{display:block;width:100%;height:100%;object-fit:cover;object-position:top center}
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,2vw,24px);max-width:1160px}
+.shotimg{display:block;width:auto;height:auto;max-width:100%;max-height:70vh;background:var(--linen-2)}
+.archsvg{display:block;width:100%;height:auto;max-width:1160px}
+
+/* trích dẫn điều khoản (chữ thật) */
+.quotes{display:grid;gap:clamp(12px,1.6vh,18px);max-width:1160px}
+.qrow{background:rgba(0,0,0,.05);padding:16px 22px;display:grid;gap:6px}
+.qsrc{font-weight:600;font-size:clamp(15px,1.5vw,18px)}
+.qtext{font-family:var(--font-display);font-size:clamp(14px,1.5vw,18px);line-height:1.45;color:var(--ink-2)}
+.cover-split{display:grid;grid-template-columns:.82fr 1.18fr;gap:clamp(24px,4vw,60px);align-items:center}
+
+/* compare */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:26px;font-size:clamp(16px,1.7vw,20px)}
+.compare .col{padding:22px 24px;background:rgba(0,0,0,.05)}
+.f-taupe .compare .col{background:rgba(0,0,0,.08)}
+.col.win{border-left:6px solid var(--son)}
+.f-taupe .col.win{border-left-color:var(--son-dark)}
+.col h3{font-family:var(--font-display);font-weight:500;font-size:clamp(20px,2.2vw,26px);margin:0 0 12px}
+.col ul{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.col li{display:flex;gap:10px;align-items:baseline}
+.col li i{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.45;flex:0 0 auto;transform:translateY(-2px)}
+
+/* chart bars */
+.bars{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(22px,3.4vw,52px);height:clamp(320px,58vh,470px);max-width:1060px;margin-top:4px}
+.bars .bar{display:grid;grid-template-rows:auto 1fr auto;gap:10px;min-width:0}
+.bars .m{font-family:var(--font-display);font-weight:600;font-size:clamp(34px,4vw,56px);line-height:1;letter-spacing:-.02em;white-space:nowrap}
+.bars .track{display:flex;align-items:flex-end;min-height:0}
+.bars .fill{display:block;width:100%;background:var(--son)}
+.bars .fill.soft{background:var(--son-line)}
+.bars .l{font-size:clamp(13px,1.2vw,15px);color:var(--ink-2);line-height:1.25}
+
+/* evaluation: metrics, scope and source reports */
+.eval-slide .stack>*+*{margin-top:clamp(14px,1.8vh,22px)}
+.eval-slide .headline{max-width:30ch}
+.eval-kicker{font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--son-dark);margin:0}
+.eval-sub{font-size:clamp(15px,1.4vw,18px);color:var(--ink-2);margin:0;max-width:85ch}
+.eval-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(14px,2vw,26px)}
+.eval-metric{border-top:2px solid var(--ink);padding-top:16px;min-width:0}
+.eval-value{display:block;font-family:var(--font-display);font-size:clamp(34px,4vw,56px);font-weight:600;letter-spacing:-.035em;line-height:1.1;margin-bottom:12px}
+.eval-metric h3{font-size:clamp(16px,1.5vw,19px);font-weight:600;line-height:1.35;margin:0 0 7px}
+.eval-metric p{font-size:clamp(13px,1.15vw,15px);line-height:1.45;color:var(--ink-2);margin:0}
+.eval-metric.attention{border-color:var(--son)}
+.eval-metric.attention .eval-value{color:var(--son-dark)}
+.eval-notes{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.eval-note{padding:16px 20px;background:rgba(0,0,0,.05);border-left:3px solid var(--son)}
+.eval-note h3{font-size:clamp(16px,1.5vw,19px);margin:0 0 6px;font-weight:600}
+.eval-note p{font-size:clamp(14px,1.2vw,16px);line-height:1.45;margin:0;color:var(--ink-2)}
+.eval-source{font-size:12px;line-height:1.5;color:var(--ink-2);margin:0;max-width:110ch}
+.eval-source a{color:inherit;text-underline-offset:3px}
+.eval-slide .bars{height:clamp(220px,34vh,310px);max-width:100%}
+.eval-slide .bars .m{font-size:clamp(30px,3.6vw,50px)}
+@media(max-width:760px){
+  .eval-grid{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:24px}
+  .eval-notes{grid-template-columns:1fr;gap:12px}
+  .eval-slide .bars{grid-template-columns:repeat(2,minmax(0,1fr));height:auto;row-gap:24px}
+  .eval-slide .bars .track{height:110px}
+  .eval-slide .headline{font-size:clamp(28px,5vw,36px)}
+}
+
+/* architecture: dải tầng */
+.arch{display:grid;gap:10px;max-width:1040px}
+.arch-row{display:grid;grid-template-columns:160px 1fr;gap:22px;align-items:center;padding:15px 22px;background:rgba(0,0,0,.05)}
+.arch-row.hl{border-left:7px solid var(--son)}
+.arch-k{font-weight:600;font-size:clamp(16px,1.7vw,20px)}
+.arch-v{font-size:clamp(15px,1.55vw,19px);color:var(--ink-2)}
+
+/* pipeline 4 chặng */
+.pipe{display:flex;align-items:stretch;gap:clamp(10px,1.4vw,18px);flex-wrap:wrap;max-width:1080px}
+.pstage{flex:1;min-width:180px;background:rgba(0,0,0,.05);padding:16px 18px;display:grid;gap:6px;align-content:start}
+.pstage b{font-size:clamp(17px,1.8vw,22px)}
+.pstage span{font-size:clamp(14px,1.4vw,17px);color:var(--ink-2)}
+.pstage.gate{background:var(--son);color:#fff}
+.pstage.gate span{color:#F6EAE7}
+.parrow{align-self:center;font-size:clamp(18px,2vw,24px);opacity:.5}
+
+/* challenges: cặp vấn đề → giải pháp */
+.learn{display:grid;gap:clamp(12px,1.6vh,18px);max-width:1060px}
+.lrow{display:grid;grid-template-columns:1fr auto 1.15fr;gap:clamp(14px,2vw,26px);align-items:center;padding:15px 22px;background:rgba(0,0,0,.05)}
+.lrow .q{font-size:clamp(15px,1.6vw,19px);color:var(--ink-2)}
+.lrow .a{font-size:clamp(16px,1.7vw,21px);font-weight:600}
+.lrow .to{opacity:.5;font-size:clamp(16px,1.8vw,22px)}
+
+/* progress + controls */
+.progress{position:fixed;top:0;left:0;height:4px;background:var(--son);width:0;z-index:50;transition:width .4s var(--ease-out)}
+.hint{position:fixed;right:20px;bottom:18px;z-index:50;font-size:13px;color:var(--ink-3);letter-spacing:.02em}
+.cta{border:0;background:var(--son);color:#fff;font:600 15px/1 var(--font-text);padding:15px 26px;display:inline-flex;align-items:center;gap:10px;cursor:pointer}
+.cta:focus-visible,.cta:hover{background:var(--son-dark)}
+
+/* motion: ẩn state chỉ khi có js + reduced motion no-preference */
+html:not(.js) [data-rise]{opacity:1!important;transform:none!important}
+@media (prefers-reduced-motion:no-preference){
+  html.js [data-rise]{opacity:0;transform:translateY(clamp(14px,2vh,24px))}
+  html.js .is-in [data-rise]{opacity:1;transform:none;transition:opacity var(--t-reveal) var(--ease-out),transform .9s var(--ease-out)}
+  html.js .is-in [data-rise]{transition-delay:calc(var(--i,0)*90ms + 120ms)}
+}
+@media (prefers-reduced-motion:reduce){
+  html.js .slide{overflow:auto}
+  html.js body{overflow:auto;height:auto}
+  html:not(.js){scroll-behavior:auto}
+}
+
+/* runtime contracts */
+.chain{display:grid;grid-template-columns:1fr 30px 1fr 30px 1fr 30px 1fr;align-items:stretch;max-width:1160px}
+.agent{display:grid;gap:8px;align-content:start;padding:16px 18px;background:rgba(0,0,0,.05);min-width:0}
+.agent.hl{border-left:7px solid var(--son)}
+.agent .io{font-size:clamp(11px,1.05vw,13px);font-weight:600;color:var(--son-dark);line-height:1.3}
+.agent b{font-size:clamp(16px,1.65vw,20px);line-height:1.2}
+.agent span{font-size:clamp(13px,1.25vw,15px);line-height:1.4;color:var(--ink-2)}
+.chain .parrow{display:grid;place-items:center;font-size:clamp(16px,1.8vw,22px);opacity:.5}
+.guard{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(10px,1.4vw,18px);max-width:1160px}
+.guard div{border-top:2px solid var(--ink);padding-top:9px;font-size:clamp(12px,1.15vw,14px);line-height:1.35;color:var(--ink-2)}
+.guard b{display:block;color:var(--ink);font-size:clamp(13px,1.3vw,16px);margin-bottom:3px}
+
+/* roadmap */
+.road{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(16px,2.2vw,30px);max-width:1120px}
+.phase{display:grid;gap:10px;align-content:start;padding:20px 22px 22px;background:rgba(0,0,0,.05);border-top:4px solid var(--son)}
+.phase .pk{font-size:clamp(12px,1.1vw,14px);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--son-dark)}
+.phase h3{font-family:var(--font-display);font-size:clamp(21px,2.3vw,28px);font-weight:500;margin:0}
+.phase ul{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.phase li{font-size:clamp(13px,1.3vw,16px);line-height:1.4;color:var(--ink-2);display:flex;gap:9px}
+.phase li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--son);margin-top:7px;flex:0 0 auto}
+.phase .gate{font-size:clamp(12px,1.2vw,14px);font-weight:600;line-height:1.35;border-top:1px solid var(--linen-3);padding-top:10px;margin-top:2px}
+
+@media(max-width:760px){
+  .chain{grid-template-columns:1fr;gap:10px}
+  .chain .parrow{display:none}
+  .guard{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:18px}
+  .road{grid-template-columns:1fr}
+}
+
+/* print / PDF: one slide per landscape page */
+@page{size:13.333in 7.5in;margin:0}
+@media print{
+  html,body{width:13.333in;background:var(--paper);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .progress,.hint{display:none!important}
+  .slide{width:13.333in;height:7.5in;min-height:0;padding:clamp(30px,5vh,54px) clamp(28px,5vw,72px);overflow:hidden;page-break-after:always;break-after:page}
+  .slide:last-of-type{page-break-after:auto;break-after:auto}
+  html.js [data-rise],html.js .is-in [data-rise]{opacity:1!important;transform:none!important;transition:none!important}
+  html.js .slide{overflow:hidden!important}
+  img,svg{break-inside:avoid}
+  .shotimg{max-height:5.2in}
+  .shotwrap{aspect-ratio:16/10}
+  .chain{grid-template-columns:1fr 30px 1fr 30px 1fr 30px 1fr!important}
+  .chain .parrow{display:grid!important}
+  .guard{grid-template-columns:repeat(4,1fr)!important}
+  .road{grid-template-columns:repeat(3,1fr)!important}
+  .eval-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  .eval-notes{grid-template-columns:1fr 1fr!important}
+  .eval-slide .bars{grid-template-columns:repeat(4,1fr)!important}
+  a{text-decoration:none;color:inherit}
+}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="hint" id="hint">→ để chuyển slide</div>
+
+<!-- ============ 1 · Cover · P ============ -->
+<section class="slide f-paper" data-reveal>
+  <div class="inner">
+    <div class="cover-split">
+      <div class="stack" data-rise style="--i:0">
+        <div class="masthead">
+          <div class="seal">HR<br>HELP</div>
+          <span class="brand">P029 · VinUni AI20K</span>
+        </div>
+        <h1 class="display">HR Help</h1>
+        <p class="lead muted">Trợ lý AI cho nghiệp vụ kỷ luật lao động.</p>
+        <p class="small muted">Mentors: Ngô Đình Luân, Trần Hữu Khánh Văn</p>
+      </div>
+      <figure class="shotwrap" data-rise style="--i:1">
+        <img class="shot" src="assets/landing.png" alt="Trang chủ HR Help">
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 · Nỗi đau · S ============ -->
+<section class="slide f-stone" data-reveal>
+  <div class="inner">
+    <div class="split">
+      <div class="stack" data-rise style="--i:0">
+        <h2 class="headline">Một vụ vi phạm, một rừng văn bản</h2>
+        <p class="body muted">Một vụ phải đối chiếu nhiều tầng văn bản, rất dễ bỏ sót điều khoản.</p>
+      </div>
+      <ul class="list" data-rise style="--i:1">
+        <li><span class="tick"></span><span>Điều khoản dẫn chiếu lẫn nhau</span></li>
+        <li><span class="tick"></span><span>Tra cứu thủ công tốn hàng giờ</span></li>
+        <li><span class="tick"></span><span>Mỗi phòng ban xử một kiểu</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3 · Cái giá · T (bậc đậm nhất) ============ -->
+<section class="slide f-taupe" data-reveal>
+  <div class="inner">
+    <div class="split">
+      <div class="stack" data-rise style="--i:0">
+        <h2 class="headline">Sai thủ tục, mất cả vụ kiện</h2>
+        <p class="bignum nums">1 sai sót</p>
+        <p class="statement">Đủ để bản án nghiêng về người lao động.</p>
+      </div>
+      <div class="stack" data-rise style="--i:1">
+        <ul class="list">
+          <li><span class="tick"></span><span>Thiếu biên bản</span></li>
+          <li><span class="tick"></span><span>Sai thời hiệu</span></li>
+          <li><span class="tick"></span><span>Thiếu họp công đoàn</span></li>
+        </ul>
+        <p class="body">Hệ quả: bồi thường, buộc nhận lại lao động, phạt hành chính.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 · Giải pháp · U ============ -->
+<section class="slide f-putty" data-reveal>
+  <div class="inner">
+    <div class="stack">
+      <h2 class="headline" data-rise style="--i:0">Từ mô tả thô đến hồ sơ kỷ luật</h2>
+      <div class="flow" data-rise style="--i:1">
+        <span class="node">Làm rõ tình tiết</span>
+        <span class="step"><span class="arrow">→</span><span class="node">Tra cứu theo hiệu lực</span></span>
+        <span class="step"><span class="arrow">→</span><span class="node">Đánh giá rủi ro</span></span>
+        <span class="step"><span class="arrow">→</span><span class="node">Soạn bản nháp</span></span>
+        <span class="step"><span class="arrow">→</span><span class="node gate">Con người quyết định</span></span>
+      </div>
+      <p class="body muted" data-rise style="--i:2">Một quy trình năm bước, kết thúc bằng chữ ký của con người.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 · Demo · S ============ -->
+<section class="slide f-stone" data-reveal>
+  <div class="inner">
+    <div class="stack">
+      <h2 class="headline" data-rise style="--i:0">AI hỏi, người xác nhận</h2>
+      <img class="shotimg" src="assets/chat-clarify.png" alt="Khung chat: agent hỏi làm rõ tình tiết" data-rise style="--i:1;margin-inline:auto">
+      <p class="body muted" data-rise style="--i:2">Agent hỏi cho đủ căn cứ, khóa dữ kiện, rồi trích dẫn điều khoản cụ thể.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6 · Kiến trúc: luồng kỹ thuật · P ============ -->
+<section class="slide f-paper" data-reveal>
+  <div class="inner">
+    <div class="stack">
+      <h2 class="headline" data-rise style="--i:0">Năm chặng kỹ thuật</h2>
+      <p class="body muted" data-rise style="--i:1">Một request đi từ chat đến quyết định, mỗi bước có contract và chốt kiểm tra.</p>
+      <svg class="archsvg" data-rise style="--i:2" viewBox="0 0 1140 410" role="img" aria-label="Luồng kỹ thuật HR Help: nhập hồ sơ, hiểu và hỏi, truy xuất, đề xuất, cổng và người duyệt; kèm dữ liệu, control plane và dịch vụ AI ngoài">
+        <defs>
+          <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#332C22"/>
+          </marker>
+        </defs>
+        <g font-family="'Public Sans',system-ui,sans-serif" fill="#332C22">
+          <!-- 1 · nhập hồ sơ -->
+          <rect x="8" y="6" width="210" height="182" fill="rgba(0,0,0,.05)"/>
+          <text x="22" y="28" font-size="10.5" font-weight="600" fill="#8C2B2B" letter-spacing="1">NHẬP HỒ SƠ</text>
+          <text x="22" y="54" font-size="20" font-weight="600">React + API</text>
+          <text x="22" y="84" font-size="13" fill="#5C554A">CaseWorkspace · chat</text>
+          <text x="22" y="104" font-size="13" fill="#5C554A">FastAPI /api/v1</text>
+          <text x="22" y="124" font-size="13" fill="#5C554A">JWT · RBAC · case access</text>
+          <text x="22" y="144" font-size="13" fill="#5C554A">POST /messages · /facts/confirm</text>
+          <text x="22" y="170" font-size="10.5" fill="#722222">ra: TurnRequest</text>
+
+          <!-- 2 · hiểu và hỏi -->
+          <rect x="234" y="6" width="210" height="182" fill="rgba(0,0,0,.05)"/>
+          <text x="248" y="28" font-size="10.5" font-weight="600" fill="#8C2B2B" letter-spacing="1">HIỂU VÀ HỎI</text>
+          <text x="248" y="54" font-size="20" font-weight="600">Case Graph</text>
+          <text x="248" y="84" font-size="13" fill="#5C554A">open → intent → extract</text>
+          <text x="248" y="104" font-size="13" fill="#5C554A">ask / action / retrieve</text>
+          <text x="248" y="124" font-size="13" fill="#5C554A">facts khóa sau xác nhận</text>
+          <text x="248" y="144" font-size="13" fill="#5C554A">Python chọn cạnh</text>
+          <text x="248" y="170" font-size="10.5" fill="#722222">ra: SearchQuery</text>
+
+          <!-- 3 · truy xuất -->
+          <rect x="460" y="6" width="210" height="182" fill="rgba(0,0,0,.05)"/>
+          <text x="474" y="28" font-size="10.5" font-weight="600" fill="#8C2B2B" letter-spacing="1">TRUY XUẤT</text>
+          <text x="474" y="54" font-size="20" font-weight="600">Retrieval</text>
+          <text x="474" y="84" font-size="13" fill="#5C554A">dense + BM25 + lexical</text>
+          <text x="474" y="104" font-size="13" fill="#5C554A">RRF → Cohere rerank</text>
+          <text x="474" y="124" font-size="13" fill="#5C554A">mở rộng đồ thị một bước</text>
+          <text x="474" y="144" font-size="13" fill="#5C554A">chọn gói chứng cứ</text>
+          <text x="474" y="170" font-size="10.5" fill="#722222">ra: CaseHandoff</text>
+
+          <!-- 4 · đề xuất -->
+          <rect x="686" y="6" width="210" height="182" fill="rgba(0,0,0,.05)"/>
+          <text x="700" y="28" font-size="10.5" font-weight="600" fill="#8C2B2B" letter-spacing="1">ĐỀ XUẤT</text>
+          <text x="700" y="54" font-size="20" font-weight="600">Recommendation</text>
+          <text x="700" y="84" font-size="13" fill="#5C554A">đọc CaseHandoff</text>
+          <text x="700" y="104" font-size="13" fill="#5C554A">DRAFT + citation</text>
+          <text x="700" y="124" font-size="13" fill="#5C554A">risk + process steps</text>
+          <text x="700" y="144" font-size="13" fill="#5C554A">AnswerView</text>
+          <text x="700" y="170" font-size="10.5" fill="#722222">ra: ProposalHandoff</text>
+
+          <!-- 5 · cổng và người -->
+          <rect x="912" y="6" width="210" height="182" fill="rgba(0,0,0,.06)"/>
+          <rect x="912" y="6" width="7" height="182" fill="#8C2B2B"/>
+          <text x="930" y="28" font-size="10.5" font-weight="600" fill="#722222" letter-spacing="1">CỔNG VÀ NGƯỜI</text>
+          <text x="930" y="54" font-size="20" font-weight="600">Dispatch Gate</text>
+          <text x="930" y="84" font-size="13" fill="#5C554A">HOLD / SUBMIT</text>
+          <text x="930" y="104" font-size="13" fill="#5C554A">Legal duyệt</text>
+          <text x="930" y="124" font-size="13" fill="#5C554A">Manager ký</text>
+          <text x="930" y="144" font-size="13" fill="#5C554A">Đóng hồ sơ</text>
+          <text x="930" y="170" font-size="10.5" fill="#722222">ra: draft packet</text>
+
+          <!-- arrows -->
+          <g stroke="#332C22" stroke-width="2" fill="none">
+            <line x1="218" y1="95" x2="230" y2="95" marker-end="url(#arw)"/>
+            <line x1="444" y1="95" x2="456" y2="95" marker-end="url(#arw)"/>
+            <line x1="670" y1="95" x2="682" y2="95" marker-end="url(#arw)"/>
+            <line x1="896" y1="95" x2="908" y2="95" marker-end="url(#arw)"/>
+          </g>
+
+          <!-- data pills -->
+          <rect x="8" y="196" width="210" height="46" fill="rgba(0,0,0,.04)"/>
+          <text x="22" y="216" font-size="10.5" fill="#5C554A">messages · case_facts</text>
+          <text x="22" y="233" font-size="10.5" fill="#5C554A">cases · conversations</text>
+
+          <rect x="234" y="196" width="210" height="46" fill="rgba(0,0,0,.04)"/>
+          <text x="248" y="216" font-size="10.5" fill="#5C554A">agent_runs · tool_calls</text>
+          <text x="248" y="233" font-size="10.5" fill="#5C554A">retrievals</text>
+
+          <rect x="460" y="196" width="210" height="46" fill="rgba(0,0,0,.04)"/>
+          <text x="474" y="216" font-size="10.5" fill="#5C554A">document_chunks</text>
+          <text x="474" y="233" font-size="10.5" fill="#5C554A">policy_versions</text>
+
+          <rect x="686" y="196" width="210" height="46" fill="rgba(0,0,0,.04)"/>
+          <text x="700" y="216" font-size="10.5" fill="#5C554A">recommendations</text>
+          <text x="700" y="233" font-size="10.5" fill="#5C554A">citations · case_drafts</text>
+
+          <rect x="912" y="196" width="210" height="46" fill="rgba(0,0,0,.04)"/>
+          <text x="926" y="216" font-size="10.5" fill="#5C554A">reviews · decisions</text>
+          <text x="926" y="233" font-size="10.5" fill="#5C554A">audit_logs · notifications</text>
+
+          <!-- human workflow -->
+          <rect x="8" y="258" width="1114" height="54" fill="rgba(0,0,0,.05)"/>
+          <text x="22" y="281" font-size="10.5" font-weight="600" fill="#8C2B2B" letter-spacing="1">LUỒNG NGƯỜI DUYỆT</text>
+          <text x="210" y="288" font-size="13.5" font-weight="600">HR xác nhận facts</text>
+          <text x="350" y="288" font-size="13.5" fill="#756F63">→</text>
+          <text x="380" y="288" font-size="13.5" font-weight="600">HR gửi ticket</text>
+          <text x="520" y="288" font-size="13.5" fill="#756F63">→</text>
+          <text x="550" y="288" font-size="13.5" font-weight="600">Legal duyệt</text>
+          <text x="680" y="288" font-size="13.5" fill="#756F63">→</text>
+          <text x="710" y="288" font-size="13.5" font-weight="600">Manager ký</text>
+          <text x="840" y="288" font-size="13.5" fill="#756F63">→</text>
+          <text x="870" y="288" font-size="13.5" font-weight="600">Đóng hồ sơ</text>
+
+          <!-- control plane -->
+          <rect x="8" y="326" width="370" height="76" fill="rgba(0,0,0,.05)"/>
+          <text x="22" y="350" font-size="10.5" font-weight="600" fill="#8C2B2B" letter-spacing="1">KIỂM SOÁT</text>
+          <text x="22" y="374" font-size="12" fill="#5C554A">JWT · RBAC · case access</text>
+          <text x="22" y="394" font-size="12" fill="#5C554A">Idempotency-Key · audit_logs · SSE</text>
+
+          <rect x="394" y="326" width="370" height="76" fill="rgba(0,0,0,.05)"/>
+          <text x="408" y="350" font-size="10.5" font-weight="600" fill="#8C2B2B" letter-spacing="1">DỮ LIỆU</text>
+          <text x="408" y="374" font-size="12" fill="#5C554A">PostgreSQL + pgvector</text>
+          <text x="408" y="394" font-size="12" fill="#5C554A">lọc hiệu lực theo incident_date</text>
+
+          <rect x="780" y="326" width="342" height="76" fill="rgba(0,0,0,.05)"/>
+          <text x="794" y="350" font-size="10.5" font-weight="600" fill="#8C2B2B" letter-spacing="1">AI NGOÀI</text>
+          <text x="794" y="374" font-size="12" fill="#5C554A">DeepSeek / Mistral · Mistral Embed</text>
+          <text x="794" y="394" font-size="12" fill="#5C554A">Cohere Rerank</text>
+        </g>
+      </svg>
+      <p class="body muted" data-rise style="--i:3">Ba contract: SearchQuery → CaseHandoff → ProposalHandoff. Mỗi lần chạy ghi vào agent_runs và audit_logs.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6b · Kiến trúc runtime · S ============ -->
+<section class="slide f-stone" data-reveal>
+  <div class="inner">
+    <div class="stack">
+      <h2 class="headline" data-rise style="--i:0">Bên trong một lượt chạy</h2>
+      <div class="chain" data-rise style="--i:1">
+        <div class="agent">
+          <span class="io">vào: mô tả vụ việc</span>
+          <b>Case Graph</b>
+          <span>Hỏi, trích xuất, khóa dữ kiện.</span>
+        </div>
+        <span class="parrow">→</span>
+        <div class="agent">
+          <span class="io">nhận: CaseHandoff</span>
+          <b>Retrieval</b>
+          <span>Dense, BM25, RRF, rerank. Lọc hiệu lực tại ngày vi phạm.</span>
+        </div>
+        <span class="parrow">→</span>
+        <div class="agent hl">
+          <span class="io">nhận: CaseHandoff</span>
+          <b>Recommendation</b>
+          <span>Chỉ đọc hợp đồng. Ghi DRAFT và citation. Không duyệt.</span>
+        </div>
+        <span class="parrow">→</span>
+        <div class="agent">
+          <span class="io">nhận: ProposalHandoff</span>
+          <b>Dispatch Gate</b>
+          <span>HOLD khi thiếu căn cứ. SUBMIT chỉ tạo bản nháp.</span>
+        </div>
+      </div>
+      <div class="guard" data-rise style="--i:2">
+        <div><b>Python chọn bước</b>LLM không nối cạnh đồ thị.</div>
+        <div><b>RBAC và JWT</b>Quyền theo vai trò và hồ sơ.</div>
+        <div><b>Idempotency-Key</b>Chống gửi trùng ticket.</div>
+        <div><b>Audit và agent_runs</b>Ghi mọi lần chạy và trích dẫn.</div>
+      </div>
+      <p class="body muted" data-rise style="--i:3">Hai hợp đồng bất biến. Handoff là dữ liệu nội bộ, không render ra giao diện.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7 · GraphRAG · T ============ -->
+<section class="slide f-taupe" data-reveal>
+  <div class="inner">
+    <div class="stack">
+      <h2 class="headline" data-rise style="--i:0">Đúng điều khoản, đúng thời điểm</h2>
+      <div class="pipe" data-rise style="--i:1">
+        <div class="pstage"><b>Truy vấn</b><span>Dense 1024 · BM25 hai kho · Phrase</span></div>
+        <span class="parrow">→</span>
+        <div class="pstage"><b>Hợp nhất</b><span>RRF · 100 ứng viên</span></div>
+        <span class="parrow">→</span>
+        <div class="pstage"><b>Tinh lọc</b><span>Cohere rerank · mở rộng đồ thị một bước</span></div>
+        <span class="parrow">→</span>
+        <div class="pstage gate"><b>Chứng cứ</b><span>Mười hai đoạn · lọc theo ngày vi phạm</span></div>
+      </div>
+      <p class="body muted" data-rise style="--i:2">Văn bản phải còn hiệu lực tại ngày vi phạm.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8 · Trích dẫn điều khoản · S ============ -->
+<section class="slide f-stone" data-reveal>
+  <div class="inner">
+    <div class="stack">
+      <h2 class="headline" data-rise style="--i:0">Trích đúng điều, đúng khoản</h2>
+      <div class="quotes" data-rise style="--i:1">
+        <div class="qrow">
+          <span class="qsrc">BLLĐ 2019 · Điều 125, khoản 4</span>
+          <span class="qtext">“Người lao động tự ý bỏ việc 05 ngày cộng dồn trong thời hạn 30 ngày … mà không có lý do chính đáng.”</span>
+        </div>
+        <div class="qrow">
+          <span class="qsrc">Nội quy lao động · Điều 4, khoản 3</span>
+          <span class="qtext">“Mọi trường hợp vắng mặt không xin phép … được coi là tự ý bỏ việc.”</span>
+        </div>
+        <div class="qrow">
+          <span class="qsrc">Nội quy lao động · Điều 15, khoản 1</span>
+          <span class="qtext">“Ít nhất 05 ngày làm việc trước ngày mở cuộc họp xử lý kỷ luật, Công ty phải gửi thông báo bằng văn bản … đến người lao động vi phạm và Ban chấp hành Công đoàn cơ sở.”</span>
+        </div>
+      </div>
+      <p class="body muted" data-rise style="--i:2">Trích từ kho văn bản của dự án, lọc theo ngày vi phạm.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9 · Quản trị · U ============ -->
+<section class="slide f-putty" data-reveal>
+  <div class="inner">
+    <div class="stack">
+      <h2 class="headline" data-rise style="--i:0">AI phân tích, người quyết định</h2>
+      <div class="compare" data-rise style="--i:1">
+        <div class="col">
+          <h3>AI làm</h3>
+          <ul>
+            <li><i></i>Hỏi làm rõ</li>
+            <li><i></i>Tính rủi ro</li>
+            <li><i></i>Soạn bản nháp</li>
+          </ul>
+        </div>
+        <div class="col win">
+          <h3>Người quyết</h3>
+          <ul>
+            <li><i></i>Pháp chế duyệt</li>
+            <li><i></i>Người có thẩm quyền ký</li>
+          </ul>
+          <p class="small muted" style="margin-top:12px">RBAC, JWT, audit log, chống gửi trùng</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Đánh giá 1/4 · Corpus và ingestion ============ -->
+<section class="slide f-paper eval-slide" id="eval-ingestion" data-reveal aria-labelledby="eval-ingestion-title">
+  <div class="inner">
+    <div class="stack">
+      <p class="eval-kicker" data-rise style="--i:0">Đánh giá 01 / 04 · Corpus và ingestion · Nhãn dự thảo</p>
+      <h2 class="headline" id="eval-ingestion-title" data-rise style="--i:1">Nội dung gần đủ,<br>dẫn chiếu còn thiếu</h2>
+      <p class="eval-sub" data-rise style="--i:2">16 ca · 189 đoạn nguồn · 4 văn bản. Đối chiếu nguồn với các tệp chunk đã lưu.</p>
+      <div class="eval-grid" data-rise style="--i:3">
+        <div class="eval-metric"><span class="eval-value nums">98.94%</span><h3>Bảo toàn nội dung</h3><p>187/189 đoạn nguồn được giữ.</p></div>
+        <div class="eval-metric"><span class="eval-value nums">100%</span><h3>Metadata đúng</h3><p>187/187 đoạn đã được bảo toàn.</p></div>
+        <div class="eval-metric"><span class="eval-value nums">99.47%</span><h3>Ngữ cảnh đạt</h3><p>186/187 đoạn đã được bảo toàn.</p></div>
+        <div class="eval-metric attention"><span class="eval-value nums">60%</span><h3>Recall dẫn chiếu</h3><p>Tìm được 3/5 dẫn chiếu có nhãn.</p></div>
+      </div>
+      <div class="eval-notes" data-rise style="--i:4">
+        <div class="eval-note"><h3>14/16 ca đạt · Tổng thể chưa đạt</h3><p>ND145, Điều 69 và 70 thiếu nội dung nguồn và dẫn chiếu. Có nội dung chỉ còn trong metadata.</p></div>
+        <div class="eval-note"><h3>Cần sửa cấu trúc nội quy</h3><p>NQCT có nhãn điều ngoài danh mục nguồn. Phép đo này chưa kiểm tra DB đang chạy hoặc vector embedding.</p></div>
+      </div>
+      <p class="eval-source" data-rise style="--i:5">Nguồn: <a href="eval/ingestion/results/saved_corpus/report.md">ingestion / saved_corpus</a> · Nhãn chờ rà soát; chưa xác nhận tính đúng pháp lý. Không chạy lại toàn bộ quy trình nạp dữ liệu.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Đánh giá 2/4 · Routing và fact extraction ============ -->
+<section class="slide f-stone eval-slide" id="eval-routing" data-reveal aria-labelledby="eval-routing-title">
+  <div class="inner">
+    <div class="stack">
+      <p class="eval-kicker" data-rise style="--i:0">Đánh giá 02 / 04 · Routing và tình tiết · Nhãn dự thảo</p>
+      <h2 class="headline" id="eval-routing-title" data-rise style="--i:1">Định tuyến đúng trên<br>các ca chấm được</h2>
+      <p class="eval-sub" data-rise style="--i:2">48 ca · DeepSeek Flash · Thành phần thật của ứng dụng, có cổng kiểm tra Python.</p>
+      <div class="eval-grid" data-rise style="--i:3">
+        <div class="eval-metric"><span class="eval-value nums">100%</span><h3>Routing accuracy</h3><p>28/28 ca chấm được; 2/30 ca lỗi.</p></div>
+        <div class="eval-metric"><span class="eval-value nums">98.25%</span><h3>F1 trích xuất tình tiết</h3><p>Sau kiểm tra Python · 18 ca.</p></div>
+        <div class="eval-metric"><span class="eval-value nums">94.44%</span><h3>Ca tình tiết đạt đầy đủ</h3><p>17/18 ca đạt mọi yêu cầu.</p></div>
+        <div class="eval-metric attention"><span class="eval-value nums">45/48</span><h3>Ca đạt toàn bộ</h3><p>46 ca hoàn thành; 2 ca lỗi xử lý.</p></div>
+      </div>
+      <div class="eval-notes" data-rise style="--i:4">
+        <div class="eval-note"><h3>Hai ca routing chưa chấm được</h3><p>R16 và R20 dùng fallback sau khi kiểm tra lại thất bại. Điểm là null, không tính vào accuracy.</p></div>
+        <div class="eval-note"><h3>Một tình tiết mất sau kiểm tra Python</h3><p>F01: mô hình lấy đúng tình tiết thông báo nghỉ, nhưng trường notice_form bị loại ở bước kiểm tra.</p></div>
+      </div>
+      <p class="eval-source" data-rise style="--i:5">Nguồn: <a href="eval/routing/results/golden_live/report.md">routing / golden_live</a> · Routing và trích xuất được đo riêng; chưa đánh giá hội thoại đầu cuối. Nhãn chờ chuyên gia rà soát.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Đánh giá 3/4 · Retrieval ============ -->
+<section class="slide f-putty eval-slide" id="eval-retrieval" data-reveal aria-labelledby="eval-retrieval-title">
+  <div class="inner">
+    <div class="stack">
+      <p class="eval-kicker" data-rise style="--i:0">Đánh giá 03 / 04 · Retrieval · Nhãn dự thảo</p>
+      <h2 class="headline" id="eval-retrieval-title" data-rise style="--i:1">Giữ đủ chứng cứ<br>đã gán nhãn</h2>
+      <p class="eval-sub" data-rise style="--i:2">20 ca · 30 đơn vị chứng cứ · DB thực tế 1.307 chunk. Lần chạy điều tiết: không lỗi API.</p>
+      <div class="eval-grid" data-rise style="--i:3">
+        <div class="eval-metric"><span class="eval-value nums">100%</span><h3>Recall chứng cứ cuối</h3><p>Trung bình trên 19 ca có chứng cứ.</p></div>
+        <div class="eval-metric"><span class="eval-value nums">19/19</span><h3>Giữ đủ bộ nhãn tối thiểu</h3><p>Ca âm tính còn lại trả về rỗng đúng.</p></div>
+        <div class="eval-metric"><span class="eval-value nums">100%</span><h3>Recall chunk quan trọng</h3><p>18 ca có nhãn chứng cứ quan trọng.</p></div>
+        <div class="eval-metric"><span class="eval-value nums">0.8660</span><h3>nDCG cận dưới</h3><p>19 ca; đoạn chưa có nhãn nhận 0.</p></div>
+      </div>
+      <div class="eval-notes" data-rise style="--i:4">
+        <div class="eval-note"><h3>Chỉ 25,88% đầu ra đã có nhãn</h3><p>Chưa kết luận được precision tổng thể. 17/20 ca có cảnh báo vượt ngân sách chứng cứ.</p></div>
+        <div class="eval-note"><h3>DB có 0 cạnh dẫn chiếu</h3><p>Chưa đo được lợi ích mở rộng đồ thị. Nội dung và bộ lọc ngày đều đạt; corpus giữ nguyên sau chạy.</p></div>
+      </div>
+      <p class="eval-source" data-rise style="--i:5">Nguồn: <a href="eval/retrieval/results/golden_paced/report.md">retrieval / golden_paced</a> · Nhãn chờ chuyên gia duyệt. Giãn cách rerank 7 giây; thời gian có chờ API không dùng làm độ trễ phục vụ.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Đánh giá 4/4 · RAGAS ============ -->
+<section class="slide f-paper eval-slide" id="eval-ragas" data-reveal aria-labelledby="eval-ragas-title">
+  <div class="inner">
+    <div class="stack">
+      <p class="eval-kicker" data-rise style="--i:0">Đánh giá 04 / 04 · Chất lượng trả lời · Nhãn dự thảo</p>
+      <h2 class="headline" id="eval-ragas-title" data-rise style="--i:1">Chất lượng trả lời<br>còn khoảng trống</h2>
+      <p class="eval-sub" data-rise style="--i:2">RAGAS · 5 mẫu · Retrieval trực tiếp và thành phần đánh giá hồ sơ; chưa phải toàn bộ hội thoại.</p>
+      <div class="bars" data-rise style="--i:3" role="img" aria-label="RAGAS trên 5 mẫu: Context Precision 91,41%; Faithfulness 82,45%; Factual Correctness 57,60%; Context Recall 34,96%. Thang cột từ 0 đến 100%.">
+        <div class="bar"><span class="m nums">91.41%</span><div class="track"><span class="fill" style="height:91.41%"></span></div><span class="l">Context Precision · 5/5 mẫu</span></div>
+        <div class="bar"><span class="m nums">82.45%</span><div class="track"><span class="fill" style="height:82.45%"></span></div><span class="l">Faithfulness · 5/5 mẫu</span></div>
+        <div class="bar"><span class="m nums">57.60%</span><div class="track"><span class="fill soft" style="height:57.60%"></span></div><span class="l">Factual Correctness · 5/5 mẫu</span></div>
+        <div class="bar"><span class="m nums">34.96%</span><div class="track"><span class="fill soft" style="height:34.96%"></span></div><span class="l">Context Recall · 5/5 mẫu</span></div>
+      </div>
+      <p class="eval-sub" data-rise style="--i:4">Độ đúng so với tham chiếu và độ bao phủ ngữ cảnh còn thấp. RAGAS dùng cách chấm khác với recall theo UUID ở bộ retrieval 20 ca.</p>
+      <p class="eval-source" data-rise style="--i:5">Nguồn: <a href="eval/case_assessment/results/live_retrieval_mistral8b/report.md">case_assessment / live_retrieval_mistral8b</a> · Judge: ministral-8b-2512 · Cột theo thang 0–100%. Faithfulness xét cả tình tiết đầu vào và chính sách. Bộ nhỏ, nhãn tham chiếu chờ chuyên gia rà soát.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11 · Thách thức · T ============ -->
+<section class="slide f-taupe" data-reveal>
+  <div class="inner">
+    <div class="stack">
+      <h2 class="headline" data-rise style="--i:0">Ba điểm nghẽn và cách vượt</h2>
+      <div class="learn" data-rise style="--i:1">
+        <div class="lrow"><span class="q">Luật chung lấn át nội quy công ty</span><span class="to">→</span><span class="a">Tách hai kho BM25</span></div>
+        <div class="lrow"><span class="q">Văn bản hết hiệu lực vẫn được lấy</span><span class="to">→</span><span class="a">Lọc theo ngày vi phạm</span></div>
+        <div class="lrow"><span class="q">LLM tự chọn mức phạt khi thiếu căn cứ</span><span class="to">→</span><span class="a">Guardrail Python, cổng HOLD</span></div>
+      </div>
+      <p class="body muted" data-rise style="--i:2">Chọn an toàn pháp lý thay vì đoán.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12 · Định hướng phát triển · S ============ -->
+<section class="slide f-stone" data-reveal>
+  <div class="inner">
+    <div class="stack">
+      <h2 class="headline" data-rise style="--i:0">Ba chặng, ba điều kiện ra</h2>
+      <p class="body muted" data-rise style="--i:1">Mỗi chặng chỉ mở khi chặng trước có bằng chứng.</p>
+      <div class="road" data-rise style="--i:2">
+        <div class="phase">
+          <span class="pk">Nền tảng</span>
+          <h3>Làm cho hồ sơ đáng tin</h3>
+          <ul>
+            <li>Xác minh corpus từng điều với chuyên gia</li>
+            <li>Mở rộng eval, gắn nhãn chuyên gia</li>
+            <li>Đo chi phí và độ trễ mỗi hồ sơ</li>
+            <li>Bật CI theo push, thêm cảnh báo vận hành</li>
+          </ul>
+          <p class="gate">Điều kiện ra: corpus được duyệt, CI xanh, có ngưỡng chi phí và độ trễ.</p>
+        </div>
+        <div class="phase">
+          <span class="pk">Mở rộng</span>
+          <h3>Phủ thêm nghiệp vụ</h3>
+          <ul>
+            <li>Dynamic fact schema có validator</li>
+            <li>Source Planner internal-first</li>
+            <li>External MCP có citation và disclaimer</li>
+            <li>Tích hợp Base.vn, 1Office, SuccessFactors</li>
+          </ul>
+          <p class="gate">Điều kiện ra: external research có kiểm soát, thêm nhóm vi phạm mới, đồng bộ HRIS.</p>
+        </div>
+        <div class="phase">
+          <span class="pk">Sản phẩm</span>
+          <h3>Thành hệ thống HR</h3>
+          <ul>
+            <li>Trợ lý phiên hòa giải</li>
+            <li>Kho tiền lệ nội bộ</li>
+            <li>Dashboard tuân thủ</li>
+            <li>Multi-tenant và on-prem</li>
+          </ul>
+          <p class="gate">Điều kiện ra: khách hàng thử nghiệm, SLA, kiểm toán bảo mật.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 13 · Thanks · P ============ -->
+<section class="slide f-paper" data-reveal>
+  <div class="inner">
+    <div class="stack">
+      <div class="masthead" data-rise style="--i:0">
+        <div class="seal">HR<br>HELP</div>
+        <span class="brand">P029 · VinUni AI20K</span>
+      </div>
+      <h2 class="display" data-rise style="--i:1">Thanks for listening</h2>
+      <p class="lead muted" data-rise style="--i:2">Hỏi đáp và demo trực tiếp.</p>
+      <p class="small muted" data-rise style="--i:3">Live demo: c4-app-029.vercel.app · Mentors: Ngô Đình Luân, Trần Hữu Khánh Văn</p>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  document.documentElement.classList.add('js');
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var progress=document.getElementById('progress');
+  var reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // scroll to current; progress
+  function sync(cur){
+    var i=slides.indexOf(cur);
+    progress.style.width=((i+1)/slides.length*100)+'%';
+  }
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('is-in'); sync(e.target); io.unobserve(e.target);} });
+  },{threshold:.55});
+  slides.forEach(function(s){io.observe(s)});
+
+  if(reduced) return;
+  // keyboard nav
+  var i=0;
+  function go(n){ i=(n+slides.length)%slides.length; slides[i].scrollIntoView(); }
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key==='PageDown'){go(i+1)}
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){go(i-1)}
+    else if(e.key==='Home'){go(0)} else if(e.key==='End'){go(slides.length-1)}
+  });
+})();
+</script>
+</body>
+</html>

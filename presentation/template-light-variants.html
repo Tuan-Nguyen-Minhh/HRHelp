@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P029 · V2 refinements — bớt đơn điệu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FBFAF7; --putty:#F0EBE0; --stone:#DCD8CC; --taupe:#C4B9A3; --linen-2:#E7E3D9;
+  --ink:#332C22; --ink-2:#5C554A; --ink-3:#756F63;
+  --leather:#4A3F30; --son:#8C2B2B; --son-tint:#F6EAE7;
+  --font-display:"Literata",Georgia,serif; --font-text:"Public Sans",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#E9E7E1;color:var(--ink);font-family:var(--font-text);padding:40px 20px 90px}
+.deck{display:flex;flex-direction:column;gap:56px;max-width:1280px;margin:0 auto}
+.variant{display:flex;flex-direction:column;gap:16px}
+.vhead h2{font-family:var(--font-display);font-weight:600;font-size:22px;margin:0 0 4px}
+.vhead p{margin:0;font-size:14px;color:#6C665B;max-width:80ch}
+.pair{display:flex;flex-direction:column;gap:18px}
+.slide{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:64px 76px}
+.display{font-family:var(--font-display);font-weight:500;font-size:72px;line-height:1.02;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.headline{font-family:var(--font-display);font-weight:500;font-size:44px;line-height:1.08;letter-spacing:-.02em;margin:0;max-width:20ch}
+.lead{font-size:20px;line-height:1.4;margin:0;max-width:42ch}
+.body{font-size:16px;line-height:1.5;margin:0;max-width:46ch}
+.small{font-size:13px;line-height:1.45;margin:0}
+.stack>*+*{margin-top:20px}
+.masthead{display:flex;align-items:center;gap:14px}
+.seal{width:58px;height:58px;border:1.5px solid currentColor;border-radius:50%;display:grid;place-items:center;font-family:var(--font-display);font-size:9px;line-height:1.2;text-align:center;transform:rotate(-9deg);flex:0 0 auto}
+.list{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.list li{display:grid;grid-template-columns:20px 1fr;gap:12px;font-size:17px;align-items:start}
+.list .tick{width:10px;height:10px;border-radius:50%;background:var(--son);margin-top:7px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:26px}
+.metric{border-top:4px solid var(--son);padding-top:12px}
+.metric .num{font-size:64px;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.metric .lbl{font-size:13px;margin-top:4px}
+.flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:16px}
+.node{padding:9px 14px;background:rgba(0,0,0,.055)}
+.node.gate{background:var(--son);color:var(--paper)}
+.arrow{opacity:.5}
+.tag{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#6C665B}
+.tag code{font-family:ui-monospace,Menlo,monospace;text-transform:none;letter-spacing:0}
+
+/* thang sáng (giữ "sáng toàn phần", nhưng bước nhảy rõ) */
+.f-paper{background:var(--paper);color:var(--ink)}
+.f-putty{background:var(--putty);color:var(--ink)}
+.f-stone{background:var(--stone);color:var(--ink)}
+.f-taupe{background:var(--taupe);color:var(--ink)}
+/* chương "to tiếng" duy nhất của V2b */
+.f-leather{background:var(--leather);color:var(--paper)}
+.f-leather .node{background:rgba(255,255,255,.14)}
+.f-leather .node.gate{background:var(--linen-2);color:var(--leather)}
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- ============ V2a ============ -->
+  <div class="variant">
+    <div class="vhead">
+      <h2>Cách 1 · V2a — "Thang sáng rộng"</h2>
+      <p>Vẫn sáng toàn phần, nhưng mở rộng thang tông thành 4 bậc cách xa nhau: giấy <code>#FBFAF7</code> → putty <code>#F0EBE0</code> → đá <code>#DCD8CC</code> → taupe <code>#C4B9A3</code>. Không nền đậm, nhưng mắt thấy được bước nhảy giữa các chương.</p>
+    </div>
+    <div class="pair">
+      <div class="tag">Cover · giấy <code>#FBFAF7</code></div>
+      <div class="slide f-paper">
+        <div class="stack">
+          <div class="seal" style="color:var(--son)">HR<br>HELP</div>
+          <h1 class="display">Ipsum dolor</h1>
+          <p class="lead" style="color:var(--ink-2)">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+        </div>
+      </div>
+      <div class="tag">Chương · đá <code>#DCD8CC</code></div>
+      <div class="slide f-stone">
+        <div class="stack">
+          <h2 class="headline">Lorem ipsum dolor, sit amet consectetur</h2>
+          <ul class="list">
+            <li><span class="tick"></span><span>Lorem ipsum dolor sit amet</span></li>
+            <li><span class="tick"></span><span>Consectetur adipiscing elit</span></li>
+            <li><span class="tick"></span><span>Sed do eiusmod tempor</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="tag">Chương · taupe <code>#C4B9A3</code> (bậc đậm nhất của hệ sáng)</div>
+      <div class="slide f-taupe">
+        <div class="stack">
+          <h2 class="headline">Lorem ipsum sit</h2>
+          <div class="metrics">
+            <div class="metric"><div class="num">91.41%</div><p class="lbl">Lorem ipsum</p></div>
+            <div class="metric"><div class="num">82.45%</div><p class="lbl">Dolor sit</p></div>
+            <div class="metric"><div class="num">57.60%</div><p class="lbl">Consectetur</p></div>
+            <div class="metric"><div class="num">34.96%</div><p class="lbl">Adipiscing</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="tag">Đóng · putty <code>#F0EBE0</code></div>
+      <div class="slide f-putty">
+        <div class="masthead">
+          <div class="seal" style="color:var(--son)">HR<br>HELP</div>
+          <div>
+            <p class="headline" style="font-size:34px">Ipsum dolor sit amet</p>
+            <p class="small" style="color:var(--ink-3)">Lorem ipsum · Live demo · Q&amp;A</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ V2b ============ -->
+  <div class="variant">
+    <div class="vhead">
+      <h2>Cách 2 · V2b — "Sáng, một chương nâu da"</h2>
+      <p>Vẫn sáng toàn phần, nhưng <strong>đúng một</strong> chương (slide kiến trúc) đổi thành nâu da <code>#4A3F30</code>. Đây là chỗ "thở" duy nhất. Nâu da vốn là token <code>solid</code> trong MASTER, và không phải đen, không phải đỏ.</p>
+    </div>
+    <div class="pair">
+      <div class="tag">Cover · giấy <code>#FBFAF7</code></div>
+      <div class="slide f-paper">
+        <div class="stack">
+          <div class="seal" style="color:var(--son)">HR<br>HELP</div>
+          <h1 class="display">Ipsum dolor</h1>
+          <p class="lead" style="color:var(--ink-2)">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+        </div>
+      </div>
+      <div class="tag">Chương · đá <code>#DCD8CC</code></div>
+      <div class="slide f-stone">
+        <div class="stack">
+          <h2 class="headline">Lorem ipsum dolor, sit amet consectetur</h2>
+          <ul class="list">
+            <li><span class="tick"></span><span>Lorem ipsum dolor sit amet</span></li>
+            <li><span class="tick"></span><span>Consectetur adipiscing elit</span></li>
+            <li><span class="tick"></span><span>Sed do eiusmod tempor</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="tag">Chương "to tiếng" duy nhất · nâu da <code>#4A3F30</code></div>
+      <div class="slide f-leather">
+        <div class="stack">
+          <h2 class="headline">Lorem ipsum dolor sit</h2>
+          <div class="flow">
+            <span class="node">Case Graph</span><span class="arrow">→</span>
+            <span class="node">CaseHandoff</span><span class="arrow">→</span>
+            <span class="node">Recommendation</span><span class="arrow">→</span>
+            <span class="node gate">Dispatch Gate</span><span class="arrow">→</span>
+            <span class="node">Con người</span>
+          </div>
+          <p class="body" style="color:var(--linen-2)">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+        </div>
+      </div>
+      <div class="tag">Đóng · putty <code>#F0EBE0</code></div>
+      <div class="slide f-putty">
+        <div class="masthead">
+          <div class="seal" style="color:var(--son)">HR<br>HELP</div>
+          <div>
+            <p class="headline" style="font-size:34px">Ipsum dolor sit amet</p>
+            <p class="small" style="color:var(--ink-3)">Lorem ipsum · Live demo · Q&amp;A</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
