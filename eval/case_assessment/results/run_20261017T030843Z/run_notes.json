@@ -1,0 +1,13 @@
+{
+  "generation_provider": "deepseek",
+  "generation_model": "deepseek-flash",
+  "judge_provider": "mistral",
+  "judge_model": "ministral-8b-2512",
+  "label_status": "draft_pending_expert_review",
+  "notes": [
+    "Fresh generation on 2026-10-17. Some synthesis calls recovered through built-in output-length retry.",
+    "Initial answer-quality fixture capture rejected nullable headings; normalized null headings to empty strings and regenerated all outputs.",
+    "DeepSeek judge attempts were interrupted after LLMDidNotFinishException; increasing configured token allowance did not resolve truncation. Final scores use Mistral on the saved outputs.",
+    "No generated outputs or golden expectations were changed to improve scores."
+  ]
+}

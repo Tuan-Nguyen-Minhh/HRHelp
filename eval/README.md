@@ -1,5 +1,20 @@
 # Evaluation directory
 
+Retrieval-quality evaluation is in [`retrieval/`](retrieval/README.md). Its 20
+draft cases and 30 evidence units are pinned to a read-only snapshot of the live
+corpus. The runner captures the production retrieval graph, supports paced
+Cohere calls and offline rescoring, and reports incomplete judgment coverage.
+
+Routing and fact-extraction evaluation is in [`routing/`](routing/README.md).
+Its 48 draft cases cover production routing guards and isolated fact planning,
+including five source excerpts from the case DOCX dataset. Captured live runs,
+offline rescoring, per-case diagnostics and Vietnamese reports are supported.
+
+Source-anchored corpus/ingestion evaluation is in [`ingestion/`](ingestion/README.md).
+It compares original source paragraphs and metadata/reference expectations with
+chunk artifacts, supports passages split across chunks, and includes local
+offline/upload replay commands. Its generated labels are drafts pending review.
+
 The active case-assessment workflow is in `case_assessment/`. It reads the benchmark,
 runs the production database retrieval graph, passes the resulting passages to the
 assessment graph, and calculates four RAGAS metrics. See [the workflow guide](case_assessment/README.md).
@@ -21,9 +36,13 @@ assessment graph, and calculates four RAGAS metrics. See [the workflow guide](ca
 | `case_assessment/results/validation/` | Historical, not required | Old validation of the draft dataset. |
 | `case_assessment/results/TEST_REPORT.md` | Historical, not required | Describes the previous fixed-evidence run and its limitations. |
 | `case_assessment/__pycache__/` | No | Automatically generated Python bytecode. |
-| `legal_golden.json` | No, separate benchmark | 18 pinned legal-search queries from the earlier retrieval work. |
 | `results/report.md` | No | Unfilled general product-evaluation report template. |
 
 Historical outputs are retained for comparison. They are not inputs to new live runs.
 The earlier retrieval runner and `retrieval_eval_*` reports were removed, as recorded
-in `handoff/README.md`; `legal_golden.json` does not drive the RAGAS case evaluator.
+in `handoff/README.md`. The new retrieval benchmark is separate from the RAGAS case evaluator.
+
+Assessment and answer-quality evaluation is in [`answer_quality/`](answer_quality/README.md).
+Its 10 draft fixed-evidence cases capture structured assessments, reports, and short
+chat replies, with deterministic checks, offline rescoring, and optional RAGAS
+faithfulness/factual-correctness scoring for each answer channel.

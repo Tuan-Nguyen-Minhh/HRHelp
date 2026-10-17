@@ -238,6 +238,20 @@ def make_judge(provider: str, model: str, timeout: int):
             model=model, api_key=key, vertexai=False, temperature=temperature,
             timeout=timeout, max_tokens=8192, max_retries=1,
         )
+    elif provider == "deepseek":
+        from langchain_openai import ChatOpenAI
+        key = (os.environ.get("DEEPSEEK_API_KEY") or "").strip()
+        if not key:
+            raise ValueError("Set DEEPSEEK_API_KEY for the DeepSeek judge.")
+        client = ChatOpenAI(
+            model=model, api_key=key,
+            base_url=(os.environ.get("DEEPSEEK_BASE_URL") or "").strip() or "https://api.deepseek.com",
+            timeout=timeout, max_retries=1, max_tokens=8192,
+            use_responses_api=False,
+            # RAGAS claim extraction/inference can require several calls per
+            # sample. Avoid spending the scoring deadline on hidden reasoning.
+            extra_body={"thinking": {"type": "disabled"}},
+        )
     elif provider == "openrouter":
         from langchain_openai import ChatOpenAI
         key = (os.environ.get("OPENROUTER_API_KEY") or "").strip()
@@ -255,10 +269,10 @@ def make_judge(provider: str, model: str, timeout: int):
         client = ChatOpenAI(model=model, temperature=0, timeout=timeout, max_retries=1)
     else:
         raise ValueError(f"Unsupported judge provider: {provider}")
-    # Preserve Gemini settings and OpenRouter model sampling defaults.
+    # Preserve Gemini settings and compatible-provider sampling defaults.
     return LangchainLLMWrapper(
         client, run_config=RunConfig(timeout=timeout),
-        bypass_temperature=(provider in {"gemini", "openrouter"}),
+        bypass_temperature=(provider in {"gemini", "openrouter", "deepseek"}),
     )
 
 
@@ -367,7 +381,7 @@ def main(argv=None) -> int:
     parser.add_argument("--generate-only", action="store_true",
                         help="Capture missing live outputs without calling the RAGAS judge")
     parser.add_argument("--resume", action="store_true", help="Dùng lại chỉ số đã chấm đủ nếu dữ liệu và cấu hình không đổi")
-    parser.add_argument("--provider", choices=("mistral", "openai", "gemini", "openrouter"), default="mistral")
+    parser.add_argument("--provider", choices=("mistral", "openai", "gemini", "openrouter", "deepseek"), default="mistral")
     parser.add_argument("--judge-model", default=None)
     parser.add_argument("--metrics", default=",".join(METRICS))
     parser.add_argument("--policy-only-faithfulness", action="store_true")
@@ -392,6 +406,8 @@ def main(argv=None) -> int:
     from dotenv import load_dotenv
     load_dotenv(args.env_file, override=False)
     model = args.judge_model or os.environ.get("RAGAS_JUDGE_MODEL") or (os.environ.get("MODEL_NAME") if args.provider == "mistral" else None)
+    if not model and args.provider == "deepseek":
+        model = "deepseek-flash"
     if not model and not args.generate_only:
         raise ValueError("Chỉ định --judge-model hoặc RAGAS_JUDGE_MODEL.")
     cases = aligned_metadata(args.metadata, rows)

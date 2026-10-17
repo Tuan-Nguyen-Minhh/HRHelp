@@ -1,0 +1,172 @@
+[
+  {
+    "case_id": "CA01",
+    "group": "source_case",
+    "passed": false,
+    "checks": {
+      "report_nonempty": true,
+      "answer_nonempty": true,
+      "sanction_correct": true,
+      "assessment_present": true,
+      "assessment_status": true,
+      "assessment_sanction": true,
+      "confirmed_facts_preserved": true,
+      "unknown_facts_not_invented": true,
+      "missing_facts_covered": false,
+      "human_review_required": true,
+      "no_automatic_legal_ticket": true,
+      "citations_present": true,
+      "citation_integrity": true
+    },
+    "status": "scored"
+  },
+  {
+    "case_id": "CA01-EMPTY",
+    "group": "empty_evidence",
+    "passed": true,
+    "checks": {
+      "report_nonempty": true,
+      "answer_nonempty": true,
+      "sanction_correct": true,
+      "no_assessment_without_evidence": true,
+      "empty_evidence_answer": true
+    },
+    "status": "scored"
+  },
+  {
+    "case_id": "CA02",
+    "group": "source_case",
+    "passed": false,
+    "checks": {
+      "report_nonempty": true,
+      "answer_nonempty": true,
+      "sanction_correct": false,
+      "assessment_present": true,
+      "assessment_status": true,
+      "assessment_sanction": false,
+      "confirmed_facts_preserved": true,
+      "unknown_facts_not_invented": true,
+      "missing_facts_covered": false,
+      "human_review_required": true,
+      "no_automatic_legal_ticket": true,
+      "citations_present": true,
+      "citation_integrity": true
+    },
+    "status": "scored"
+  },
+  {
+    "case_id": "CA02-EMPTY",
+    "group": "empty_evidence",
+    "passed": true,
+    "checks": {
+      "report_nonempty": true,
+      "answer_nonempty": true,
+      "sanction_correct": true,
+      "no_assessment_without_evidence": true,
+      "empty_evidence_answer": true
+    },
+    "status": "scored"
+  },
+  {
+    "case_id": "CA03",
+    "group": "source_case",
+    "passed": false,
+    "checks": {
+      "report_nonempty": true,
+      "answer_nonempty": true,
+      "sanction_correct": false,
+      "assessment_present": true,
+      "assessment_status": true,
+      "assessment_sanction": false,
+      "confirmed_facts_preserved": true,
+      "unknown_facts_not_invented": true,
+      "missing_facts_covered": false,
+      "human_review_required": true,
+      "no_automatic_legal_ticket": true,
+      "citations_present": true,
+      "citation_integrity": true
+    },
+    "status": "scored"
+  },
+  {
+    "case_id": "CA03-EMPTY",
+    "group": "empty_evidence",
+    "passed": true,
+    "checks": {
+      "report_nonempty": true,
+      "answer_nonempty": true,
+      "sanction_correct": true,
+      "no_assessment_without_evidence": true,
+      "empty_evidence_answer": true
+    },
+    "status": "scored"
+  },
+  {
+    "case_id": "CA04",
+    "group": "source_case",
+    "passed": false,
+    "checks": {
+      "report_nonempty": true,
+      "answer_nonempty": true,
+      "sanction_correct": false,
+      "assessment_present": true,
+      "assessment_status": true,
+      "assessment_sanction": false,
+      "confirmed_facts_preserved": true,
+      "unknown_facts_not_invented": true,
+      "missing_facts_covered": false,
+      "human_review_required": true,
+      "no_automatic_legal_ticket": true,
+      "citations_present": true,
+      "citation_integrity": true
+    },
+    "status": "scored"
+  },
+  {
+    "case_id": "CA04-EMPTY",
+    "group": "empty_evidence",
+    "passed": true,
+    "checks": {
+      "report_nonempty": true,
+      "answer_nonempty": true,
+      "sanction_correct": true,
+      "no_assessment_without_evidence": true,
+      "empty_evidence_answer": true
+    },
+    "status": "scored"
+  },
+  {
+    "case_id": "CA05",
+    "group": "source_case",
+    "passed": false,
+    "checks": {
+      "report_nonempty": true,
+      "answer_nonempty": true,
+      "sanction_correct": false,
+      "assessment_present": true,
+      "assessment_status": false,
+      "assessment_sanction": false,
+      "confirmed_facts_preserved": true,
+      "unknown_facts_not_invented": true,
+      "missing_facts_covered": false,
+      "human_review_required": true,
+      "no_automatic_legal_ticket": true,
+      "citations_present": true,
+      "citation_integrity": true
+    },
+    "status": "scored"
+  },
+  {
+    "case_id": "CA05-EMPTY",
+    "group": "empty_evidence",
+    "passed": true,
+    "checks": {
+      "report_nonempty": true,
+      "answer_nonempty": true,
+      "sanction_correct": true,
+      "no_assessment_without_evidence": true,
+      "empty_evidence_answer": true
+    },
+    "status": "scored"
+  }
+]

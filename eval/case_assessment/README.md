@@ -119,6 +119,37 @@ qua OpenRouter không bảo đảm model luôn có sẵn; lỗi provider vẫn t
 
 Tài liệu: [OpenRouter quickstart](https://openrouter.ai/docs/quickstart).
 
+### Dùng DeepSeek làm LLM-as-judge
+
+Đặt `DEEPSEEK_API_KEY` trong `.env`, sau đó chạy:
+
+```bash
+python eval/case_assessment/evaluate_ragas.py --generate-missing --provider deepseek
+```
+
+Model chấm được chọn theo thứ tự: `--judge-model`, `RAGAS_JUDGE_MODEL`, rồi
+`deepseek-flash`. Có thể đặt `DEEPSEEK_BASE_URL` để thay endpoint mặc định
+`https://api.deepseek.com`. Client dùng `langchain-openai` đã có trong dependency.
+`--provider` chỉ chọn model chấm; retrieval và assessment vẫn dùng cấu hình ứng dụng.
+Embedding khi tạo output vẫn cần `MISTRAL_API_KEY`. Khi đổi judge, dùng
+`--output-dir` mới để tách kết quả các lần chạy.
+
+DeepSeek judge tắt thinking bằng `thinking.type=disabled` để giảm thời gian chấm.
+Faithfulness và factual correctness có thể cần nhiều lượt gọi cho mỗi mẫu;
+`--timeout` giới hạn thời gian chấm mỗi mẫu, không chỉ một HTTP request.
+Nếu gặp timeout, dùng output đã lưu để chấm lại mà không chạy lại ứng dụng:
+
+```bash
+python eval/case_assessment/evaluate_ragas.py \
+  --dataset eval/case_assessment/results/live_retrieval/dataset.completed.json \
+  --provider deepseek --timeout 600 \
+  --metrics faithfulness,factual_correctness \
+  --output-dir eval/case_assessment/results/deepseek_answer_retry
+```
+
+Thư mục mới chỉ chứa hai metric chấm lại; các metric retrieval trước đó vẫn ở
+thư mục capture gốc.
+
 ## 4. Đọc kết quả
 
 Mặc định kết quả nằm trong `eval/case_assessment/results/live_retrieval/`:

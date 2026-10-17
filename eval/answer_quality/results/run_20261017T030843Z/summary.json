@@ -1,0 +1,13 @@
+{
+  "dataset_sha256": "db0ab93efac13ab7294f086dbd102078db02452570c7e92541ff7e7823d5a95a",
+  "scope": "fixed_evidence_component; not retrieval or end-to-end chat",
+  "review_status": "draft",
+  "total": 10,
+  "scored": 10,
+  "missing_or_failed": 0,
+  "passed": 5,
+  "pass_rate": 0.5,
+  "judge": "mistral",
+  "judge_model": "ministral-8b-2512",
+  "semantic_complete": true
+}

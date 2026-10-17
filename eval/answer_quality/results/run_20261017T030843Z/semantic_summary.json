@@ -1,0 +1,62 @@
+{
+  "report": {
+    "faithfulness": {
+      "all": {
+        "count": 10,
+        "mean": 0.7840204278860996
+      },
+      "source_case": {
+        "count": 5,
+        "mean": 0.7847881085194518
+      },
+      "empty_evidence": {
+        "count": 5,
+        "mean": 0.7832527472527472
+      }
+    },
+    "factual_correctness": {
+      "all": {
+        "count": 10,
+        "mean": 0.746
+      },
+      "source_case": {
+        "count": 5,
+        "mean": 0.618
+      },
+      "empty_evidence": {
+        "count": 5,
+        "mean": 0.874
+      }
+    }
+  },
+  "answer": {
+    "faithfulness": {
+      "all": {
+        "count": 10,
+        "mean": 0.7204423436041083
+      },
+      "source_case": {
+        "count": 5,
+        "mean": 0.5837418300653595
+      },
+      "empty_evidence": {
+        "count": 5,
+        "mean": 0.8571428571428571
+      }
+    },
+    "factual_correctness": {
+      "all": {
+        "count": 10,
+        "mean": 0.7849999999999999
+      },
+      "source_case": {
+        "count": 5,
+        "mean": 0.5700000000000001
+      },
+      "empty_evidence": {
+        "count": 5,
+        "mean": 1.0
+      }
+    }
+  }
+}

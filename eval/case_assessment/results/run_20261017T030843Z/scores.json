@@ -1,0 +1,37 @@
+[
+  {
+    "case_id": "CA01",
+    "faithfulness": 1.0,
+    "factual_correctness": 0.61,
+    "context_precision": 0.9999999999916667,
+    "context_recall": 0.7368421052631579
+  },
+  {
+    "case_id": "CA02",
+    "faithfulness": 0.9090909090909091,
+    "factual_correctness": 0.64,
+    "context_precision": 0.9999999999916667,
+    "context_recall": 0.8823529411764706
+  },
+  {
+    "case_id": "CA03",
+    "faithfulness": 0.75,
+    "factual_correctness": 0.54,
+    "context_precision": 0.7583213083128826,
+    "context_recall": 0.9230769230769231
+  },
+  {
+    "case_id": "CA04",
+    "faithfulness": 0.8888888888888888,
+    "factual_correctness": 0.5,
+    "context_precision": 0.8612626262540136,
+    "context_recall": 0.7857142857142857
+  },
+  {
+    "case_id": "CA05",
+    "faithfulness": 0.8974358974358975,
+    "factual_correctness": 0.37,
+    "context_precision": 0.9999999999916667,
+    "context_recall": 0.75
+  }
+]
