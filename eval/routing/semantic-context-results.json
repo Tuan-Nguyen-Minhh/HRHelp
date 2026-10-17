@@ -1,0 +1,916 @@
+{
+  "description": "Synthetic live smoke, not a general accuracy evaluation",
+  "results": [
+    {
+      "name": "required_inputs_follow_up",
+      "question": "Vậy tôi cần cung cấp những thông tin gì?",
+      "dialogue_context": {
+        "status": "ready",
+        "version": "dialogue-context-v1",
+        "through_message_id": "987c9f05-a0c0-45fd-8972-fb3f80107375",
+        "analysis": {
+          "current_goal": {
+            "text": "Người dùng muốn biết, khi lập biên bản trên HR Help, họ cần cung cấp những thông tin gì; đây là câu hỏi tiếp nối các bước hướng dẫn lập biên bản đã nhận trước đó.",
+            "source_ids": [
+              "987c9f05-a0c0-45fd-8972-fb3f80107375",
+              "7dc44f9b-2b71-4421-b979-5ca8b62e64de",
+              "f5186616-4059-41e1-9bfa-fd69ad834ffc"
+            ]
+          },
+          "interpreted_question": {
+            "text": "Khi lập biên bản (tạo hồ sơ và xử lý trong hội thoại hồ sơ), tôi cần cung cấp những thông tin gì?",
+            "source_ids": [
+              "987c9f05-a0c0-45fd-8972-fb3f80107375",
+              "7dc44f9b-2b71-4421-b979-5ca8b62e64de"
+            ]
+          },
+          "topic_transition": "follow_up",
+          "links": [
+            {
+              "from_id": "987c9f05-a0c0-45fd-8972-fb3f80107375",
+              "to_id": "7dc44f9b-2b71-4421-b979-5ca8b62e64de",
+              "relation": "follow_up",
+              "meaning": "Câu hỏi hiện tại hỏi chi tiết thông tin cần cung cấp, tiếp nối các bước hướng dẫn lập biên bản mà trả lời trước đã nêu."
+            },
+            {
+              "from_id": "987c9f05-a0c0-45fd-8972-fb3f80107375",
+              "to_id": "f5186616-4059-41e1-9bfa-fd69ad834ffc",
+              "relation": "follow_up",
+              "meaning": "Cùng mạch chủ đề bắt đầu lập biên bản: từ câu hỏi bắt đầu ở đâu đến việc cần cung cấp thông tin gì."
+            },
+            {
+              "from_id": "7dc44f9b-2b71-4421-b979-5ca8b62e64de",
+              "to_id": "f5186616-4059-41e1-9bfa-fd69ad834ffc",
+              "relation": "answer",
+              "meaning": "Trả lời trước đưa ra các bước tạo biên bản để giải đáp câu hỏi nên bắt đầu ở đâu."
+            }
+          ],
+          "context_summary": [
+            {
+              "text": "Người dùng đã hỏi nên bắt đầu lập biên bản ở đâu; trợ lý hướng dẫn các bước: bấm Tạo hồ sơ (hoặc mở Hồ sơ HR đã có), nhập thông tin nhân viên, ngày xảy ra vụ việc và mô tả, gửi yêu cầu lập biên bản trong hội thoại của hồ sơ, trả lời câu hỏi bổ sung, kiểm tra Tình tiết vi phạm, rồi xem Đánh giá và biên bản để sửa, lưu nháp, xác nhận hoặc xuất Word.",
+              "source_ids": [
+                "7dc44f9b-2b71-4421-b979-5ca8b62e64de",
+                "f5186616-4059-41e1-9bfa-fd69ad834ffc"
+              ]
+            },
+            {
+              "text": "Trợ lý đã lưu ý rằng hỏi hướng dẫn trong chat nổi không tạo hay gửi biên bản; việc lập biên bản thực hiện trong hội thoại của hồ sơ.",
+              "source_ids": [
+                "7dc44f9b-2b71-4421-b979-5ca8b62e64de"
+              ]
+            },
+            {
+              "text": "Câu hỏi hiện tại chuyển sang phạm vi nghiệp vụ, hỏi cụ thể các thông tin cần cung cấp; nội dung này chưa được trả lời.",
+              "source_ids": [
+                "987c9f05-a0c0-45fd-8972-fb3f80107375"
+              ]
+            }
+          ],
+          "corrections": [],
+          "open_questions": [
+            {
+              "text": "Danh sách thông tin cụ thể người dùng cần cung cấp khi lập biên bản chưa được giải đáp.",
+              "source_ids": [
+                "987c9f05-a0c0-45fd-8972-fb3f80107375"
+              ]
+            }
+          ],
+          "uncertainty": "Câu hỏi khá rộng: có thể đang hỏi thông tin cần nhập khi tạo hồ sơ (thông tin nhân viên, ngày xảy ra vụ việc, mô tả) hoặc thông tin cần trả lời các câu hỏi bổ sung khi lập biên bản; chưa đủ để xác định chắc chắn. Ngoài ra phạm vi câu hỏi chuyển từ system_help sang business nhưng vẫn tiếp nối cùng chủ đề lập biên bản."
+        },
+        "source_ids": [
+          "f5186616-4059-41e1-9bfa-fd69ad834ffc",
+          "7dc44f9b-2b71-4421-b979-5ca8b62e64de",
+          "987c9f05-a0c0-45fd-8972-fb3f80107375"
+        ],
+        "history_gap": false,
+        "source_turns": [
+          {
+            "id": "f5186616-4059-41e1-9bfa-fd69ad834ffc",
+            "role": "USER",
+            "scope": "system_help",
+            "content": "Tôi muốn lập biên bản thì bắt đầu ở đâu?"
+          },
+          {
+            "id": "7dc44f9b-2b71-4421-b979-5ca8b62e64de",
+            "role": "ASSISTANT",
+            "scope": "system_help",
+            "content": "Để tạo biên bản trên HR Help, bạn làm theo các bước sau bằng tài khoản HR:\n\n1. Bấm Tạo hồ sơ ở phía trên màn hình. Nếu đã có hồ sơ, vào Hồ sơ HR và mở hồ sơ cần xử lý.\n2. Với hồ sơ mới, nhập thông tin nhân viên, ngày xảy ra vụ việc và mô tả, rồi chọn Tạo hồ sơ để vào hội thoại của hồ sơ.\n3. Trong hội thoại của hồ sơ, gửi: “Hãy lập biên bản vụ việc này cho tôi.”\n4. Trả lời các câu hỏi bổ sung của trợ lý; vào Tình tiết vi phạm để kiểm tra, sửa và xác nhận thông tin cần thiết.\n5. Khi đủ thông tin, mở Đánh giá và biên bản để xem bản nháp. Bạn có thể sửa, Lưu nháp, Xác nhận biên bản và Xuất Word theo trạng thái hồ sơ.\n\nBạn có thể hỏi hướng dẫn trong chat nổi; để lập biên bản, hãy dùng hội thoại của hồ sơ. Câu hỏi hướng dẫn này chưa tạo hay gửi biên bản."
+          },
+          {
+            "id": "987c9f05-a0c0-45fd-8972-fb3f80107375",
+            "role": "USER",
+            "scope": "business",
+            "content": "Vậy tôi cần cung cấp những thông tin gì?"
+          }
+        ]
+      },
+      "route": "system_help",
+      "help_topic_ids": [
+        "minutes_required_information"
+      ],
+      "answer": "Khi lập biên bản, bạn nên chuẩn bị các thông tin sau để trợ lý hỗ trợ:\n\n• Hồ sơ và nhân viên: mã hồ sơ, họ tên, mã nhân viên; phòng ban/chức danh nếu có.\n• Vụ việc: ngày, giờ, địa điểm, diễn biến cụ thể và hành vi được ghi nhận.\n• Tài liệu liên quan nếu có: bảng chấm công, email, hình ảnh, lời giải trình hoặc thông tin người chứng kiến.\n• Những nội dung đã xác minh và những điểm còn chưa rõ.\n\nKhi mở hồ sơ, thông tin cơ bản gồm mã hồ sơ, họ tên/mã nhân viên, ngày xảy ra và mô tả vụ việc. Phần cần bổ sung để lập biên bản sẽ tùy từng tình huống; trợ lý sẽ hỏi thêm trong hội thoại của hồ sơ. Nếu chưa có thông tin nào, bạn có thể nói rõ là chưa có, không cần tự điền phỏng đoán.\n\nLưu ý: các chức năng thu thập tình tiết, lập biên bản và gửi phiếu cần thực hiện khi mở hồ sơ riêng; tại chat độc lập này mình chỉ hướng dẫn, chưa tạo hay gửi biên bản.",
+      "state_update": "preserve",
+      "checkpoint_follow_up": {
+        "status": "ready",
+        "version": "dialogue-context-v1",
+        "through_message_id": "cce44acd-fd42-420a-9925-1bd3fbde21f4",
+        "analysis": {
+          "current_goal": {
+            "text": "Người dùng hỏi khi lập biên bản trên HR Help mà chưa có tài liệu liên quan thì nên xử lý thế nào và việc thiếu tài liệu có ảnh hưởng gì không.",
+            "source_ids": [
+              "cce44acd-fd42-420a-9925-1bd3fbde21f4",
+              "ee48e560-5868-441e-bd86-c16094519271",
+              "987c9f05-a0c0-45fd-8972-fb3f80107375"
+            ]
+          },
+          "interpreted_question": {
+            "text": "Nếu tôi chưa có tài liệu liên quan (ví dụ bảng chấm công, email, hình ảnh, lời giải trình hoặc thông tin người chứng kiến) thì khi lập biên bản tôi nên làm gì; có thể tiếp tục lập biên bản hay cần xử lý thế nào?",
+            "source_ids": [
+              "cce44acd-fd42-420a-9925-1bd3fbde21f4",
+              "ee48e560-5868-441e-bd86-c16094519271"
+            ]
+          },
+          "topic_transition": "follow_up",
+          "links": [
+            {
+              "from_id": "cce44acd-fd42-420a-9925-1bd3fbde21f4",
+              "to_id": "ee48e560-5868-441e-bd86-c16094519271",
+              "relation": "follow_up",
+              "meaning": "Câu hỏi tiếp nối lời trợ lý nêu rằng có thể chuẩn bị tài liệu liên quan nếu có, nay hỏi trường hợp chưa có tài liệu đó."
+            },
+            {
+              "from_id": "cce44acd-fd42-420a-9925-1bd3fbde21f4",
+              "to_id": "987c9f05-a0c0-45fd-8972-fb3f80107375",
+              "relation": "follow_up",
+              "meaning": "Cùng mạch hỏi về những thông tin cần cung cấp khi lập biên bản; câu hiện tại hỏi riêng trường hợp thiếu tài liệu liên quan."
+            },
+            {
+              "from_id": "ee48e560-5868-441e-bd86-c16094519271",
+              "to_id": "987c9f05-a0c0-45fd-8972-fb3f80107375",
+              "relation": "answer",
+              "meaning": "Trợ lý trả lời câu hỏi trước bằng danh sách thông tin nên chuẩn bị, trong đó có tài liệu liên quan nếu có."
+            }
+          ],
+          "context_summary": [
+            {
+              "text": "Trợ lý trước đó đã liệt kê thông tin nên chuẩn bị khi lập biên bản, gồm hồ sơ/nhân viên, vụ việc, tài liệu liên quan nếu có, và các nội dung đã xác minh/chưa rõ; đồng thời nói nếu chưa có thông tin nào thì có thể nói rõ là chưa có, không cần tự điền phỏng đoán.",
+              "source_ids": [
+                "ee48e560-5868-441e-bd86-c16094519271"
+              ]
+            },
+            {
+              "text": "Người dùng trước đó hỏi cần cung cấp những thông tin gì để lập biên bản; câu hiện tại tiếp tục hỏi về trường hợp chưa có tài liệu liên quan.",
+              "source_ids": [
+                "987c9f05-a0c0-45fd-8972-fb3f80107375",
+                "cce44acd-fd42-420a-9925-1bd3fbde21f4"
+              ]
+            }
+          ],
+          "corrections": [],
+          "open_questions": [
+            {
+              "text": "Chưa rõ khi không có tài liệu liên quan thì có thể tiếp tục lập biên bản hay không, và nên ghi nhận/trả lời về việc thiếu tài liệu như thế nào.",
+              "source_ids": [
+                "cce44acd-fd42-420a-9925-1bd3fbde21f4"
+              ]
+            }
+          ],
+          "uncertainty": "Câu hỏi có thể đang hỏi liệu thiếu tài liệu có cản trở việc lập biên bản hay chỉ hỏi cách xử lý/ghi nhận khi không có tài liệu; chưa đủ để xác định chắc chắn. Trợ lý trước đó mới nói chung là có thể nói rõ chưa có thông tin, chưa xác nhận quy trình cụ thể cho trường hợp thiếu tài liệu."
+        },
+        "source_ids": [
+          "987c9f05-a0c0-45fd-8972-fb3f80107375",
+          "ee48e560-5868-441e-bd86-c16094519271",
+          "cce44acd-fd42-420a-9925-1bd3fbde21f4"
+        ],
+        "history_gap": false,
+        "source_turns": [
+          {
+            "id": "987c9f05-a0c0-45fd-8972-fb3f80107375",
+            "role": "USER",
+            "scope": "business",
+            "content": "Vậy tôi cần cung cấp những thông tin gì?"
+          },
+          {
+            "id": "ee48e560-5868-441e-bd86-c16094519271",
+            "role": "ASSISTANT",
+            "scope": "system_help",
+            "content": "Khi lập biên bản, bạn nên chuẩn bị các thông tin sau để trợ lý hỗ trợ:\n\n• Hồ sơ và nhân viên: mã hồ sơ, họ tên, mã nhân viên; phòng ban/chức danh nếu có.\n• Vụ việc: ngày, giờ, địa điểm, diễn biến cụ thể và hành vi được ghi nhận.\n• Tài liệu liên quan nếu có: bảng chấm công, email, hình ảnh, lời giải trình hoặc thông tin người chứng kiến.\n• Những nội dung đã xác minh và những điểm còn chưa rõ.\n\nKhi mở hồ sơ, thông tin cơ bản gồm mã hồ sơ, họ tên/mã nhân viên, ngày xảy ra và mô tả vụ việc. Phần cần bổ sung để lập biên bản sẽ tùy từng tình huống; trợ lý sẽ hỏi thêm trong hội thoại của hồ sơ. Nếu chưa có thông tin nào, bạn có thể nói rõ là chưa có, không cần tự điền phỏng đoán.\n\nLưu ý: các chức năng thu thập tình tiết, lập biên bản và gửi phiếu cần thực hiện khi mở hồ sơ riêng; tại chat độc lập này mình chỉ hướng dẫn, chưa tạo hay gửi biên bản."
+          },
+          {
+            "id": "cce44acd-fd42-420a-9925-1bd3fbde21f4",
+            "role": "USER",
+            "scope": "business",
+            "content": "Tôi chưa có tài liệu liên quan thì sao?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "correction",
+      "question": "Loại đó thì tôi phải cung cấp gì?",
+      "dialogue_context": {
+        "status": "ready",
+        "version": "dialogue-context-v1",
+        "through_message_id": "d763a94b-12a5-47ea-a595-2c74f686550f",
+        "analysis": {
+          "current_goal": {
+            "text": "Xác định những thông tin/tài liệu người dùng cần cung cấp để lập biên bản ghi nhận sự việc.",
+            "source_ids": [
+              "d763a94b-12a5-47ea-a595-2c74f686550f",
+              "b7f5660e-145a-4268-98dd-e97a8a57f038"
+            ]
+          },
+          "interpreted_question": {
+            "text": "Với biên bản ghi nhận sự việc, tôi phải cung cấp những gì?",
+            "source_ids": [
+              "d763a94b-12a5-47ea-a595-2c74f686550f",
+              "b7f5660e-145a-4268-98dd-e97a8a57f038"
+            ]
+          },
+          "topic_transition": "follow_up",
+          "links": [
+            {
+              "from_id": "d763a94b-12a5-47ea-a595-2c74f686550f",
+              "to_id": "d80b2df8-ae97-4d7a-9738-ab35382abe7f",
+              "relation": "follow_up",
+              "meaning": "Người dùng hỏi tiếp sau khi trợ lý xác nhận hiểu là biên bản ghi nhận sự việc."
+            },
+            {
+              "from_id": "d80b2df8-ae97-4d7a-9738-ab35382abe7f",
+              "to_id": "b7f5660e-145a-4268-98dd-e97a8a57f038",
+              "relation": "answer",
+              "meaning": "Trợ lý tiếp nhận nội dung đính chính của người dùng về loại biên bản."
+            },
+            {
+              "from_id": "b7f5660e-145a-4268-98dd-e97a8a57f038",
+              "to_id": "de7da5c0-d1ca-417f-8fc1-b377fc1ed900",
+              "relation": "correction",
+              "meaning": "Người dùng sửa cách hiểu trước đó: không phải họp kỷ luật mà là biên bản ghi nhận sự việc."
+            },
+            {
+              "from_id": "de7da5c0-d1ca-417f-8fc1-b377fc1ed900",
+              "to_id": "672f7abe-ee36-470c-b6b8-956b9fde9c8a",
+              "relation": "clarification",
+              "meaning": "Trợ lý hỏi lại để làm rõ người dùng cần lập loại biên bản nào."
+            }
+          ],
+          "context_summary": [
+            {
+              "text": "Người dùng cần lập biên bản; sau khi được hỏi lại, người dùng nói rõ là biên bản ghi nhận sự việc, không phải biên bản họp xử lý kỷ luật.",
+              "source_ids": [
+                "672f7abe-ee36-470c-b6b8-956b9fde9c8a",
+                "de7da5c0-d1ca-417f-8fc1-b377fc1ed900",
+                "b7f5660e-145a-4268-98dd-e97a8a57f038"
+              ]
+            },
+            {
+              "text": "Trợ lý đã xác nhận hiểu là biên bản ghi nhận sự việc; người dùng tiếp tục hỏi phải cung cấp gì cho loại biên bản này.",
+              "source_ids": [
+                "d80b2df8-ae97-4d7a-9738-ab35382abe7f",
+                "d763a94b-12a5-47ea-a595-2c74f686550f"
+              ]
+            }
+          ],
+          "corrections": [
+            {
+              "text": "Đính chính: đối tượng là biên bản ghi nhận sự việc, không phải biên bản họp xử lý kỷ luật.",
+              "source_ids": [
+                "b7f5660e-145a-4268-98dd-e97a8a57f038",
+                "de7da5c0-d1ca-417f-8fc1-b377fc1ed900"
+              ]
+            }
+          ],
+          "open_questions": [
+            {
+              "text": "Cần cung cấp thông tin/tài liệu gì để lập biên bản ghi nhận sự việc?",
+              "source_ids": [
+                "d763a94b-12a5-47ea-a595-2c74f686550f",
+                "b7f5660e-145a-4268-98dd-e97a8a57f038"
+              ]
+            }
+          ],
+          "uncertainty": ""
+        },
+        "source_ids": [
+          "672f7abe-ee36-470c-b6b8-956b9fde9c8a",
+          "de7da5c0-d1ca-417f-8fc1-b377fc1ed900",
+          "b7f5660e-145a-4268-98dd-e97a8a57f038",
+          "d80b2df8-ae97-4d7a-9738-ab35382abe7f",
+          "d763a94b-12a5-47ea-a595-2c74f686550f"
+        ],
+        "history_gap": false,
+        "source_turns": [
+          {
+            "id": "672f7abe-ee36-470c-b6b8-956b9fde9c8a",
+            "role": "USER",
+            "scope": "system_help",
+            "content": "Tôi cần lập biên bản"
+          },
+          {
+            "id": "de7da5c0-d1ca-417f-8fc1-b377fc1ed900",
+            "role": "ASSISTANT",
+            "scope": "system_help",
+            "content": "Bạn muốn hỏi về biên bản họp xử lý kỷ luật?"
+          },
+          {
+            "id": "b7f5660e-145a-4268-98dd-e97a8a57f038",
+            "role": "USER",
+            "scope": "system_help",
+            "content": "Không phải họp kỷ luật, tôi hỏi biên bản ghi nhận sự việc."
+          },
+          {
+            "id": "d80b2df8-ae97-4d7a-9738-ab35382abe7f",
+            "role": "ASSISTANT",
+            "scope": "system_help",
+            "content": "Mình hiểu bạn hỏi về biên bản ghi nhận sự việc."
+          },
+          {
+            "id": "d763a94b-12a5-47ea-a595-2c74f686550f",
+            "role": "USER",
+            "scope": "business",
+            "content": "Loại đó thì tôi phải cung cấp gì?"
+          }
+        ]
+      },
+      "route": "system_help",
+      "help_topic_ids": [
+        "minutes_required_information"
+      ],
+      "answer": "Với biên bản ghi nhận sự việc, bạn nên chuẩn bị các thông tin sau để trợ lý hỗ trợ lập biên bản:\n\n• Hồ sơ và nhân viên: mã hồ sơ, họ tên, mã nhân viên; phòng ban/chức danh nếu có.\n• Vụ việc: ngày, giờ, địa điểm, diễn biến cụ thể và hành vi được ghi nhận.\n• Tài liệu liên quan nếu có: bảng chấm công, email, hình ảnh, lời giải trình hoặc thông tin người chứng kiến.\n• Những nội dung đã xác minh và những điểm còn chưa rõ.\n\nLưu ý: hiện bạn đang ở chat độc lập nên có thể hỏi quy định và tra cứu ngay, nhưng các chức năng thu thập tình tiết, lập biên bản và gửi phiếu cần mở hồ sơ riêng. Khi mở hồ sơ, thông tin cơ bản gồm mã hồ sơ, họ tên/mã nhân viên, ngày xảy ra và mô tả vụ việc; phần cần bổ sung để lập biên bản sẽ tùy từng tình huống và trợ lý sẽ hỏi tiếp trong hội thoại hồ sơ. Nếu chưa biết thông tin nào, bạn có thể nói rõ là chưa có, không cần tự điền phỏng đoán.",
+      "state_update": "preserve"
+    },
+    {
+      "name": "topic_shift",
+      "question": "Chuyển chủ đề nhé, hôm nay ăn món gì cho đỡ ngán?",
+      "dialogue_context": {
+        "status": "ready",
+        "version": "dialogue-context-v1",
+        "through_message_id": "38a7d7e7-800b-4a08-a17f-cb51e3847c90",
+        "analysis": {
+          "current_goal": {
+            "text": "Người dùng muốn gợi ý món ăn cho hôm nay để đỡ ngán, sau khi tuyên bố chuyển chủ đề khỏi nội dung lập biên bản trước đó.",
+            "source_ids": [
+              "38a7d7e7-800b-4a08-a17f-cb51e3847c90"
+            ]
+          },
+          "interpreted_question": {
+            "text": "Hôm nay nên ăn món gì cho đỡ ngán? (câu hỏi xin gợi ý món ăn, không phải yêu cầu thực hiện thao tác nghiệp vụ)",
+            "source_ids": [
+              "38a7d7e7-800b-4a08-a17f-cb51e3847c90"
+            ]
+          },
+          "topic_transition": "new_topic",
+          "links": [
+            {
+              "from_id": "38a7d7e7-800b-4a08-a17f-cb51e3847c90",
+              "to_id": "6995d9d7-1300-4b07-a92c-afc12b9926be",
+              "relation": "topic_shift",
+              "meaning": "Người dùng chủ động bỏ mạch hướng dẫn lập biên bản và chuyển sang hỏi về món ăn."
+            },
+            {
+              "from_id": "38a7d7e7-800b-4a08-a17f-cb51e3847c90",
+              "to_id": "a3462806-70b3-40d2-8700-d5fdc07c2333",
+              "relation": "topic_shift",
+              "meaning": "Câu hỏi món ăn không tiếp nối câu hỏi trước về nơi lập biên bản."
+            }
+          ],
+          "context_summary": [
+            {
+              "text": "Trước đó người dùng hỏi muốn lập biên bản thì vào đâu; trợ lý hướng dẫn mở hồ sơ rồi vào Hội thoại để yêu cầu lập biên bản. Đây là nội dung system_help, không phải tình tiết nghiệp vụ đã hoàn tất.",
+              "source_ids": [
+                "a3462806-70b3-40d2-8700-d5fdc07c2333",
+                "6995d9d7-1300-4b07-a92c-afc12b9926be"
+              ]
+            },
+            {
+              "text": "Tin mới nhất tuyên bố chuyển chủ đề và hỏi hôm nay ăn món gì cho đỡ ngán.",
+              "source_ids": [
+                "38a7d7e7-800b-4a08-a17f-cb51e3847c90"
+              ]
+            }
+          ],
+          "corrections": [],
+          "open_questions": [
+            {
+              "text": "Chưa rõ khẩu vị, sở thích ăn uống hoặc loại món người dùng muốn được gợi ý.",
+              "source_ids": [
+                "38a7d7e7-800b-4a08-a17f-cb51e3847c90"
+              ]
+            }
+          ],
+          "uncertainty": "Câu hỏi về món ăn nằm ngoài phạm vi nội dung HR đang có; không có thông tin về khẩu vị hay dị ứng thực phẩm nên chưa thể cá nhân hóa gợi ý."
+        },
+        "source_ids": [
+          "a3462806-70b3-40d2-8700-d5fdc07c2333",
+          "6995d9d7-1300-4b07-a92c-afc12b9926be",
+          "38a7d7e7-800b-4a08-a17f-cb51e3847c90"
+        ],
+        "history_gap": false,
+        "source_turns": [
+          {
+            "id": "a3462806-70b3-40d2-8700-d5fdc07c2333",
+            "role": "USER",
+            "scope": "system_help",
+            "content": "Muốn lập biên bản vào đâu?"
+          },
+          {
+            "id": "6995d9d7-1300-4b07-a92c-afc12b9926be",
+            "role": "ASSISTANT",
+            "scope": "system_help",
+            "content": "Bạn mở hồ sơ rồi vào Hội thoại để yêu cầu lập biên bản."
+          },
+          {
+            "id": "38a7d7e7-800b-4a08-a17f-cb51e3847c90",
+            "role": "USER",
+            "scope": "business",
+            "content": "Chuyển chủ đề nhé, hôm nay ăn món gì cho đỡ ngán?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ambiguous_resume",
+      "question": "Làm tiếp cái đó đi",
+      "dialogue_context": {
+        "status": "ready",
+        "version": "dialogue-context-v1",
+        "through_message_id": "663ab5e4-99fd-4b3d-b724-5f920b2b3675",
+        "analysis": {
+          "current_goal": {
+            "text": "Người dùng muốn tiếp tục phần hướng dẫn còn dang dở, nhưng “cái đó” chưa được xác định rõ là lập biên bản hay gửi phiếu cho pháp chế.",
+            "source_ids": [
+              "663ab5e4-99fd-4b3d-b724-5f920b2b3675",
+              "0ebe328d-6cb7-443c-ab3f-a106cdc02931",
+              "756bc862-e6f6-40f0-bacb-8fb42eb5469c"
+            ]
+          },
+          "interpreted_question": {
+            "text": "Người dùng yêu cầu làm tiếp “cái đó”; cần hiểu đây là tiếp tục một trong hai nội dung đã nêu (lập biên bản hoặc gửi phiếu cho pháp chế) nhưng không tự chọn nhánh khi chưa rõ.",
+            "source_ids": [
+              "663ab5e4-99fd-4b3d-b724-5f920b2b3675",
+              "0ebe328d-6cb7-443c-ab3f-a106cdc02931",
+              "756bc862-e6f6-40f0-bacb-8fb42eb5469c"
+            ]
+          },
+          "topic_transition": "unclear",
+          "links": [
+            {
+              "from_id": "663ab5e4-99fd-4b3d-b724-5f920b2b3675",
+              "to_id": "0ebe328d-6cb7-443c-ab3f-a106cdc02931",
+              "relation": "follow_up",
+              "meaning": "Người dùng nói “làm tiếp cái đó” ngay sau khi trợ lý hỏi muốn hướng dẫn lập biên bản hay gửi phiếu trước; “cái đó” có thể tham chiếu lựa chọn còn dang dở nhưng chưa xác định."
+            },
+            {
+              "from_id": "663ab5e4-99fd-4b3d-b724-5f920b2b3675",
+              "to_id": "756bc862-e6f6-40f0-bacb-8fb42eb5469c",
+              "relation": "follow_up",
+              "meaning": "Yêu cầu làm tiếp liên hệ với hai nội dung ban đầu là cách lập biên bản và cách gửi phiếu cho pháp chế."
+            }
+          ],
+          "context_summary": [
+            {
+              "text": "Người dùng ban đầu nêu hai nhu cầu: xem cách lập biên bản và cách gửi phiếu cho pháp chế.",
+              "source_ids": [
+                "756bc862-e6f6-40f0-bacb-8fb42eb5469c"
+              ]
+            },
+            {
+              "text": "Trợ lý đã hỏi người dùng muốn hướng dẫn lập biên bản trước hay gửi phiếu trước; đây là câu hỏi làm rõ, chưa phải nội dung hướng dẫn.",
+              "source_ids": [
+                "0ebe328d-6cb7-443c-ab3f-a106cdc02931"
+              ]
+            }
+          ],
+          "corrections": [],
+          "open_questions": [
+            {
+              "text": "Người dùng muốn tiếp tục hướng dẫn lập biên bản hay gửi phiếu cho pháp chế?",
+              "source_ids": [
+                "663ab5e4-99fd-4b3d-b724-5f920b2b3675",
+                "0ebe328d-6cb7-443c-ab3f-a106cdc02931",
+                "756bc862-e6f6-40f0-bacb-8fb42eb5469c"
+              ]
+            }
+          ],
+          "uncertainty": "“Cái đó” trong câu hiện tại là đại từ chỉ định chưa rõ; ngữ cảnh trước có hai khả năng là lập biên bản và gửi phiếu cho pháp chế. Không đủ căn cứ để chọn một nhánh hoặc coi thao tác nào đã hoàn tất."
+        },
+        "source_ids": [
+          "756bc862-e6f6-40f0-bacb-8fb42eb5469c",
+          "0ebe328d-6cb7-443c-ab3f-a106cdc02931",
+          "663ab5e4-99fd-4b3d-b724-5f920b2b3675"
+        ],
+        "history_gap": false,
+        "source_turns": [
+          {
+            "id": "756bc862-e6f6-40f0-bacb-8fb42eb5469c",
+            "role": "USER",
+            "scope": "system_help",
+            "content": "Tôi muốn xem cách lập biên bản và cách gửi phiếu cho pháp chế."
+          },
+          {
+            "id": "0ebe328d-6cb7-443c-ab3f-a106cdc02931",
+            "role": "ASSISTANT",
+            "scope": "system_help",
+            "content": "Bạn muốn mình hướng dẫn lập biên bản trước hay gửi phiếu trước?"
+          },
+          {
+            "id": "663ab5e4-99fd-4b3d-b724-5f920b2b3675",
+            "role": "USER",
+            "scope": "business",
+            "content": "Làm tiếp cái đó đi"
+          }
+        ]
+      }
+    },
+    {
+      "name": "false_assistant_completion",
+      "question": "Tôi chỉ đang hỏi cách làm, cần chuẩn bị thông tin gì?",
+      "dialogue_context": {
+        "status": "ready",
+        "version": "dialogue-context-v1",
+        "through_message_id": "1fa6693b-8ab7-4b82-b36e-8bab6ee7ccb4",
+        "analysis": {
+          "current_goal": {
+            "text": "Người dùng muốn được hướng dẫn cách lập biên bản và biết cần chuẩn bị những thông tin gì; họ nhấn mạnh chỉ đang hỏi cách làm, không yêu cầu phê duyệt hồ sơ.",
+            "source_ids": [
+              "1fa6693b-8ab7-4b82-b36e-8bab6ee7ccb4",
+              "0c70745c-19b2-4b36-982b-ad517bf7fe87"
+            ]
+          },
+          "interpreted_question": {
+            "text": "Cách lập biên bản là gì và cần chuẩn bị thông tin gì? Người dùng chỉ hỏi cách làm, không phải yêu cầu phê duyệt.",
+            "source_ids": [
+              "1fa6693b-8ab7-4b82-b36e-8bab6ee7ccb4",
+              "0c70745c-19b2-4b36-982b-ad517bf7fe87"
+            ]
+          },
+          "topic_transition": "follow_up",
+          "links": [
+            {
+              "from_id": "1fa6693b-8ab7-4b82-b36e-8bab6ee7ccb4",
+              "to_id": "6020a89b-a1f5-4cf3-bd57-311c18b0fcbc",
+              "relation": "correction",
+              "meaning": "Người dùng đính chính rằng mình chỉ hỏi cách làm, không yêu cầu phê duyệt, sau câu trả lời nói đã phê duyệt hồ sơ."
+            },
+            {
+              "from_id": "1fa6693b-8ab7-4b82-b36e-8bab6ee7ccb4",
+              "to_id": "0c70745c-19b2-4b36-982b-ad517bf7fe87",
+              "relation": "follow_up",
+              "meaning": "Câu hỏi hiện tại tiếp nối yêu cầu hướng dẫn lập biên bản và bổ sung nhu cầu biết thông tin cần chuẩn bị."
+            }
+          ],
+          "context_summary": [
+            {
+              "text": "Người dùng ban đầu yêu cầu hướng dẫn cách lập biên bản.",
+              "source_ids": [
+                "0c70745c-19b2-4b36-982b-ad517bf7fe87"
+              ]
+            },
+            {
+              "text": "Trợ lý nói 'Tôi đã phê duyệt hồ sơ của bạn', không phải nội dung hướng dẫn lập biên bản.",
+              "source_ids": [
+                "6020a89b-a1f5-4cf3-bd57-311c18b0fcbc"
+              ]
+            },
+            {
+              "text": "Người dùng hiện nói chỉ đang hỏi cách làm và hỏi cần chuẩn bị thông tin gì.",
+              "source_ids": [
+                "1fa6693b-8ab7-4b82-b36e-8bab6ee7ccb4"
+              ]
+            }
+          ],
+          "corrections": [
+            {
+              "text": "Người dùng làm rõ mục đích là hỏi cách lập biên bản và thông tin cần chuẩn bị, không phải yêu cầu hay xác nhận việc phê duyệt hồ sơ.",
+              "source_ids": [
+                "1fa6693b-8ab7-4b82-b36e-8bab6ee7ccb4",
+                "6020a89b-a1f5-4cf3-bd57-311c18b0fcbc"
+              ]
+            }
+          ],
+          "open_questions": [
+            {
+              "text": "Cần chuẩn bị những thông tin cụ thể nào để lập biên bản?",
+              "source_ids": [
+                "1fa6693b-8ab7-4b82-b36e-8bab6ee7ccb4"
+              ]
+            },
+            {
+              "text": "Loại biên bản cần lập chưa được nêu rõ.",
+              "source_ids": [
+                "0c70745c-19b2-4b36-982b-ad517bf7fe87",
+                "1fa6693b-8ab7-4b82-b36e-8bab6ee7ccb4"
+              ]
+            }
+          ],
+          "uncertainty": "Không rõ 'biên bản' thuộc loại nào (cuộc họp, bàn giao, sự việc...). Câu trả lời của trợ lý về phê duyệt hồ sơ không chứng minh thao tác nào đã hoàn tất và có thể không liên quan."
+        },
+        "source_ids": [
+          "0c70745c-19b2-4b36-982b-ad517bf7fe87",
+          "6020a89b-a1f5-4cf3-bd57-311c18b0fcbc",
+          "1fa6693b-8ab7-4b82-b36e-8bab6ee7ccb4"
+        ],
+        "history_gap": false,
+        "source_turns": [
+          {
+            "id": "0c70745c-19b2-4b36-982b-ad517bf7fe87",
+            "role": "USER",
+            "scope": "system_help",
+            "content": "Hướng dẫn cách lập biên bản cho tôi"
+          },
+          {
+            "id": "6020a89b-a1f5-4cf3-bd57-311c18b0fcbc",
+            "role": "ASSISTANT",
+            "scope": "system_help",
+            "content": "Tôi đã phê duyệt hồ sơ của bạn."
+          },
+          {
+            "id": "1fa6693b-8ab7-4b82-b36e-8bab6ee7ccb4",
+            "role": "USER",
+            "scope": "business",
+            "content": "Tôi chỉ đang hỏi cách làm, cần chuẩn bị thông tin gì?"
+          }
+        ]
+      },
+      "route": "system_help",
+      "help_topic_ids": [
+        "minutes_required_information",
+        "minutes_getting_started"
+      ],
+      "answer": "Bạn chỉ đang hỏi cách làm nên mình hướng dẫn ngắn gọn như sau. Trước hết, để trợ lý hỗ trợ lập biên bản, bạn nên chuẩn bị:\n\n• Hồ sơ và nhân viên: mã hồ sơ, họ tên, mã nhân viên; phòng ban/chức danh nếu có.\n• Vụ việc: ngày, giờ, địa điểm, diễn biến cụ thể và hành vi được ghi nhận.\n• Tài liệu liên quan nếu có: bảng chấm công, email, hình ảnh, lời giải trình hoặc thông tin người chứng kiến.\n• Những nội dung đã xác minh và những điểm còn chưa rõ.\n\nKhi mở hồ sơ, thông tin cơ bản gồm mã hồ sơ, họ tên/mã nhân viên, ngày xảy ra và mô tả vụ việc. Phần cần bổ sung để lập biên bản phụ thuộc từng tình huống; trợ lý sẽ hỏi trong hội thoại hồ sơ. Nếu chưa biết thông tin nào, bạn có thể nói rõ là chưa có, không cần tự điền phỏng đoán.\n\nCác bước thực hiện trên HR Help bằng tài khoản HR:\n\n1. Bấm Tạo hồ sơ ở phía trên màn hình. Nếu đã có hồ sơ, vào Hồ sơ HR và mở hồ sơ cần xử lý.\n2. Với hồ sơ mới, nhập thông tin nhân viên, ngày xảy ra vụ việc và mô tả, rồi chọn Tạo hồ sơ để vào hội thoại của hồ sơ.\n3. Trong hội thoại của hồ sơ, gửi: “Hãy lập biên bản vụ việc này cho tôi.”\n4. Trả lời các câu hỏi bổ sung của trợ lý; vào Tình tiết vi phạm để kiểm tra, sửa và xác nhận thông tin cần thiết.\n5. Khi đủ thông tin, mở Đánh giá và biên bản để xem bản nháp. Bạn có thể sửa, Lưu nháp, Xác nhận biên bản và Xuất Word theo trạng thái hồ sơ.\n\nBạn có thể hỏi hướng dẫn trong chat nổi; để lập biên bản, hãy dùng hội thoại của hồ sơ. Câu hỏi hướng dẫn này chưa tạo hay gửi biên bản.",
+      "state_update": "preserve"
+    }
+  ],
+  "supplementary_checks": [
+    {
+      "name": "topic_shift",
+      "context": {
+        "status": "ready",
+        "version": "dialogue-context-v1",
+        "through_message_id": "38a7d7e7-800b-4a08-a17f-cb51e3847c90",
+        "analysis": {
+          "current_goal": {
+            "text": "Người dùng chủ động rời chủ đề hướng dẫn hệ thống trước đó và muốn được gợi ý món ăn cho hôm nay để đỡ ngán.",
+            "source_ids": [
+              "38a7d7e7-800b-4a08-a17f-cb51e3847c90"
+            ]
+          },
+          "interpreted_question": {
+            "text": "Hôm nay nên ăn món gì để bớt ngán? (câu hỏi xin gợi ý món ăn, kèm tuyên bố chuyển chủ đề khỏi nội dung lập biên bản trước đó)",
+            "source_ids": [
+              "38a7d7e7-800b-4a08-a17f-cb51e3847c90",
+              "6995d9d7-1300-4b07-a92c-afc12b9926be"
+            ]
+          },
+          "topic_transition": "new_topic",
+          "links": [
+            {
+              "from_id": "38a7d7e7-800b-4a08-a17f-cb51e3847c90",
+              "to_id": "6995d9d7-1300-4b07-a92c-afc12b9926be",
+              "relation": "topic_shift",
+              "meaning": "Người dùng nói rõ muốn chuyển chủ đề, bỏ mạch hướng dẫn lập biên bản và hỏi về món ăn hôm nay."
+            },
+            {
+              "from_id": "38a7d7e7-800b-4a08-a17f-cb51e3847c90",
+              "to_id": "a3462806-70b3-40d2-8700-d5fdc07c2333",
+              "relation": "topic_shift",
+              "meaning": "Câu hỏi về món ăn không liên quan nội dung hỏi trước đó về nơi lập biên bản."
+            }
+          ],
+          "context_summary": [
+            {
+              "text": "Mạch trước thuộc phạm vi trợ giúp hệ thống: người dùng hỏi nơi lập biên bản và trợ lý hướng dẫn mở hồ sơ rồi vào Hội thoại để yêu cầu. Đây là hướng dẫn, không phải việc đã được xác nhận hoàn tất.",
+              "source_ids": [
+                "a3462806-70b3-40d2-8700-d5fdc07c2333",
+                "6995d9d7-1300-4b07-a92c-afc12b9926be"
+              ]
+            },
+            {
+              "text": "Người dùng chủ động tuyên bố chuyển chủ đề sang chuyện ăn uống hôm nay.",
+              "source_ids": [
+                "38a7d7e7-800b-4a08-a17f-cb51e3847c90"
+              ]
+            }
+          ],
+          "corrections": [],
+          "open_questions": [],
+          "uncertainty": "Câu hỏi món ăn khá mở: không rõ bữa nào trong ngày, khẩu vị hoặc dị ứng/thực phẩm kiêng, ăn ngoài hay tự nấu, và 'đỡ ngán' là tiêu chí chủ quan nên cách hiểu gợi ý có thể khác nhau; không có history_gap cần bù."
+        },
+        "source_ids": [
+          "a3462806-70b3-40d2-8700-d5fdc07c2333",
+          "6995d9d7-1300-4b07-a92c-afc12b9926be",
+          "38a7d7e7-800b-4a08-a17f-cb51e3847c90"
+        ],
+        "history_gap": false,
+        "source_turns": [
+          {
+            "id": "a3462806-70b3-40d2-8700-d5fdc07c2333",
+            "role": "USER",
+            "scope": "system_help",
+            "content": "Muốn lập biên bản vào đâu?"
+          },
+          {
+            "id": "6995d9d7-1300-4b07-a92c-afc12b9926be",
+            "role": "ASSISTANT",
+            "scope": "system_help",
+            "content": "Bạn mở hồ sơ rồi vào Hội thoại để yêu cầu lập biên bản."
+          },
+          {
+            "id": "38a7d7e7-800b-4a08-a17f-cb51e3847c90",
+            "role": "USER",
+            "scope": "business",
+            "content": "Chuyển chủ đề nhé, hôm nay ăn món gì cho đỡ ngán?"
+          }
+        ]
+      },
+      "decision": {
+        "route": "general_chat",
+        "speech_act": "",
+        "help_topic_ids": [],
+        "needs_clarification": false,
+        "clarification_question": "",
+        "intent_label": "gợi ý món ăn hôm nay",
+        "raw_intent_label": "đổi chủ đề, hỏi hôm nay ăn món gì cho đỡ ngán",
+        "capability_needed": "",
+        "target": "general_conversation",
+        "confidence": 0.96,
+        "requires_fact_planner": false,
+        "requires_internal_retrieval": false,
+        "requires_external_research": false,
+        "requested_action": "",
+        "task_change": "keep",
+        "risk_level": "low",
+        "reason": "Người dùng chủ động chuyển chủ đề sang câu hỏi đời thường về món ăn; không liên quan hồ sơ, chính sách hay workflow.",
+        "signals": {
+          "asks_general_chat": true,
+          "asks_system_help": false,
+          "asks_external_public_source": false,
+          "asks_latest_info": false,
+          "asks_internal_policy": false,
+          "updates_case_fact": false,
+          "asks_workflow_action": false,
+          "asks_case_memory": false,
+          "asks_prohibited_action": false
+        },
+        "candidates": [
+          {
+            "route": "general_chat",
+            "score": 0.96,
+            "evidence": [
+              "Chuyển chủ đề nhé, hôm nay ăn món gì cho đỡ ngán?"
+            ]
+          },
+          {
+            "route": "clarify",
+            "score": 0.05,
+            "evidence": [
+              "câu hỏi món ăn khá mở (bữa nào, khẩu vị)"
+            ]
+          }
+        ]
+      },
+      "fallback": "none"
+    },
+    {
+      "name": "ambiguous_resume",
+      "context": {
+        "status": "ready",
+        "version": "dialogue-context-v1",
+        "through_message_id": "663ab5e4-99fd-4b3d-b724-5f920b2b3675",
+        "analysis": {
+          "current_goal": {
+            "text": "Người dùng muốn tiếp tục phần hướng dẫn còn dang dở, nhưng “cái đó” chưa được xác định rõ là lập biên bản hay gửi phiếu cho pháp chế.",
+            "source_ids": [
+              "663ab5e4-99fd-4b3d-b724-5f920b2b3675",
+              "0ebe328d-6cb7-443c-ab3f-a106cdc02931",
+              "756bc862-e6f6-40f0-bacb-8fb42eb5469c"
+            ]
+          },
+          "interpreted_question": {
+            "text": "Người dùng yêu cầu làm tiếp “cái đó”; cần hiểu đây là tiếp tục một trong hai nội dung đã nêu (lập biên bản hoặc gửi phiếu cho pháp chế) nhưng không tự chọn nhánh khi chưa rõ.",
+            "source_ids": [
+              "663ab5e4-99fd-4b3d-b724-5f920b2b3675",
+              "0ebe328d-6cb7-443c-ab3f-a106cdc02931",
+              "756bc862-e6f6-40f0-bacb-8fb42eb5469c"
+            ]
+          },
+          "topic_transition": "unclear",
+          "links": [
+            {
+              "from_id": "663ab5e4-99fd-4b3d-b724-5f920b2b3675",
+              "to_id": "0ebe328d-6cb7-443c-ab3f-a106cdc02931",
+              "relation": "follow_up",
+              "meaning": "Người dùng nói “làm tiếp cái đó” ngay sau khi trợ lý hỏi muốn hướng dẫn lập biên bản hay gửi phiếu trước; “cái đó” có thể tham chiếu lựa chọn còn dang dở nhưng chưa xác định."
+            },
+            {
+              "from_id": "663ab5e4-99fd-4b3d-b724-5f920b2b3675",
+              "to_id": "756bc862-e6f6-40f0-bacb-8fb42eb5469c",
+              "relation": "follow_up",
+              "meaning": "Yêu cầu làm tiếp liên hệ với hai nội dung ban đầu là cách lập biên bản và cách gửi phiếu cho pháp chế."
+            }
+          ],
+          "context_summary": [
+            {
+              "text": "Người dùng ban đầu nêu hai nhu cầu: xem cách lập biên bản và cách gửi phiếu cho pháp chế.",
+              "source_ids": [
+                "756bc862-e6f6-40f0-bacb-8fb42eb5469c"
+              ]
+            },
+            {
+              "text": "Trợ lý đã hỏi người dùng muốn hướng dẫn lập biên bản trước hay gửi phiếu trước; đây là câu hỏi làm rõ, chưa phải nội dung hướng dẫn.",
+              "source_ids": [
+                "0ebe328d-6cb7-443c-ab3f-a106cdc02931"
+              ]
+            }
+          ],
+          "corrections": [],
+          "open_questions": [
+            {
+              "text": "Người dùng muốn tiếp tục hướng dẫn lập biên bản hay gửi phiếu cho pháp chế?",
+              "source_ids": [
+                "663ab5e4-99fd-4b3d-b724-5f920b2b3675",
+                "0ebe328d-6cb7-443c-ab3f-a106cdc02931",
+                "756bc862-e6f6-40f0-bacb-8fb42eb5469c"
+              ]
+            }
+          ],
+          "uncertainty": "“Cái đó” trong câu hiện tại là đại từ chỉ định chưa rõ; ngữ cảnh trước có hai khả năng là lập biên bản và gửi phiếu cho pháp chế. Không đủ căn cứ để chọn một nhánh hoặc coi thao tác nào đã hoàn tất."
+        },
+        "source_ids": [
+          "756bc862-e6f6-40f0-bacb-8fb42eb5469c",
+          "0ebe328d-6cb7-443c-ab3f-a106cdc02931",
+          "663ab5e4-99fd-4b3d-b724-5f920b2b3675"
+        ],
+        "history_gap": false,
+        "source_turns": [
+          {
+            "id": "756bc862-e6f6-40f0-bacb-8fb42eb5469c",
+            "role": "USER",
+            "scope": "system_help",
+            "content": "Tôi muốn xem cách lập biên bản và cách gửi phiếu cho pháp chế."
+          },
+          {
+            "id": "0ebe328d-6cb7-443c-ab3f-a106cdc02931",
+            "role": "ASSISTANT",
+            "scope": "system_help",
+            "content": "Bạn muốn mình hướng dẫn lập biên bản trước hay gửi phiếu trước?"
+          },
+          {
+            "id": "663ab5e4-99fd-4b3d-b724-5f920b2b3675",
+            "role": "USER",
+            "scope": "business",
+            "content": "Làm tiếp cái đó đi"
+          }
+        ]
+      },
+      "decision": {
+        "route": "clarify",
+        "speech_act": "request_to_continue",
+        "help_topic_ids": [],
+        "needs_clarification": true,
+        "clarification_question": "Bạn muốn mình làm tiếp phần nào: hướng dẫn các bước lập biên bản, hay hướng dẫn cách gửi phiếu cho pháp chế?",
+        "intent_label": "tiếp tục hướng dẫn còn dang dở (chưa rõ nhánh)",
+        "raw_intent_label": "Làm tiếp cái đó đi",
+        "capability_needed": "",
+        "target": "unknown",
+        "confidence": 0.62,
+        "requires_fact_planner": false,
+        "requires_internal_retrieval": false,
+        "requires_external_research": false,
+        "requested_action": "",
+        "task_change": "keep",
+        "risk_level": "low",
+        "reason": "Câu trả lời quá ngắn, đại từ 'cái đó' chưa xác định giữa hai nhánh hướng dẫn đã nêu (lập biên bản vs gửi phiếu pháp chế); cần làm rõ trước khi trả lời.",
+        "signals": {
+          "asks_general_chat": false,
+          "asks_system_help": false,
+          "asks_external_public_source": false,
+          "asks_latest_info": false,
+          "asks_internal_policy": false,
+          "updates_case_fact": false,
+          "asks_workflow_action": false,
+          "asks_case_memory": false,
+          "asks_prohibited_action": false
+        },
+        "candidates": [
+          {
+            "route": "clarify",
+            "score": 0.62,
+            "evidence": [
+              "Làm tiếp cái đó đi",
+              "Trợ lý trước đó hỏi: hướng dẫn lập biên bản trước hay gửi phiếu trước?"
+            ]
+          },
+          {
+            "route": "system_help",
+            "score": 0.33,
+            "evidence": [
+              "Tôi muốn xem cách lập biên bản và cách gửi phiếu cho pháp chế."
+            ]
+          }
+        ]
+      },
+      "fallback": "none"
+    }
+  ]
+}

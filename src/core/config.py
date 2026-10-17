@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
     LLM_TEMPERATURE: float = Field(default=0.7, ge=0.0, le=2.0)
     SYSTEM_HELP_ENABLED: bool = True
+    SYSTEM_HELP_FORMAT_TIMEOUT_SECONDS: float = Field(default=20, ge=1, le=60)
+    DIALOGUE_CONTEXT_TIMEOUT_SECONDS: float = Field(default=20, ge=1, le=60)
     GENERAL_CHAT_ENABLED: bool = True
     GENERAL_CHAT_TIMEOUT_SECONDS: float = Field(default=20, ge=1, le=60)
     GENERAL_CHAT_RATE_LIMIT: int = Field(default=12, ge=1, le=120)

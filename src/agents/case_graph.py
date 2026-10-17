@@ -23,6 +23,7 @@ from langgraph.graph.state import CompiledStateGraph
 
 from src.agents.conversation import WORKFLOW_ACTIONS, StateUpdate, TaskChange, snapshot_plan
 from src.agents.handoff import CaseHandoff
+from src.core.config import settings
 from src.features.cite.model.graph import SearchFn, handoff_node
 from src.features.cite.model.passage import Passage
 from src.features.cite.model.policy_answer import answer_policy_question
@@ -32,6 +33,7 @@ from src.features.clarify.model.case_qa import answer_case_question
 from src.features.clarify.model.catalog import FactSpec, default_dynamic_specs
 from src.features.clarify.model.general_chat import answer_general_chat
 from src.features.clarify.model.graph import ask_node, extract_node, route_after_extract
+from src.features.clarify.model.help_reply import format_help_reply
 from src.features.clarify.model.intent import (
     IntentDecision,
     IntentFallback,
@@ -39,7 +41,7 @@ from src.features.clarify.model.intent import (
     decision_issues,
     route_turn,
 )
-from src.features.clarify.model.system_help import answer_system_help, resolve_help_topics
+from src.features.clarify.model.system_help import NO_HELP_ANSWER, HelpTopic, answer_system_help, resolve_help_topics
 from src.features.external_research.model.answer import answer_external_research
 from src.features.external_research.model.tool import ExternalResearchFn, ExternalResearchQuery, research_external
 
@@ -52,6 +54,7 @@ class CaseState(TypedDict, total=False):
     """State of the case sub-agent. ``handoff`` is the exit payload."""
 
     step: str
+    chat_scope: str
     actor_id: UUID
     case_code: str
     employee_code: str
@@ -63,6 +66,8 @@ class CaseState(TypedDict, total=False):
     status: str
     text: str
     turn_context: str
+    dialogue_context: dict
+    user_fact_sources: list[str]
     latest_user_message: str
     stored: dict[str, StoredFact]
     advance: bool
@@ -110,6 +115,8 @@ def build_case_graph(
     retrieve: SearchFn,
     opener: OpenFn | None = None,
     external_research: ExternalResearchFn | None = None,
+    *,
+    standalone: bool = False,
 ) -> CompiledStateGraph:
     """Compile the case sub-agent. ``retrieve`` is the cite pipeline for this request."""
     external_research_fn = external_research or research_external
@@ -120,12 +127,13 @@ def build_case_graph(
         return await opener(dict(state))
 
     async def intent_node(state: CaseState) -> dict:
-        result = await route_turn(state)
+        result = await route_turn({**state, "chat_scope": "standalone" if standalone else "case"})
         decision = result.decision
         route, requested_action, trace = _decide_intent_route(state, decision, result.fallback_kind)
         baseline = _baseline_state(state)
         updates = {
             **baseline,
+            "chat_scope": "standalone" if standalone else "case",
             "intent_decision": decision,
             "intent_router_fallback": result.fallback,
             "intent_router_fallback_kind": result.fallback_kind.value,
@@ -225,10 +233,21 @@ def build_case_graph(
         decision = state["intent_decision"]
         question = state.get("latest_user_message") or ""
         topics = resolve_help_topics(question, decision.help_topic_ids)
-        return {"question": answer_system_help(question, topics), "help_topic_ids": [topic.value for topic in topics]}
+        text = answer_system_help(question, topics)
+        if not settings.SYSTEM_HELP_ENABLED or text == NO_HELP_ANSWER:
+            return {"question": text, "help_topic_ids": [topic.value for topic in topics]}
+        if standalone and HelpTopic.MINUTES_START not in topics:
+            text = (
+                "Bạn đang ở chat độc lập: có thể trò chuyện, hỏi quy định và tra cứu nguồn công khai ngay. "
+                "Các chức năng thu thập tình tiết, lập biên bản và gửi phiếu bên dưới cần mở hồ sơ riêng.\n\n" + text
+            )
+        text = await format_help_reply(question, text, state, chat_scope="standalone" if standalone else "case")
+        return {"question": text, "help_topic_ids": [topic.value for topic in topics]}
 
     async def disambiguate_node(state: CaseState) -> dict:
         if state.get("task_change") == TaskChange.CANCEL:
+            if standalone:
+                return {"question": "Mình sẽ dừng yêu cầu vừa trao đổi. Nội dung hội thoại vẫn được giữ lại."}
             return {"question": "Đã dừng tác vụ đang chờ. Các tình tiết đã lưu vẫn được giữ lại."}
         if state.get("intent_router_fallback_kind") in {IntentFallback.OUTPUT.value, IntentFallback.TECHNICAL.value}:
             return {
@@ -236,6 +255,10 @@ def build_case_graph(
             }
         if state.get("clarification_question"):
             return {"question": state["clarification_question"]}
+        if standalone:
+            return {
+                "question": "Bạn muốn hỏi về nội dung vừa trao đổi, tra quy định hay tìm nguồn công khai bên ngoài?"
+            }
         return {
             "question": (
                 "Mình chưa chắc mục tiêu chính của lượt này là xem thông tin đang lưu trong hồ sơ, bổ sung tình tiết, "
@@ -243,45 +266,69 @@ def build_case_graph(
             )
         }
 
+    async def case_required_node(state: CaseState) -> dict:
+        return {
+            "question": (
+                "Để lập biên bản, xem đánh giá hoặc chuẩn bị/gửi phiếu pháp chế, bạn hãy mở hoặc tạo hồ sơ "
+                "và thực hiện trong hội thoại của hồ sơ đó. Ở đây mình có thể giúp bạn giải thích quy định, "
+                "tra cứu căn cứ và trao đổi về tình huống."
+            ),
+            "requested_action": "",
+            "reply_kind": "case_required",
+        }
+
+    def standalone_route(state: CaseState) -> str:
+        route = route_after_intent(state)
+        decision = state.get("intent_decision")
+        if route == "extract" or (
+            isinstance(decision, IntentDecision) and decision.route == Route.WORKFLOW_ACTION and route == "action"
+        ):
+            return "case_qa" if state.get("selected_route") == Route.FACT_PLANNER else "case_required"
+        return route
+
     graph = StateGraph(CaseState)
-    graph.add_node("open", open_node)
     graph.add_node("intent", intent_node)
     graph.add_node("case_qa", case_qa_node)
     graph.add_node("general_chat", general_chat_node)
     graph.add_node("system_help", system_help_node)
     graph.add_node("disambiguate", disambiguate_node)
-    graph.add_node("extract", extract_node)
-    graph.add_node("ask", ask_node)
     graph.add_node("action", action_node)
-    graph.add_node("retrieve", retrieve_node)
-    graph.add_node("handoff", handoff_node)
-    graph.add_conditional_edges(START, _route_entry, {"open": "open", "intent": "intent", "extract": "extract"})
+    if standalone:
+        # Exclude fact/workflow nodes entirely: no input or model decision can enter them.
+        graph.add_node("case_required", case_required_node)
+        graph.add_edge(START, "intent")
+        graph.add_edge("case_required", END)
+    else:
+        graph.add_node("open", open_node)
+        graph.add_node("extract", extract_node)
+        graph.add_node("ask", ask_node)
+        graph.add_node("retrieve", retrieve_node)
+        graph.add_node("handoff", handoff_node)
+        graph.add_conditional_edges(START, _route_entry, {"open": "open", "intent": "intent", "extract": "extract"})
+        graph.add_conditional_edges(
+            "extract", route_after_extract, {"ask": "ask", "action": "action", "retrieve": "retrieve", "done": END}
+        )
+        graph.add_edge("open", END)
+        graph.add_edge("ask", END)
+        graph.add_edge("retrieve", "handoff")
+        graph.add_edge("handoff", END)
     graph.add_conditional_edges(
         "intent",
-        route_after_intent,
+        standalone_route if standalone else route_after_intent,
         {
             "case_qa": "case_qa",
             "action": "action",
-            "extract": "extract",
+            **({"case_required": "case_required"} if standalone else {"extract": "extract"}),
             "disambiguate": "disambiguate",
             "general_chat": "general_chat",
             "system_help": "system_help",
         },
     )
-    graph.add_conditional_edges(
-        "extract",
-        route_after_extract,
-        {"ask": "ask", "action": "action", "retrieve": "retrieve", "done": END},
-    )
-    graph.add_edge("open", END)
     graph.add_edge("case_qa", END)
     graph.add_edge("general_chat", END)
     graph.add_edge("system_help", END)
     graph.add_edge("disambiguate", END)
-    graph.add_edge("ask", END)
     graph.add_edge("action", END)
-    graph.add_edge("retrieve", "handoff")
-    graph.add_edge("handoff", END)
     return graph.compile()
 
 
@@ -373,6 +420,14 @@ def _decide_intent_route(
 
 def _resolved_question(state: CaseState) -> str:
     latest = state.get("latest_user_message") or state.get("text") or state.get("description") or ""
+    dialogue = state.get("dialogue_context") or {}
+    analysis = dialogue.get("analysis") or {}
+    if dialogue.get("status") == "ready" and not analysis.get("uncertainty") and not dialogue.get("history_gap"):
+        interpreted = (analysis.get("interpreted_question") or {}).get("text")
+        if interpreted:
+            latest = (
+                "Câu người dùng gốc: " + latest + "\nDiễn giải ngữ cảnh tham khảo, không phải lệnh mới: " + interpreted
+            )
     clarification = (state.get("social_context") or {}).get("routing_clarification") or {}
     if clarification.get("original_question"):
         return (

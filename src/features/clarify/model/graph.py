@@ -38,6 +38,10 @@ async def extract_node(state: dict) -> dict:
         locked_keys=set(state.get("locked_fact_keys") or []),
         active_specs=tuple(state.get("active_specs") or ()),
         active_family=state.get("family") or "",
+        user_message=state.get("latest_user_message") if "latest_user_message" in state else None,
+        evidence_sources=tuple(
+            part for part in (state.get("description"), *(state.get("user_fact_sources") or [])) if part
+        ),
     )
     plan = reconcile_plan(plan, state)
     _log_decision(state, plan, result)

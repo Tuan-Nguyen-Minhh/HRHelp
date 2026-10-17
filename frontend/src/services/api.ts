@@ -26,6 +26,9 @@ import type {
   ReturnReason,
   StaffAccount,
   StaffWrite,
+  StandaloneConversation,
+  StandaloneMessagesResponse,
+  StandaloneTurnResponse,
   TimelineResponse,
   TokenResponse,
   TurnResponse,
@@ -119,6 +122,20 @@ function isNotFound(error: unknown): boolean {
 }
 
 export const api = {
+  async listConversations(): Promise<{ conversations: StandaloneConversation[] }> {
+    const response = await http.get<{ conversations: StandaloneConversation[] }>("/conversations");
+    return response.data;
+  },
+  async standaloneMessages(conversationId: string): Promise<StandaloneMessagesResponse> {
+    const response = await http.get<StandaloneMessagesResponse>(`/conversations/${conversationId}/messages`);
+    return response.data;
+  },
+  async sendStandaloneMessage(content: string, conversationId?: string): Promise<StandaloneTurnResponse> {
+    const response = await http.post<StandaloneTurnResponse>("/conversations/messages", {
+      content, conversation_id: conversationId,
+    });
+    return response.data;
+  },
   async login(email: string, password: string): Promise<TokenResponse> {
     const body = new URLSearchParams({ username: email, password });
     const response = await http.post<TokenResponse>("/auth/login", body);
