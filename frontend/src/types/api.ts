@@ -230,6 +230,23 @@ export interface MessageListResponse {
   messages: MessageView[];
 }
 
+export interface StandaloneConversation {
+  id: string;
+  title: string;
+  updated_at: string;
+}
+
+export interface StandaloneMessagesResponse {
+  conversation_id: string;
+  messages: MessageView[];
+}
+
+export interface StandaloneTurnResponse extends StandaloneMessagesResponse {
+  agent_run_id: string;
+  reply_kind: string;
+  lookup_date: string;
+}
+
 export interface TimelineEvent {
   at: string;
   kind: string;

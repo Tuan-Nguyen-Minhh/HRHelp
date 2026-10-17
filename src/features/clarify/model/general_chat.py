@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pydantic import BaseModel, Field
 
 from src.core.config import settings
+from src.features.clarify.model.dialogue_context import context_for_prompt
 from src.services.chat_client import create_chat_model
 from src.services.content_safety import SafetyVerdict, check_content, safety_reply
 
@@ -79,7 +80,17 @@ async def answer_general_chat(question: str, state: dict) -> ChatReply:
         return ChatReply(safety_reply(verdict), verdict.action)
     prompt = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": json.dumps({"general_history": history, "message": question}, ensure_ascii=False)},
+        {
+            "role": "user",
+            "content": json.dumps(
+                {
+                    "general_history": history,
+                    "message": question,
+                    "dialogue_context": context_for_prompt(state, scope="general"),
+                },
+                ensure_ascii=False,
+            ),
+        },
         {"role": "system", "content": "Return only JSON matching: " + json.dumps(GeneralReply.model_json_schema())},
     ]
     try:

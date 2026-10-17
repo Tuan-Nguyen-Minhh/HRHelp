@@ -109,7 +109,7 @@ body {
 .minutes-document .minutes-input { font-family: inherit; font-size: inherit; line-height: inherit; }
 
 /* The composer shows keyboard focus around the whole input surface. */
-.case-workspace #chat-content:focus-visible {
+[data-chat-content]:focus-visible {
   outline: none;
 }
 
@@ -126,6 +126,13 @@ select,
   outline: 2px solid var(--son);
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+/* Compact chat controls keep their shape and one clear keyboard-focus outline. */
+.chat-history-control:focus-visible {
+  outline: 2px solid var(--son);
+  outline-offset: 2px;
+  border-radius: 0.75rem;
 }
 
 #manager-comment:focus-visible {

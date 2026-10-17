@@ -33,7 +33,9 @@ from src.models.users import User
 
 @pytest.mark.skipif(os.getenv("P029_RUN_DB_TESTS") != "1", reason="Requires local migrated PostgreSQL")
 @pytest.mark.asyncio
-async def test_help_recheck_clarification_and_social_turns_preserve_real_case(monkeypatch):
+async def test_help_recheck_clarification_and_social_turns_preserve_real_case(
+    monkeypatch, approved_help_reply, dialogue_model
+):
     engine = create_async_engine(settings.SQLALCHEMY_DATABASE_URI)
     suffix = uuid4().hex
     uid, cid, conversation_id, report_id = (uuid4() for _ in range(4))
@@ -144,6 +146,19 @@ async def test_help_recheck_clarification_and_social_turns_preserve_real_case(mo
                         )
                         assert followup.status_code == 200, followup.text
                         assert followup.json()["reply_kind"] == "system_help"
+                        formatting_state = approved_help_reply.call_args.args[2]
+                        assert "Original business memory" in formatting_state["turn_context"]
+                        assert formatting_state["social_context"]["help_messages"][0] == {
+                            "role": "USER",
+                            "content": "AI có quyền phê duyệt không?",
+                        }
+                        assert approved_help_reply.await_count == 2
+                        assert formatting_state["dialogue_context"]["status"] == "ready"
+                        assert (
+                            formatting_state["dialogue_context"]["analysis"]["interpreted_question"]["text"]
+                            == "Tôi chỉ hỏi quyền của AI"
+                        )
+                        assert "SEMANTIC_DIALOGUE_CONTEXT" in first.call_args_list[2].args[0][1]["content"]
                         prompt = first.call_args_list[2].args[0][1]["content"]
                         assert "Bạn xử lý phê duyệt giúp tôi" in prompt and "Tôi chỉ hỏi quyền của AI" in prompt
                         social = await client.post(root, headers=headers, json={"content": "Hôm nay ăn gì?"})
@@ -162,6 +177,9 @@ async def test_help_recheck_clarification_and_social_turns_preserve_real_case(mo
                         await session.scalars(select(Message).where(Message.conversation_id == conversation_id))
                     ).all()
                     assert len(messages) == 8
+                    snapshots = [m.message_metadata.get("dialogue_context") for m in messages if m.role == "ASSISTANT"]
+                    assert any(snapshots)
+                    assert dialogue_model.await_count >= 2
                     assert all(
                         m.message_metadata.get("context_scope") in {"system_help", "general", "routing_clarification"}
                         for m in messages

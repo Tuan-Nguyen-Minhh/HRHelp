@@ -1,8 +1,10 @@
-"""Short-term memory for case conversations.
+"""Authoritative working-state projection and raw short-term conversation memory.
 
 Memory is deterministic and case-scoped: it summarizes the current working
 state, pending fact keys, pending workflow action, and the last few messages.
 It is context for the next turn, not evidence and not a source of sanctions.
+``dialogue_context`` separately interprets turn relationships before graph execution;
+its model-derived checkpoints live in message metadata, never working facts/tasks.
 """
 
 from uuid import UUID
@@ -30,14 +32,19 @@ async def side_context(session: AsyncSession, conversation_id: UUID) -> dict:
     """Separate dialogue state; never merge this object into case facts or summary."""
     rows = await list_messages(session, conversation_id)
     general = []
+    help_messages = []
     last_assistant = None
     for row in rows:
         meta = getattr(row, "message_metadata", None) or {}
-        if row.role == "ASSISTANT" and not meta.get("internal"):
+        if meta.get("internal") or row.role not in {"USER", "ASSISTANT"}:
+            continue
+        if row.role == "ASSISTANT":
             last_assistant = row
         if meta.get("context_scope") == "general" and meta.get("include_in_general_context"):
             general.append({"role": row.role, "content": row.content})
-    result = {"general_messages": general[-RECENT_LIMIT:]}
+        if meta.get("context_scope") == "system_help" or meta.get("kind") == "system_help":
+            help_messages.append({"role": row.role, "content": row.content})
+    result = {"general_messages": general[-RECENT_LIMIT:], "help_messages": help_messages[-RECENT_LIMIT:]}
     if last_assistant is not None:
         meta = getattr(last_assistant, "message_metadata", None) or {}
         result["last_reply_kind"] = meta.get("kind") or "business"
