@@ -121,7 +121,7 @@ def test_provider_failure_keeps_null_score_and_safe_diagnostic(monkeypatch):
     assert scores.errors == [{"error_type": "HTTPStatusError", "http_status": 429}]
 
 
-@pytest.mark.parametrize("provider", ["mistral", "gemini", "openrouter"])
+@pytest.mark.parametrize("provider", ["mistral", "gemini", "openrouter", "deepseek"])
 def test_each_metric_gets_a_fresh_judge_client(monkeypatch, tmp_path, provider):
     pytest.importorskip("ragas")
     pytest.importorskip("dotenv")
@@ -399,3 +399,31 @@ def test_openrouter_adapter_sends_chat_request_and_reads_completion(monkeypatch)
     assert payload["model"] == "vendor/judge-model"
     assert payload["messages"][0]["content"] == "Assess this output."
     assert "temperature" not in payload
+
+
+@pytest.mark.parametrize("endpoint", [None, "https://deepseek.invalid/v1"])
+def test_deepseek_judge_configuration(monkeypatch, endpoint):
+    pytest.importorskip("ragas")
+    pytest.importorskip("langchain_openai")
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "offline-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "unrelated-key")
+    monkeypatch.setenv("DEEPSEEK_BASE_URL", endpoint or "")
+    judge = runner.make_judge("deepseek", "deepseek-flash", 60)
+    client = judge.langchain_llm
+    assert client.openai_api_base == (endpoint or "https://api.deepseek.com")
+    assert client.openai_api_key.get_secret_value() == "offline-key"
+    assert client.model_name == "deepseek-flash"
+    assert client.extra_body == {"thinking": {"type": "disabled"}}
+    assert client.request_timeout == 60
+    assert client.max_retries == 1
+    assert client.use_responses_api is False
+    assert judge.bypass_temperature
+
+
+def test_deepseek_requires_own_key(monkeypatch):
+    pytest.importorskip("ragas")
+    pytest.importorskip("langchain_openai")
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "   ")
+    monkeypatch.setenv("OPENAI_API_KEY", "unrelated-key")
+    with pytest.raises(ValueError, match="DEEPSEEK_API_KEY"):
+        runner.make_judge("deepseek", "deepseek-flash", 30)
