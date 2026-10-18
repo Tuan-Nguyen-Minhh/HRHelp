@@ -81,7 +81,7 @@ Bảng live agent đọc là `document_chunks`; các bảng `legal_*` là bản 
 | Rerank | Cohere `rerank-v4.0-pro` |
 | Database | PostgreSQL 16 + pgvector (+ BM25 qua `search_tsv`) |
 | Frontend | Vite + React + TypeScript + TanStack Query + Tailwind |
-| DevOps | Docker + GitHub Actions |
+| DevOps | Docker + AWS |
 
 ## 8. Bắt đầu nhanh
 ```bash
