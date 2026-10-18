@@ -1,256 +1,166 @@
-# AI20K Agent Template
+# HR Help — Trợ lý chính sách nhân sự (P-029)
 
-## HR Help frontend
+**HR Help** là trợ lý AI (human-in-the-loop) hỗ trợ xử lý **hồ sơ kỷ luật lao động**: HR trò chuyện để làm rõ tình tiết vi phạm, hệ thống truy xuất văn bản luật/nghị định/nội quy **còn hiệu lực tại ngày xảy ra vụ việc**, soạn đánh giá tư vấn kèm căn cứ và bản nháp giấy tờ, rồi định tuyến qua **pháp chế duyệt** và **quản lý ban hành quyết định**. Mọi hành động duyệt, ký, đóng hồ sơ do con người có thẩm quyền quyết định — agent chỉ phân tích, tra cứu, tổng hợp và soạn nháp.
 
-The current HR Help web UI is in [frontend/](frontend/README.md). Run the FastAPI backend on port 8000, then serve the frontend with `python3 -m http.server 3000 --directory frontend` and open `http://localhost:3000`.
+> Kiến trúc đầy đủ: [`ARCHITECTURE.md`](ARCHITECTURE.md) · [`P029-flowchart.md`](P029-flowchart.md) · flow nghiệp vụ: [`docs/features/features.md`](docs/features/features.md)
 
-The web UI covers registration, login, opening a case, chat, fact confirmation, and the cited recommendation. Legal review and final decision screens need backend endpoints that are not implemented yet.
+## 1. Vấn đề & mục tiêu
+Khi có vi phạm nội quy, HR và quản lý thường lúng túng khi áp nội quy cho một tình huống cụ thể: tra cứu luật, nghị định và tiền lệ mất nhiều thời gian, dễ áp sai mức kỷ luật hoặc ra quyết định thiếu căn cứ.
 
-Template chính thức cho học viên VinUni AI20K Build Phase: cấu trúc dự án, code
-mẫu và hướng dẫn kỹ thuật để xây dựng một AI Agent hoàn chỉnh — từ kiến trúc,
-code, test cho đến deploy và nộp bài Demo Day.
+HR Help phân tích tình huống vi phạm, đối chiếu nội quy công ty và quy định pháp luật còn hiệu lực, rồi đề xuất phương án giải quyết kèm trích dẫn căn cứ — vẫn giữ nguyên ranh giới trách nhiệm của con người:
+- Rút ngắn thời gian tra cứu và xử lý vụ việc vi phạm.
+- Đảm bảo mọi đề xuất kỷ luật minh bạch, nhất quán, có căn cứ pháp lý/nội quy.
+- Hỗ trợ quản lý tự tin, chuẩn xác hơn khi ra quyết định.
 
-Technical Guidebook: <https://phoenix.note.transformerlabs.ai/technical-book>
+## 2. Vai trò & ranh giới
+| Vai trò | Được làm |
+|---|---|
+| `HR` | Mở hồ sơ, chat làm rõ, xác nhận fact, đọc báo cáo, gửi phiếu pháp chế, chuyển thẳng quản lý, mở lại hồ sơ bị từ chối |
+| `MANAGER` | Xem hàng chờ quản lý, ban hành quyết định nếu có quyền |
+| `LEGAL` (pháp chế) | Duyệt/từ chối phiếu; không sửa fact, mức kỷ luật hay citation |
+| `SIGNER` | Ban hành quyết định từ đề xuất đã duyệt |
+| `ADMIN` | Quản trị hệ thống/người dùng |
 
-## Template có sẵn những gì
+**Ranh giới bắt buộc:** agent **không** tự approve/reject/sign/close/delete hay bỏ qua bước pháp chế; không tự ban hành quyết định. Mức kỷ luật trong bản nháp được **sao chép** từ recommendation, không tính lại.
 
-- **Cấu trúc thư mục tách lớp** — `agents/`, `api/`, `services/`, `models/` đã
-  chia sẵn, không phải bàn lại từ đầu.
-- **Code mẫu chạy được** — LangGraph agent (state, node, tool), FastAPI routes,
-  Pydantic settings, schema.
-- **Docker và CI** — Dockerfile multi-stage, `docker-compose.yml`, workflow
-  GitHub Actions chạy `ruff` + `pytest` khi push lên `main`/`develop` và khi mở
-  pull request vào `main`.
-- **Technical Guidebook 10 chương** trong `docs/guide/`, đồng thời đọc được
-  online.
-- **Checklist 10 deliverables** của Demo Day.
-- **AI usage logging** — hook cài sẵn cho 7 công cụ AI (gồm Grok), log tự động
-  gửi lên grading server mỗi lần `git push`.
+## 3. Luồng nghiệp vụ
+1. HR mở hồ sơ → `OPEN`.
+2. Chat làm rõ tình tiết → `NEED_INFO`.
+3. Trích xuất & xác nhận fact (fact bắt buộc được "khoá").
+4. Khi đủ fact và có `incident_date` → truy xuất văn bản còn hiệu lực theo ngày vụ việc.
+5. Tổng hợp đánh giá → lưu `recommendations` (DRAFT) → `ANALYZED`.
+6. Dispatch gate quyết định HOLD hay tạo preview biên bản/phiếu.
+7. HR gửi phiếu cho pháp chế → `PENDING_LEGAL`, hoặc chuyển thẳng quản lý → `APPROVED`.
+8. Pháp chế duyệt → `APPROVED`; từ chối → `REJECTED` (bắt buộc kèm lý do).
+9. Quản lý/người ký ban hành → `DECIDED` → đóng hồ sơ `CLOSED`.
+10. Xuất biên bản/phiếu/quyết định (JSON/Markdown/DOCX).
 
-## Yêu cầu
+Trạng thái hồ sơ (`cases.status`): `OPEN → NEED_INFO → ANALYZED → PENDING_LEGAL → APPROVED / REJECTED → DECIDED → CLOSED`. Chat chỉ nhận hồ sơ còn mutable: `OPEN`, `NEED_INFO`, `ANALYZED`, `REJECTED`.
 
-- Python 3.11 (phiên bản CI đang dùng)
-- Git
-- Docker — tuỳ chọn, chỉ cần nếu chạy `docker compose`
+## 4. Kiến trúc
+- **Backend** FastAPI (Python 3.11) giữ toàn bộ state workflow, phân quyền, audit, retrieval, lưu recommendation, duyệt, ban hành, thông báo và export.
+- **Agent** LangGraph: case graph (intent router + fact planner) và sub-graph retrieval/dispatch.
+- **Dữ liệu** PostgreSQL + pgvector (vector 1024 chiều) + BM25 (`search_tsv`).
+- **Frontend** Vite + React + TypeScript (React Query), chỉ hiển thị những gì backend đã lưu.
 
-## Bắt đầu
-
-### 1. Clone repo của đội
-
-Khi đội được chốt, hệ thống tự sinh repo cho đội từ template này, nằm trong org
-GitHub của khoá bạn đang học và đặt tên theo mã đội. Copy URL ở trang đội trên
-Phoenix rồi clone về:
-
-```bash
-git clone https://github.com/<ORG-CỦA-KHOÁ>/<MÃ-ĐỘI>.git
-cd <MÃ-ĐỘI>
-```
-
-Không cần `rm -rf .git`, `git init` hay `git remote add`: repo sinh từ template
-đã bắt đầu bằng lịch sử riêng của đội và remote trỏ sẵn đúng chỗ. Chưa thấy repo
-của đội thì báo BTC — repo tự tạo nằm ngoài org sẽ không được chấm.
-
-### 2. Cài môi trường
-
-```bash
-python3.11 -m venv .venv
-source .venv/bin/activate      # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-### 3. Cấu hình biến môi trường
-
-```bash
-cp .env.example .env
-```
-
-Chọn `LLM_PROVIDER=deepseek` hoặc `LLM_PROVIDER=mistral` trong `.env`.
-Điền API key tương ứng (`DEEPSEEK_API_KEY` hoặc `MISTRAL_API_KEY`) cho chat/agent.
-Để trống `MODEL_NAME` để dùng model mặc định theo provider; hoặc đặt tên model
-và `FALLBACK_MODEL_NAME` thuộc cùng provider. Khi đổi provider, cập nhật hoặc
-xóa tên model cũ. Embedding `mistral-embed` luôn dùng `MISTRAL_API_KEY`. Riêng `AI_LOG_API_KEY`, mỗi thành viên tự
-tạo key riêng tại [dashboard Phoenix](https://phoenix.note.transformerlabs.ai/api-keys)
-rồi thay vào chỗ `<get-your-api-key-from-dashboard-phoenix>` — giá trị trong
-`.env.example` chỉ là placeholder, để nguyên thì log không vào được hệ thống chấm.
-
-### 4. Cài hook ghi log AI
-
-```bash
-bash scripts/setup_hooks.sh                                      # Linux / macOS / Git Bash
-powershell -ExecutionPolicy Bypass -File scripts\setup_hooks.ps1 # Windows PowerShell
-```
-
-Chạy một lần sau khi clone. Hook ghi lại prompt khi bạn dùng Claude Code, Cursor,
-Codex CLI, Gemini CLI, Antigravity, GitHub Copilot hoặc Grok, và cài pre-push
-hook để đẩy log lên server.
-
-### 5. Chạy server
-
-```bash
-uvicorn src.main:app --reload --port 8000
-```
-
-Swagger UI ở <http://localhost:8000/docs>. Hoặc dùng `make run`, `make test`,
-`make lint` — xem `Makefile`.
-
-## Cấu trúc thư mục
-
-```
-src/
-  agents/            LangGraph agent
-    graph.py         State graph (nodes + edges)
-    state.py         State schema (TypedDict)
-    nodes/           Node functions
-    tools/           Agent tools (@tool)
-  api/routes.py      FastAPI endpoints
-  models/schemas.py  Pydantic schemas
-  services/llm.py    LLM client
-  config.py          Pydantic Settings
-  main.py            App entry point
-tests/               pytest suite
-scripts/             Hook ghi log AI + installer
-docs/
-  guide/             Technical Guidebook (nguồn của bản online)
-  architecture_diagram.md
-eval/                Kết quả evaluation
-presentation/        Slide và video Demo Day
-.claude/ .codex/ .cursor/ .gemini/ .agents/ .github/hooks/ .grok/hooks/
-                     Config hook cho từng công cụ (Grok: `.grok/hooks/`)
-.github/workflows/   CI
-Dockerfile           Multi-stage build
-docker-compose.yml   Chạy backend bằng Docker
-README_boilerplate.md  Khung README cho dự án của đội
-```
-
-## Technical Guidebook
-
-| Chương | Nội dung | Thời gian |
+## 5. Multi-agent & pipeline truy xuất
+| Agent | Vai trò | File chính |
 |---|---|---|
-| 1 | Lời mở đầu — mục tiêu, cách sử dụng | 15 phút |
-| 2 | Khởi tạo dự án — clone, setup, git workflow | 4 giờ |
-| 3 | Thiết kế kiến trúc — 3-tier, diagram, ADR | 6 giờ |
-| 4 | LangGraph Agent — state, node, edge, tool, RAG | 8 giờ |
-| 5 | FastAPI — routes, validation, error handling, streaming | 6 giờ |
-| 6 | Giao diện — Next.js và Streamlit | 6 giờ |
-| 7 | DevOps — Docker, CI/CD, deploy, logging | 6 giờ |
-| 8 | Kiểm thử — unit test, integration test, RAGAS | 4 giờ |
-| 9 | Demo Day — 10 deliverables, checklist | 2 giờ |
-| 10 | Tài nguyên — khoá học, tài liệu, BMAD method | tham khảo |
+| Case graph | Intent router + trích xuất/làm rõ fact (Python chọn edge, LLM không chọn) | `src/agents/case_graph.py`, `src/features/clarify/model/` |
+| Retrieval → `CaseHandoff` | Tìm văn bản còn hiệu lực theo `incident_date`, tạo payload bất biến | `src/features/cite/model/pipeline.py`, `src/agents/handoff.py` |
+| Recommendation | Đọc `CaseHandoff`, tổng hợp đánh giá + citation, lưu DRAFT | `src/features/answer/model/answers.py` |
+| Dispatch gate | Quyết định HOLD/SUBMIT, chỉ tạo preview draft | `src/features/answer/model/dispatch.py` |
 
-Đọc online tại <https://phoenix.note.transformerlabs.ai/technical-book>: đăng
-nhập bằng GitHub (đúng account đã được BTC mời vào org của khoá), chọn tab
-**Technical Book** ở sidebar trái. Bản offline nằm trong `docs/guide/`, mở được
-bằng bất kỳ markdown viewer nào.
+```text
+similarity + Okapi BM25 + lexical → RRF (100) → Cohere seed rerank (rerank-v4.0-pro)
+  → mở rộng dẫn chiếu (citation graph, hop-1) → facet rerank
+  → chọn evidence → tối đa 1 lượt tìm bù → fallback page_index nếu rỗng
+```
 
-## 10 deliverables cho Demo Day
+Xem [`plans/graphrag-hop1-retrieval.md`](plans/graphrag-hop1-retrieval.md), [`docs/retrieval-rerank-implementation.md`](docs/retrieval-rerank-implementation.md).
 
-| # | Deliverable | Vị trí | Template lo tới đâu |
-|---|---|---|---|
-| 1 | Source code | `src/` | Khung sẵn |
-| 2 | README | copy `README_boilerplate.md` thành `README.md` | Khung sẵn |
-| 3 | Architecture diagram | `docs/architecture_diagram.md` | Khung sẵn |
-| 4 | AI logs | LangSmith (3 biến môi trường) + auto AI usage logging | Cấu hình sẵn |
-| 5 | Live URL | deploy lên Render/Vercel | CI/CD sẵn |
-| 6 | Video demo | `presentation/` | Đội tự làm |
-| 7 | Pitch deck | `presentation/` | Đội tự làm |
-| 8 | Development journal | `JOURNAL.md` | Khung sẵn |
-| 9 | Worklog | `WORKLOG.md` | Khung sẵn |
-| 10 | Evaluation evidence | `eval/` | Đội tự làm |
+## 6. Kho tri thức & pipeline dữ liệu
+Corpus gồm **4 văn bản** (~1377 chunk, ~599 cạnh dẫn chiếu):
 
-## Tech stack
+| Mã | Văn bản |
+|---|---|
+| `BLLD` | Bộ luật Lao động 2019 (hợp nhất 18/VBHN-VPQH) |
+| `ND145_2020` | Nghị định 145/2020/NĐ-CP (hướng dẫn điều kiện/quan hệ lao động) |
+| `ND283_2026` | Nghị định 283/2026/NĐ-CP (xử phạt hành chính — tầng rủi ro) |
+| `NQCT` | Nội quy lao động nội bộ công ty |
 
+Bảng live agent đọc là `document_chunks`; các bảng `legal_*` là bản dựng/build-time. Quy trình 8 bước (docx → md → làm sạch → chunk → metadata → graph → embedding → search): [`data_pipeline_steps/README.md`](data_pipeline_steps/README.md), [`data/README.md`](data/README.md).
+
+## 7. Tech stack
 | Lớp | Công nghệ |
 |---|---|
 | Agent | LangGraph + LangChain 0.3 |
-| Backend | FastAPI 0.115 + Uvicorn |
-| LLM | DeepSeek qua OpenAI-compatible API, mặc định `deepseek-flash` (đổi `MODEL_NAME` / `FALLBACK_MODEL_NAME` trong `.env`) |
-| Embedding | Mistral `mistral-embed` 1024 chiều cho vector retrieval |
-| Giao diện | Next.js hoặc Streamlit (đội tự chọn, hướng dẫn ở chương 6) |
-| Lint / test | ruff + pytest 8 |
+| Backend | FastAPI + Uvicorn (Python 3.11) |
+| LLM | DeepSeek / Mistral (`LLM_PROVIDER`, `MODEL_NAME`) |
+| Embedding | Mistral `mistral-embed` (1024 chiều) |
+| Rerank | Cohere `rerank-v4.0-pro` |
+| Database | PostgreSQL 16 + pgvector (+ BM25 qua `search_tsv`) |
+| Frontend | Vite + React + TypeScript + TanStack Query + Tailwind |
 | DevOps | Docker + GitHub Actions |
 
-## Chạy Docker trên desktop để xem log agent
-
-Khi debug latency/timeout agent, chạy backend bằng compose desktop:
-
+## 8. Bắt đầu nhanh
 ```bash
-make compose-desktop
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env        # điền MISTRAL_API_KEY, COHERE_API_KEY, LLM_PROVIDER...
+
+docker compose up -d db     # Postgres + pgvector
+powershell -ExecutionPolicy Bypass -File scripts/restore_handoff.ps1   # nạp corpus (snapshot full)
+
+make run                    # backend: uvicorn src.main:app --reload --port 8000 (Swagger ở /docs)
+cd frontend && npm install && npm run dev   # frontend: http://localhost:5173
 ```
 
-Target này luôn gọi:
+Tài khoản demo (admin/manager/HR/pháp chế) do `scripts/seed_demo_users.py` tạo, chạy sau migration nếu DB chưa có. Chi tiết nạp data: [`handoff/README.md`](handoff/README.md), [`handoff/RUNBOOK_DO_DATA_MOI.md`](handoff/RUNBOOK_DO_DATA_MOI.md).
 
-```bash
-docker compose -f docker-compose.yml -f docker-compose.desktop.yml up --build --force-recreate --remove-orphans
-```
+## 9. API chính
+| Chức năng | Endpoint |
+|---|---|
+| Đăng nhập | `POST /api/v1/auth/login` |
+| Hồ sơ | `POST /api/v1/cases`, `GET/PATCH /api/v1/cases/{id}` |
+| Chat làm rõ | `POST /api/v1/cases/{id}/messages` |
+| Fact | `GET /api/v1/cases/{id}/facts`, `POST /api/v1/cases/{id}/facts/confirm` |
+| Đánh giá | `GET /api/v1/cases/{id}/answer` |
+| Gửi pháp chế / chuyển quản lý | `POST /api/v1/cases/{id}/ticket`, `POST /api/v1/cases/{id}/escalate` |
+| Hàng chờ pháp chế | `GET /api/v1/legal/reviews/queue`, `POST /api/v1/cases/{id}/reviews` |
+| Quản lý / quyết định | `GET /api/v1/manager/queue`, `POST /api/v1/cases/{id}/decisions`, `POST /api/v1/cases/{id}/close` |
+| Timeline / Export | `GET /api/v1/cases/{id}/timeline`, `GET /api/v1/cases/{id}/export/{kind}` |
 
-Vì vậy mỗi lần code đổi, image backend được build lại và container được recreate theo code mới. Log backend in trực tiếp ra terminal với `LOG_LEVEL=DEBUG`.
+Các route thay đổi state nhận header `Idempotency-Key`. Đầy đủ trong [`docs/features/features.md`](docs/features/features.md).
 
-Nếu đã chạy container nền và chỉ muốn xem log:
+## 10. Đánh giá chất lượng
+5 bộ đánh giá trong [`eval/`](eval/README.md):
 
-```bash
-make compose-desktop-logs
-```
+| Bộ | Đo gì |
+|---|---|
+| [`eval/retrieval`](eval/retrieval/README.md) | Chất lượng truy xuất (recall, nDCG, evidence) |
+| [`eval/routing`](eval/routing/README.md) | Định tuyến intent (10 nhánh) + trích xuất tình tiết |
+| [`eval/ingestion`](eval/ingestion/README.md) | Đối chiếu đoạn nguồn với chunk |
+| [`eval/case_assessment`](eval/case_assessment/README.md) | Đánh giá RAG bằng RAGAS (4 chỉ số) |
+| [`eval/answer_quality`](eval/answer_quality/README.md) | Chất lượng assessment + câu trả lời chat |
 
-Tắt stack:
-
-```bash
-make compose-desktop-down
-```
-
-Các log quan trọng có prefix `agent_stage`, ví dụ:
-
+## 11. Cấu trúc thư mục
 ```text
-agent_stage start stage=case_graph ...
-agent_stage end stage=retrieval latency_ms=...
-agent_stage start stage=synthesis prompt_chars=... passages=... base_url_host=...
-agent_stage error stage=synthesis_llm model=... latency_ms=... error=OpenAITimeoutError
+src/
+  main.py     Entry point FastAPI (router dưới /api/v1)
+  agents/     LangGraph: case_graph.py, handoff.py (CaseHandoff)
+  features/   Mỗi feature = controller.py + model/ + schema/ (opencase, clarify, cite,
+              answer, assessment, legal_review, decision, export, timeline, ...)
+  common/     Auth, access, audit, idempotency, workflow guards
+  core/       Settings (config.py), security (RBAC)
+  models/     SQLAlchemy models (cases, document_chunks, ...)
+frontend/     Vite + React + TS      | eval/        Bộ đánh giá
+data/         Corpus                 | handoff/     Snapshot DB để deploy
+data_pipeline_steps/  Pipeline       | docs/        Tài liệu nghiệp vụ, research
+alembic/versions/     Migrations     | gateG1-chotdetai/  Project Brief + PRD
 ```
 
-## Cohere retrieval và rerank
+## 12. Tài liệu liên quan
+| Tài liệu | Nội dung |
+|---|---|
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) · [`P029-flowchart.md`](P029-flowchart.md) | Kiến trúc kỹ thuật & flowchart agent |
+| [`docs/features/features.md`](docs/features/features.md) | Flow nghiệp vụ, API map, multi-agent |
+| [`docs/orchestration-contract.md`](docs/orchestration-contract.md) · [`docs/retrieval-rerank-implementation.md`](docs/retrieval-rerank-implementation.md) | Hợp đồng hội thoại & triển khai retrieval |
+| [`plans/graphrag-hop1-retrieval.md`](plans/graphrag-hop1-retrieval.md) | Plan GraphRAG hop-1 |
+| [`data_pipeline_steps/README.md`](data_pipeline_steps/README.md) · [`data/README.md`](data/README.md) | Pipeline dữ liệu 8 bước & corpus |
+| [`handoff/README.md`](handoff/README.md) · [`handoff/RUNBOOK_DO_DATA_MOI.md`](handoff/RUNBOOK_DO_DATA_MOI.md) | Snapshot DB & runbook nạp data |
+| [`eval/README.md`](eval/README.md) · [`design-system/hr-help/MASTER.md`](design-system/hr-help/MASTER.md) | Điều hướng eval & design system |
+| [`gateG1-chotdetai/Project_Brief.md`](gateG1-chotdetai/Project_Brief.md) · [`PRD.md`](gateG1-chotdetai/PRD.md) | Định nghĩa dự án (Gate G1) |
+| [`frontend/README.md`](frontend/README.md) · [`presentation/README.md`](presentation/README.md) · [`WORKLOG.md`](WORKLOG.md) | Frontend, pitch deck, nhật ký |
 
-Điền `COHERE_API_KEY` trong `.env`. Model mặc định là `COHERE_RERANK_MODEL=rerank-v4.0-pro`.
-Key trống hoặc API lỗi sẽ được ghi là trạng thái suy giảm; hệ thống chưa khóa mức xử lý.
-Readiness có check `rerank_configured` để phát hiện thiếu key, không gọi Cohere để kiểm tra key có hợp lệ hay không.
+## 13. Trạng thái & giới hạn
+- **Corpus demo-grade, chưa kiểm chứng nguồn.** Chunk sinh từ `.docx` qua MarkItDown, chưa đối chiếu từng điều với văn bản chính thức → **không phải nguồn pháp lý chính thức**, không dùng để kết luận pháp lý.
+- **Đánh giá chưa end-to-end.** Chưa có accuracy/latency đầu-cuối; RAGAS factual correctness của assessment ~0.53; answer-quality đạt 5/10. Toàn bộ nhãn/reference vẫn là **bản nháp chờ chuyên gia HR/pháp chế rà soát**.
+- **Mở rộng đồ thị phụ thuộc dữ liệu:** `chunk_references` phải được populate (qua `scripts/copy_chunk_references.py`) mới đo được lợi ích.
+- **External research (MCP/web) mặc định tắt** (`EXTERNAL_RESEARCH_ENABLED`); **chưa có live URL/deploy** trong repo và SSE agent chưa phát sự kiện (UI cập nhật theo từng request).
+- **Standalone chat** cố ý thiếu node workflow — không thu thập fact, không soạn biên bản; yêu cầu đó được hướng về hồ sơ.
+- **Branding cũ còn sót:** `APP_NAME="AI20K Agent"` (`src/core/config.py`) và tiêu đề FastAPI trong `src/main.py` — cần dọn.
 
-Flow hiện tại: query ưu tiên hành vi → dense/Okapi BM25/lexical → RRF → rerank chọn seed → dẫn chiếu → rerank theo nhu cầu căn cứ → chọn evidence → tối đa một lượt tìm bù căn cứ còn thiếu.
-Các giới hạn ứng viên, context và thời gian chờ có trong `.env.example`; `RERANK_MIN_SCORE` để trống cho đến khi có dữ liệu hiệu chỉnh.
-
-DeepSeek trả assessment ngắn; Python dựng biên bản sau khi kiểm tra quote và mapping điều kiện với fact đã xác nhận. Timeout tổng hợp có giới hạn và không retry lặp lại một model bị timeout.
-
-Xem [hướng dẫn triển khai và kiểm chứng](docs/retrieval-rerank-implementation.md), [bộ đo retrieval](eval/retrieval/README.md).
-
-## AI usage logging
-
-Mọi prompt được ghi vào `.ai-log/session.jsonl` và tự động gửi lên grading server
-ở bước pre-push.
-
-| Công cụ | Cấu hình | Thời điểm ghi |
-|---|---|---|
-| Claude Code | `.claude/settings.json` | mỗi prompt (`UserPromptSubmit`) |
-| Cursor | `.cursor/hooks.json` | mỗi prompt và khi dừng |
-| OpenAI Codex CLI | `.codex/hooks.json` | mỗi prompt và khi dừng |
-| Gemini CLI | `.gemini/settings.json` | mỗi lượt agent chạy |
-| GitHub Copilot | `.github/hooks/hooks.json` | mỗi prompt và cuối session |
-| Antigravity IDE | `.agents/hooks.json` | mỗi prompt, kèm lần quét lại lúc `git push` |
-| Grok | `.grok/hooks/ai-log.json` | mỗi prompt (`UserPromptSubmit`) và khi dừng (`Stop`) |
-
-Dùng ChatGPT hay công cụ web khác thì log thủ công:
-
-```bash
-bash scripts/_pyrun.sh scripts/log_manual.py --tool chatgpt --prompt "What you asked"
-```
-
-## Đóng góp
-
-Repo này là open source. Đọc [CONTRIBUTING.md](CONTRIBUTING.md) trước khi mở PR.
-
-Nội dung trong `docs/guide/` là nguồn của Technical Book và được đồng bộ lên bản
-online, nên mọi thay đổi ở đó cần review của
-[@AI20K-Build-Phase/book-maintainers](https://github.com/orgs/AI20K-Build-Phase/teams/book-maintainers)
-— xem [.github/CODEOWNERS](.github/CODEOWNERS).
-
-Báo lỗ hổng bảo mật theo [SECURITY.md](SECURITY.md), đừng mở public issue.
-
-## License
-
-[MIT](LICENSE) — dùng tự do cho mục đích giáo dục.
+## 14. Đội ngũ & License
+- **Dự án** P-029 — "HR Help". **Mentor:** Ngô Đình Luân, Trần Hữu Khánh Văn. **Nhóm:** Nhóm P-029.
+- **License:** [MIT](LICENSE). Đóng góp theo [`CONTRIBUTING.md`](CONTRIBUTING.md); báo lỗ hổng bảo mật theo [`SECURITY.md`](SECURITY.md).

@@ -36,7 +36,6 @@ assessment graph, and calculates four RAGAS metrics. See [the workflow guide](ca
 | `case_assessment/results/validation/` | Historical, not required | Old validation of the draft dataset. |
 | `case_assessment/results/TEST_REPORT.md` | Historical, not required | Describes the previous fixed-evidence run and its limitations. |
 | `case_assessment/__pycache__/` | No | Automatically generated Python bytecode. |
-| `results/report.md` | No | Unfilled general product-evaluation report template. |
 
 Historical outputs are retained for comparison. They are not inputs to new live runs.
 The earlier retrieval runner and `retrieval_eval_*` reports were removed, as recorded
